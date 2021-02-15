@@ -1,0 +1,25 @@
+{
+    "Departments": [
+        {
+            "DepartmentName": "eAI",
+            "Sections": [
+                {
+                    "SectionName": "Developers",
+                    "SectionLines": [
+                        "Ralian"
+						]
+                },
+                {
+                    "SectionName": "Special Thanks",
+                    "SectionLines": [
+                        "Hlynge",
+						"Jacob_Mango",
+						"Arkensor",
+						"Dance Of Jesus",
+						"InclementDab"
+                    ]
+                }
+            ]
+        }
+    ]
+}
