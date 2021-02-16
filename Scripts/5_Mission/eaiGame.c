@@ -1,6 +1,6 @@
 class eAIGame {
 	// List of all eAI entities
-	autoptr array<DayZPlayerImplement> aiList = new array<DayZPlayerImplement>();
+	autoptr array<PlayerBase> aiList = new array<PlayerBase>();
 	
 	vector debug_offset = "10 0 0"; // Offset from player to spawn a new AI entity at when debug called
 	
@@ -32,7 +32,8 @@ class eAIGame {
             Print( "eAI spawn entity RPC called.");
         //}
 		//Human h = Human.Cast(GetGame().CreateObject("SurvivorF_Linda", data.param1));
-		DayZPlayerImplement h = DayZPlayerImplement.Cast(GetGame().CreatePlayer(null, "SurvivorF_Linda", data.param1.GetPosition() + debug_offset, 0, "NONE"));
+		PlayerBase h = PlayerBase.Cast(GetGame().CreatePlayer(null, "SurvivorF_Linda", data.param1.GetPosition() + debug_offset, 0, "NONE"));
+		h.markAI(); // Important: Mark unit as AI since we don't control the constructor.
 		h.GetInventory().CreateInInventory("TTSKOPants");
 		h.GetInventory().CreateInInventory("TTsKOJacket_Camo");
 		h.GetInventory().CreateInInventory("CombatBoots_Black");
@@ -52,8 +53,9 @@ class eAIGame {
 		gun.GetInventory().CreateAttachment("M4_MPBttstck_Black");
 		gun.GetInventory().CreateAttachment("ACOGOptic");
 		h.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
+		h.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
 			
-		h.eAIFollow(data.param1);
+		h.eAIFollow(data.param1, 2.0);
 		
 		//h.StartCommand_Action(DayZPlayerConstants.CMD_ACTIONFB_FILLMAG);
 
@@ -74,7 +76,7 @@ class eAIGame {
             Print( "eAI clear all entity RPC called.");
         }
 		
-		foreach (DayZPlayerImplement e : aiList) {
+		foreach (PlayerBase e : aiList) {
 			GetGame().ObjectDelete(e); // This is almost certainly not the right way to do this.
 			// Need to check for mem leaks
 		}
@@ -90,7 +92,7 @@ class eAIGame {
             Print( "eAI UpdateMovement RPC called.");
         }
 		
-		foreach (DayZPlayerImplement p : aiList) {
+		foreach (PlayerBase p : aiList) {
 			//p.eAIUpdateMovement();
 			p.eAIDebugMovement();
 		}
@@ -119,7 +121,7 @@ class eAIGame {
 		gametime += (4*timeslice); // timeslice*x where x is the number of slices
 		timeDiv++;
 		if (Math.Floor(gametime - (4*timeslice)) != Math.Floor(gametime)) {timeDiv = 0;}
-		foreach (DayZPlayerImplement h : aiList) {
+		foreach (PlayerBase h : aiList) {
 			if (timeDiv == 0) {h.eAIUpdateMovement();} // set a new movement target once per second
 			//else if (timeDiv == 10) {h.GetInputController().OverrideAimChangeX(true, 0);}
 		}

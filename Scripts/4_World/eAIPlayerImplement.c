@@ -1,13 +1,62 @@
 class eAIMovementState : HumanMovementState {
+	bool m_weaponRaised = false;
+	
 	void eAIMovementState() {
 		Print("eAIMovementState: Init");
 		//m_CommandTypeId = DayZPlayerConstants.COMMANDID_MOVE;
 		//m_iMovement = 2;
 	}
+	
+	void toggleWeapon() {m_weaponRaised = !m_weaponRaised;}
 };
 
+modded class WeaponManager {
+	override bool StartAction(int action, Magazine mag, InventoryLocation il, ActionBase control_action = NULL)
+	{
+		//if it is controled by action inventory reservation and synchronization provide action itself
+		if(control_action)
+		{
+			m_ControlAction = ActionBase.Cast(control_action);
+			m_PendingWeaponAction = action;
+			m_InProgress = true;
+			m_IsEventSended = false;
+			m_PendingTargetMagazine = mag;
+			m_PendingInventoryLocation = il;
+			StartPendingAction();
+			
+			return true;
+		}
+		
+		if ( !ScriptInputUserData.CanStoreInputUserData() )
+			return false;
+		if ( !InventoryReservation(mag, il) )
+			return false;
 
-modded class DayZPlayerImplement {
+		m_PendingWeaponAction = action;
+		m_InProgress = true;
+		m_IsEventSended = false;
+		
+		if ( !GetGame().IsMultiplayer() )
+			m_readyToStart = true;
+		else
+			Synchronize();
+		
+		// Okay. So. I don't completely understand the client/server interaction here, but this bit is an override
+		// (replacing BI code which would kick a server out of this function) to force server-local AI to kick into the queued
+		// reloading action. For some reason however the correct animation triggers, but the magazine is invisible and ends up 
+		// getting bugged.
+		if (GetGame().IsMultiplayer() && GetGame().IsServer()) {
+			m_PendingTargetMagazine = mag;
+			m_PendingInventoryLocation = il;
+			StartPendingAction();
+		}
+		
+		return true;
+	}
+}
+
+
+modded class PlayerBase {
 	ref HumanMovementState m_MovementState = new eAIMovementState();
 	//ref eAIHumanInputController m_eAIController = new eAIHumanInputController();
 	
@@ -15,31 +64,51 @@ modded class DayZPlayerImplement {
 	float m_FollowDistance = 5.0;
 	vector m_NextWaypoint = "0 0 0"; // otherwise, default to waypoint.
 	
-	void DayZPlayerImplement() {
-		Print("eAI DayZPlayerImplement: Init");
-		m_IsFireWeaponRaised = false;
-		m_SprintFull = false;
-		m_SprintedTime = 0;
-		m_AimingModel = new DayZPlayerImplementAiming(this);
-		m_MeleeCombat = new DayZPlayerImplementMeleeCombat(this);
-		m_MeleeFightLogic = new DayZPlayerMeleeFightLogic_LightHeavy(this);
-		m_Swimming = new DayZPlayerImplementSwimming(this);		
-		m_Throwing = new DayZPlayerImplementThrowing(this);
-		m_JumpClimb = new DayZPlayerImplementJumpClimb(this);
-		m_FallDamage = new DayZPlayerImplementFallDamage(this);
-		m_bADS = false;
-		m_WeaponRaiseCompleted = false;
-		m_CameraEyeZoom = false;
-		m_CameraOptics = false;
-		m_IsShootingFromCamera = true;
-		m_ProcessFirearmMeleeHit = false;
-		m_ContinueFirearmMelee = false;
-		m_WasIronsight = true;
-		#ifdef PLATFORM_CONSOLE
-		m_Camera3rdPerson = !GetGame().GetWorld().Is3rdPersonDisabled();
-		#endif
-		m_LastSurfaceUnderHash = ("cp_gravel").Hash();
-		m_NextVoNNoiseTime = 0;
+	bool isAI = false;
+	
+	// IMPORTANT: Since this class is always constructed in engine, we need some other way to mark a unit as AI outside of the constructor.
+	// As such, when spawning AI make sure you ALWAYS CALL MARKAI() ON THE UNIT AFTER TELLING THE ENGINE TO SPAWN THE UNIT.
+	// This is used in many functions for workarounds for AI controlled players and it will break things if AI are not properly marked.
+	void markAI() {isAI = true;}
+	bool isAI() {return isAI;}
+	
+	//Reload weapon with given magazine
+	override void ReloadWeapon( EntityAI weapon, EntityAI magazine ) {
+		Print(this.ToString() + " is trying to reload " + magazine.ToString() + " into " + weapon.ToString());
+		ActionManagerClient mngr_client;
+		CastTo(mngr_client, GetActionManager());
+		
+		if (mngr_client && FirearmActionLoadMultiBulletRadial.Cast(mngr_client.GetRunningAction()))
+		{
+			mngr_client.Interrupt();
+		}
+		else if ( GetHumanInventory().GetEntityInHands()!= magazine )
+		{
+			Weapon_Base wpn;
+			Magazine mag;
+			Class.CastTo( wpn,  weapon );
+			Class.CastTo( mag,  magazine );
+			if ( GetWeaponManager().CanUnjam(wpn) )
+			{
+				GetWeaponManager().Unjam();
+			}
+			else if ( GetWeaponManager().CanAttachMagazine( wpn, mag ) )
+			{
+				GetWeaponManager().AttachMagazine( mag );
+			}
+			else if ( GetWeaponManager().CanSwapMagazine( wpn, mag ) )
+			{
+				GetWeaponManager().SwapMagazine( mag );
+			}
+			else if ( GetWeaponManager().CanLoadBullet( wpn, mag ) )
+			{
+				//GetWeaponManager().LoadMultiBullet( mag );
+
+				ActionTarget atrg = new ActionTarget(mag, this, -1, vector.Zero, -1.0);
+				if ( mngr_client && !mngr_client.GetRunningAction() && mngr_client.GetAction(FirearmActionLoadMultiBulletRadial).Can(this, atrg, wpn) )
+					mngr_client.PerformActionStart(mngr_client.GetAction(FirearmActionLoadMultiBulletRadial), atrg, wpn);
+			}
+		}
 	}
 	
 	void eAIFollow(DayZPlayer p, float distance = 5.0) {
@@ -50,9 +119,20 @@ modded class DayZPlayerImplement {
 	float targetAngle, heading, delta;
 	
 	void eAIDebugMovement() {
-		Print("targetAngle: " + targetAngle);
-		Print("heading: " + heading);
-		Print("delta: " + delta);
+		//Print("targetAngle: " + targetAngle);
+		//Print("heading: " + heading);
+		//Print("delta: " + delta);
+		
+		//GetCommandModifier_Weapons().StartAction(WeaponActions.RELOAD, WeaponActionReloadTypes.RELOADRIFLE_NOMAGAZINE_NOBULLET); // Need to use wpn UIManager
+		//WeaponManager wm = GetWeaponManager();
+		//if (wm.CanAttachMagazine(GetHumanInventory().GetEntityInHands(), wm.GetPreparedMagazine())) {
+		//	wm.AttachMagazine(wm.GetPreparedMagazine());
+		//}
+		
+		QuickReloadWeapon(GetHumanInventory().GetEntityInHands());
+		
+		//GetWeaponManager().Fire(Weapon_Base.CastTo(GetHumanInventory().GetEntityInHands())); // Needs to reload first
+		//GetCommandModifier_Weapons().SetADS(true); // Use M to toggle ADS as a test
 	}
 	
 	void eAIUpdateMovement() {
@@ -70,7 +150,7 @@ modded class DayZPlayerImplement {
 		while (delta > 180) {delta -= 360;} // There's no remainder function so I had to do this retarded BS
 		while (delta < -180) {delta += 360;}
 		
-		GetInputController().OverrideAimChangeX(true, delta/3000.0);
+		GetInputController().OverrideAimChangeX(true, delta/1000.0);
 		
 		if (vector.Distance(GetPosition(), m_NextWaypoint) >  2 * m_FollowDistance) {
 			GetInputController().OverrideMovementSpeed(true, 2.0);
