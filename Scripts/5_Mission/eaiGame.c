@@ -2,13 +2,16 @@ class eAIGame {
 	// List of all eAI entities
 	autoptr array<DayZPlayerImplement> aiList = new array<DayZPlayerImplement>();
 	
-	vector debug_offset = "5 0 0"; // Offset from player to spawn a new AI entity at when debug called
+	vector debug_offset = "10 0 0"; // Offset from player to spawn a new AI entity at when debug called
+	
+	float gametime = 0;
 
 	
     void eAIGame() {
         GetRPCManager().AddRPC("eAI", "TestRPCFunction", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "SpawnEntity", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ClearAllEntity", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("eAI", "UpdateMovement", this, SingeplayerExecutionType.Client);
     }
 
     void TestRPCFunction(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
@@ -23,13 +26,13 @@ class eAIGame {
     }
 	
 	void SpawnEntity(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param1< vector > data;
+		Param1< DayZPlayer > data;
         if ( !ctx.Read( data ) ) return;
 		if( type == CallType.Server ) {
             Print( "eAI spawn entity RPC called.");
         //}
 		//Human h = Human.Cast(GetGame().CreateObject("SurvivorF_Linda", data.param1));
-		DayZPlayerImplement h = DayZPlayerImplement.Cast(GetGame().CreatePlayer(null, "SurvivorF_Linda", data.param1, 0, "NONE"));
+		DayZPlayerImplement h = DayZPlayerImplement.Cast(GetGame().CreatePlayer(null, "SurvivorF_Linda", data.param1.GetPosition() + debug_offset, 0, "NONE"));
 		h.GetInventory().CreateInInventory("TTSKOPants");
 		h.GetInventory().CreateInInventory("TTsKOJacket_Camo");
 		h.GetInventory().CreateInInventory("CombatBoots_Black");
@@ -49,6 +52,8 @@ class eAIGame {
 		gun.GetInventory().CreateAttachment("M4_MPBttstck_Black");
 		gun.GetInventory().CreateAttachment("ACOGOptic");
 		h.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
+			
+		h.eAIFollow(data.param1);
 		
 		//h.StartCommand_Action(DayZPlayerConstants.CMD_ACTIONFB_FILLMAG);
 
@@ -76,28 +81,47 @@ class eAIGame {
 		
 		aiList.Clear();
 	}
+	
+	void UpdateMovement(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+		Param1< vector > data; // here the parameter is unused, maybe we could use an enum instead
+        if ( !ctx.Read( data ) ) return;
+		if( type == CallType.Server )
+        {
+            Print( "eAI UpdateMovement RPC called.");
+        }
+		
+		foreach (DayZPlayerImplement p : aiList) {
+			//p.eAIUpdateMovement();
+			p.eAIDebugMovement();
+		}
+	}
 
     void OnKeyPress(int key) {
         switch (key) {
             case KeyCode.KC_K: {
                 //GetRPCManager().SendRPC("eAI", "TestRPCFunction", new Param1< string >( "Hello, World!" ) );
-				GetRPCManager().SendRPC("eAI", "SpawnEntity", new Param1< vector >( GetGame().GetPlayer().GetPosition() + debug_offset ) );
+				GetRPCManager().SendRPC("eAI", "SpawnEntity", new Param1<DayZPlayer>(GetGame().GetPlayer()));
                 break;
             }
 			case KeyCode.KC_L: {
-				GetRPCManager().SendRPC("eAI", "ClearAllEntity", new Param1< vector >( GetGame().GetPlayer().GetPosition()) );
+				GetRPCManager().SendRPC("eAI", "ClearAllEntity", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
+				break;
+			}
+			case KeyCode.KC_M: {
+				GetRPCManager().SendRPC("eAI", "UpdateMovement", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
 				break;
 			}
         }
     }
 	
+	int timeDiv = 0;
 	void OnUpdate(bool doSim, float timeslice) {
+		gametime += (4*timeslice); // timeslice*x where x is the number of slices
+		timeDiv++;
+		if (Math.Floor(gametime - (4*timeslice)) != Math.Floor(gametime)) {timeDiv = 0;}
 		foreach (DayZPlayerImplement h : aiList) {
-			h.eAIUpdateMovement();
-			//Print("OnUpdate debug triggered!");
-			// overriding this doesn't work?
-			//h.GetInputController().OverrideAimChangeX(true, 0.5);
-			h.GetInputController().OverrideMovementSpeed(true, 2.0);
+			if (timeDiv == 0) {h.eAIUpdateMovement();} // set a new movement target once per second
+			//else if (timeDiv == 10) {h.GetInputController().OverrideAimChangeX(true, 0);}
 		}
 	}
 };
