@@ -2,7 +2,7 @@ class eAIGame {
 	// List of all eAI entities
 	autoptr array<PlayerBase> aiList = new array<PlayerBase>();
 	
-	vector debug_offset = "10 0 0"; // Offset from player to spawn a new AI entity at when debug called
+	vector debug_offset = "5 0 0"; // Offset from player to spawn a new AI entity at when debug called
 	
 	float gametime = 0;
 
@@ -12,6 +12,7 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "SpawnEntity", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ClearAllEntity", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "UpdateMovement", this, SingeplayerExecutionType.Client);
+		//GetRPCManager().AddRPC("eAI", "ProcessReload", this, SingeplayerExecutionType.Client);
     }
 
     void TestRPCFunction(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
@@ -26,12 +27,13 @@ class eAIGame {
     }
 	
 	void SpawnEntity(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param1< DayZPlayer > data;
-        if ( !ctx.Read( data ) ) return;
-		if( type == CallType.Server ) {
-            Print( "eAI spawn entity RPC called.");
+		Param1<DayZPlayer> data;
+        if (!ctx.Read(data)) return;
+		if(type == CallType.Server ) {
+            Print("eAI spawn entity RPC called.");
         //}
 		//Human h = Human.Cast(GetGame().CreateObject("SurvivorF_Linda", data.param1));
+			//SurvivorM_Cyril
 		PlayerBase h = PlayerBase.Cast(GetGame().CreatePlayer(null, "SurvivorF_Linda", data.param1.GetPosition() + debug_offset, 0, "NONE"));
 		h.markAI(); // Important: Mark unit as AI since we don't control the constructor.
 		h.GetInventory().CreateInInventory("TTSKOPants");
@@ -42,7 +44,7 @@ class eAIGame {
 		h.GetInventory().CreateInInventory("SodaCan_Pipsi");
 		h.GetInventory().CreateInInventory("SpaghettiCan");
 		h.GetInventory().CreateInInventory("HuntingKnife");
-		ItemBase rags = h.GetInventory().CreateInInventory("Rag");
+		ItemBase rags = ItemBase.Cast(h.GetInventory().CreateInInventory("Rag"));
 		rags.SetQuantity(4);
 
 		EntityAI primary;
@@ -53,9 +55,13 @@ class eAIGame {
 		gun.GetInventory().CreateAttachment("M4_MPBttstck_Black");
 		gun.GetInventory().CreateAttachment("ACOGOptic");
 		h.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
-		h.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
+		EntityAI mag = h.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
 			
 		h.eAIFollow(data.param1, 2.0);
+			
+		//h.QuickReloadWeapon(gun);
+		FirearmActionAttachMagazineQuick f = new FirearmActionAttachMagazineQuick();
+		ActionManagerClient.Cast(h.GetActionManager()).PerformActionStart(f, null, ItemBase.Cast(gun));
 		
 		//h.StartCommand_Action(DayZPlayerConstants.CMD_ACTIONFB_FILLMAG);
 
@@ -69,34 +75,38 @@ class eAIGame {
 	}
 	
 	void ClearAllEntity(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param1< vector > data; // here the parameter is unused, maybe we could use an enum instead
-        if ( !ctx.Read( data ) ) return;
-		if( type == CallType.Server )
-        {
-            Print( "eAI clear all entity RPC called.");
-        }
-		
-		foreach (PlayerBase e : aiList) {
-			GetGame().ObjectDelete(e); // This is almost certainly not the right way to do this.
-			// Need to check for mem leaks
+		Param1<vector> data; // here the parameter is unused, maybe we could use an enum instead
+        if (!ctx.Read(data)) return;
+		if(type == CallType.Server ) {
+            Print("eAI clear all entity RPC called.");
+			foreach (PlayerBase e : aiList) {
+				GetGame().ObjectDelete(e); // This is almost certainly not the right way to do this.
+				// Need to check for mem leaks
+			}
+			
+			aiList.Clear();
 		}
-		
-		aiList.Clear();
 	}
 	
 	void UpdateMovement(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param1< vector > data; // here the parameter is unused, maybe we could use an enum instead
-        if ( !ctx.Read( data ) ) return;
-		if( type == CallType.Server )
-        {
-            Print( "eAI UpdateMovement RPC called.");
+		Param1<vector> data; // here the parameter is unused, maybe we could use an enum instead
+        if (!ctx.Read( data)) return;
+		if(type == CallType.Server) {
+            Print("eAI UpdateMovement RPC called.");
+			foreach (PlayerBase p : aiList) {
+				p.eAIDebugMovement();
+			}
         }
-		
-		foreach (PlayerBase p : aiList) {
-			//p.eAIUpdateMovement();
-			p.eAIDebugMovement();
-		}
 	}
+	
+	/*void ProcessReload(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+		Param1<WeaponManager> data; // here the parameter is unused, maybe we could use an enum instead
+        if ( !ctx.Read( data ) ) return;
+		if( type == CallType.Client ) {
+            Print( "eAI ProcessReload updated on client.");
+			data.
+        }
+	}*/
 
     void OnKeyPress(int key) {
         switch (key) {
