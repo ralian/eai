@@ -441,6 +441,7 @@ modded class WeaponManager {
 }
 
 
+// Todo move this to a separate child class (like PlayerBaseClient)
 modded class PlayerBase {
 	ref array<Entity> threats = new array<Entity>();
 	
@@ -455,8 +456,9 @@ modded class PlayerBase {
 	// This is used in many functions for workarounds for AI controlled players and it will break things if AI are not properly marked.
 	bool isAI() {return isAI;}
 	void markAI() {
-		m_ActionManager = new ActionManagerClient(this);
 		isAI = true;
+		m_ActionManager = new ActionManagerAI(this);
+		// Todo do we need to set instance type?
 	}
 	
 	//Reload weapon with given magazine

@@ -61,7 +61,7 @@ class eAIGame {
 			
 		//h.QuickReloadWeapon(gun);
 		FirearmActionAttachMagazineQuick f = new FirearmActionAttachMagazineQuick();
-		ActionManagerClient.Cast(h.GetActionManager()).PerformActionStart(f, null, ItemBase.Cast(gun));
+		ActionManagerAI.Cast(h.GetActionManager()).PerformActionStart(f, null, ItemBase.Cast(gun));
 		
 		//h.StartCommand_Action(DayZPlayerConstants.CMD_ACTIONFB_FILLMAG);
 
