@@ -5,14 +5,12 @@ class eAIGame {
 	vector debug_offset = "5 0 0"; // Offset from player to spawn a new AI entity at when debug called
 	
 	float gametime = 0;
-
 	
     void eAIGame() {
         GetRPCManager().AddRPC("eAI", "TestRPCFunction", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "SpawnEntity", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ClearAllEntity", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "UpdateMovement", this, SingeplayerExecutionType.Client);
-		//GetRPCManager().AddRPC("eAI", "ProcessReload", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("eAI", "ProcessReload", this, SingeplayerExecutionType.Client);
     }
 
     void TestRPCFunction(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
@@ -54,20 +52,10 @@ class eAIGame {
 		gun.GetInventory().CreateAttachment("M4_RISHndgrd_Black");
 		gun.GetInventory().CreateAttachment("M4_MPBttstck_Black");
 		gun.GetInventory().CreateAttachment("ACOGOptic");
-		h.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
 		EntityAI mag = h.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
+		h.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
 			
 		h.eAIFollow(data.param1, 2.0);
-			
-		//h.QuickReloadWeapon(gun);
-		FirearmActionAttachMagazineQuick f = new FirearmActionAttachMagazineQuick();
-		ActionManagerAI.Cast(h.GetActionManager()).PerformActionStart(f, null, ItemBase.Cast(gun));
-		
-		//h.StartCommand_Action(DayZPlayerConstants.CMD_ACTIONFB_FILLMAG);
-
-		//HumanCommandMove movement = h.StartCommand_Move();
-		//movement.ForceStance(DayZPlayerConstants.STANCEIDX_CROUCH);
-		//movement
 		
 		aiList.Insert(h);
 			
@@ -88,25 +76,17 @@ class eAIGame {
 		}
 	}
 	
-	void UpdateMovement(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param1<vector> data; // here the parameter is unused, maybe we could use an enum instead
-        if (!ctx.Read( data)) return;
+	void ProcessReload(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+		Param1<PlayerBase> data; // here the parameter is unused, maybe we could use an enum instead
+        if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server) {
             Print("eAI UpdateMovement RPC called.");
 			foreach (PlayerBase p : aiList) {
-				p.eAIDebugMovement();
+
+				p.QuickReloadWeapon(p.GetHumanInventory().GetEntityInHands());
 			}
         }
 	}
-	
-	/*void ProcessReload(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param1<WeaponManager> data; // here the parameter is unused, maybe we could use an enum instead
-        if ( !ctx.Read( data ) ) return;
-		if( type == CallType.Client ) {
-            Print( "eAI ProcessReload updated on client.");
-			data.
-        }
-	}*/
 
     void OnKeyPress(int key) {
         switch (key) {
@@ -120,20 +100,32 @@ class eAIGame {
 				break;
 			}
 			case KeyCode.KC_M: {
-				GetRPCManager().SendRPC("eAI", "UpdateMovement", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
+				GetRPCManager().SendRPC("eAI", "ProcessReload", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
 				break;
 			}
         }
     }
 	
-	int timeDiv = 0;
+	int numOfDivsPassed = 0; // Okay, so this is a terrible way to do this. But AI will recalculate once each time "Div," a div (currently) being 250ms. This int is the floor of # of divs that have passed.
+	int timeDiv = 0; // This is the number of OnUpdates that have triggered since the last Div.
 	void OnUpdate(bool doSim, float timeslice) {
-		gametime += (4*timeslice); // timeslice*x where x is the number of slices
+		gametime += (4*timeslice); // timeslice*x where x is the number of slices per second
 		timeDiv++;
 		if (Math.Floor(gametime - (4*timeslice)) != Math.Floor(gametime)) {timeDiv = 0;}
+		
+		// AI pathing calculations
 		foreach (PlayerBase h : aiList) {
-			if (timeDiv == 0) {h.eAIUpdateMovement();} // set a new movement target once per second
-			//else if (timeDiv == 10) {h.GetInputController().OverrideAimChangeX(true, 0);}
+			if (timeDiv == 0) {
+				numOfDivsPassed++;
+				h.eAIUpdateMovement();
+			} // set a new movement target 4 times per scond
+		}
+		
+		if (timeDiv == 0 && numOfDivsPassed % 120 == 0) { // Every 30 seconds
+			// AI pathing calculations
+			foreach (PlayerBase i : aiList) {
+				i.eAIUpdateBrain();
+			}
 		}
 	}
 };

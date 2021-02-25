@@ -6,47 +6,21 @@ enum eAIBehaviorGlobal { // Global states that dictate each unit's actions
 	COMBAT // Will engage the threats in the threat list in order. Will ignore waypoints to seek out threats.
 }
 
-modded class FirearmActionAttachMagazineQuick : FirearmActionBase
-{	
-	override bool SetupAction(PlayerBase player, ActionTarget target, ItemBase item, out ActionData action_data, Param extra_data = NULL)
-	{
-		if( super.SetupAction( player, target, item, action_data, extra_data))
-		{
-			ActionTarget newTarget;
-			if(player.isAI()) // Modded this condition to enable work on AI
-			{
-				// The only reason we need this instead of GetPreparedMags is because the latter is only updated every tick.
-				// If an AI tries to reload on the same tick it spawns, the suitable mags will be null.
-				newTarget = new ActionTarget(player.GetMagazineToReload(item), null, -1, vector.Zero, -1);
-				action_data.m_Target = newTarget;
-			}
-			return true;
-		}
-		if( super.SetupAction( player, target, item, action_data, extra_data))
-		{
-			if( !GetGame().IsMultiplayer() || GetGame().IsClient()) // Modded this condition to enable work on AI
-			{
-				newTarget = new ActionTarget(player.GetWeaponManager().GetPreparedMagazine(), null, -1, vector.Zero, -1);
-				action_data.m_Target = newTarget;
-			}
-			return true;
-		}
-		return false;
-	}
-}
-
 modded class WeaponManager {
+	
 	override bool StartAction(int action, Magazine mag, InventoryLocation il, ActionBase control_action = NULL)
 	{
 		//if it is controled by action inventory reservation and synchronization provide action itself
 		if(control_action) {
 			m_ControlAction = ActionBase.Cast(control_action);
-			Print("WeaponManager::StartAction control action " + m_ControlAction.ToString() + " triggered on " + m_player.ToString());
+			Print("WeaponManager::StartAction control action " + m_ControlAction.ToString() + " triggered on " + m_player.ToString() + m_player.IsMale().ToString());
 			m_PendingWeaponAction = action;
 			m_InProgress = true;
 			m_IsEventSended = false;
 			m_PendingTargetMagazine = mag;
 			m_PendingInventoryLocation = il;
+			
+			DumpStack();
 			StartPendingAction();
 			
 			return true;
@@ -85,7 +59,7 @@ modded class WeaponManager {
 	// This function is only used by the WeaponManager of AI units and executes server-side.
 	private bool SynchronizeServer(Magazine mag, InventoryLocation il){
 		if(GetGame().IsServer() && m_player.isAI()) {
-			Print("WeaponManager::SynchronizeServer for AI unit " + m_player.ToString() + " started.");
+			Print("WeaponManager::SynchronizeServer for AI unit " + m_player.ToString() + m_player.IsMale().ToString() + " started.");
 			
 			m_PendingWeaponActionAcknowledgmentID = ++m_LastAcknowledgmentID;
 			
@@ -195,6 +169,7 @@ modded class WeaponManager {
 					Error("unknown actionID=" + m_PendingWeaponAction);
 					break;
 			}
+			// might be unnecessary - this is for the client which reloaded only?
 			DayZPlayerSyncJunctures.SendWeaponActionAcknowledgment(m_player, m_PendingWeaponActionAcknowledgmentID, accepted);
 			
 			return accepted;
@@ -204,240 +179,6 @@ modded class WeaponManager {
 		
 		return false; // This case is only executed if the conditions are not met
 	}
-	
-	
-	override void Update( float deltaT )
-	{
-
-		if (m_WeaponInHand != m_player.GetItemInHands())
-		{
-			if( m_WeaponInHand )
-			{
-				m_SuitableMagazines.Clear();
-				OnWeaponActionEnd();
-			}
-			m_WeaponInHand = Weapon_Base.Cast(m_player.GetItemInHands());
-			if ( m_WeaponInHand )
-			{
-				m_MagazineInHand = null;
-				//SET new magazine
-				SetSutableMagazines();
-				m_WeaponInHand.SetSyncJammingChance(0);
-			}
-			m_AnimationRefreshCooldown = 0;
-		}
-		
-		if (m_WeaponInHand)
-		{
-			if(m_AnimationRefreshCooldown)
-			{
-				m_AnimationRefreshCooldown--;
-			
-				if( m_AnimationRefreshCooldown == 0)
-				{
-					RefreshAnimationState();
-				}
-			}
-		
-			if (!GetGame().IsMultiplayer())
-			{
-				m_WeaponInHand.SetSyncJammingChance(m_WeaponInHand.GetChanceToJam());
-			}
-			else
-			{
-				if ( m_NewJamChance >= 0)
-				{
-					m_WeaponInHand.SetSyncJammingChance(m_NewJamChance);
-					m_NewJamChance = -1;
-					m_WaitToSyncJamChance = false;
-				}
-				if (GetGame().IsServer() && !m_WaitToSyncJamChance )
-				{
-					float actual_chance_to_jam;
-					actual_chance_to_jam = m_WeaponInHand.GetChanceToJam();
-					if ( Math.AbsFloat(m_WeaponInHand.GetSyncChanceToJam() - m_WeaponInHand.GetChanceToJam()) > 0.001 )
-					{
-						DayZPlayerSyncJunctures.SendWeaponJamChance(m_player, m_WeaponInHand.GetChanceToJam());
-						m_WaitToSyncJamChance = true;
-					}
-				}
-			}
-			
-			if(m_readyToStart)
-			{
-				Print("WeaponManager: Unit " + m_player.ToString() + " is about to start queued action.");
-				StartPendingAction();
-				m_readyToStart = false;
-				return;
-			}
-		
-			if( !m_InProgress || !m_IsEventSended )
-				return;
-		
-			if(m_canEnd)
-			{
-			
-				if(m_WeaponInHand.IsIdle())
-				{
-					OnWeaponActionEnd();
-				}
-				else if(m_justStart)
-				{
-					m_InIronSight = m_player.IsInIronsights();
-					m_InOptic = m_player.IsInOptics();
-		
-					if(m_InIronSight || m_InOptic)
-					{
-						m_player.GetInputController().ResetADS();
-						m_player.ExitSights();
-					}
-				
-					m_justStart = false;
-				}
-			
-			}
-			else
-			{
-				m_canEnd = true;
-				m_justStart = true;
-			}
-		}
-		else
-		{
-			if ( m_MagazineInHand != m_player.GetItemInHands() )
-			{
-				m_MagazineInHand = MagazineStorage.Cast(m_player.GetItemInHands());
-				if ( m_MagazineInHand )
-				{
-					SetSutableMagazines();
-				}
-			}
-		
-		
-		}
-	}
-	
-	override void StartPendingAction() {			
-		m_WeaponInHand = Weapon_Base.Cast(m_player.GetItemInHands());
-		if(!m_WeaponInHand)
-		{
-			OnWeaponActionEnd();
-			return;
-		}
-		
-		if (m_PendingTargetMagazine)
-			Print("WeaponManager::StartPendingAction - Unit: " + m_player.ToString() + " Weapon: " + m_WeaponInHand.ToString() + " Mag: " + m_PendingTargetMagazine.ToString());
-		else
-			Print("WeaponManager::StartPendingAction - Unit: " + m_player.ToString() + " Weapon: " + m_WeaponInHand.ToString() + " Mag: None");
-		
-		switch (m_PendingWeaponAction)
-		{
-			case AT_WPN_ATTACH_MAGAZINE:
-			{
-				m_player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventAttachMagazine(m_player, m_PendingTargetMagazine) );
-				break;
-			}
-			case AT_WPN_SWAP_MAGAZINE:
-			{
-				m_player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventSwapMagazine(m_player, m_PendingTargetMagazine) );
-				break;
-			}
-			case AT_WPN_DETACH_MAGAZINE:
-			{
-				Magazine mag = Magazine.Cast(m_PendingInventoryLocation.GetItem());
-				m_player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventDetachMagazine(m_player, mag, m_PendingInventoryLocation) );
-				break;
-			}
-			case AT_WPN_LOAD_BULLET:
-			{
-				m_WantContinue = false;
-				m_player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventLoad1Bullet(m_player, m_PendingTargetMagazine) );
-				break;
-			}
-			case AT_WPN_LOAD_MULTI_BULLETS_START:
-			{
-				m_player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventLoad1Bullet(m_player, m_PendingTargetMagazine) );
-				break;
-			}
-			case AT_WPN_LOAD_MULTI_BULLETS_END:
-			{
-				m_player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventContinuousLoadBulletEnd(m_player) );
-				break;
-			}
-			case AT_WPN_UNJAM:
-			{
-				m_player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventUnjam(m_player, NULL) );
-				break;
-			}
-			case AT_WPN_EJECT_BULLET:
-			{
-				m_player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventMechanism(m_player, NULL) );
-				break;
-			}
-			case AT_WPN_SET_NEXT_MUZZLE_MODE:
-			{
-				m_player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventSetNextMuzzleMode(m_player, NULL) );
-				break;
-			}
-			default:
-				m_InProgress = false;
-				Error("unknown actionID=" + m_PendingWeaponAction);
-		}	
-		m_IsEventSended = true;
-		m_canEnd = false;
-	}
-	
-	override void OnSyncJuncture(int pJunctureID, ParamsReadContext pCtx)
-	{
-		Print("WeaponManager::OnSyncJuncture #" + pJunctureID.ToString() + " ("+pCtx+") received for unit: " + m_player.ToString());
-		if (pJunctureID == DayZPlayerSyncJunctures.SJ_WEAPON_SET_JAMMING_CHANCE )
-		{
-			pCtx.Read(m_NewJamChance);
-		}
-		else
-		{
-			int AcknowledgmentID;
-			pCtx.Read(AcknowledgmentID);
-			Print("WeaponManager::OnSyncJuncture ACK ID: " + AcknowledgmentID.ToString());
-			if ( AcknowledgmentID == m_PendingWeaponActionAcknowledgmentID)
-			{
-				if (pJunctureID == DayZPlayerSyncJunctures.SJ_WEAPON_ACTION_ACK_ACCEPT)
-				{ 
-					Print("WeaponManager::OnSyncJuncture ACK Accept.");
-					m_readyToStart = true;
-				}
-				else if (pJunctureID == DayZPlayerSyncJunctures.SJ_WEAPON_ACTION_ACK_REJECT)
-				{
-					Print("WeaponManager::OnSyncJuncture ACK Rejected.");
-					if(m_PendingWeaponAction >= 0 )
-					{
-						if(!(GetGame().IsServer() && GetGame().IsMultiplayer()))
-						{
-							InventoryLocation ilWeapon = new InventoryLocation;
-							ItemBase weapon = m_player.GetItemInHands();
-							weapon.GetInventory().GetCurrentInventoryLocation(ilWeapon);
-							m_player.GetInventory().ClearInventoryReservation(m_player.GetItemInHands(),ilWeapon);
-							
-							if( m_PendingTargetMagazine )
-							{
-								m_PendingTargetMagazine.GetInventory().ClearInventoryReservation(m_PendingTargetMagazine, m_TargetInventoryLocation );
-							}
-							
-							if( m_PendingInventoryLocation )
-							{
-								m_player.GetInventory().ClearInventoryReservation( NULL, m_PendingInventoryLocation );
-							}
-						}
-						m_PendingWeaponActionAcknowledgmentID = -1;
-						m_PendingTargetMagazine = NULL;
-						m_PendingWeaponAction = -1;
-						m_PendingInventoryLocation = NULL;
-						m_InProgress = false;
-					}
-				}
-			}
-		}
-	}
 }
 
 
@@ -445,8 +186,16 @@ modded class WeaponManager {
 modded class PlayerBase {
 	ref array<Entity> threats = new array<Entity>();
 	
-	Entity m_FollowOrders = null; // If this is a non-null reference to an entity, we follow it.
-	float m_FollowDistance = 5.0;
+	Entity m_FollowOrders = null; // This is a reference to the entity we want to pathfind to.
+	float m_FollowDistance = 5.0; // This is the distance that we consider a waypoint to be 'reached' at.
+	
+	int cur_waypoint_no = -1; // Next point to move to in the waypoints array. -1 for "none"
+	ref TVectorArray waypoints = new TVectorArray(); // This is the list of waypoints the AI will follow. It is set by AIWorld.
+												 // This could be used by players too, with some kind of UI "highlight waypoint" system.
+	
+	ref PGFilter pgFilter = new PGFilter(); // This is the bitmask used for pathfinding (i.e. whether we want a path that goes over a fence
+	
+	//depricated
 	vector m_NextWaypoint = "0 0 0"; // otherwise, default to waypoint.
 	
 	bool isAI = false;
@@ -459,9 +208,36 @@ modded class PlayerBase {
 		isAI = true;
 		m_ActionManager = new ActionManagerAI(this);
 		// Todo do we need to set instance type?
+		
+		// Configure the pathfinding filter
+		//pgFilter.SetCost(PGAreaType.NONE, 1.0f); // not sure what kind of behaivor this causes
+		pgFilter.SetCost(PGAreaType.TERRAIN, 1.0);
+		pgFilter.SetCost(PGAreaType.WATER, 15.0);
+		pgFilter.SetCost(PGAreaType.WATER_DEEP, 15.0);
+		pgFilter.SetCost(PGAreaType.WATER_SEA, 15.0);
+		pgFilter.SetCost(PGAreaType.OBJECTS_NOFFCON, 1000000.0); // imma be real with you chief idk what this is
+		pgFilter.SetCost(PGAreaType.OBJECTS, 20.0);
+		pgFilter.SetCost(PGAreaType.BUILDING, 20.0);
+		pgFilter.SetCost(PGAreaType.ROADWAY, 0.2);
+		pgFilter.SetCost(PGAreaType.TREE, 15.0);
+		pgFilter.SetCost(PGAreaType.ROADWAY_BUILDING, 20.0);
+		pgFilter.SetCost(PGAreaType.DOOR_OPENED, 1.0);
+		pgFilter.SetCost(PGAreaType.DOOR_CLOSED, 1000000.0); // not yet implemented :)
+		pgFilter.SetCost(PGAreaType.LADDER, 1000000.0);
+		pgFilter.SetCost(PGAreaType.CRAWL, 1000000.0);
+		pgFilter.SetCost(PGAreaType.CROUCH, 1000000.0);
+		pgFilter.SetCost(PGAreaType.FENCE_WALL, 1000000.0);
+		pgFilter.SetCost(PGAreaType.JUMP, 1000000.0);
+		//pgFilter.SetFlags(int includeFlags, int excludeFlags, int exclusiveFlags);
 	}
 	
-	//Reload weapon with given magazine
+	void markAIServer() {
+		isAI = true;
+		m_ActionManager = new ActionManagerServer(this);
+		// The action manager should get auto-set to a server one I think
+	}
+	
+	//Eventually we can use this instead of calling the action manager, needs more work though
 	override void ReloadWeapon( EntityAI weapon, EntityAI magazine ) {
 		// The only reason this is an override is because there is a client-only condition here that I have removed.
 		// There is probably a better way to do this.
@@ -485,7 +261,7 @@ modded class PlayerBase {
 			}
 			else if ( GetWeaponManager().CanAttachMagazine( wpn, mag ) )
 			{
-				GetWeaponManager().AttachMagazine( mag );
+				GetWeaponManager().AttachMagazine(mag);
 			}
 			else if ( GetWeaponManager().CanSwapMagazine( wpn, mag ) )
 			{
@@ -502,6 +278,56 @@ modded class PlayerBase {
 		}
 	}
 	
+	// We should integrate this into ReloadWeapon
+	void ReloadWeaponAI( EntityAI weapon, EntityAI magazine ) {
+		// The only reason this is an override is because there is a client-only condition here that I have removed.
+		// There is probably a better way to do this.
+		Print(this.ToString() + !this.isAI().ToString() + " is trying to reload " + magazine.ToString() + " into " + weapon.ToString());
+		ActionManagerAI mngr_ai;
+		CastTo(mngr_ai, GetActionManager());
+		
+		if (mngr_ai && FirearmActionLoadMultiBulletRadial.Cast(mngr_ai.GetRunningAction()))
+		{
+			mngr_ai.Interrupt();
+		}
+		else if ( GetHumanInventory().GetEntityInHands()!= magazine )
+		{
+			Weapon_Base wpn;
+			Magazine mag;
+			Class.CastTo( wpn,  weapon );
+			Class.CastTo( mag,  magazine );
+			if ( GetWeaponManager().CanUnjam(wpn) )
+			{
+				GetWeaponManager().Unjam();
+			}
+			else if ( GetWeaponManager().CanAttachMagazine( wpn, mag ) )
+			{
+				GetWeaponManager().AttachMagazine(mag);//, new FirearmActionAttachMagazineQuick() );
+			}
+			else if ( GetWeaponManager().CanSwapMagazine( wpn, mag ) )
+			{
+				GetWeaponManager().SwapMagazine( mag );
+			}
+			else if ( GetWeaponManager().CanLoadBullet( wpn, mag ) )
+			{
+				GetWeaponManager().LoadMultiBullet( mag );
+
+				ActionTarget atrg = new ActionTarget(mag, this, -1, vector.Zero, -1.0);
+				//if ( mngr_ai && !mngr_ai.GetRunningAction() && mngr_ai.GetAction(FirearmActionLoadMultiBulletRadial).Can(this, atrg, wpn) )
+					mngr_ai.PerformActionStart(mngr_ai.GetAction(FirearmActionLoadMultiBulletRadial), atrg, wpn);
+			}
+		}
+	}
+	
+	override void QuickReloadWeapon( EntityAI weapon )
+	{
+		EntityAI magazine = GetMagazineToReload( weapon );
+		if (isAI())
+			ReloadWeaponAI( weapon, magazine );
+		else
+			ReloadWeapon( weapon, magazine );
+	}
+
 	void eAIFollow(DayZPlayer p, float distance = 5.0) {
 		m_FollowOrders = p;
 		m_FollowDistance = distance;
@@ -519,27 +345,32 @@ modded class PlayerBase {
 	
 	void eAIUpdateMovement() {
 		
-		if (m_FollowOrders) {m_NextWaypoint = m_FollowOrders.GetPosition();} // move to brain
+		// First, if we don't have any valid waypoints, make sure to stop the AI and quit.
+		if (cur_waypoint_no < 0) {
+			GetInputController().OverrideMovementSpeed(true, 0.0);
+			return;
+		}
 		
-		targetAngle = vector.Direction(GetPosition(), m_NextWaypoint).VectorToAngles().GetRelAngles()[0];// * Math.DEG2RAD;
+		targetAngle = vector.Direction(GetPosition(), waypoints[cur_waypoint_no]).VectorToAngles().GetRelAngles()[0];// * Math.DEG2RAD;
 		heading = -GetInputController().GetHeadingAngle() / Math.DEG2RAD; // This seems to be CCW is positive unlike relative angles.
-														// ALSO THIS ISN'T CAPPED AT +-180. I HAVE SEEN IT IN THE THOUSANDS. WHY BOHEMIA?
+														// ALSO THIS ISN'T CAPPED AT +-180. I HAVE SEEN IT IN THE THOUSANDS.
 		//heading = GetDirection()[0]*180 + 90; // The documentation does not cover this but the angle this spits out is between (-1..1). WHAT?! (also seems to be angle of feet)
 		//while (heading > 180) {heading -= 360;} // Also, the basis seems to be off by 90 degrees
 		//if (heading < 0) {heading = 360+heading;}
 		
 		delta = targetAngle - heading;
-		while (delta > 180) {delta -= 360;} // There's no remainder function so I had to do this retarded BS
+		while (delta > 180) {delta -= 360;} // There's no remainder function so I had to do this
 		while (delta < -180) {delta += 360;}
 		
-		GetInputController().OverrideAimChangeX(true, delta/1000.0);
+		GetInputController().OverrideAimChangeX(true, delta/1000.0); // This is a PID controller with only the P
 		
-		if (vector.Distance(GetPosition(), m_NextWaypoint) >  2 * m_FollowDistance) {
+		if (vector.Distance(GetPosition(), waypoints[cur_waypoint_no]) >  2 * m_FollowDistance) { // If we have a WP but it is far away
 			GetInputController().OverrideMovementSpeed(true, 2.0);
-		} else if (vector.Distance(GetPosition(), m_NextWaypoint) > m_FollowDistance) {
+		} else if (vector.Distance(GetPosition(), waypoints[cur_waypoint_no]) > m_FollowDistance) { // If we are getting close to a WP
 			GetInputController().OverrideMovementSpeed(true, 1.0);
-		} else {
-			GetInputController().OverrideMovementSpeed(true, 0.0);
+		} else { 																					// If we are 'at' a WP
+			if (++cur_waypoint_no == waypoints.Count()) // Increment selects the next WP
+				cur_waypoint_no = -1; // We have reached our Final Destination!
 		}
 		
 		GetInputController().OverrideMovementAngle(true, targetAngle*Math.DEG2RAD);//Math.PI/2.0);
@@ -547,8 +378,16 @@ modded class PlayerBase {
 		//m_MovementState.m_iMovement = 2;
 	}
 	
+	// For debugging purposes, I am only updating this every 30 seconds to let the player to get some distance on the AI
 	void eAIUpdateBrain() { // This update needs to be done way less frequent than Movement; Default is 1 every 10 update ticks.
-		// Todo we need to stagger this so not all AI are updated at once
+		if (m_FollowOrders) { // If we have a reference to a player to follow, we refresh the waypoints.
+			GetGame().GetWorld().GetAIWorld().FindPath(GetPosition(), m_FollowOrders.GetPosition(), pgFilter, waypoints);
+			cur_waypoint_no = 0;
+			
+			Print("Current Waypoint: " + cur_waypoint_no);
+			for (int i = 0; i < waypoints.Count(); i++)
+				Print(waypoints[i]);
+		}
 	}
 	
 	/*override HumanInputController GetInputController() {

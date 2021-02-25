@@ -62,9 +62,10 @@ class ActionManagerAI: ActionManagerBase
 
 	}
 
-	override bool OnInputUserDataProcess(int userDataType, ParamsReadContext ctx)
+	// This was commented out originally
+	/*override bool OnInputUserDataProcess(int userDataType, ParamsReadContext ctx)
 	{		
-		/*switch ( userDataType )
+		switch ( userDataType )
 		{
 			case INPUT_UDT_STANDARD_ACTION_START:
 			{
@@ -103,11 +104,11 @@ class ActionManagerAI: ActionManagerBase
 			}
 			//m_CurrentActionData = NULL;
 			return false;
-		}*/
+		}
 		//StartDeliveredAction();
 		return true;
 		
-	}
+	}*/
 	
 	override void StartDeliveredAction()
 	{
@@ -130,8 +131,9 @@ class ActionManagerAI: ActionManagerBase
 		target = m_CurrentActionData.m_Target;
 		item = m_CurrentActionData.m_MainItem;
 
-		if( is_target_free && !m_Player.GetCommandModifier_Action() && !m_Player.GetCommand_Action() && !m_Player.IsSprinting() && picked_action && picked_action.Can(m_Player,target,item)) 
-		{
+		// Fuck it, full cheese ahead
+		//if( is_target_free && !m_Player.GetCommandModifier_Action() && !m_Player.GetCommand_Action() && !m_Player.IsSprinting() && picked_action && picked_action.Can(m_Player,target,item)) 
+		//{
 			accepted = true;
 			if( picked_action.HasTarget())
 			{
@@ -154,7 +156,7 @@ class ActionManagerAI: ActionManagerBase
 					}
 				}
 			}
-		}
+		//}
 		
 		if( accepted )
 		{
@@ -208,22 +210,19 @@ class ActionManagerAI: ActionManagerBase
 		
 		//Debug.Log("m_ActionWantEnd " + m_ActionInputWantEnd);
 		
-		Print("ActionManagerAI::Update ID: " + pCurrentCommandID.ToString() + " m_PendingAction: " + m_PendingAction.ToString());
+		//Print("ActionManagerAI::Update ID: " + pCurrentCommandID.ToString() + " m_PendingAction: " + m_PendingAction.ToString() + " instance: " + this.ToString());
 		
 		// Obviously I am just doing this to get a stack trace
-		DumpStack();
+		//DumpStack();
 		
 		if (m_PendingAction)
 		{
-			Print("-3");
 			if ( m_CurrentActionData )
 			{
-				Print("-2");
 				DayZPlayerSyncJunctures.SendActionAcknowledgment(m_Player, m_PendingActionAcknowledgmentID, false); // Note - why is this false?
 			}
 			else
 			{
-				Print("-1");
 				ref ActionTarget target = new ActionTarget(NULL, NULL, -1, vector.Zero, 0); 
 				bool success = true;
 
@@ -239,7 +238,6 @@ class ActionManagerAI: ActionManagerBase
 			
 				if (success)
 				{
-					Print("-4");
 					StartDeliveredAction();
 				}
 				else
@@ -260,15 +258,12 @@ class ActionManagerAI: ActionManagerBase
 	
 		if (m_CurrentActionData)
 		{			
-			Print("1");
 			if (m_CurrentActionData.m_State != UA_AM_PENDING && m_CurrentActionData.m_State != UA_AM_REJECTED && m_CurrentActionData.m_State != UA_AM_ACCEPTED)
 			{
-				Print("2");
 				m_CurrentActionData.m_Action.OnUpdateServer(m_CurrentActionData);
 				
 				if (m_CurrentActionData.m_RefreshJunctureTimer > 0)
 				{
-					Print("3");
 					m_CurrentActionData.m_RefreshJunctureTimer--;
 				}
 				else
@@ -276,11 +271,9 @@ class ActionManagerAI: ActionManagerBase
 					m_CurrentActionData.m_RefreshJunctureTimer = m_CurrentActionData.m_Action.GetRefreshReservationTimerValue();
 					if ( m_CurrentActionData.m_Target )
 					{
-						Print("4");
 						EntityAI targetEntity;
 						if ( targetEntity.CastTo(targetEntity, m_CurrentActionData.m_Target.GetObject()) && !Building.Cast(targetEntity) )
 						{
-							Print("5");
 							GetGame().ExtendActionJuncture(m_CurrentActionData.m_Player, targetEntity, 10000);
 						}
 					}
@@ -291,11 +284,9 @@ class ActionManagerAI: ActionManagerBase
 			switch (m_CurrentActionData.m_State)
 			{
 				case UA_AM_PENDING:
-					Print("Pending");
 					break;
 			
 				case UA_AM_ACCEPTED:
-					Print("Accepted");
 					// check pCurrentCommandID before start or reject 
 					if ( ActionPossibilityCheck(pCurrentCommandID) )
 					{
@@ -313,13 +304,11 @@ class ActionManagerAI: ActionManagerBase
 					break;
 				
 				case UA_AM_REJECTED:
-					Print("Rejected");
 					OnActionEnd();
 					m_PendingActionAcknowledgmentID = -1;
 					break;
 			
 				default:
-					Print("Other");
 					if (m_ActionInputWantEnd)
 					{
 						m_ActionInputWantEnd = false;
@@ -376,7 +365,9 @@ class ActionManagerAI: ActionManagerBase
 				// server, and will be picked up next time Update() is called (since m_PendingAction is set 
 				// but not m_CurrentActionData)
 				m_PendingAction = action;
-				Print("0: " + m_PendingAction.ToString());
+				Print("0, PendingAction: " + m_PendingAction.ToString() + " instance: " + this.ToString());
+				Update(DayZPlayerConstants.COMMANDID_ACTION); // This is some absolute cheese I am testing
+					// I know that COMMANDID_ACTION will pass ActionManagerBase::ActionPossibilityCheck
 			}
 			else
 			{
@@ -411,3 +402,10 @@ class ActionManagerAI: ActionManagerBase
 		return m_PendingActionReciveData;
 	}
 };
+
+/*modded class DayZPlayerInventory {
+	override void HandleWeaponEvents (float dt, out bool exitIronSights) {
+		Print("Test debug message");
+		super.HandleWeaponEvents(dt, exitIronSights);
+	}
+};*/
