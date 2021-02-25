@@ -56,7 +56,7 @@ class eAIGame {
 		h.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
 		
 		// Set the target entity we should follow to the player that spawned it, then do the first pathfinding update
-		h.eAIFollow(data.param1, 2.0);
+		h.eAIFollow(data.param1, 1.5);
 		h.eAIUpdateBrain();
 		
 		aiList.Insert(h);

@@ -187,7 +187,8 @@ modded class PlayerBase {
 	ref array<Entity> threats = new array<Entity>();
 	
 	Entity m_FollowOrders = null; // This is a reference to the entity we want to pathfind to.
-	float m_FollowDistance = 5.0; // This is the distance that we consider a waypoint to be 'reached' at.
+	
+	float m_FollowDistance = 2.0; // This is the distance that we consider a waypoint to be 'reached' at.
 	
 	int cur_waypoint_no = -1; // Next point to move to in the waypoints array. -1 for "none"
 	ref TVectorArray waypoints = new TVectorArray(); // This is the list of waypoints the AI will follow. It is set by AIWorld.
@@ -359,6 +360,7 @@ modded class PlayerBase {
 	void clearWaypoints() {
 		cur_waypoint_no = -1;
 		waypoints.Clear(); // Now we need a clean array!
+		lastDistToWP = -1; // If this is set to -1, the AI will not try to sprint on the first movement update.
 	}
 	
 	//! Skip to the next waypoint (returns true, unless there is no future waypoint.)
@@ -398,11 +400,11 @@ modded class PlayerBase {
 		
 		GetInputController().OverrideAimChangeX(true, delta/1000.0); // This is a PID controller with only the P
 		
+		// Next, we handle logic flow for waypoints.
 		float currDistToWP = vector.Distance(GetPosition(), waypoints[cur_waypoint_no]);
-		
 		bool gettingCloser = (lastDistToWP > currDistToWP); // If we are getting closer to the WP (a GOOD thing!) - otherwise we can only walk
 		
-		if (currDistToWP > 2 * m_FollowDistance && gettingCloser) { 			// If we have a WP but it is far away			
+		if (currDistToWP > 3 * m_FollowDistance && gettingCloser) { 			// If we have a WP but it is far away			
 			GetInputController().OverrideMovementSpeed(true, 2.0);
 		} else if (currDistToWP > m_FollowDistance) { 							// If we are getting close to a WP
 			GetInputController().OverrideMovementSpeed(true, 1.0);
@@ -422,17 +424,7 @@ modded class PlayerBase {
 	// For debugging purposes, I am only updating this every 30 seconds to let the player to get some distance on the AI
 	void eAIUpdateBrain() { // This update needs to be done way less frequent than Movement; Default is 1 every 10 update ticks.
 		if (m_FollowOrders) { // If we have a reference to a player to follow, we refresh the waypoints.
-			clearWaypoints();
-			GetGame().GetWorld().GetAIWorld().FindPath(GetPosition(), m_FollowOrders.GetPosition(), pgFilter, waypoints);
-			if (!nextWaypoint())
-				Error("eAI controlled unit " + this.ToString() + " called FindPath(), but no waypoints were generated!");
-			
-			lastDistToWP = -1; // If this is set to -1, the AI will not try to sprint on the first movement update.
-			
-			Print("Current Pos: " + GetPosition());
-			Print("Current Waypoint: " + cur_waypoint_no);
-			for (int i = 0; i < waypoints.Count(); i++)
-				Print(waypoints[i][0].ToString() + ", " + waypoints[i][2].ToString()); // Make sure to do this in an excel friendly way
+			thread updateWaypoints(this);
 		}
 	}
 	
