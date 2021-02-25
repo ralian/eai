@@ -193,10 +193,10 @@ modded class PlayerBase {
 	ref TVectorArray waypoints = new TVectorArray(); // This is the list of waypoints the AI will follow. It is set by AIWorld.
 												 // This could be used by players too, with some kind of UI "highlight waypoint" system.
 	
-	ref PGFilter pgFilter = new PGFilter(); // This is the bitmask used for pathfinding (i.e. whether we want a path that goes over a fence
+	// This is checked every pathing update to ensure we are not running away from the waypoint.
+	float lastDistToWP = -1; // If it is set to -1, the AI will not try to sprint on the first movement update.
 	
-	//depricated
-	vector m_NextWaypoint = "0 0 0"; // otherwise, default to waypoint.
+	ref PGFilter pgFilter = new PGFilter(); // This is the bitmask used for pathfinding (i.e. whether we want a path that goes over a fence
 	
 	bool isAI = false;
 	
@@ -355,11 +355,33 @@ modded class PlayerBase {
 		GetWeaponManager().Fire(Weapon_Base.Cast(GetHumanInventory().GetEntityInHands()));
 	}
 	
+	//! Clear the array of waypoints, setting cur_waypoint_no to -1
+	void clearWaypoints() {
+		cur_waypoint_no = -1;
+		waypoints.Clear(); // Now we need a clean array!
+	}
+	
+	//! Skip to the next waypoint (returns true, unless there is no future waypoint.)
+	//! If there is not a next waypoint, returns false and clears the list of waypoints.
+	bool nextWaypoint() {
+		if (++cur_waypoint_no < waypoints.Count())
+			return true;
+		
+		// executes if there is no future waypoint
+		clearWaypoints();
+		return false;
+	}
+	
 	void eAIUpdateMovement() {
 		
-		// First, if we don't have any valid waypoints, make sure to stop the AI and quit.
+		// Aiming logic will go here.
+		// if (hasTarget) { ... }
+		
+		// First, if we don't have any valid waypoints, make sure to stop the AI and quit prior to the movement logic.
+		// Otherwise, the AimChange would be undefined in this case (leading to some hilarious behavior including disappearing heads)
 		if (cur_waypoint_no < 0) {
 			GetInputController().OverrideMovementSpeed(true, 0.0);
+			GetInputController().OverrideAimChangeX(true, 0.0);
 			return;
 		}
 		
@@ -376,20 +398,23 @@ modded class PlayerBase {
 		
 		GetInputController().OverrideAimChangeX(true, delta/1000.0); // This is a PID controller with only the P
 		
-		if (vector.Distance(GetPosition(), waypoints[cur_waypoint_no]) >  2 * m_FollowDistance) { // If we have a WP but it is far away
+		float currDistToWP = vector.Distance(GetPosition(), waypoints[cur_waypoint_no]);
+		
+		bool gettingCloser = (lastDistToWP > currDistToWP); // If we are getting closer to the WP (a GOOD thing!) - otherwise we can only walk
+		
+		if (currDistToWP > 2 * m_FollowDistance && gettingCloser) { 			// If we have a WP but it is far away			
 			GetInputController().OverrideMovementSpeed(true, 2.0);
-		} else if (vector.Distance(GetPosition(), waypoints[cur_waypoint_no]) > m_FollowDistance) { // If we are getting close to a WP
+		} else if (currDistToWP > m_FollowDistance) { 							// If we are getting close to a WP
 			GetInputController().OverrideMovementSpeed(true, 1.0);
-		} else { 																					// If we are 'at' a WP
-			if (++cur_waypoint_no == waypoints.Count()) { // Increment selects the next WP
-				cur_waypoint_no = -1; // We have reached our Final Destination!
-				delete waypoints; // Now we need a clean array!
-				waypoints = new TVectorArray();
-			}
-			
+		} else { 																// If we are 'at' a WP
+			nextWaypoint(); // We have reached our Final Destination!
 		}
 		
+		lastDistToWP = currDistToWP;
+		
+		// Should this be moved to setup?
 		GetInputController().OverrideMovementAngle(true, targetAngle*Math.DEG2RAD);//Math.PI/2.0);
+		
 		//m_MovementState.m_CommandTypeId = DayZPlayerConstants.COMMANDID_MOVE ;
 		//m_MovementState.m_iMovement = 2;
 	}
@@ -397,8 +422,12 @@ modded class PlayerBase {
 	// For debugging purposes, I am only updating this every 30 seconds to let the player to get some distance on the AI
 	void eAIUpdateBrain() { // This update needs to be done way less frequent than Movement; Default is 1 every 10 update ticks.
 		if (m_FollowOrders) { // If we have a reference to a player to follow, we refresh the waypoints.
+			clearWaypoints();
 			GetGame().GetWorld().GetAIWorld().FindPath(GetPosition(), m_FollowOrders.GetPosition(), pgFilter, waypoints);
-			cur_waypoint_no = 0;
+			if (!nextWaypoint())
+				Error("eAI controlled unit " + this.ToString() + " called FindPath(), but no waypoints were generated!");
+			
+			lastDistToWP = -1; // If this is set to -1, the AI will not try to sprint on the first movement update.
 			
 			Print("Current Pos: " + GetPosition());
 			Print("Current Waypoint: " + cur_waypoint_no);
