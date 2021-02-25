@@ -228,7 +228,19 @@ modded class PlayerBase {
 		pgFilter.SetCost(PGAreaType.CROUCH, 1000000.0);
 		pgFilter.SetCost(PGAreaType.FENCE_WALL, 1000000.0);
 		pgFilter.SetCost(PGAreaType.JUMP, 1000000.0);
-		//pgFilter.SetFlags(int includeFlags, int excludeFlags, int exclusiveFlags);
+		
+		int allowFlags = 0;
+		allowFlags |= PGPolyFlags.WALK;
+		allowFlags |= PGPolyFlags.CRAWL;
+		allowFlags |= PGPolyFlags.CROUCH;
+		
+		int disallowFlags = 0;
+		disallowFlags |= PGPolyFlags.JUMP_OVER;
+		disallowFlags |= PGPolyFlags.JUMP_DOWN;
+		disallowFlags |= PGPolyFlags.UNREACHABLE;
+		disallowFlags |= PGPolyFlags.JUMP;
+		
+		pgFilter.SetFlags(allowFlags, disallowFlags, 0);
 	}
 	
 	void markAIServer() {
