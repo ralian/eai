@@ -369,8 +369,12 @@ modded class PlayerBase {
 		} else if (vector.Distance(GetPosition(), waypoints[cur_waypoint_no]) > m_FollowDistance) { // If we are getting close to a WP
 			GetInputController().OverrideMovementSpeed(true, 1.0);
 		} else { 																					// If we are 'at' a WP
-			if (++cur_waypoint_no == waypoints.Count()) // Increment selects the next WP
+			if (++cur_waypoint_no == waypoints.Count()) { // Increment selects the next WP
 				cur_waypoint_no = -1; // We have reached our Final Destination!
+				delete waypoints; // Now we need a clean array!
+				waypoints = new TVectorArray();
+			}
+			
 		}
 		
 		GetInputController().OverrideMovementAngle(true, targetAngle*Math.DEG2RAD);//Math.PI/2.0);
@@ -384,9 +388,10 @@ modded class PlayerBase {
 			GetGame().GetWorld().GetAIWorld().FindPath(GetPosition(), m_FollowOrders.GetPosition(), pgFilter, waypoints);
 			cur_waypoint_no = 0;
 			
+			Print("Current Pos: " + GetPosition());
 			Print("Current Waypoint: " + cur_waypoint_no);
 			for (int i = 0; i < waypoints.Count(); i++)
-				Print(waypoints[i]);
+				Print(waypoints[i][0].ToString() + ", " + waypoints[i][2].ToString()); // Make sure to do this in an excel friendly way
 		}
 	}
 	
