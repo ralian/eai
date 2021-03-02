@@ -412,7 +412,7 @@ modded class PlayerBase {
 		float currDistToWP = vector.Distance(GetPosition(), waypoints[cur_waypoint_no]);
 		bool gettingCloser = (lastDistToWP > currDistToWP); // If we are getting closer to the WP (a GOOD thing!) - otherwise we can only walk
 		
-		if (currDistToWP > 3 * m_FollowDistance && gettingCloser) { 			// If we have a WP but it is far away			
+		if (currDistToWP > 2 * m_FollowDistance && gettingCloser) { 			// If we have a WP but it is far away			
 			GetInputController().OverrideMovementSpeed(true, 2.0);
 		} else if (currDistToWP > m_FollowDistance) { 							// If we are getting close to a WP
 			GetInputController().OverrideMovementSpeed(true, 1.0);
