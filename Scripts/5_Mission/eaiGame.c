@@ -2,7 +2,7 @@ class eAIGame {
 	// List of all eAI entities
 	autoptr array<PlayerBase> aiList = new array<PlayerBase>();
 	
-	vector debug_offset = "5 0 0"; // Offset from player to spawn a new AI entity at when debug called
+	vector debug_offset = "-25 0 0"; // Offset from player to spawn a new AI entity at when debug called
 	
 	float gametime = 0;
 	
@@ -56,7 +56,7 @@ class eAIGame {
 		h.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
 		
 		// Set the target entity we should follow to the player that spawned it, then do the first pathfinding update
-		h.eAIFollow(data.param1, 1.5);
+		h.eAIFollow(data.param1, 2);
 		h.eAIUpdateBrain();
 		
 		aiList.Insert(h);
@@ -83,9 +83,13 @@ class eAIGame {
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server) {
             Print("eAI UpdateMovement RPC called.");
-			foreach (PlayerBase p : aiList) {
+			//foreach (PlayerBase p : aiList) {
 
-				p.QuickReloadWeapon(p.GetHumanInventory().GetEntityInHands());
+			//	p.QuickReloadWeapon(p.GetHumanInventory().GetEntityInHands());
+			//}
+			
+			foreach (PlayerBase i : aiList) {
+				i.eAIUpdateBrain();
 			}
         }
 	}
@@ -125,9 +129,9 @@ class eAIGame {
 		
 		if (timeDiv == 0 && numOfDivsPassed % 120 == 0) { // Every 30 seconds
 			// AI pathing calculations
-			foreach (PlayerBase i : aiList) {
-				i.eAIUpdateBrain();
-			}
+			//foreach (PlayerBase i : aiList) {
+				//i.eAIUpdateBrain();
+			//}
 		}
 	}
 };

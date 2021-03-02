@@ -6,6 +6,9 @@ enum eAIBehaviorGlobal { // Global states that dictate each unit's actions
 	COMBAT // Will engage the threats in the threat list in order. Will ignore waypoints to seek out threats.
 }
 
+#define INV_DEBUG
+
+
 modded class WeaponManager {
 	
 	override bool StartAction(int action, Magazine mag, InventoryLocation il, ActionBase control_action = NULL)
@@ -13,7 +16,8 @@ modded class WeaponManager {
 		//if it is controled by action inventory reservation and synchronization provide action itself
 		if(control_action) {
 			m_ControlAction = ActionBase.Cast(control_action);
-			Print("WeaponManager::StartAction control action " + m_ControlAction.ToString() + " triggered on " + m_player.ToString() + m_player.IsMale().ToString());
+			Print("WeaponManager::StartAction control action " + m_ControlAction.GetID().ToString() + " triggered on " + m_player.ToString() + " (DayZPlayerInstanceType." + m_player.GetInstanceType().ToString() + ")");
+			//Print(m_ControlAction.GetAdminLogMessage());
 			m_PendingWeaponAction = action;
 			m_InProgress = true;
 			m_IsEventSended = false;
@@ -42,7 +46,7 @@ modded class WeaponManager {
 		
 		if ( !GetGame().IsMultiplayer() ) {
 			m_readyToStart = true;
-		} else if (m_player.isAI()) {
+		} else if (GetGame().IsServer() && m_player.isAI()) {
 			m_PendingTargetMagazine = mag;
 			m_PendingInventoryLocation = il;
 			SynchronizeServer(mag, il);
@@ -247,14 +251,13 @@ modded class PlayerBase {
 	void markAIServer() {
 		isAI = true;
 		m_ActionManager = new ActionManagerServer(this);
-		// The action manager should get auto-set to a server one I think
 	}
 	
 	//Eventually we can use this instead of calling the action manager, needs more work though
 	override void ReloadWeapon( EntityAI weapon, EntityAI magazine ) {
 		// The only reason this is an override is because there is a client-only condition here that I have removed.
 		// There is probably a better way to do this.
-		Print(this.ToString() + " is trying to reload " + magazine.ToString() + " into " + weapon.ToString());
+		Print(this.ToString() + "(DayZPlayerInstanceType." + GetInstanceType().ToString() + ") is trying to reload " + magazine.ToString() + " into " + weapon.ToString());
 		ActionManagerClient mngr_client;
 		CastTo(mngr_client, GetActionManager());
 		
@@ -295,7 +298,7 @@ modded class PlayerBase {
 	void ReloadWeaponAI( EntityAI weapon, EntityAI magazine ) {
 		// The only reason this is an override is because there is a client-only condition here that I have removed.
 		// There is probably a better way to do this.
-		Print(this.ToString() + !this.isAI().ToString() + " is trying to reload " + magazine.ToString() + " into " + weapon.ToString());
+		Print(this.ToString() + "(DayZPlayerInstanceType." + GetInstanceType().ToString() + ") is trying to reload " + magazine.ToString() + " into " + weapon.ToString());
 		ActionManagerAI mngr_ai;
 		CastTo(mngr_ai, GetActionManager());
 		
@@ -326,7 +329,7 @@ modded class PlayerBase {
 				GetWeaponManager().LoadMultiBullet( mag );
 
 				ActionTarget atrg = new ActionTarget(mag, this, -1, vector.Zero, -1.0);
-				//if ( mngr_ai && !mngr_ai.GetRunningAction() && mngr_ai.GetAction(FirearmActionLoadMultiBulletRadial).Can(this, atrg, wpn) )
+				if ( mngr_ai && !mngr_ai.GetRunningAction() && mngr_ai.GetAction(FirearmActionLoadMultiBulletRadial).Can(this, atrg, wpn) )
 					mngr_ai.PerformActionStart(mngr_ai.GetAction(FirearmActionLoadMultiBulletRadial), atrg, wpn);
 			}
 		}
@@ -398,7 +401,12 @@ modded class PlayerBase {
 		while (delta > 180) {delta -= 360;} // There's no remainder function so I had to do this
 		while (delta < -180) {delta += 360;}
 		
-		GetInputController().OverrideAimChangeX(true, delta/1000.0); // This is a PID controller with only the P
+		delta /= 500;
+		delta = Math.Max(delta, -0.6);
+		delta = Math.Min(delta, 0.6);
+				
+		// This is a capped PID controller, but using only the P component
+		GetInputController().OverrideAimChangeX(true, delta);
 		
 		// Next, we handle logic flow for waypoints.
 		float currDistToWP = vector.Distance(GetPosition(), waypoints[cur_waypoint_no]);
@@ -427,8 +435,5 @@ modded class PlayerBase {
 			thread updateWaypoints(this);
 		}
 	}
-	
-	/*override HumanInputController GetInputController() {
-		return m_eAIController;
-	}*/
+
 };
