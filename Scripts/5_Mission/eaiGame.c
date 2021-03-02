@@ -11,6 +11,7 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "SpawnEntity", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ClearAllEntity", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ProcessReload", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("eAI", "ServerSendGlobalRPC", this, SingeplayerExecutionType.Client);
     }
 
     void TestRPCFunction(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
@@ -33,7 +34,7 @@ class eAIGame {
 		//Human h = Human.Cast(GetGame().CreateObject("SurvivorF_Linda", data.param1));
 			//SurvivorM_Cyril
 		PlayerBase h = PlayerBase.Cast(GetGame().CreatePlayer(null, "SurvivorF_Linda", data.param1.GetPosition() + debug_offset, 0, "NONE"));
-		h.markAI(); // Important: Mark unit as AI since we don't control the constructor.
+		h.markAIServer(); // Important: Mark unit as AI since we don't control the constructor.
 		h.GetInventory().CreateInInventory("TTSKOPants");
 		h.GetInventory().CreateInInventory("TTsKOJacket_Camo");
 		h.GetInventory().CreateInInventory("CombatBoots_Black");
@@ -78,19 +79,34 @@ class eAIGame {
 		}
 	}
 	
-	void ProcessReload(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param1<PlayerBase> data; // here the parameter is unused, maybe we could use an enum instead
+	// This RPC is to be sent from a client to the server, so that the server can send the RPC (stored as data.param1 string) to all clients
+	void ServerSendGlobalRPC(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+		Param1<string> data;
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server) {
+            Print("ServerSendGlobalRPC: Synching event " + data.param1);
+			foreach (PlayerBase p : aiList) {
+				//GetRPCManager().SendRPC("eAI", data.param1, new Param1<PlayerBase>(p));
+				p.QuickReloadWeapon(p.GetHumanInventory().GetEntityInHands());
+			}
+        }
+	}
+	
+	// Unused for the moment
+	void ProcessReload(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+		Param1<Object> data; // here the parameter is unused, maybe we could use an enum instead
+        if ( !ctx.Read( data ) ) return;
+		if(type == CallType.Server || true) {
             Print("eAI UpdateMovement RPC called.");
 			//foreach (PlayerBase p : aiList) {
-
-			//	p.QuickReloadWeapon(p.GetHumanInventory().GetEntityInHands());
-			//}
+				PlayerBase p = PlayerBase.Cast(data.param1);
+				p.markAIClient();
+				p.QuickReloadWeapon(p.GetHumanInventory().GetEntityInHands());
 			
-			foreach (PlayerBase i : aiList) {
-				i.eAIUpdateBrain();
-			}
+			
+			//foreach (PlayerBase i : aiList) {
+			//	i.eAIUpdateBrain();
+			//}
         }
 	}
 
@@ -106,7 +122,8 @@ class eAIGame {
 				break;
 			}
 			case KeyCode.KC_M: {
-				GetRPCManager().SendRPC("eAI", "ProcessReload", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
+				//GetRPCManager().SendRPC("eAI", "ProcessReload", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
+				GetRPCManager().SendRPC("eAI", "ServerSendGlobalRPC", new Param1<string>("ProcessReload"));
 				break;
 			}
         }

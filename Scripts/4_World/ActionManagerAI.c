@@ -12,6 +12,7 @@ class ActionManagerAI: ActionManagerBase
 	protected int 								m_LastAcknowledgmentID;
 	protected int 								m_PendingAcknowledgmentID;
 	protected ref ActionData 					m_PendingActionData;
+	protected ref InventoryActionHandlerAI		m_InventoryActionHandler;
 	
 	void ActionManagerAI(PlayerBase player)
 	{
@@ -20,6 +21,8 @@ class ActionManagerAI: ActionManagerBase
 		m_LastAcknowledgmentID = 1;
 		m_PendingAcknowledgmentID = 1;
 		//ActionManagerBase(player);
+		
+		m_InventoryActionHandler = new InventoryActionHandlerAI(player);
 	}
 	
 	//------------------------------------------
@@ -206,6 +209,7 @@ class ActionManagerAI: ActionManagerBase
 	
 	override void Update(int pCurrentCommandID)
 	{
+		m_InventoryActionHandler.OnUpdate();
 		super.Update(pCurrentCommandID);
 		
 		//Debug.Log("m_ActionWantEnd " + m_ActionInputWantEnd);
@@ -400,6 +404,22 @@ class ActionManagerAI: ActionManagerBase
 	override ActionReciveData GetReciveData()
 	{
 		return m_PendingActionReciveData;
+	}
+	
+	// These three functions were lifted from the client action manager; they are unused for now, might need them later
+	void SetInventoryAction(ActionBase action_name, ItemBase target_item, ItemBase main_item)
+	{
+		m_InventoryActionHandler.SetAction(action_name, target_item, main_item);
+	}
+
+	void SetInventoryAction(ActionBase action_name, ActionTarget target, ItemBase main_item)
+	{
+		m_InventoryActionHandler.SetAction(action_name, target, main_item);
+	}
+	
+	void UnsetInventoryAction()
+	{
+		m_InventoryActionHandler.DeactiveAction();
 	}
 };
 

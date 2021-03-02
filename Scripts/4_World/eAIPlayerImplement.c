@@ -209,7 +209,7 @@ modded class PlayerBase {
 	// As such, when spawning AI make sure you ALWAYS CALL MARKAI() ON THE UNIT AFTER TELLING THE ENGINE TO SPAWN THE UNIT.
 	// This is used in many functions for workarounds for AI controlled players and it will break things if AI are not properly marked.
 	bool isAI() {return isAI;}
-	void markAI() {
+	void markAIServer() {
 		isAI = true;
 		m_ActionManager = new ActionManagerAI(this);
 		// Todo do we need to set instance type?
@@ -248,9 +248,9 @@ modded class PlayerBase {
 		pgFilter.SetFlags(allowFlags, disallowFlags, 0);
 	}
 	
-	void markAIServer() {
+	void markAIClient() {
 		isAI = true;
-		m_ActionManager = new ActionManagerServer(this);
+		m_ActionManager = new ActionManagerClient(this);
 	}
 	
 	//Eventually we can use this instead of calling the action manager, needs more work though
