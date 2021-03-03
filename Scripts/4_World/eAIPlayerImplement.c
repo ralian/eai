@@ -527,15 +527,14 @@ modded class PlayerBase {
 		}
 		
 		targetAngle = vector.Direction(GetPosition(), waypoints[cur_waypoint_no]).VectorToAngles().GetRelAngles()[0];// * Math.DEG2RAD;
-		heading = -GetInputController().GetHeadingAngle() * Math.RAD2DEG; // This seems to be CCW is positive unlike relative angles.
-														// ALSO THIS ISN'T CAPPED AT +-180. I HAVE SEEN IT IN THE THOUSANDS.
-		//heading = GetDirection()[0]*180 + 90; // The documentation does not cover this but the angle this spits out is between (-1..1). WHAT?! (also seems to be angle of feet)
-		//while (heading > 180) {heading -= 360;} // Also, the basis seems to be off by 90 degrees
-		//if (heading < 0) {heading = 360+heading;}
+		//vector heading = MiscGameplayFunctions.GetHeadingVector(this);
 		
-		//delta = targetAngle - heading;
-		//while (delta > 180) {delta -= 360;} // There's no remainder function so I had to do this
-		//while (delta < -180) {delta += 360;}
+		// This seems to be CCW is positive unlike relative angles.
+		// ALSO THIS ISN'T CAPPED AT +-180. I HAVE SEEN IT IN THE THOUSANDS.
+		heading = -GetInputController().GetHeadingAngle() * Math.RAD2DEG; 
+
+		
+		//heading = GetDirection()[0]*180 + 90; // The documentation does not cover this but the angle this spits out is between (-1..1). WHAT?! (also seems to be angle of feet)
 		
 		delta = Math.DiffAngle(targetAngle, heading);
 		

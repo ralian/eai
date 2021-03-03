@@ -16,6 +16,7 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "DebugFire", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ToggleWeaponRaise", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ServerSendGlobalRPC", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", this, SingeplayerExecutionType.Client);
     }
 
     void TestRPCFunction(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
@@ -164,6 +165,15 @@ class eAIGame {
 				p.SetPosition(data.param1);
 			}
 		}
+	}
+	
+	void DayZPlayerInventory_OnEventForRemoteWeaponAICallback(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+		Param3<int, DayZPlayer, Magazine> data;
+        if (!ctx.Read(data)) return;
+		//if(type == CallType.Client ) {
+			Print("Received weapon event for " + data.param1.ToString() + " player:" + data.param2.ToString() + " mag:" + data.param3.ToString());
+            DayZPlayerInventory_OnEventForRemoteWeaponAI(data.param1, data.param2, data.param3);
+		//}
 	}
 
     void OnKeyPress(int key) {

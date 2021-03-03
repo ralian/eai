@@ -1,3 +1,47 @@
+WeaponEventBase CreateWeaponEventFromContextAI (int packedType, DayZPlayer player, Magazine magazine)
+{
+	WeaponEventID eventID = packedType >> 16;
+	WeaponEvents animEvent = packedType & 0x0000ffff;
+	WeaponEventBase b = WeaponEventFactory(eventID, animEvent, player, magazine);
+	//b.ReadFromContext(ctx); // currently does nothing in the bI code anyways
+	return b;
+}
+
+bool DayZPlayerInventory_OnEventForRemoteWeaponAI (int packedType, DayZPlayer player, Magazine magazine)
+{
+	PlayerBase pb = PlayerBase.Cast(player);
+	if (pb.GetDayZPlayerInventory().GetEntityInHands())
+	{
+		Weapon_Base wpn = Weapon_Base.Cast(pb.GetDayZPlayerInventory().GetEntityInHands());
+		if (wpn)
+		{
+			
+
+			WeaponEventBase e = CreateWeaponEventFromContextAI(packedType, player, magazine);
+			if (pb && e)
+			{
+				pb.GetWeaponManager().SetRunning(true);
+	
+				fsmDebugSpam("[wpnfsm] " + Object.GetDebugName(wpn) + " recv event from remote: created event=" + e);
+				if (e.GetEventID() == WeaponEventID.HUMANCOMMAND_ACTION_ABORTED)
+				{
+					wpn.ProcessWeaponAbortEvent(e);
+				}
+				else
+				{
+					wpn.ProcessWeaponEvent(e);
+				}
+				pb.GetWeaponManager().SetRunning(false);
+			}
+		}
+		else
+			Error("OnEventForRemoteWeapon - entity in hands, but not weapon. item=" + pb.GetDayZPlayerInventory().GetEntityInHands());
+	}
+	else
+		Error("OnEventForRemoteWeapon - no entity in hands");
+	return true;
+}
+
 modded class Weapon_Base {
 	override bool LiftWeaponCheck (PlayerBase player)
 	{
@@ -79,5 +123,60 @@ modded class Weapon_Base {
 			return true;
 		}
 		return false;
+	}
+	
+	
+	/**@fn	ProcessWeaponEvent
+	 * @brief	weapon's fsm handling of events
+	 * @NOTE: warning: ProcessWeaponEvent can be called only within DayZPlayer::HandleWeapons (or ::CommandHandler)
+	 **/
+	override bool ProcessWeaponEvent (WeaponEventBase e)
+	{
+		if (GetGame().IsServer()) { // This is very hacky... we need to check if the unit is also AI
+			// Write the ctx that would normally be sent to the server... note we need to skip writing INPUT_UDT_WEAPON_REMOTE_EVENT
+			// since this would normally be Read() and stripped away by the server before calling OnEventForRemoteWeapon
+			
+			// also wait, I think everyone is meant to execute this
+			ScriptRemoteInputUserData ctx = new ScriptRemoteInputUserData;
+			Print("Sending weapon event for " + e.GetPackedType().ToString() + " player:" + e.m_player.ToString() + " mag:" + e.m_magazine.ToString());
+			GetRPCManager().SendRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", new Param3<int, DayZPlayer, Magazine>(e.GetPackedType(), e.m_player, e.m_magazine));
+			if (m_fsm.ProcessEvent(e) == ProcessEventResult.FSM_OK)
+				return true;
+			return false;
+		} else
+			SyncEventToRemote(e);
+		
+		// @NOTE: synchronous events not handled by fsm
+		if (e.GetEventID() == WeaponEventID.SET_NEXT_MUZZLE_MODE)
+		{
+			SetNextMuzzleMode(GetCurrentMuzzle());
+			return true;
+		}
+
+		if (m_fsm.ProcessEvent(e) == ProcessEventResult.FSM_OK)
+			return true;
+
+		//wpnDebugPrint("FSM refused to process event (no transition): src=" + GetCurrentState().ToString() + " event=" + e.ToString());
+		return false;
+	}
+	/**@fn	ProcessWeaponAbortEvent
+	 * @NOTE: warning: ProcessWeaponEvent can be called only within DayZPlayer::HandleWeapons (or ::CommandHandler)
+	 **/
+	override bool ProcessWeaponAbortEvent (WeaponEventBase e)
+	{
+		if (GetGame().IsServer()) { // This is very hacky... we need to check if the unit is also AI
+			// Write the ctx that would normally be sent to the server... note we need to skip writing INPUT_UDT_WEAPON_REMOTE_EVENT
+			// since this would normally be Read() and stripped away by the server before calling OnEventForRemoteWeapon
+			ScriptRemoteInputUserData ctx = new ScriptRemoteInputUserData;
+			GetRPCManager().SendRPC("eAI", "ToggleWeaponRaise", new Param3<int, DayZPlayer, Magazine>(e.GetPackedType(), e.m_player, e.m_magazine)); // This might need a separate RPC?
+			if (m_fsm.ProcessEvent(e) == ProcessEventResult.FSM_OK)
+				return true;
+			return false;
+		} else
+			SyncEventToRemote(e);
+		
+		ProcessEventResult aa;
+		m_fsm.ProcessAbortEvent(e, aa);
+		return aa == ProcessEventResult.FSM_OK;
 	}
 }
