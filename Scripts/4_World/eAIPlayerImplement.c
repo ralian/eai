@@ -257,6 +257,8 @@ modded class WeaponManager {
 modded class PlayerBase {
 	ref array<Entity> threats = new array<Entity>();
 	
+	bool m_WantWeapRaise = true;
+	
 	Entity m_FollowOrders = null; // This is a reference to the entity we want to pathfind to.
 	
 	float m_FollowDistance = 2.0; // This is the distance that we consider a waypoint to be 'reached' at.
@@ -422,7 +424,7 @@ modded class PlayerBase {
 	//	return super.GetInventory();
 	//}
 	
-	override DayZPlayerInventory GetDayZPlayerInventory ()
+	/*override DayZPlayerInventory GetDayZPlayerInventory ()
 	{
 		DayZPlayerInventory inv;
 		if (isAI())
@@ -440,7 +442,7 @@ modded class PlayerBase {
 		else
 			inv = HumanInventory.Cast(GetInventory());
 		return inv;
-	}
+	}*/
 
 	void eAIFollow(DayZPlayer p, float distance = 5.0) {
 		m_FollowOrders = p;
@@ -450,11 +452,45 @@ modded class PlayerBase {
 	float targetAngle, heading, delta;
 	
 	void eAIDebugMovement() {
-		//Print("targetAngle: " + targetAngle);
-		//Print("heading: " + heading);
-		//Print("delta: " + delta);
-		
 		GetWeaponManager().Fire(Weapon_Base.Cast(GetHumanInventory().GetEntityInHands()));
+	}
+	
+	void ToggleWeaponRaise() {
+		m_WantWeapRaise = !m_WantWeapRaise;
+	}
+	
+	// This returns true if the weapon should be raised.
+	bool AIWeaponRaise() {
+		return m_WantWeapRaise;
+	}
+	
+	// As with many things we do, this is an almagomation of the client and server code
+	override void CheckLiftWeapon()
+	{
+		if (isAI() && GetGame().IsServer()) {
+			bool state = true;
+			Weapon_Base weap;
+			if ( Weapon_Base.CastTo(weap, GetItemInHands()) )
+			{
+				// Note that this variable is named poorly by BI but I am leaving it...
+				// "Limited" means "Not limited"
+				bool limited = weap.LiftWeaponCheck(this);
+				if (limited && !m_WantWeapRaise)
+					state = false;
+				else if (!limited && m_WantWeapRaise)
+					state = false;
+			}
+			else if (m_WantWeapRaise)
+			{
+				state = false;
+			}
+			
+			// Now the server code
+			ScriptJunctureData pCtx = new ScriptJunctureData;
+			pCtx.Write(state);
+			SendSyncJuncture(DayZPlayerSyncJunctures.SJ_WEAPON_LIFT, pCtx);
+		}
+		else super.CheckLiftWeapon();
 	}
 	
 	//! Clear the array of waypoints, setting cur_waypoint_no to -1

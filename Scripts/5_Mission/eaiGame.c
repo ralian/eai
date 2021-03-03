@@ -13,6 +13,8 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "ProcessReload", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "MoveAllToPos", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "UpdateMovement", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("eAI", "DebugFire", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("eAI", "ToggleWeaponRaise", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ServerSendGlobalRPC", this, SingeplayerExecutionType.Client);
     }
 
@@ -129,6 +131,28 @@ class eAIGame {
         }
 	}
 	
+	void DebugFire(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+		Param1<PlayerBase> data; // here the parameter is unused, maybe we could use an enum instead
+        if ( !ctx.Read( data ) ) return;
+		if(type == CallType.Server) {
+            Print("eAI DebugFire RPC called.");
+			foreach (PlayerBase i : aiList) {
+				i.eAIDebugMovement();
+			}
+        }
+	}
+	
+	void ToggleWeaponRaise(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+		Param1<PlayerBase> data; // here the parameter is unused, maybe we could use an enum instead
+        if ( !ctx.Read( data ) ) return;
+		if(type == CallType.Server) {
+            Print("eAI DebugFire RPC called.");
+			foreach (PlayerBase i : aiList) {
+				i.ToggleWeaponRaise();
+			}
+        }
+	}
+	
 	void MoveAllToPos(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
 		Param1<vector> data; // here the parameter is unused, maybe we could use an enum instead
         if (!ctx.Read(data)) return;
@@ -157,8 +181,16 @@ class eAIGame {
 				GetRPCManager().SendRPC("eAI", "MoveAllToPos", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
 				break;
 			}
-			case KeyCode.KC_O: {
+			case KeyCode.KC_I: {
 				GetRPCManager().SendRPC("eAI", "UpdateMovement", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
+				break;
+			}
+			case KeyCode.KC_P: {
+				GetRPCManager().SendRPC("eAI", "DebugFire", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
+				break;
+			}
+			case KeyCode.KC_O: {
+				GetRPCManager().SendRPC("eAI", "ToggleWeaponRaise", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
 				break;
 			}
 			case KeyCode.KC_M: {
