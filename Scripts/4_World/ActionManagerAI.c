@@ -422,10 +422,3 @@ class ActionManagerAI: ActionManagerBase
 		m_InventoryActionHandler.DeactiveAction();
 	}
 };
-
-/*modded class DayZPlayerInventory {
-	override void HandleWeaponEvents (float dt, out bool exitIronSights) {
-		Print("Test debug message");
-		super.HandleWeaponEvents(dt, exitIronSights);
-	}
-};*/

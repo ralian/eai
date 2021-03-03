@@ -11,6 +11,8 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "SpawnEntity", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ClearAllEntity", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ProcessReload", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("eAI", "MoveAllToPos", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("eAI", "UpdateMovement", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ServerSendGlobalRPC", this, SingeplayerExecutionType.Client);
     }
 
@@ -34,16 +36,19 @@ class eAIGame {
 		//Human h = Human.Cast(GetGame().CreateObject("SurvivorF_Linda", data.param1));
 			//SurvivorM_Cyril
 		PlayerBase h = PlayerBase.Cast(GetGame().CreatePlayer(null, "SurvivorF_Linda", data.param1.GetPosition() + debug_offset, 0, "NONE"));
+			
 		h.markAIServer(); // Important: Mark unit as AI since we don't control the constructor.
-		h.GetInventory().CreateInInventory("TTSKOPants");
-		h.GetInventory().CreateInInventory("TTsKOJacket_Camo");
-		h.GetInventory().CreateInInventory("CombatBoots_Black");
-		h.GetInventory().CreateInInventory("ImprovisedBag");
+		 // Do the same in the clients
+			
+		h.GetHumanInventory().CreateInInventory("TTSKOPants");
+		h.GetHumanInventory().CreateInInventory("TTsKOJacket_Camo");
+		h.GetHumanInventory().CreateInInventory("CombatBoots_Black");
+		h.GetHumanInventory().CreateInInventory("ImprovisedBag");
 
-		h.GetInventory().CreateInInventory("SodaCan_Pipsi");
-		h.GetInventory().CreateInInventory("SpaghettiCan");
-		h.GetInventory().CreateInInventory("HuntingKnife");
-		ItemBase rags = ItemBase.Cast(h.GetInventory().CreateInInventory("Rag"));
+		h.GetHumanInventory().CreateInInventory("SodaCan_Pipsi");
+		h.GetHumanInventory().CreateInInventory("SpaghettiCan");
+		h.GetHumanInventory().CreateInInventory("HuntingKnife");
+		ItemBase rags = ItemBase.Cast(h.GetHumanInventory().CreateInInventory("Rag"));
 		rags.SetQuantity(4);
 
 		EntityAI primary;
@@ -53,8 +58,9 @@ class eAIGame {
 		gun.GetInventory().CreateAttachment("M4_RISHndgrd_Black");
 		gun.GetInventory().CreateAttachment("M4_MPBttstck_Black");
 		gun.GetInventory().CreateAttachment("ACOGOptic");
-		EntityAI mag = h.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
-		h.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
+		//gun.GetInventory().CreateAttachment("Mag_STANAG_30Rnd");
+		EntityAI mag = h.GetHumanInventory().CreateInInventory("Mag_STANAG_30Rnd");
+		h.GetHumanInventory().CreateInInventory("Mag_STANAG_30Rnd");
 		
 		// Set the target entity we should follow to the player that spawned it, then do the first pathfinding update
 		h.eAIFollow(data.param1, 2);
@@ -87,6 +93,7 @@ class eAIGame {
             Print("ServerSendGlobalRPC: Synching event " + data.param1);
 			foreach (PlayerBase p : aiList) {
 				//GetRPCManager().SendRPC("eAI", data.param1, new Param1<PlayerBase>(p));
+				//GetRPCManager().SendRPC("eAI", "ProcessReload", new Param1<PlayerBase>(p));
 				p.QuickReloadWeapon(p.GetHumanInventory().GetEntityInHands());
 			}
         }
@@ -94,20 +101,45 @@ class eAIGame {
 	
 	// Unused for the moment
 	void ProcessReload(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param1<Object> data; // here the parameter is unused, maybe we could use an enum instead
+		Param1<PlayerBase> data; // here the parameter is unused, maybe we could use an enum instead
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server || true) {
-            Print("eAI UpdateMovement RPC called.");
+            Print("eAI ProcessReload RPC called.");
 			//foreach (PlayerBase p : aiList) {
-				PlayerBase p = PlayerBase.Cast(data.param1);
-				p.markAIClient();
-				p.QuickReloadWeapon(p.GetHumanInventory().GetEntityInHands());
+				//PlayerBase p = PlayerBase.Cast(data.param1);
+				data.param1.markAIClient();
+				data.param1.QuickReloadWeapon(data.param1.GetHumanInventory().GetEntityInHands());
+				//p.QuickReloadWeapon(p.GetHumanInventory().GetEntityInHands());
 			
 			
 			//foreach (PlayerBase i : aiList) {
 			//	i.eAIUpdateBrain();
 			//}
         }
+	}
+	
+	void UpdateMovement(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+		Param1<PlayerBase> data; // here the parameter is unused, maybe we could use an enum instead
+        if ( !ctx.Read( data ) ) return;
+		if(type == CallType.Server) {
+            Print("eAI UpdateMovement RPC called.");
+			foreach (PlayerBase i : aiList) {
+				i.eAIUpdateBrain();
+			}
+        }
+	}
+	
+	void MoveAllToPos(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+		Param1<vector> data; // here the parameter is unused, maybe we could use an enum instead
+        if (!ctx.Read(data)) return;
+		if(type == CallType.Server ) {
+            Print("Moving all units to position...");
+			array<Man> players = new array<Man>();
+			GetGame().GetPlayers(players);
+			foreach (Man p : players) {
+				p.SetPosition(data.param1);
+			}
+		}
 	}
 
     void OnKeyPress(int key) {
@@ -119,6 +151,14 @@ class eAIGame {
             }
 			case KeyCode.KC_L: {
 				GetRPCManager().SendRPC("eAI", "ClearAllEntity", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
+				break;
+			}
+			case KeyCode.KC_N: {
+				GetRPCManager().SendRPC("eAI", "MoveAllToPos", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
+				break;
+			}
+			case KeyCode.KC_O: {
+				GetRPCManager().SendRPC("eAI", "UpdateMovement", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
 				break;
 			}
 			case KeyCode.KC_M: {
@@ -140,7 +180,7 @@ class eAIGame {
 		foreach (PlayerBase h : aiList) {
 			if (timeDiv == 0) {
 				numOfDivsPassed++;
-				h.eAIUpdateMovement();
+				while (h.eAIUpdateMovement()) {} // update the movement as many times as needed
 			} // set a new movement target 4 times per scond
 		}
 		

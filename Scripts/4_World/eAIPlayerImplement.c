@@ -11,6 +11,73 @@ enum eAIBehaviorGlobal { // Global states that dictate each unit's actions
 
 modded class WeaponManager {
 	
+	override void StartPendingAction()
+	{		
+		m_WeaponInHand = Weapon_Base.Cast(m_player.GetItemInHands());
+		if(!m_WeaponInHand)
+		{
+			OnWeaponActionEnd();
+			return;
+		}
+		Print("WM::StartPendingAction " + m_PendingWeaponAction.ToString() + " for unit " + m_player.ToString() + ", " + m_player.GetInstanceType().ToString());
+		Print("PlayerInventoryInfo: " + m_player.GetDayZPlayerInventory().ToString() + " Type:" + m_player.GetDayZPlayerInventory().Type().ToString());
+		switch (m_PendingWeaponAction)
+		{
+			case AT_WPN_ATTACH_MAGAZINE:
+			{
+				m_player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventAttachMagazine(m_player, m_PendingTargetMagazine) );
+				break;
+			}
+			case AT_WPN_SWAP_MAGAZINE:
+			{
+				m_player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventSwapMagazine(m_player, m_PendingTargetMagazine) );
+				break;
+			}
+			case AT_WPN_DETACH_MAGAZINE:
+			{
+				Magazine mag = Magazine.Cast(m_PendingInventoryLocation.GetItem());
+				m_player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventDetachMagazine(m_player, mag, m_PendingInventoryLocation) );
+				break;
+			}
+			case AT_WPN_LOAD_BULLET:
+			{
+				m_WantContinue = false;
+				m_player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventLoad1Bullet(m_player, m_PendingTargetMagazine) );
+				break;
+			}
+			case AT_WPN_LOAD_MULTI_BULLETS_START:
+			{
+				m_player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventLoad1Bullet(m_player, m_PendingTargetMagazine) );
+				break;
+			}
+			case AT_WPN_LOAD_MULTI_BULLETS_END:
+			{
+				m_player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventContinuousLoadBulletEnd(m_player) );
+				break;
+			}
+			case AT_WPN_UNJAM:
+			{
+				m_player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventUnjam(m_player, NULL) );
+				break;
+			}
+			case AT_WPN_EJECT_BULLET:
+			{
+				m_player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventMechanism(m_player, NULL) );
+				break;
+			}
+			case AT_WPN_SET_NEXT_MUZZLE_MODE:
+			{
+				m_player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventSetNextMuzzleMode(m_player, NULL) );
+				break;
+			}
+			default:
+				m_InProgress = false;
+				Error("unknown actionID=" + m_PendingWeaponAction);
+		}	
+		m_IsEventSended = true;
+		m_canEnd = false;
+	}
+	
 	override bool StartAction(int action, Magazine mag, InventoryLocation il, ActionBase control_action = NULL)
 	{
 		//if it is controled by action inventory reservation and synchronization provide action itself
@@ -43,10 +110,9 @@ modded class WeaponManager {
 		m_InProgress = true;
 		m_IsEventSended = false;
 		
-		
 		if ( !GetGame().IsMultiplayer() ) {
 			m_readyToStart = true;
-		} else if (GetGame().IsServer() && m_player.isAI()) {
+		} else if (/*GetGame().IsServer() && */m_player.isAI()) {
 			m_PendingTargetMagazine = mag;
 			m_PendingInventoryLocation = il;
 			SynchronizeServer(mag, il);
@@ -63,7 +129,8 @@ modded class WeaponManager {
 	// This function is only used by the WeaponManager of AI units and executes server-side.
 	private bool SynchronizeServer(Magazine mag, InventoryLocation il){
 		if(GetGame().IsServer() && m_player.isAI()) {
-			Print("WeaponManager::SynchronizeServer for AI unit " + m_player.ToString() + m_player.IsMale().ToString() + " started.");
+			Print("WeaponManager::SynchronizeServer for AI unit " + m_player.ToString() + " started.");
+			DumpStack();
 			
 			m_PendingWeaponActionAcknowledgmentID = ++m_LastAcknowledgmentID;
 			
@@ -246,11 +313,14 @@ modded class PlayerBase {
 		disallowFlags |= PGPolyFlags.JUMP;
 		
 		pgFilter.SetFlags(allowFlags, disallowFlags, 0);
+		
+		newInv = new eAIDayZInventory(this);
+		newInv.Init();
 	}
 	
 	void markAIClient() {
 		isAI = true;
-		m_ActionManager = new ActionManagerClient(this);
+		//m_ActionManager = new ActionManagerClient(this);
 	}
 	
 	//Eventually we can use this instead of calling the action manager, needs more work though
@@ -343,6 +413,34 @@ modded class PlayerBase {
 		else
 			ReloadWeapon( weapon, magazine );
 	}
+	
+	ref DayZPlayerInventory newInv;
+	
+	//override GameInventory GetInventory() {
+	//	if (isAI())
+	//		return newInv;
+	//	return super.GetInventory();
+	//}
+	
+	override DayZPlayerInventory GetDayZPlayerInventory ()
+	{
+		DayZPlayerInventory inv;
+		if (isAI())
+			inv = DayZPlayerInventory.Cast(newInv);
+		else
+			inv = DayZPlayerInventory.Cast(GetInventory());
+		return inv;
+	}
+	
+	override HumanInventory GetHumanInventory ()
+	{
+		HumanInventory inv;
+		if (isAI())
+			inv = HumanInventory.Cast(newInv);
+		else
+			inv = HumanInventory.Cast(GetInventory());
+		return inv;
+	}
 
 	void eAIFollow(DayZPlayer p, float distance = 5.0) {
 		m_FollowOrders = p;
@@ -377,7 +475,9 @@ modded class PlayerBase {
 		return false;
 	}
 	
-	void eAIUpdateMovement() {
+	bool eAIUpdateMovement() {
+		
+		bool needsToRunAgain = false;
 		
 		// Aiming logic will go here.
 		// if (hasTarget) { ... }
@@ -387,23 +487,25 @@ modded class PlayerBase {
 		if (cur_waypoint_no < 0) {
 			GetInputController().OverrideMovementSpeed(true, 0.0);
 			GetInputController().OverrideAimChangeX(true, 0.0);
-			return;
+			return false;
 		}
 		
 		targetAngle = vector.Direction(GetPosition(), waypoints[cur_waypoint_no]).VectorToAngles().GetRelAngles()[0];// * Math.DEG2RAD;
-		heading = -GetInputController().GetHeadingAngle() / Math.DEG2RAD; // This seems to be CCW is positive unlike relative angles.
+		heading = -GetInputController().GetHeadingAngle() * Math.RAD2DEG; // This seems to be CCW is positive unlike relative angles.
 														// ALSO THIS ISN'T CAPPED AT +-180. I HAVE SEEN IT IN THE THOUSANDS.
 		//heading = GetDirection()[0]*180 + 90; // The documentation does not cover this but the angle this spits out is between (-1..1). WHAT?! (also seems to be angle of feet)
 		//while (heading > 180) {heading -= 360;} // Also, the basis seems to be off by 90 degrees
 		//if (heading < 0) {heading = 360+heading;}
 		
-		delta = targetAngle - heading;
-		while (delta > 180) {delta -= 360;} // There's no remainder function so I had to do this
-		while (delta < -180) {delta += 360;}
+		//delta = targetAngle - heading;
+		//while (delta > 180) {delta -= 360;} // There's no remainder function so I had to do this
+		//while (delta < -180) {delta += 360;}
+		
+		delta = Math.DiffAngle(targetAngle, heading);
 		
 		delta /= 500;
-		delta = Math.Max(delta, -0.6);
-		delta = Math.Min(delta, 0.6);
+		delta = Math.Max(delta, -0.25);
+		delta = Math.Min(delta, 0.25);
 				
 		// This is a capped PID controller, but using only the P component
 		GetInputController().OverrideAimChangeX(true, delta);
@@ -412,18 +514,26 @@ modded class PlayerBase {
 		float currDistToWP = vector.Distance(GetPosition(), waypoints[cur_waypoint_no]);
 		bool gettingCloser = (lastDistToWP > currDistToWP); // If we are getting closer to the WP (a GOOD thing!) - otherwise we can only walk
 		
-		if (currDistToWP > 2 * m_FollowDistance && gettingCloser) { 			// If we have a WP but it is far away			
+		if (Math.AbsFloat(delta) > 0.24) {										// If we need to turn a lot, we don't want to start walking
+			GetInputController().OverrideMovementSpeed(true, 0.0); 
+		} else if (currDistToWP > 2 * m_FollowDistance && gettingCloser) { 		// If we have a WP but it is far away			
 			GetInputController().OverrideMovementSpeed(true, 2.0);
 		} else if (currDistToWP > m_FollowDistance) { 							// If we are getting close to a WP
 			GetInputController().OverrideMovementSpeed(true, 1.0);
 		} else { 																// If we are 'at' a WP
-			nextWaypoint(); // We have reached our Final Destination!
+			// We have reached our current waypoint
+			if (!nextWaypoint())
+				clearWaypoints();
+			
+			needsToRunAgain = true; // Run again, to either go to next WP or cancel all movement
 		}
 		
 		lastDistToWP = currDistToWP;
 		
 		// Should this be moved to setup?
 		GetInputController().OverrideMovementAngle(true, targetAngle*Math.DEG2RAD);//Math.PI/2.0);
+		
+		return needsToRunAgain;
 		
 		//m_MovementState.m_CommandTypeId = DayZPlayerConstants.COMMANDID_MOVE ;
 		//m_MovementState.m_iMovement = 2;

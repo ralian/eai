@@ -40,9 +40,12 @@ void updateWaypoints(PlayerBase p) {
 		delta = vector.Direction(midpoint, p.waypoints.Get(i)); // imma be real with u chief, I don't know why the Get operator works here but the array accessor does not.
 															    // the doc says they should do the same thing... I think it's an enforce parsing bug
 		
-		// We need to do Math.Min(delta, delta.Normalized());
-		if (delta.LengthSq() > 1)
-			delta.Normalize(); // The outward push of the WP should be 1m (or less)
+		// on second thought, this condition harms trying to get around fences in some cases
+		//if (delta.LengthSq() > 1)
+			delta.Normalize();
+		
+		for (int m = 0; m < 3; m++) // iterator over indices
+			delta[m] = 2*delta[m];
 		
 		p.waypoints[i] = p.waypoints[i] - delta;
 	}

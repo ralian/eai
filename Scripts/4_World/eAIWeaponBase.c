@@ -1,4 +1,4 @@
-/*modded class Weapon_Base {
+modded class Weapon_Base {
 	override bool IsRemoteWeapon ()
 	{
 		Print("IsRemoteWeapon called");
@@ -15,4 +15,4 @@
 		}
 		return true;
 	}
-}*/
+}
