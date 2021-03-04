@@ -132,7 +132,7 @@ modded class Weapon_Base {
 	 **/
 	override bool ProcessWeaponEvent (WeaponEventBase e)
 	{
-		if (GetGame().IsServer()) { // This is very hacky... we need to check if the unit is also AI
+		if (GetGame().IsServer() && PlayerBase.Cast(e.m_player).isAI()) {
 			// Write the ctx that would normally be sent to the server... note we need to skip writing INPUT_UDT_WEAPON_REMOTE_EVENT
 			// since this would normally be Read() and stripped away by the server before calling OnEventForRemoteWeapon
 			
@@ -142,8 +142,19 @@ modded class Weapon_Base {
 			GetRPCManager().SendRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", new Param3<int, DayZPlayer, Magazine>(e.GetPackedType(), e.m_player, e.m_magazine));
 			if (m_fsm.ProcessEvent(e) == ProcessEventResult.FSM_OK)
 				return true;
+			
+			/*if (e.GetEventID() == WeaponEventID.TRIGGER) {
+				vector pos, dir;
+				GetCameraPoint(GetCurrentMuzzle(), pos, dir);
+				vector speed;
+				for (int i = 0; i < 3; i++)
+					speed[i] = dir[i]*910;
+				Fire(GetCurrentMuzzle(), pos, dir, speed);
+				//TryFireWeapon(this, GetCurrentMuzzle());
+			}*/
+				
 			return false;
-		} else
+		} else if (!PlayerBase.Cast(e.m_player).isAI())
 			SyncEventToRemote(e);
 		
 		// @NOTE: synchronous events not handled by fsm
@@ -164,7 +175,7 @@ modded class Weapon_Base {
 	 **/
 	override bool ProcessWeaponAbortEvent (WeaponEventBase e)
 	{
-		if (GetGame().IsServer()) { // This is very hacky... we need to check if the unit is also AI
+		if (GetGame().IsServer() && PlayerBase.Cast(e.m_player).isAI()) { // This is very hacky... we need to check if the unit is also AI
 			// Write the ctx that would normally be sent to the server... note we need to skip writing INPUT_UDT_WEAPON_REMOTE_EVENT
 			// since this would normally be Read() and stripped away by the server before calling OnEventForRemoteWeapon
 			ScriptRemoteInputUserData ctx = new ScriptRemoteInputUserData;
@@ -172,7 +183,7 @@ modded class Weapon_Base {
 			if (m_fsm.ProcessEvent(e) == ProcessEventResult.FSM_OK)
 				return true;
 			return false;
-		} else
+		} else if (!PlayerBase.Cast(e.m_player).isAI())
 			SyncEventToRemote(e);
 		
 		ProcessEventResult aa;
