@@ -257,7 +257,7 @@ modded class WeaponManager {
 modded class PlayerBase {
 	ref array<Entity> threats = new array<Entity>();
 	
-	bool m_WantWeapRaise = true;
+	bool m_WantWeapRaise = false;
 	
 	Entity m_FollowOrders = null; // This is a reference to the entity we want to pathfind to.
 	
@@ -453,10 +453,18 @@ modded class PlayerBase {
 	
 	void eAIDebugMovement() {
 		GetWeaponManager().Fire(Weapon_Base.Cast(GetHumanInventory().GetEntityInHands()));
+		GetInputController().OverrideAimChangeY(true, 0.0);
 	}
 	
 	void ToggleWeaponRaise() {
 		m_WantWeapRaise = !m_WantWeapRaise;
+		GetInputController().OverrideRaise(true, m_WantWeapRaise);
+		HumanCommandMove cm = GetCommand_Move();
+		if (m_WantWeapRaise) {
+			cm.ForceStance(DayZPlayerConstants.STANCEIDX_RAISEDERECT);
+		} else {
+			cm.ForceStance(DayZPlayerConstants.STANCEIDX_ERECT);
+		}
 	}
 	
 	// This returns true if the weapon should be raised.
@@ -468,21 +476,14 @@ modded class PlayerBase {
 	override void CheckLiftWeapon()
 	{
 		if (isAI() && GetGame().IsServer()) {
-			bool state = true;
+			bool state = false;
 			Weapon_Base weap;
 			if ( Weapon_Base.CastTo(weap, GetItemInHands()) )
 			{
-				// Note that this variable is named poorly by BI but I am leaving it...
-				// "Limited" means "Not limited"
+				state = m_LiftWeapon_player;
 				bool limited = weap.LiftWeaponCheck(this);
-				if (limited && !m_WantWeapRaise)
+				if (limited) //(limited && !m_WantWeapRaise)
 					state = false;
-				else if (!limited && m_WantWeapRaise)
-					state = false;
-			}
-			else if (m_WantWeapRaise)
-			{
-				state = false;
 			}
 			
 			// Now the server code
@@ -545,17 +546,27 @@ modded class PlayerBase {
 		// This is a capped PID controller, but using only the P component
 		GetInputController().OverrideAimChangeX(true, delta);
 		
+		// Now, the logic for conrolling aim elevation
+		float quatHeadTrans[4];
+		int idx = GetBoneIndexByName("Head");
+		if (idx < 0)
+			Error("I've lost my darn head!");
+		GetBoneRotationWS(idx, quatHeadTrans);
+		vector headTrans = Math3D.QuatToAngles(quatHeadTrans); //despite what it says in the doc, this goes <Yaw, Roll, Pitch> with Pitch measured from the +Y axis
+		Print(headTrans.ToString());
+		//GetInputController().OverrideAimChangeY(true, -0.60);//-headTrans[2]);
+		
 		// Next, we handle logic flow for waypoints.
 		float currDistToWP = vector.Distance(GetPosition(), waypoints[cur_waypoint_no]);
 		bool gettingCloser = (lastDistToWP > currDistToWP); // If we are getting closer to the WP (a GOOD thing!) - otherwise we can only walk
 		
-		if (Math.AbsFloat(delta) > 0.24) {										// If we need to turn a lot, we don't want to start walking
+		if (Math.AbsFloat(delta) > 0.24) {															// If we need to turn a lot, we don't want to start walking
 			GetInputController().OverrideMovementSpeed(true, 0.0); 
-		} else if (currDistToWP > 2 * m_FollowDistance && gettingCloser) { 		// If we have a WP but it is far away			
+		} else if (currDistToWP > 2 * m_FollowDistance && gettingCloser) { 							// If we have a WP but it is far away			
 			GetInputController().OverrideMovementSpeed(true, 2.0);
-		} else if (currDistToWP > m_FollowDistance) { 							// If we are getting close to a WP
+		} else if (currDistToWP > m_FollowDistance) { 												// If we are getting close to a WP
 			GetInputController().OverrideMovementSpeed(true, 1.0);
-		} else { 																// If we are 'at' a WP
+		} else { 																					// If we are 'at' a WP
 			// We have reached our current waypoint
 			if (!nextWaypoint())
 				clearWaypoints();

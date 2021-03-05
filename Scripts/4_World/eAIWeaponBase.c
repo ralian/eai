@@ -43,7 +43,7 @@ bool DayZPlayerInventory_OnEventForRemoteWeaponAI (int packedType, DayZPlayer pl
 }
 
 modded class Weapon_Base {
-	override bool LiftWeaponCheck (PlayerBase player)
+	/*override bool LiftWeaponCheck (PlayerBase player)
 	{
 		int idx;
 		float distance;
@@ -102,9 +102,7 @@ modded class Weapon_Base {
 		else
 			{ start = player.GetBonePositionWS(idx); }
 		
-		//! snippet below measures distance from "RightHandIndex1" bone for lifting calibration
-		/*usti_hlavne_position = ModelToWorld(usti_hlavne_position);
-		distance = vector.Distance(start,usti_hlavne_position);*/
+		
 		distance = m_WeaponLength;// - 0.05; //adjusted raycast length
 
 		// if weapon has battel attachment, does longer cast
@@ -123,7 +121,7 @@ modded class Weapon_Base {
 			return true;
 		}
 		return false;
-	}
+	}*/
 	
 	
 	/**@fn	ProcessWeaponEvent
