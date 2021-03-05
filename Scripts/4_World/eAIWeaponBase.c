@@ -96,10 +96,14 @@ modded class Weapon_Base {
 					
 					array<Man> players = new array<Man>();
 					GetGame().GetPlayers(players);
+					//GetGame().Get
 					for (int i = 0; i < players.Count(); i++) {
 						// todo more sophistocated logic for hitting each part
 						if (vector.Distance(players[i].GetPosition(), hitPosition) < 1.5) {
 							Print("We have a winner! unit: " + players[i].ToString() + " position: " + players[i].GetPosition().ToString());
+							// I have an idea here but no time to implement it. We could pick the hit part of the player randomly using the hitPos's height off
+							// the ground... eg higher than 1.5m translates to "head", then "torso", then below 1m is "legs"
+							// Of course, this will not work if the player is crouched or prone, or on something like a building
 							players[i].ProcessDirectDamage(DT_FIRE_ARM, e.m_player, "Torso", ammoTypeName, "0 0 0", 1.0);
 							break;
 						}

@@ -222,6 +222,7 @@ class eAIGame {
 		foreach (PlayerBase h : aiList) {
 			if (timeDiv == 0) {
 				numOfDivsPassed++;
+				h.eAIUpdateTargeting();
 				while (h.eAIUpdateMovement()) {} // update the movement as many times as needed
 			} // set a new movement target 4 times per scond
 		}

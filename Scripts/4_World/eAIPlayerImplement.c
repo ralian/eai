@@ -511,6 +511,20 @@ modded class PlayerBase {
 		return false;
 	}
 	
+	void eAIUpdateTargeting() {
+		// For now, just the logic for conrolling aim elevation
+		float quatHeadTrans[4];
+		int idx = GetBoneIndexByName("Head");
+		if (idx < 0)
+			Error("I've lost my darn head!");
+		GetBoneRotationWS(idx, quatHeadTrans);
+		vector headTrans = Math3D.QuatToAngles(quatHeadTrans); //despite what it says in the doc, this goes <Yaw, Roll, Pitch> with Pitch measured from the +Y axis
+		//Print(GetPosition().ToString());
+
+		float delta = -((headTrans[2]*Math.DEG2RAD))/10.0;
+		//GetInputController().OverrideAimChangeY(true, 3.0);
+	}
+	
 	bool eAIUpdateMovement() {
 		
 		bool needsToRunAgain = false;
@@ -544,16 +558,6 @@ modded class PlayerBase {
 				
 		// This is a capped PID controller, but using only the P component
 		GetInputController().OverrideAimChangeX(true, delta);
-		
-		// Now, the logic for conrolling aim elevation
-		float quatHeadTrans[4];
-		int idx = GetBoneIndexByName("Head");
-		if (idx < 0)
-			Error("I've lost my darn head!");
-		GetBoneRotationWS(idx, quatHeadTrans);
-		vector headTrans = Math3D.QuatToAngles(quatHeadTrans); //despite what it says in the doc, this goes <Yaw, Roll, Pitch> with Pitch measured from the +Y axis
-		Print(GetPosition().ToString());//Print(headTrans.ToString());
-		//GetInputController().OverrideAimChangeY(true, -0.60);//-headTrans[2]);
 		
 		// Next, we handle logic flow for waypoints.
 		float currDistToWP = vector.Distance(GetPosition(), waypoints[cur_waypoint_no]);
