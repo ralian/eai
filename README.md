@@ -11,11 +11,22 @@ https://discord.gg/hxY7a4CA7t
 
 - Movement (Move to waypoint)
 - Follow Unit
+- Basic Weapon Handling
 
 #### In Progress
 
-- Weapon Handling
+- Advanced Weapon Handling
+- Targeting System
+- Ballistics computation
 
 #### Known Bugs
 
+- Possible server crash if unit tries to fire a jammed weapon
+- Script crash if reload is triggered during a weapon raise animation
+- Unit can enter an indefinite turn/walk state under certain circumstances
+
 #### Wishlist Features
+
+- Group Behavior
+- Vehicle Control
+- Melee Behavior

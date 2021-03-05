@@ -1,0 +1,12 @@
+Enfusion AI Project
+Copyright © 2021 Will Bowers
+
+All code herein is licensed under the Apache 2.0 License (see the LICENSE file).
+
+ANY DERIVED WORKS, COMMERCIAL OR OPEN, MUST RETAIN A COPY OF THIS COPYRIGHT AND NOTICE FILE, AS
+WELL AS A 'CHANGES' FILE DESCRIBING CHANGES MADE BY THE DERIVED WORK.
+
+Contributors to the work include:
+ralian <0xBA5E16@gmail.com>
+
+Special Thanks:
