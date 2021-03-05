@@ -42,87 +42,7 @@ bool DayZPlayerInventory_OnEventForRemoteWeaponAI (int packedType, DayZPlayer pl
 	return true;
 }
 
-modded class Weapon_Base {
-	/*override bool LiftWeaponCheck (PlayerBase player)
-	{
-		int idx;
-		float distance;
-		float hit_fraction; //junk
-		vector start, end;
-		vector direction;
-		vector usti_hlavne_position;
-		vector trigger_axis_position;
-		vector hit_pos, hit_normal; //junk
-		Object obj;
-		ItemBase attachment;
-		
-		m_LiftWeapon = false;
-		// not a gun, no weap.raise for now
-		if ( HasSelection("Usti hlavne") )
-			return false;
-		
-		if (!player)
-		{
-			Print("Error: No weapon owner, returning");
-			return false;
-		}
-		
-		// add a separate check here since AI cannot use that part of the HIC
-		if ( !player.isAI() && player.GetInputController() && !player.GetInputController().IsWeaponRaised() )
-			return false;
-		
-		// if the AI is not targeting, we don't want a raise anyways
-		if ( player.isAI() && !player.AIWeaponRaise() )
-			return false;
-		
-		usti_hlavne_position = GetSelectionPositionLS( "Usti hlavne" ); 	// Usti hlavne
-		trigger_axis_position = GetSelectionPositionLS("trigger_axis");
-		
-		// freelook raycast
-		if (player.GetInputController().CameraIsFreeLook())
-		{
-			if (player.m_DirectionToCursor != vector.Zero)
-			{
-				direction = player.m_DirectionToCursor;
-			}
-			// if player raises weapon in freelook
-			else
-			{
-				direction = MiscGameplayFunctions.GetHeadingVector(player);
-			}
-		}
-		else
-		{
-			direction = GetGame().GetCurrentCameraDirection(); // exception for freelook. Much better this way!
-		}
-		
-		idx = player.GetBoneIndexByName("Neck"); //RightHandIndex1
-		if ( idx == -1 )
-			{ start = player.GetPosition()[1] + 1.5; }
-		else
-			{ start = player.GetBonePositionWS(idx); }
-		
-		
-		distance = m_WeaponLength;// - 0.05; //adjusted raycast length
-
-		// if weapon has battel attachment, does longer cast
-		if (ItemBase.CastTo(attachment,FindAttachmentBySlotName("weaponBayonet")) || ItemBase.CastTo(attachment,FindAttachmentBySlotName("weaponBayonetAK")) || ItemBase.CastTo(attachment,FindAttachmentBySlotName("weaponBayonetMosin")) || ItemBase.CastTo(attachment,FindAttachmentBySlotName("weaponBayonetSKS")) || ItemBase.CastTo(attachment,GetAttachedSuppressor()))
-		{
-			distance += attachment.m_ItemModelLength;
-		}
-		end = start + (direction * distance);
-		DayZPhysics.RayCastBullet(start, end, hit_mask, player, obj, hit_pos, hit_normal, hit_fraction);
-		
-		// something is hit
-		if (hit_pos != vector.Zero)
-		{
-			//Print(distance);
-			m_LiftWeapon = true;
-			return true;
-		}
-		return false;
-	}*/
-	
+modded class Weapon_Base {	
 	
 	/**@fn	ProcessWeaponEvent
 	 * @brief	weapon's fsm handling of events
@@ -136,22 +56,69 @@ modded class Weapon_Base {
 			
 			// also wait, I think everyone is meant to execute this
 			ScriptRemoteInputUserData ctx = new ScriptRemoteInputUserData;
-			Print("Sending weapon event for " + e.GetPackedType().ToString() + " player:" + e.m_player.ToString() + " mag:" + e.m_magazine.ToString());
+			Print("Sending weapon event for " + e.GetEventID().ToString() + " player:" + e.m_player.ToString() + " mag:" + e.m_magazine.ToString());
 			GetRPCManager().SendRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", new Param3<int, DayZPlayer, Magazine>(e.GetPackedType(), e.m_player, e.m_magazine));
+			
+			// Now that the RPC is sent to the clients, we need to compute the ballistics data and see about a hit.
+			// We miiight want to do this in another thread???
+			
+			if (e.GetEventID() == WeaponEventID.TRIGGER) {
+				// Get ballistics info
+				float ammoDamage;
+				string ammoTypeName;
+				GetCartridgeInfo(GetCurrentMuzzle(), ammoDamage, ammoTypeName);
+				
+				Print("AI ROUND FIRED, BEGIN DEBUG INFO FOR UNIT: " + e.m_player);
+				Print("AmmoType: " + ammoTypeName + " ammoDamage: " + ammoDamage.ToString());
+				
+				// Get Position Info
+				vector pos, dir;
+				float quatHeadTrans[4];
+				pos = this.GetPosition();							// Use the position of the rifle
+				dir = MiscGameplayFunctions.GetHeadingVector(e.m_player);
+				Print("Muzzle pos: " + pos.ToString() + " dir: " + dir.ToString());
+				
+				// Prep Raycast
+				Object hitObject;
+				vector hitPosition, hitNormal;
+				float hitFraction;
+				DayZPhysics.RayCastBullet(pos, pos + (dir * 1000), hit_mask, e.m_player, hitObject, hitPosition, hitNormal, hitFraction);
+				
+				Print("Raycast hitObject: " + hitObject.ToString() + " hitPosition: " + hitPosition.ToString() + " hitNormal: " + hitNormal.ToString() + " hitFraction " + hitFraction.ToString());
+				
+				// So here is an interesting bug... hitObject is always still null even if the raycast succeeded
+				// If it succeded then hitPosition, hitNormal, and hitFraction will be accurate
+				if (hitFraction > 0.00001) {
+					// this could be useful in the future
+					//ref array<Object> nearest_objects = new array<Object>;
+					//ref array<CargoBase> proxy_cargos = new array<CargoBase>;
+					//GetGame().GetObjectsAtPosition ( hitPosition, 1.0, nearest_objects, proxy_cargos ); 
+					
+					array<Man> players = new array<Man>();
+					GetGame().GetPlayers(players);
+					for (int i = 0; i < players.Count(); i++) {
+						// todo more sophistocated logic for hitting each part
+						if (vector.Distance(players[i].GetPosition(), hitPosition) < 1.5) {
+							Print("We have a winner! unit: " + players[i].ToString() + " position: " + players[i].GetPosition().ToString());
+							players[i].ProcessDirectDamage(DT_FIRE_ARM, e.m_player, "Torso", ammoTypeName, "0 0 0", 1.0);
+							break;
+						}
+					}
+				}
+				
+				// Check if a player was hit
+				// unused for now because of the aforementioned bug
+				if (hitObject) {
+					hitObject.ProcessDirectDamage(DT_FIRE_ARM, e.m_player, "Head", ammoTypeName, "0 0 0", 1.0);
+				}
+			}
+			
 			if (m_fsm.ProcessEvent(e) == ProcessEventResult.FSM_OK)
 				return true;
-			
-			/*if (e.GetEventID() == WeaponEventID.TRIGGER) {
-				vector pos, dir;
-				GetCameraPoint(GetCurrentMuzzle(), pos, dir);
-				vector speed;
-				for (int i = 0; i < 3; i++)
-					speed[i] = dir[i]*910;
-				Fire(GetCurrentMuzzle(), pos, dir, speed);
-				//TryFireWeapon(this, GetCurrentMuzzle());
-			}*/
 				
 			return false;
+		
+		// The rest of this is going to be client code. Also, for AI, clients should not sync events they receive to remote.
 		} else if (!PlayerBase.Cast(e.m_player).isAI())
 			SyncEventToRemote(e);
 		

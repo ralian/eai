@@ -130,7 +130,6 @@ modded class WeaponManager {
 	private bool SynchronizeServer(Magazine mag, InventoryLocation il){
 		if(GetGame().IsServer() && m_player.isAI()) {
 			Print("WeaponManager::SynchronizeServer for AI unit " + m_player.ToString() + " started.");
-			DumpStack();
 			
 			m_PendingWeaponActionAcknowledgmentID = ++m_LastAcknowledgmentID;
 			
@@ -553,7 +552,7 @@ modded class PlayerBase {
 			Error("I've lost my darn head!");
 		GetBoneRotationWS(idx, quatHeadTrans);
 		vector headTrans = Math3D.QuatToAngles(quatHeadTrans); //despite what it says in the doc, this goes <Yaw, Roll, Pitch> with Pitch measured from the +Y axis
-		Print(headTrans.ToString());
+		Print(GetPosition().ToString());//Print(headTrans.ToString());
 		//GetInputController().OverrideAimChangeY(true, -0.60);//-headTrans[2]);
 		
 		// Next, we handle logic flow for waypoints.

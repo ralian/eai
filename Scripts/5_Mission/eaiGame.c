@@ -147,7 +147,7 @@ class eAIGame {
 		Param1<PlayerBase> data; // here the parameter is unused, maybe we could use an enum instead
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server) {
-            Print("eAI DebugFire RPC called.");
+            Print("eAI ToggleWeaponRaise RPC called.");
 			foreach (PlayerBase i : aiList) {
 				i.ToggleWeaponRaise();
 			}
