@@ -533,7 +533,7 @@ modded class PlayerBase {
 		// this way, I will deny its existance.
 		//
 		// Just kidding :-)   ... or am I?
-		GetAimingModel().SetRecoil(Weapon_Base.Cast(GetHumanInventory().GetEntityInHands()));
+		GetAimingModel().SetDummyRecoil(Weapon_Base.Cast(GetHumanInventory().GetEntityInHands()));
 	}
 	
 	override bool AimingModel(float pDt, SDayZPlayerAimingModel pModel) {
