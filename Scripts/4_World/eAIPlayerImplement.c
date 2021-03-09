@@ -314,9 +314,7 @@ modded class PlayerBase {
 		disallowFlags |= PGPolyFlags.JUMP;
 		
 		pgFilter.SetFlags(allowFlags, disallowFlags, 0);
-		
-		newInv = new eAIDayZInventory(this);
-		newInv.Init();
+
 	}
 	
 	void markAIClient() {
@@ -414,34 +412,6 @@ modded class PlayerBase {
 		else
 			ReloadWeapon( weapon, magazine );
 	}
-	
-	ref DayZPlayerInventory newInv;
-	
-	//override GameInventory GetInventory() {
-	//	if (isAI())
-	//		return newInv;
-	//	return super.GetInventory();
-	//}
-	
-	/*override DayZPlayerInventory GetDayZPlayerInventory ()
-	{
-		DayZPlayerInventory inv;
-		if (isAI())
-			inv = DayZPlayerInventory.Cast(newInv);
-		else
-			inv = DayZPlayerInventory.Cast(GetInventory());
-		return inv;
-	}
-	
-	override HumanInventory GetHumanInventory ()
-	{
-		HumanInventory inv;
-		if (isAI())
-			inv = HumanInventory.Cast(newInv);
-		else
-			inv = HumanInventory.Cast(GetInventory());
-		return inv;
-	}*/
 
 	void eAIFollow(DayZPlayer p, float distance = 5.0) {
 		m_FollowOrders = p;
