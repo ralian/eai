@@ -3,15 +3,17 @@
 
 int atomic_findPathRunning = 0;
 
-void updateWaypoints(PlayerBase p) {
+void updateWaypoints(eAIPlayerHandler p, bool debug_waypoints = true) {
 	
 	bool success = false;
+	
+	vector pos = p.unit.GetPosition();
 	
 	while (!success) {
 		if (++atomic_findPathRunning < 2) { // if we are the only one about to call FindPath
 			p.clearWaypoints();
-			p.waypoints.Insert(p.GetPosition()); // Make WP 0 the player's position. This is only necessary for the corner smoothing logic to work on the first waypoint.
-			GetGame().GetWorld().GetAIWorld().FindPath(p.GetPosition(), p.m_FollowOrders.GetPosition(), p.pgFilter, p.waypoints);
+			p.waypoints.Insert(pos); // Make WP 0 the player's position. This is only necessary for the corner smoothing logic to work on the first waypoint.
+			GetGame().GetWorld().GetAIWorld().FindPath(pos, p.m_FollowOrders.GetPosition(), p.pgFilter, p.waypoints);
 			atomic_findPathRunning--;
 			success = true;
 		} else {							// else, decrement the counter then yield before trying again
@@ -51,9 +53,13 @@ void updateWaypoints(PlayerBase p) {
 	}
 	
 	// Debug info
-	Print("Current Pos: " + p.GetPosition());
-	Print("Current Waypoint: " + p.cur_waypoint_no);
-	Print("Waypoint List:");
-	for (int k = 0; k < p.waypoints.Count(); k++)
-		Print(p.waypoints[k][0].ToString() + "," + p.waypoints[k][2].ToString()); // Make sure to do this in an excel friendly way
+	if (debug_waypoints) {
+		Print("Current Pos: " + pos);
+		Print("Current Waypoint: " + p.cur_waypoint_no);
+		Print("Waypoint List:");
+		for (int k = 0; k < p.waypoints.Count(); k++) {
+			Print(p.waypoints[k][0].ToString() + "," + p.waypoints[k][2].ToString()); // Make sure to do this in an excel friendly way
+			GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(p.waypoints[k], vector.Zero));
+		}
+	}
 }

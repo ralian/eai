@@ -54,64 +54,8 @@ class ActionManagerAI: ActionManagerBase
 	// Interact----------------------------------------------------
 	override void OnInteractAction() //Interact
 	{
-//		if ( m_SelectedActionIndex == 0 ) // tertiary action is always on index 0 now
-//		{
-//				StartDeliveredAction();
-//		}
-//		else
-//		{
-		//	rozbal debug akci
-//		}
-
+	
 	}
-
-	// This was commented out originally
-	/*override bool OnInputUserDataProcess(int userDataType, ParamsReadContext ctx)
-	{		
-		switch ( userDataType )
-		{
-			case INPUT_UDT_STANDARD_ACTION_START:
-			{
-				// FOOKEN MIGRATED TO this::ActionStart INNIT
-				ActionBase recvAction;
-				bool success = false; // Fail this by default since we know it should never get called
-				break;
-
-			}
-
-			case INPUT_UDT_STANDARD_ACTION_END_REQUEST:
-			{
-				//Debug.Log("Action want end request, STS=" + m_Player.GetSimulationTimeStamp());
-				m_ActionWantEndRequest = true;
-			}
-			
-			case INPUT_UDT_STANDARD_ACTION_INPUT_END:
-			{
-				//Debug.Log("Action input ended, STS=" + m_Player.GetSimulationTimeStamp());
-				m_ActionInputWantEnd = true;
-			}
-			default:
-				return false;
-		}
-		
-		if (!success)
-		{
-			//Debug.Log("[AM] OnInputUserDataProcess INPUT_UDT_STANDARD_ACTION_START Error");
-			if (recvAction.UseAcknowledgment())
-			{
-				DayZPlayerSyncJunctures.SendActionAcknowledgment(m_Player, m_PendingActionAcknowledgmentID, false);
-			}
-			else
-			{
-				DayZPlayerSyncJunctures.SendActionInterrupt(m_Player);
-			}
-			//m_CurrentActionData = NULL;
-			return false;
-		}
-		//StartDeliveredAction();
-		return true;
-		
-	}*/
 	
 	override void StartDeliveredAction()
 	{
