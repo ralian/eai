@@ -513,18 +513,18 @@ modded class PlayerBase {
 	
 	void eAIUpdateTargeting(float pDt) {
 		// For now, just the logic for conrolling aim elevation
-		float quatHeadTrans[4];
-		int idx = GetBoneIndexByName("Head");
-		if (idx < 0)
-			Error("I've lost my darn head!");
-		GetBoneRotationWS(idx, quatHeadTrans);
-		vector headTrans = Math3D.QuatToAngles(quatHeadTrans); //despite what it says in the doc, this goes <Yaw, Roll, Pitch> with Pitch measured from the +Y axis
+		//float quatHeadTrans[4];
+		//int idx = GetBoneIndexByName("Head");
+		//if (idx < 0)
+		//	Error("I've lost my darn head!");
+		//GetBoneRotationWS(idx, quatHeadTrans);
+		//vector headTrans = Math3D.QuatToAngles(quatHeadTrans); //despite what it says in the doc, this goes <Yaw, Roll, Pitch> with Pitch measured from the +Y axis
 		
 		// This always returns 0
 		//vector direction = GetInputController().GetHeadingAngle() * Math.RAD2DEG; 
 		//Print(direction);
 
-		float delta = -(GetAimingModel().getAimY()*Math.DEG2RAD)/5.0;
+		float delta = -((GetAimingModel().getAimY()+10.0)*Math.DEG2RAD)/5.0;
 		
 		GetInputController().OverrideAimChangeY(true, delta);
 		
