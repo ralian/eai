@@ -63,6 +63,10 @@ modded class Weapon_Base {
 			// We miiight want to do this in another thread???
 			
 			if (e.GetEventID() == WeaponEventID.TRIGGER) {
+
+				
+					
+				
 				// Get ballistics info
 				float ammoDamage;
 				string ammoTypeName;
@@ -72,28 +76,60 @@ modded class Weapon_Base {
 				Print("AmmoType: " + ammoTypeName + " ammoDamage: " + ammoDamage.ToString());
 				
 				// Get Position Info
-				vector pos, dir;
-				float quatHeadTrans[4];
-				pos = this.GetPosition();							// Use the position of the rifle
-				dir = MiscGameplayFunctions.GetHeadingVector(e.m_player);
-				Print("Muzzle pos: " + pos.ToString() + " dir: " + dir.ToString());
+				// This is the same code in GetProjectedCursorPos3d(), but we need to do our own raycast logic
+				vector usti_hlavne_position = GetSelectionPositionWS( "usti hlavne" );
+				vector konec_hlavne_position = GetSelectionPositionWS( "konec hlavne" );
+				
+				//usti_hlavne_position = VectorToParent(usti_hlavne_position);
+				konec_hlavne_position = VectorToParent(konec_hlavne_position);
+				
+				//HumanItemAccessor hia = e.m_player.GetItemAccessor();
+				vector aimingMatTM[4];
+				//hia.WeaponGetAimingModelDirTm(aimingMatTM);
+				
+				vector begin_point = GetPosition() + usti_hlavne_position;
+				vector end_point = GetPosition() + konec_hlavne_position;
+
+				//vector end_point = e.m_player.ModelToWorld(VectorToParent(usti_hlavne_position));// + GetWorldPosition();//ModelToWorld(usti_hlavne_position);
+				//vector begin_point = konec_hlavne_position + GetWorldPosition(); //ModelToWorld(konec_hlavne_position);
+				vector contact_dir;
+				
+				GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(end_point, vector.Zero));
+				GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point, vector.Zero));
+				
+				vector aim_point = end_point - begin_point;
+				
+				//aim_point[2] = temp;
+				//aim_point[1] = -aim_point[1];
+				aim_point = aim_point.Normalized() * 500; // 500 meters for now
+				aim_point = aim_point + end_point;
+				Print("Muzzle pos: " + begin_point.ToString() + " dir-pos: " + (aim_point-begin_point).ToString());
 				
 				// Prep Raycast
 				Object hitObject;
 				vector hitPosition, hitNormal;
 				float hitFraction;
-				DayZPhysics.RayCastBullet(pos, pos + (dir * 1000), hit_mask, e.m_player, hitObject, hitPosition, hitNormal, hitFraction);
+				int contact_component = 0;
+				DayZPhysics.RayCastBullet(begin_point, aim_point, hit_mask, this, hitObject, hitPosition, hitNormal, hitFraction);
+				//DayZPhysics.RaycastRV(begin_point, aim_point, hitPosition, hitNormal, contact_component, null, null, null, false, false, ObjIntersectFire);
 				
-				Print("Raycast hitObject: " + hitObject.ToString() + " hitPosition: " + hitPosition.ToString() + " hitNormal: " + hitNormal.ToString() + " hitFraction " + hitFraction.ToString());
+				Print("Raycast hitObject: " + hitObject.ToString() + " hitPosition-pos: " + (hitPosition-begin_point).ToString() + " hitNormal: " + hitNormal.ToString() + " hitFraction " + hitFraction.ToString());
+				
+				//if (hitPosition && hitNormal) {
+				//	Particle p = Particle.PlayInWorld(ParticleList.DEBUG_DOT, hitPosition);
+				//	p.SetOrientation(hitNormal);
+					
+				//}
 				
 				// So here is an interesting bug... hitObject is always still null even if the raycast succeeded
 				// If it succeded then hitPosition, hitNormal, and hitFraction will be accurate
-				if (hitFraction > 0.00001) {
+				if (hitFraction > 0.01) {
 					// this could be useful in the future
 					//ref array<Object> nearest_objects = new array<Object>;
 					//ref array<CargoBase> proxy_cargos = new array<CargoBase>;
-					//GetGame().GetObjectsAtPosition ( hitPosition, 1.0, nearest_objects, proxy_cargos ); 
+					//GetGame().GetObjectsAtPosition ( hitPosition, 1.0, nearest_objects, proxy_cargos );
 					
+									
 					array<Man> players = new array<Man>();
 					GetGame().GetPlayers(players);
 					//GetGame().Get

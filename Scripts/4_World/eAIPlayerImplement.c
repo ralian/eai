@@ -474,7 +474,7 @@ modded class PlayerBase {
 	// As with many things we do, this is an almagomation of the client and server code
 	override void CheckLiftWeapon()
 	{
-		if (isAI() && GetGame().IsServer()) {
+		if (isAI() && GetGame().IsServer()) {	
 			bool state = false;
 			Weapon_Base weap;
 			if ( Weapon_Base.CastTo(weap, GetItemInHands()) )
@@ -511,7 +511,7 @@ modded class PlayerBase {
 		return false;
 	}
 	
-	void eAIUpdateTargeting() {
+	void eAIUpdateTargeting(float pDt) {
 		// For now, just the logic for conrolling aim elevation
 		float quatHeadTrans[4];
 		int idx = GetBoneIndexByName("Head");
@@ -519,18 +519,37 @@ modded class PlayerBase {
 			Error("I've lost my darn head!");
 		GetBoneRotationWS(idx, quatHeadTrans);
 		vector headTrans = Math3D.QuatToAngles(quatHeadTrans); //despite what it says in the doc, this goes <Yaw, Roll, Pitch> with Pitch measured from the +Y axis
-		//Print(GetPosition().ToString());
+		
+		// This always returns 0
+		//vector direction = GetInputController().GetHeadingAngle() * Math.RAD2DEG; 
+		//Print(direction);
 
-		float delta = -((headTrans[2]*Math.DEG2RAD))/10.0;
-		//GetInputController().OverrideAimChangeY(true, 3.0);
+		float delta = -(GetAimingModel().getAimY()*Math.DEG2RAD)/5.0;
+		
+		GetInputController().OverrideAimChangeY(true, delta);
+		
+		// Ignore the fact that this works. Do not ask why it works. Or how I found out that creating a faux recoil event
+		// after updating the input controller updates the aim change. If you ask me about this code or why it is written
+		// this way, I will deny its existance.
+		//
+		// Just kidding :-)   ... or am I?
+		GetAimingModel().SetRecoil(Weapon_Base.Cast(GetHumanInventory().GetEntityInHands()));
 	}
+	
+	override bool AimingModel(float pDt, SDayZPlayerAimingModel pModel) {
+		//if (isAI()) {
+		//	GetInputController().OverrideAimChangeY(true, -0.25);
+		//	GetAimingModel().SetRecoil(Weapon_Base.Cast(GetHumanInventory().GetEntityInHands()));
+			//return true;
+		//}
+		
+		// If we are not 
+		return super.AimingModel(pDt, pModel);
+	}	
 	
 	bool eAIUpdateMovement() {
 		
 		bool needsToRunAgain = false;
-		
-		// Aiming logic will go here.
-		// if (hasTarget) { ... }
 		
 		// First, if we don't have any valid waypoints, make sure to stop the AI and quit prior to the movement logic.
 		// Otherwise, the AimChange would be undefined in this case (leading to some hilarious behavior including disappearing heads)
@@ -593,6 +612,25 @@ modded class PlayerBase {
 		if (m_FollowOrders) { // If we have a reference to a player to follow, we refresh the waypoints.
 			thread updateWaypoints(this);
 		}
+	}
+	
+	//DayZPlayerCameraResult m_pOutResult = new DayZPlayerCameraResult();
+	
+	override void CommandHandler(float pDt, int pCurrentCommandID, bool pCurrentCommandFinished)	
+	{
+		super.CommandHandler(pDt, pCurrentCommandID, pCurrentCommandFinished);
+		if (isAI()) {
+			//m_DirectionToCursor = m_CurrentCamera.GetBaseAngles();
+			//if (m_CurrentCamera)
+				//m_CurrentCamera.OnUpdate(pDt, m_pOutResult);
+		}
+	}
+	
+	override void OnCameraChanged(DayZPlayerCameraBase new_camera)
+	{
+		Print("Camera for " + this.ToString() + " changed. old:" + m_CurrentCamera.ToString() + " new:"+new_camera.ToString());
+		m_CameraSwayModifier = new_camera.GetWeaponSwayModifier();
+		m_CurrentCamera = new_camera;
 	}
 
 };

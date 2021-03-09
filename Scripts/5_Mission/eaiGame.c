@@ -14,6 +14,7 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "MoveAllToPos", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "UpdateMovement", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "DebugFire", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("eAI", "DebugParticle", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ToggleWeaponRaise", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ServerSendGlobalRPC", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", this, SingeplayerExecutionType.Client);
@@ -42,6 +43,11 @@ class eAIGame {
 			
 		h.markAIServer(); // Important: Mark unit as AI since we don't control the constructor.
 		 // Do the same in the clients
+		
+		eAIDayZPlayerCamera cam = new eAIDayZPlayerCamera(h, h.GetInputController());
+		cam.InitCameraOnPlayer(true); // force the camera active
+			
+		//h.OnCameraChanged(new eAIDayZPlayerCamera(h, h.GetInputController()));
 			
 		h.GetHumanInventory().CreateInInventory("TTSKOPants");
 		h.GetHumanInventory().CreateInInventory("TTsKOJacket_Camo");
@@ -167,6 +173,15 @@ class eAIGame {
 		}
 	}
 	
+	void DebugParticle(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+		Param2<vector, vector> data;
+        if (!ctx.Read(data)) return;
+		if(type == CallType.Client ) {
+			Particle p = Particle.PlayInWorld(ParticleList.DEBUG_DOT, data.param1);
+			p.SetOrientation(data.param2);
+		}
+	}
+	
 	void DayZPlayerInventory_OnEventForRemoteWeaponAICallback(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
 		Param3<int, DayZPlayer, Magazine> data;
         if (!ctx.Read(data)) return;
@@ -218,11 +233,14 @@ class eAIGame {
 		timeDiv++;
 		if (Math.Floor(gametime - (4*timeslice)) != Math.Floor(gametime)) {timeDiv = 0;}
 		
+		
+		
 		// AI pathing calculations
 		foreach (PlayerBase h : aiList) {
+			h.eAIUpdateTargeting(timeslice);
 			if (timeDiv == 0) {
 				numOfDivsPassed++;
-				h.eAIUpdateTargeting();
+				
 				while (h.eAIUpdateMovement()) {} // update the movement as many times as needed
 			} // set a new movement target 4 times per scond
 		}
