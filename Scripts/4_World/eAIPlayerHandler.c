@@ -247,17 +247,24 @@ class eAIPlayerHandler {
 		}
 	}
 	
-	void CleanThreatList() {
+	void RecalcThreatList() {
+		GetGame().GetObjectsAtPosition(unit.GetPosition(), 10.0, threats, proxyCargos);
+		
 		// Todo find a faster way to do this... like a linked list?
 		int i = 0;
+		float minDistance = 1000000.0, temp;
 		while (i < threats.Count()) {
-			if (DayZInfected.Cast(threats[i]))
+			if (DayZInfected.Cast(threats[i]) && threats[i].IsAlive()) {
+				temp = vector.Distance(threats[i].GetPosition(), unit.GetPosition());
+				// See if this index is the biggest threat, if so swap it to front
+				if (temp < minDistance && i > 1) {
+					threats.SwapItems(0, i);
+					minDistance = temp;
+				}
 				i++;
-			else
+			} else
 				threats.RemoveOrdered(i);
 		}
-		
-		// Todo reorder the threats so the closest/biggest is first
 	}
 	
 	bool dead;
@@ -308,6 +315,16 @@ class eAIPlayerHandler {
 		
 		
 		if (combatState == eAICombatPriority.ELIMINATE_TARGET) {
+			
+			if (!threats[0] || !threats[0].IsAlive()) {
+				RecalcThreatList();
+				HasAShot = false;
+				
+				// Also check if we need to exit combat
+				if (threats.Count() < 1)
+					state = eAIBehaviorGlobal.RELAXED;
+			}
+			
 			if (wpn.CanFire() && HasAShot) {
 				FireHeldWeapon();
 			}
@@ -322,8 +339,8 @@ class eAIPlayerHandler {
 		
 		if (state == eAIBehaviorGlobal.RELAXED) {
 			// maybe do this in another thread
-			GetGame().GetObjectsAtPosition(unit.GetPosition(), 10.0, threats, proxyCargos);
-			CleanThreatList();
+			// also maybe do it less often when relaxed
+			RecalcThreatList();
 			if (threats.Count() > 0)
 				EnterCombat();
 		}
