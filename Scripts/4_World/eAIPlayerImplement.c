@@ -1,4 +1,8 @@
 
+// This is a global flag which is set to true if any (or multiple) units are killed on a tick
+// For performance, the mission only cleans up the AI list if it knows at least one died
+bool eAIGlobal_UnitKilled = false;
+
 // Todo move this to a separate child class (like PlayerBaseClient)
 modded class PlayerBase {
 	
@@ -187,6 +191,7 @@ modded class PlayerBase {
 	override void OnCommandDeathStart() {
 		// Tell the server to stop computing AI stuffs
 		if (isAI() && GetGame().IsServer()) {
+			eAIGlobal_UnitKilled = true;
 			parent.markDead();
 		}
 		super.OnCommandDeathStart();

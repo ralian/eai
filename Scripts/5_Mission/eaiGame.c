@@ -212,10 +212,13 @@ class eAIGame {
 		timeDiv++;
 		if (Math.Floor(gametime - (4*timeslice)) != Math.Floor(gametime)) {timeDiv = 0;}
 
-		// Todo we need a better way to do this than checking each frame...
-		for (int i = 0; i < aiList.Count(); i++)
-			if (aiList[i] == null || aiList[i].isDead())
-				aiList.Remove(i);
+		// If at least one unit was killed, scan for dead units and clean up.
+		if (eAIGlobal_UnitKilled) {
+			for (int i = 0; i < aiList.Count(); i++)
+				if (aiList[i] == null || aiList[i].isDead())
+					aiList.Remove(i);
+			eAIGlobal_UnitKilled = false;
+		}
 		
 		// AI pathing calculations
 		foreach (eAIPlayerHandler h : aiList) {
