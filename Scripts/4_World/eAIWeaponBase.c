@@ -103,9 +103,10 @@ modded class Weapon_Base {
 				aim_point[0] = -Math.Cos(headTrans[0] * Math.DEG2RAD);
 				aim_point[2] = Math.Sin(headTrans[0] * Math.DEG2RAD);
 				vector end_point = (500*aim_point) + begin_point;
-
-				GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point, vector.Zero));
-				GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>((begin_point+aim_point), vector.Zero));
+				
+				// Use these to get  an idea of the direction for the raycast
+				//GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point, vector.Zero));
+				//GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>((begin_point+aim_point), vector.Zero));
 				
 				Print("Muzzle pos: " + begin_point.ToString() + " dir-pos: " + (end_point-begin_point).ToString());
 				
@@ -136,26 +137,23 @@ modded class Weapon_Base {
 					//GetGame().GetObjectsAtPosition ( hitPosition, 1.0, nearest_objects, proxy_cargos );
 					
 									
-					array<Man> players = new array<Man>();
-					GetGame().GetPlayers(players);
-					//GetGame().Get
-					for (int i = 0; i < players.Count(); i++) {
-						// todo more sophistocated logic for hitting each part
-						if (vector.Distance(players[i].GetPosition(), hitPosition) < 1.5) {
-							Print("We have a winner! unit: " + players[i].ToString() + " position: " + players[i].GetPosition().ToString());
-							// I have an idea here but no time to implement it. We could pick the hit part of the player randomly using the hitPos's height off
-							// the ground... eg higher than 1.5m translates to "head", then "torso", then below 1m is "legs"
-							// Of course, this will not work if the player is crouched or prone, or on something like a building
-							players[i].ProcessDirectDamage(DT_FIRE_ARM, e.m_player, "Torso", ammoTypeName, "0 0 0", 1.0);
-							break;
+					array<Object> objects = new array<Object>();
+					ref array<CargoBase> proxyCargos = new array<CargoBase>();
+					Object closest = null;
+					float dist = 1000000.0;
+					float testDist;
+					GetGame().GetObjectsAtPosition3D(hitPosition, 1.5, objects, proxyCargos);
+					for (int i = 0; i < objects.Count(); i++) {
+						if (DayZInfected.Cast(objects[i]) || Man.Cast(objects[i])) {
+							testDist = vector.Distance(objects[i].GetPosition(), hitPosition);
+							if (testDist < dist) {
+								closest = objects[i];
+								dist = testDist;
+							}
 						}
 					}
-				}
-				
-				// Check if a player was hit
-				// unused for now because of the aforementioned bug
-				if (hitObject) {
-					hitObject.ProcessDirectDamage(DT_FIRE_ARM, e.m_player, "Head", ammoTypeName, "0 0 0", 1.0);
+					if (closest)
+						closest.ProcessDirectDamage(DT_FIRE_ARM, e.m_player, "Torso", ammoTypeName, closest.WorldToModel(hitPosition), 1.0);
 				}
 			}
 			

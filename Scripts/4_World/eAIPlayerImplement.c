@@ -1,6 +1,11 @@
 
 // Todo move this to a separate child class (like PlayerBaseClient)
 modded class PlayerBase {
+	
+	eAIPlayerHandler parent;
+	
+	// Angle above the horizon we should be aiming, degrees.
+	float targetAngle = -5.0;
 
 	bool isAI = false;
 	
@@ -12,6 +17,8 @@ modded class PlayerBase {
 		isAI = true;
 		m_ActionManager = new ActionManagerAI(this);
 	}
+	
+	void markOwner(eAIPlayerHandler p) {parent = p;}
 	
 	// Probably not actually necessary
 	void markAIClient() {
@@ -140,7 +147,10 @@ modded class PlayerBase {
 	
 	override bool AimingModel(float pDt, SDayZPlayerAimingModel pModel) {
 		if (isAI()) {
-			float delta = -((GetAimingModel().getAimY()+10.0)*Math.DEG2RAD)/5.0;
+			if (!GetHumanInventory() || !GetHumanInventory().GetEntityInHands())
+				return false;
+			
+			float delta = -((GetAimingModel().getAimY()-targetAngle)*Math.DEG2RAD)/5.0;
 		
 			GetInputController().OverrideAimChangeY(true, delta);
 			
@@ -172,6 +182,14 @@ modded class PlayerBase {
 		Print("Camera for " + this.ToString() + " changed. old:" + m_CurrentCamera.ToString() + " new:"+new_camera.ToString());
 		m_CameraSwayModifier = new_camera.GetWeaponSwayModifier();
 		m_CurrentCamera = new_camera;
+	}
+	
+	override void OnCommandDeathStart() {
+		// Tell the server to stop computing AI stuffs
+		if (isAI() && GetGame().IsServer()) {
+			parent.markDead();
+		}
+		super.OnCommandDeathStart();
 	}
 
 };

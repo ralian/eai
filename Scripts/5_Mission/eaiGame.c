@@ -28,7 +28,7 @@ class eAIGame {
 				//SurvivorM_Cyril
 			PlayerBase h = PlayerBase.Cast(GetGame().CreatePlayer(null, "SurvivorF_Linda", data.param1.GetPosition() + debug_offset, 0, "NONE"));
 				
-			h.markAIServer(); // Important: Mark unit as AI since we don't control the constructor.
+			h.markAIServer( ); // Important: Mark unit as AI since we don't control the constructor.
 			 // Do the same in the clients
 				
 			//h.OnCameraChanged(new eAIDayZPlayerCamera(h, h.GetInputController()));
@@ -56,6 +56,7 @@ class eAIGame {
 			h.GetHumanInventory().CreateInInventory("Mag_STANAG_30Rnd");
 
 			eAIPlayerHandler handler = new eAIPlayerHandler(h);
+			h.markOwner(handler);
 			
 			// Set the target entity we should follow to the player that spawned it, then do the first pathfinding update
 			handler.Follow(data.param1, 2);
@@ -211,11 +212,16 @@ class eAIGame {
 		timeDiv++;
 		if (Math.Floor(gametime - (4*timeslice)) != Math.Floor(gametime)) {timeDiv = 0;}
 
+		// Todo we need a better way to do this than checking each frame...
+		for (int i = 0; i < aiList.Count(); i++)
+			if (aiList[i] == null || aiList[i].isDead())
+				aiList.Remove(i);
+		
 		// AI pathing calculations
 		foreach (eAIPlayerHandler h : aiList) {
 			if (timeDiv == 0) {
 				numOfDivsPassed++;
-				
+				h.UpdateState();
 				while (h.UpdateMovement()) {} // update the movement as many times as needed
 			} // set a new movement target 4 times per scond
 		}

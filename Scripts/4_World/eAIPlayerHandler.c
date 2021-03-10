@@ -4,7 +4,7 @@ enum eAIBehaviorGlobal { // Global states that dictate each unit's actions
 	ALERT, 		// Scan surroundings carefully. Will run to waypoint.
 	PANIC, 		// Unused, temp state if shot or injured from unknown direction
 	COMBAT 		// Will engage the threats in the threat list in order. Will ignore waypoints to seek out threats.
-}
+};
 
 // Combat behavior flags... mostly unused at the moment
 enum eAICombatPriority {
@@ -12,8 +12,16 @@ enum eAICombatPriority {
 	FIND_COVER,			// Find cover before engaging
 	COVERING_FIRE,		// Used to protect squadmates while they move
 	IGNORE,				// Ignore the combat and move to waypoint
-	SHOT_OF_OPPORTUNITY	// The enemy does not see us (such as an infected) and we should only shoot if we have to.
-}
+	RELOADING,
+	OPPORTUNITY_SHOT	// The enemy does not see us (such as an infected) and we should only shoot if we have to.
+};
+
+enum eAIActionInterlock { // To be implemented later, so that only one anim runs at a time
+	NONE,
+	WEAPON_UPDOWN,
+	RELOADING,
+	FIRING
+};
 
 // This class is assigned to a single PlayerBase to manage its behavior.
 class eAIPlayerHandler {
@@ -22,7 +30,7 @@ class eAIPlayerHandler {
 	ref eAIDayZPlayerCamera cam;
 	
 	// Brain data
-	ref array<Entity> threats = new array<Entity>();
+	ref array<Object> threats = new array<Object>();
 	eAIBehaviorGlobal state;
 	eAICombatPriority combatState;
 	bool m_WantWeapRaise = false;
@@ -107,9 +115,8 @@ class eAIPlayerHandler {
 		unit.GetInputController().OverrideAimChangeY(true, 0.0);
 	}
 	
-	
-	void ToggleWeaponRaise() {
-		m_WantWeapRaise = !m_WantWeapRaise;
+	void WeaponRaise(bool up) {
+		m_WantWeapRaise = up;
 		unit.GetInputController().OverrideRaise(true, m_WantWeapRaise);
 		HumanCommandMove cm = unit.GetCommand_Move();
 		if (m_WantWeapRaise) {
@@ -117,6 +124,10 @@ class eAIPlayerHandler {
 		} else {
 			cm.ForceStance(DayZPlayerConstants.STANCEIDX_ERECT);
 		}
+	}
+	
+	void ToggleWeaponRaise() {
+		WeaponRaise(!m_WantWeapRaise);
 	}
 	
 	// This returns true if the weapon should be raised.
@@ -142,9 +153,30 @@ class eAIPlayerHandler {
 		return false;
 	}
 	
+	// Add a waypoint, return the index of the added wp
+	int addWaypoint(vector pos) {
+		waypoints.Insert(pos);
+		return ++cur_waypoint_no;
+	}
+	
 	// Update our heading and speed to the next waypoint; if we reach a waypoint, do more wacky logic.
 	bool UpdateMovement() {
 		bool needsToRunAgain = false;
+		
+		if (state == eAIBehaviorGlobal.COMBAT) {
+			// Do the logic for aiming along the x axis...
+			// Todo make it so the x direction is calculated from barrell
+			unit.GetInputController().OverrideMovementSpeed(true, 0.0);
+			targetAngle = vector.Direction(unit.GetPosition(), threats[0].GetPosition()).VectorToAngles().GetRelAngles()[0];
+			heading = -(unit.GetInputController().GetHeadingAngle() * Math.RAD2DEG); 
+			delta = Math.DiffAngle(targetAngle, heading);
+			delta /= 500;
+			delta = Math.Max(delta, -0.25);
+			delta = Math.Min(delta, 0.25);
+			unit.GetInputController().OverrideAimChangeX(true, delta);
+			HasAShot = (delta < 0.01);
+			return false;
+		}
 		
 		// First, if we don't have any valid waypoints, make sure to stop the AI and quit prior to the movement logic.
 		// Otherwise, the AimChange would be undefined in this case (leading to some hilarious behavior including disappearing heads)
@@ -153,6 +185,12 @@ class eAIPlayerHandler {
 			unit.GetInputController().OverrideAimChangeX(true, 0.0);
 			return false;
 		}
+		
+		if (m_FollowOrders) {
+			cur_waypoint_no = -1; // can't use clearWaypoints() here because we want to preserve the distance
+			waypoints.Clear();
+			addWaypoint(m_FollowOrders.GetPosition());
+		};
 		
 		targetAngle = vector.Direction(unit.GetPosition(), waypoints[cur_waypoint_no]).VectorToAngles().GetRelAngles()[0];// * Math.DEG2RAD;
 		//vector heading = MiscGameplayFunctions.GetHeadingVector(this);
@@ -179,7 +217,7 @@ class eAIPlayerHandler {
 		
 		if (Math.AbsFloat(delta) > 0.24) {															// If we need to turn a lot, we don't want to start walking
 			unit.GetInputController().OverrideMovementSpeed(true, 0.0); 
-		} else if (currDistToWP > 2 * arrival_radius && gettingCloser) { 							// If we have a WP but it is far away			
+		} else if (currDistToWP > 2 * arrival_radius) { //&& gettingCloser) { 							// If we have a WP but it is far away			
 			unit.GetInputController().OverrideMovementSpeed(true, 2.0);
 		} else if (currDistToWP > arrival_radius) { 												// If we are getting close to a WP
 			unit.GetInputController().OverrideMovementSpeed(true, 1.0);
@@ -206,6 +244,88 @@ class eAIPlayerHandler {
 	void UpdatePathing() { // This update needs to be done way less frequent than Movement; Default is 1 every 10 update ticks.
 		if (m_FollowOrders) { // If we have a reference to a player to follow, we refresh the waypoints.
 			thread updateWaypoints(this);
+		}
+	}
+	
+	void CleanThreatList() {
+		// Todo find a faster way to do this... like a linked list?
+		int i = 0;
+		while (i < threats.Count()) {
+			if (DayZInfected.Cast(threats[i]))
+				i++;
+			else
+				threats.RemoveOrdered(i);
+		}
+		
+		// Todo reorder the threats so the closest/biggest is first
+	}
+	
+	bool dead;
+	void markDead() {dead = true;}
+	bool isDead() {return dead;}
+	
+	//--------------------------------------------------------------------------------------------------------------------------
+	// BEGIN CODE FOR FSM
+	//--------------------------------------------------------------------------------------------------------------------------
+	
+	// This is used in combat state, is true when the target is sufficiently being aimed at
+	bool HasAShot = false;
+	
+	protected void EnterCombat() {
+		state = eAIBehaviorGlobal.COMBAT;
+		clearWaypoints();	
+		Weapon_Base wpn = Weapon_Base.Cast(unit.GetDayZPlayerInventory().GetEntityInHands());
+		if (wpn) {
+			if (wpn.CanFire()) {
+				combatState = eAICombatPriority.ELIMINATE_TARGET;
+			} else {
+				combatState = eAICombatPriority.RELOADING;
+				unit.QuickReloadWeapon(wpn);
+			}
+		} else {
+			// If we don't have a weapon in hands, we need to switch weapons. But I haven't added this logic yet.
+			combatState = eAICombatPriority.FIND_COVER;
+		}
+	}
+	
+	protected void UpdateCombatState() {
+		Weapon_Base wpn = Weapon_Base.Cast(unit.GetDayZPlayerInventory().GetEntityInHands());
+		
+		if (threats.Count() == 0 || !threats[0]) {
+			state = eAIBehaviorGlobal.RELAXED;	
+			return;
+		}
+		
+		if (wpn.CanFire() && combatState == eAICombatPriority.RELOADING) {
+			// we are done reloading, we can continue
+			combatState = eAICombatPriority.ELIMINATE_TARGET;
+		} else if (!wpn.CanFire() && combatState != eAICombatPriority.RELOADING) {
+			// need to reload again
+			combatState = eAICombatPriority.RELOADING;
+			unit.QuickReloadWeapon(wpn);
+			return;
+		}
+		
+		
+		if (combatState == eAICombatPriority.ELIMINATE_TARGET) {
+			if (wpn.CanFire() && HasAShot) {
+				FireHeldWeapon();
+			}
+		}
+	}
+	
+	ref array<CargoBase> proxyCargos = new array<CargoBase>();// not sure what this is for yet, it is returned by GetObjectsAtPosition
+	
+	void UpdateState() {
+		if (state == eAIBehaviorGlobal.COMBAT)
+			UpdateCombatState();
+		
+		if (state == eAIBehaviorGlobal.RELAXED) {
+			// maybe do this in another thread
+			GetGame().GetObjectsAtPosition(unit.GetPosition(), 10.0, threats, proxyCargos);
+			CleanThreatList();
+			if (threats.Count() > 0)
+				EnterCombat();
 		}
 	}
 
