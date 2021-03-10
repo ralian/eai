@@ -164,16 +164,27 @@ class eAIPlayerHandler {
 		bool needsToRunAgain = false;
 		
 		if (state == eAIBehaviorGlobal.COMBAT) {
+			vector myPos = unit.GetPosition();
+			vector threatPos = threats[0].GetPosition();
+			
 			// Do the logic for aiming along the x axis...
 			// Todo make it so the x direction is calculated from barrell
 			unit.GetInputController().OverrideMovementSpeed(true, 0.0);
-			targetAngle = vector.Direction(unit.GetPosition(), threats[0].GetPosition()).VectorToAngles().GetRelAngles()[0];
+			targetAngle = vector.Direction(myPos, threatPos).VectorToAngles().GetRelAngles()[0];
 			heading = -(unit.GetInputController().GetHeadingAngle() * Math.RAD2DEG); 
 			delta = Math.DiffAngle(targetAngle, heading);
 			delta /= 500;
 			delta = Math.Max(delta, -0.25);
 			delta = Math.Min(delta, 0.25);
 			unit.GetInputController().OverrideAimChangeX(true, delta);
+			
+			// Now, do the logic for aiming along the y axis.
+			float gunHeight = 1.5 + myPos[1]; 			// Todo get the actual world gun height.
+			float targetHeight = 1.0 + threatPos[1]; 	// Todo get actual threat height
+			float aimAngle = Math.Atan2(targetHeight - gunHeight, vector.Distance(myPos, threatPos));
+			unit.targetAngle = aimAngle * Math.RAD2DEG;
+			
+			// Enable firing if the AI is with a threshold of 
 			HasAShot = (delta < 0.01);
 			return false;
 		}

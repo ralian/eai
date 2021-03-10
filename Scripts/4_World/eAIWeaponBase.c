@@ -62,7 +62,7 @@ modded class Weapon_Base {
 			// Now that the RPC is sent to the clients, we need to compute the ballistics data and see about a hit.
 			// We miiight want to do this in another thread???
 			
-			if (e.GetEventID() == WeaponEventID.TRIGGER) {
+			if (CanFire() && e.GetEventID() == WeaponEventID.TRIGGER) {
 
 				
 					
