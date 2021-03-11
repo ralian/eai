@@ -53,6 +53,9 @@ bool DayZPlayerInventory_OnEventForRemoteWeaponAI (int packedType, DayZPlayer pl
 
 modded class Weapon_Base {
 	
+	// For raycasting bullets in the navmesh
+	ref PGFilter pgFilter = new PGFilter();;
+	
 	// These two particles are set relative to this weapon when a SendBullet event is registered.
 	// The location can be polled on the postframe, when SendBullet is true.
 	//Particle p_front, p_back;	
@@ -136,7 +139,10 @@ modded class Weapon_Base {
 				vector groundCheckDelta = hitPosition + "0 -0.05 0";
 				vector groundCheckContactPos, groundCheckContactDir;
 				int contactComponent;
-				DayZPhysics.RaycastRV(hitPosition, groundCheckDelta, groundCheckContactPos, groundCheckContactDir, contactComponent, null, null, closest);		
+				//DayZPhysics.RaycastRV(hitPosition, groundCheckDelta, groundCheckContactPos, groundCheckContactDir, contactComponent, null, null, closest);
+				pgFilter.SetFlags(PGPolyFlags.ALL, 0, 0);
+				GetGame().GetWorld().GetAIWorld().RaycastNavMesh(hitPosition, groundCheckDelta, pgFilter, groundCheckContactPos, groundCheckContactDir);
+				GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(groundCheckContactPos, vector.Zero));
 				bool hitGround = (vector.Distance(groundCheckDelta, groundCheckContactPos) > 0.01);
 				
 				Print("hitGround = " + hitGround.ToString());
