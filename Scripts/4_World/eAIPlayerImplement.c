@@ -150,7 +150,7 @@ modded class PlayerBase {
 	//}
 	
 	override bool AimingModel(float pDt, SDayZPlayerAimingModel pModel) {
-		if (isAI()) {
+		if (isAI() && GetGame().IsServer()) {
 			if (!GetHumanInventory() || !GetHumanInventory().GetEntityInHands())
 				return false;
 			
@@ -196,5 +196,60 @@ modded class PlayerBase {
 		}
 		super.OnCommandDeathStart();
 	}
+	
+	// Credit: Wardog
+	// Thanks for the amazing help!
+	EntityAI GetHands()
+    {
+        int slot_id = InventorySlots.GetSlotIdFromString("Gloves"); // 98% positive this is correct
+        return GetInventory().FindPlaceholderForSlot(slot_id);
+    }
+	
+	// Credit: Wardog
+	// dump of all the hand selections
+    array<string> GetHandsSelections(string lodName = "1")
+    {
+        array<string> selection_names = {};
+        array<Selection> selections = {};
+
+        LOD lod = GetHands().GetLODByName(lodName); // get LOD 1
+        lod.GetSelections(selections);
+
+        foreach (auto sel : selections)
+            selection_names.Insert(sel.GetName());
+		
+		return selection_names;
+    }
+
+	// Credit: Wardog
+    vector GetHandSelectionPosition(string lodName, string selectionName)
+    {
+        LOD lod = GetHands().GetLODByName(lodName);
+        if (!lod)
+        {
+            Print("Could not find LOD by name: " + lodName);
+            return "0 0 0";
+        }
+        
+        Selection selection = lod.GetSelectionByName(selectionName);
+        if (!selection)
+        {
+            Print("Could not find selection by name: " + selectionName);
+            return "0 0 0";
+        }
+
+        vector total_vertices = "0 0 0";
+        int count = selection.GetVertexCount();
+
+        for (int i = 0; i < count; ++i)
+            total_vertices += lod.GetVertexPosition(selection.GetLODVertexIndex(i));
+		
+		if (count < 1) {
+			Print("PlayerBase::GetHandSelectionPosition() - No verts found lod:" + lod + " selectionName:" + selectionName);
+			return "0 0 0";
+		}
+
+        return Vector(total_vertices[0] / count, total_vertices[1] / count, total_vertices[2] / count); // divide by vertice count to get center
+    }
 
 };

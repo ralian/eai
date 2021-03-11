@@ -15,7 +15,9 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "DebugFire", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "DebugParticle", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ToggleWeaponRaise", this, SingeplayerExecutionType.Client);
-		//GetRPCManager().AddRPC("eAI", "ServerSendGlobalRPC", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("eAI", "SpawnZombie", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("eAI", "DebugWeaponLocation", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("eAI", "SpawnBullet", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", this, SingeplayerExecutionType.Client);
     }
 	
@@ -58,12 +60,13 @@ class eAIGame {
 			eAIPlayerHandler handler = new eAIPlayerHandler(h);
 			h.markOwner(handler);
 			
+			aiList.Insert(handler);
+			
 			// Set the target entity we should follow to the player that spawned it, then do the first pathfinding update
 			handler.Follow(data.param1, 2);
 			handler.UpdatePathing();
 			
-			aiList.Insert(handler);
-
+			
 		}
 	}
 	
@@ -136,8 +139,18 @@ class eAIGame {
 		if(type == CallType.Server) {
             Print("eAI ToggleWeaponRaise RPC called.");
 			foreach (eAIPlayerHandler i : aiList) {
-				i.ToggleWeaponRaise();
+				i.WeaponRaise(true);
 			}
+        }
+	}
+	
+	// BUG: this has sometimes crashed us before. Not sure why yet.
+	void SpawnZombie(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+		Param1<PlayerBase> data; // here the parameter is unused, maybe we could use an enum instead
+        if ( !ctx.Read( data ) ) return;
+		if(type == CallType.Server) {
+            Print("eAI SpawnZombie RPC called.");
+			GetGame().CreateObject("ZmbF_JournalistNormal_Blue", data.param1.GetPosition() + debug_offset + debug_offset, false, true, true);
         }
 	}
 	
@@ -159,7 +172,7 @@ class eAIGame {
         if (!ctx.Read(data)) return;
 		if(type == CallType.Client ) {
 			Particle p = Particle.PlayInWorld(ParticleList.DEBUG_DOT, data.param1);
-			p.SetOrientation(data.param2);
+			p.SetOrientation(data.param2);			
 		}
 	}
 	
@@ -170,6 +183,45 @@ class eAIGame {
 			Print("Received weapon event for " + data.param1.ToString() + " player:" + data.param2.ToString() + " mag:" + data.param3.ToString());
             DayZPlayerInventory_OnEventForRemoteWeaponAI(data.param1, data.param2, data.param3);
 		//}
+	}
+	
+	void DebugWeaponLocation(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+		Param1<Weapon_Base> data;
+        if (!ctx.Read(data)) return;
+		
+		Particle p = Particle.PlayInWorld(ParticleList.DEBUG_DOT, "0 0 0");
+		///p.SetOrientation(vector.Zero);
+		data.param1.AddChild(p, -1);
+		//data.param1.Update();
+		p.Update();
+		Print(p.GetPosition());
+		
+		vector usti_hlavne_position = data.param1.GetSelectionPositionLS("usti hlavne"); // This is therefore the begin_point
+		Particle p1 = Particle.PlayInWorld(ParticleList.DEBUG_DOT, usti_hlavne_position);
+		///p1.SetOrientation(vector.Zero);
+		data.param1.AddChild(p1, -1);
+		//data.param1.Update();
+		p1.Update();
+		Print(p1.GetPosition());
+		
+		vector konec_hlavne_position = data.param1.GetSelectionPositionLS("konec hlavne");
+		Particle p2 = Particle.PlayInWorld(ParticleList.DEBUG_DOT, konec_hlavne_position);
+		p2.SetOrientation(vector.Zero);
+		data.param1.AddChild(p2, -1);
+		//data.param1.Update();
+		p2.Update();
+		Print(p2.GetPosition());
+		
+		// Now, sync data to server.
+		GetRPCManager().SendRPC("eAI", "SpawnBullet", new Param3<Weapon_Base, vector, vector>(data.param1, p1.GetPosition(), p2.GetPosition()));
+	}
+	
+	void SpawnBullet(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+		Param3<Weapon_Base, vector, vector> data;
+        if (!ctx.Read(data)) return;
+		if(type == CallType.Server ) {
+			data.param1.BallisticsPostFrame(data.param2, data.param3);		
+		}
 	}
 
     void OnKeyPress(int key) {
@@ -200,6 +252,10 @@ class eAIGame {
 			}
 			case KeyCode.KC_M: {
 				GetRPCManager().SendRPC("eAI", "ProcessReload", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
+				break;
+			}
+			case KeyCode.KC_B: {
+				GetRPCManager().SendRPC("eAI", "SpawnZombie", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
 				break;
 			}
         }

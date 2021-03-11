@@ -42,7 +42,101 @@ bool DayZPlayerInventory_OnEventForRemoteWeaponAI (int packedType, DayZPlayer pl
 	return true;
 }
 
-modded class Weapon_Base {	
+modded class Weapon_Base {
+	
+	// These two particles are set relative to this weapon when a SendBullet event is registered.
+	// The location can be polled on the postframe, when SendBullet is true.
+	//Particle p_front, p_back;	
+	//bool SendBullet = false;
+	
+	// @params begin_point  The global space point where the raycast will start (front of the muzzle)
+	// @param back 			The global space point behind begin_point, usually the back of the barrel
+	void BallisticsPostFrame(vector begin_point, vector back) {
+		//if (SendBullet) {
+			//SendBullet = false;
+			Print("Postframe reached!...");
+			
+			// Get ballistics info
+			float ammoDamage;
+			string ammoTypeName;
+			GetCartridgeInfo(GetCurrentMuzzle(), ammoDamage, ammoTypeName);
+			
+			// Get geometry info
+			
+			//vector begin_point = p_front.GetPosition();
+			//vector back = p_back.GetPosition();
+			
+			vector aim_point = begin_point - back;
+
+			vector end_point = (500*aim_point) + begin_point;
+			
+			// Use these to get  an idea of the direction for the raycast
+			GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(back, vector.Zero));
+			GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point, vector.Zero));
+			GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point + aim_point , vector.Zero));
+			
+			
+			Print("Muzzle pos: " + begin_point.ToString() + " dir-pos: " + (end_point-begin_point).ToString());
+			
+			// Prep Raycast
+			Object hitObject;
+			vector hitPosition, hitNormal;
+			float hitFraction;
+			int contact_component = 0;
+			DayZPhysics.RayCastBullet(begin_point, end_point, hit_mask, this, hitObject, hitPosition, hitNormal, hitFraction);
+			//DayZPhysics.RaycastRV(begin_point, aim_point, hitPosition, hitNormal, contact_component, null, null, null, false, false, ObjIntersectFire);
+			
+			GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(hitPosition, vector.Zero));
+			
+			Print("Raycast hitObject: " + hitObject.ToString() + " hitPosition-pos: " + (hitPosition-begin_point).ToString() + " hitNormal: " + hitNormal.ToString() + " hitFraction " + hitFraction.ToString());
+			
+			//if (hitPosition && hitNormal) {
+			//	Particle p = Particle.PlayInWorld(ParticleList.DEBUG_DOT, hitPosition);
+			//	p.SetOrientation(hitNormal);
+				
+			//}
+			
+			// So here is an interesting bug... hitObject is always still null even if the raycast succeeded
+			// If it succeded then hitPosition, hitNormal, and hitFraction will be accurate
+			if (hitFraction > 0.00001) {
+				// this could be useful in the future
+				//ref array<Object> nearest_objects = new array<Object>;
+				//ref array<CargoBase> proxy_cargos = new array<CargoBase>;
+				//GetGame().GetObjectsAtPosition ( hitPosition, 1.0, nearest_objects, proxy_cargos );		
+													
+				array<Object> objects = new array<Object>();
+				ref array<CargoBase> proxyCargos = new array<CargoBase>();
+				Object closest = null;
+				float dist = 1000000.0;
+				float testDist;
+				GetGame().GetObjectsAtPosition3D(hitPosition, 1.5, objects, proxyCargos);
+				for (int i = 0; i < objects.Count(); i++) {
+					if (DayZInfected.Cast(objects[i]) || Man.Cast(objects[i])) {
+						testDist = vector.Distance(objects[i].GetPosition(), hitPosition);
+						if (testDist < dist) {
+							closest = objects[i];
+							dist = testDist;
+						}
+					}
+				}
+			
+				// BUG: hitGround is sometimes still false even when we hit the top of an object.
+				
+				// As a quick workaround, do a raycast 5cm down from hitPosition
+				// If we hit something other than object within 5cm, then we know we have hit the ground and we should not damage "closest."
+				vector groundCheckDelta = hitPosition + "0 -0.05 0";
+				vector groundCheckContactPos, groundCheckContactDir;
+				int contactComponent;
+				DayZPhysics.RaycastRV(hitPosition, groundCheckDelta, groundCheckContactPos, groundCheckContactDir, contactComponent, null, null, closest);		
+				bool hitGround = (vector.Distance(groundCheckDelta, groundCheckContactPos) > 0.01);
+				
+				Print("hitGround = " + hitGround.ToString());
+				
+				if (closest && !hitGround)
+					closest.ProcessDirectDamage(DT_FIRE_ARM, null, "Torso", ammoTypeName, closest.WorldToModel(hitPosition), 1.0);
+			//}
+		}
+	}
 	
 	/**@fn	ProcessWeaponEvent
 	 * @brief	weapon's fsm handling of events
@@ -61,100 +155,43 @@ modded class Weapon_Base {
 			
 			// Now that the RPC is sent to the clients, we need to compute the ballistics data and see about a hit.
 			// We miiight want to do this in another thread???
-			
 			if (CanFire() && e.GetEventID() == WeaponEventID.TRIGGER) {
-
 				
-					
+				Print("Round fired by " + e.m_player);
 				
-				// Get ballistics info
-				float ammoDamage;
-				string ammoTypeName;
-				GetCartridgeInfo(GetCurrentMuzzle(), ammoDamage, ammoTypeName);
+				// For now, we're just going to have a client handle this.
+				// It will duplicate events if more than 1 person is on the server (not good)
+				array< PlayerIdentity > identities;
+				GetGame().GetPlayerIndentities(identities);	
+				GetRPCManager().SendRPC("eAI", "DebugWeaponLocation", new Param1<Weapon_Base>(this));
 				
-				Print("AI ROUND FIRED, BEGIN DEBUG INFO FOR UNIT: " + e.m_player);
-				Print("AmmoType: " + ammoTypeName + " ammoDamage: " + ammoDamage.ToString());
+				// Eventually we will need to do this server side.
 				
-				// Get Position Info
-				// This is the same code in GetProjectedCursorPos3d(), but we need to do our own raycast logic
-				vector usti_hlavne_position = GetSelectionPositionMS( "usti hlavne" );
-				vector konec_hlavne_position = GetSelectionPositionMS( "konec hlavne" );
+				// At this poin we are ready to register an event for the ballistics. BEcause of engine limitations we cannot directly 
+				// poll the world space of the barrel to my knowledge. It is necessary to create two particles, attach them to the barrel,
+				// _then wait a frame._ The new location of the Particles is then where the barrel is.
+				/*vector usti_hlavne_position = GetSelectionPositionLS("usti hlavne"); // front?
+				p_front = Particle.Cast( GetGame().CreateObject("Particle", usti_hlavne_position, true) );
+				p_front.SetSource(ParticleList.INVALID);
+				p_front.SetOrientation(vector.Zero);
+				p_front.m_ForceOrientationRelativeToWorld = false;
+				//p_front.PlayParticle();
+				AddChild(p_front, -1);
+				p_front.Update();
 				
+				vector konec_hlavne_position = GetSelectionPositionLS("konec hlavne"); // back?
+				p_back = Particle.Cast( GetGame().CreateObject("Particle", konec_hlavne_position, true) );
+				p_back.SetSource(ParticleList.INVALID);
+				p_back.m_ForceOrientationRelativeToWorld = false;
+				//p_back.PlayParticle();
+				AddChild(p_back, -1);
+				p_back.Update();
 				
+				Print("Waiting for postframe...");
 				
-				//usti_hlavne_position = GetParent().VectorToParent(VectorToParent(usti_hlavne_position));
-				//konec_hlavne_position = VectorToParent(konec_hlavne_position);
+				SendBullet = true;
 				
-				//HumanItemAccessor hia = e.m_player.GetItemAccessor();
-				vector aimingMatTM[4];
-				//hia.WeaponGetAimingModelDirTm(aimingMatTM);
-				
-				float quatHeadTrans[4];
-				int idx = e.m_player.GetBoneIndexByName("Head");
-				if (idx < 0)
-					Error("I've lost my darn head!");
-				e.m_player.GetBoneRotationWS(idx, quatHeadTrans);
-				vector headTrans = Math3D.QuatToAngles(quatHeadTrans); //despite what it says in the doc, this goes <Yaw, Roll, Pitch> with Pitch measured from the +Y axis
-				
-				vector weaponPos = e.m_player.GetBonePositionWS(idx);
-				vector begin_point = weaponPos;
-				vector aim_point;
-				aim_point[1] = Math.Sin(DayZPlayerImplement.Cast(e.m_player).GetAimingModel().getAimY() * Math.DEG2RAD);
-				aim_point[0] = -Math.Cos(headTrans[0] * Math.DEG2RAD);
-				aim_point[2] = Math.Sin(headTrans[0] * Math.DEG2RAD);
-				vector end_point = (500*aim_point) + begin_point;
-				
-				// Use these to get  an idea of the direction for the raycast
-				//GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point, vector.Zero));
-				//GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>((begin_point+aim_point), vector.Zero));
-				
-				Print("Muzzle pos: " + begin_point.ToString() + " dir-pos: " + (end_point-begin_point).ToString());
-				
-				// Prep Raycast
-				Object hitObject;
-				vector hitPosition, hitNormal;
-				float hitFraction;
-				int contact_component = 0;
-				DayZPhysics.RayCastBullet(begin_point, end_point, hit_mask, this, hitObject, hitPosition, hitNormal, hitFraction);
-				//DayZPhysics.RaycastRV(begin_point, aim_point, hitPosition, hitNormal, contact_component, null, null, null, false, false, ObjIntersectFire);
-				
-				GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(hitPosition, vector.Zero));
-				
-				Print("Raycast hitObject: " + hitObject.ToString() + " hitPosition-pos: " + (hitPosition-begin_point).ToString() + " hitNormal: " + hitNormal.ToString() + " hitFraction " + hitFraction.ToString());
-				
-				//if (hitPosition && hitNormal) {
-				//	Particle p = Particle.PlayInWorld(ParticleList.DEBUG_DOT, hitPosition);
-				//	p.SetOrientation(hitNormal);
-					
-				//}
-				
-				// So here is an interesting bug... hitObject is always still null even if the raycast succeeded
-				// If it succeded then hitPosition, hitNormal, and hitFraction will be accurate
-				if (hitFraction > 0.00001) {
-					// this could be useful in the future
-					//ref array<Object> nearest_objects = new array<Object>;
-					//ref array<CargoBase> proxy_cargos = new array<CargoBase>;
-					//GetGame().GetObjectsAtPosition ( hitPosition, 1.0, nearest_objects, proxy_cargos );
-					
-									
-					array<Object> objects = new array<Object>();
-					ref array<CargoBase> proxyCargos = new array<CargoBase>();
-					Object closest = null;
-					float dist = 1000000.0;
-					float testDist;
-					GetGame().GetObjectsAtPosition3D(hitPosition, 1.5, objects, proxyCargos);
-					for (int i = 0; i < objects.Count(); i++) {
-						if (DayZInfected.Cast(objects[i]) || Man.Cast(objects[i])) {
-							testDist = vector.Distance(objects[i].GetPosition(), hitPosition);
-							if (testDist < dist) {
-								closest = objects[i];
-								dist = testDist;
-							}
-						}
-					}
-					if (closest)
-						closest.ProcessDirectDamage(DT_FIRE_ARM, e.m_player, "Torso", ammoTypeName, closest.WorldToModel(hitPosition), 1.0);
-				}
+				BallisticsPostFrame();*/
 			}
 			
 			if (m_fsm.ProcessEvent(e) == ProcessEventResult.FSM_OK)

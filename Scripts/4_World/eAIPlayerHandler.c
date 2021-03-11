@@ -170,8 +170,12 @@ class eAIPlayerHandler {
 			// Do the logic for aiming along the x axis...
 			// Todo make it so the x direction is calculated from barrell
 			unit.GetInputController().OverrideMovementSpeed(true, 0.0);
+			
 			targetAngle = vector.Direction(myPos, threatPos).VectorToAngles().GetRelAngles()[0];
-			heading = -(unit.GetInputController().GetHeadingAngle() * Math.RAD2DEG); 
+			
+			// Here 10 degrees is a fudge factor based off the diff between the head and weapon angle.
+			heading = -(unit.GetInputController().GetHeadingAngle() * Math.RAD2DEG) + 10; 
+			
 			delta = Math.DiffAngle(targetAngle, heading);
 			delta /= 500;
 			delta = Math.Max(delta, -0.25);
@@ -185,7 +189,7 @@ class eAIPlayerHandler {
 			unit.targetAngle = aimAngle * Math.RAD2DEG;
 			
 			// Enable firing if the AI is with a threshold of 
-			HasAShot = (delta < 0.01);
+			HasAShot = (delta < 0.005);
 			return false;
 		}
 		
@@ -259,7 +263,7 @@ class eAIPlayerHandler {
 	}
 	
 	void RecalcThreatList() {
-		GetGame().GetObjectsAtPosition(unit.GetPosition(), 10.0, threats, proxyCargos);
+		GetGame().GetObjectsAtPosition(unit.GetPosition(), 20.0, threats, proxyCargos);
 		
 		// Todo find a faster way to do this... like a linked list?
 		int i = 0;
