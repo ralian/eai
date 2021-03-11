@@ -58,6 +58,7 @@ class eAIPlayerHandler {
 			Error("Attempting to call eAIPlayerHandler() on " + p.ToString() + ", which is not marked as AI.");
 		
 		state = eAIBehaviorGlobal.RELAXED;
+		combatState = eAICombatPriority.ELIMINATE_TARGET;
 		
 		cam = new eAIDayZPlayerCamera(unit, unit.GetInputController());
 		cam.InitCameraOnPlayer(true); // force the camera active
@@ -115,7 +116,8 @@ class eAIPlayerHandler {
 		unit.GetInputController().OverrideAimChangeY(true, 0.0);
 	}
 	
-	void WeaponRaise(bool up) {
+	// todo fix the name of this
+	void RaiseWeapon(bool up) {
 		m_WantWeapRaise = up;
 		unit.GetInputController().OverrideRaise(true, m_WantWeapRaise);
 		HumanCommandMove cm = unit.GetCommand_Move();
@@ -127,7 +129,7 @@ class eAIPlayerHandler {
 	}
 	
 	void ToggleWeaponRaise() {
-		WeaponRaise(!m_WantWeapRaise);
+		RaiseWeapon(!m_WantWeapRaise);
 	}
 	
 	// This returns true if the weapon should be raised.
@@ -287,6 +289,21 @@ class eAIPlayerHandler {
 	bool isDead() {return dead;}
 	
 	//--------------------------------------------------------------------------------------------------------------------------
+	// BEGIN CODE FOR ACTION INTERLOCKS
+	//--------------------------------------------------------------------------------------------------------------------------
+	
+	float interlockTimeout = 0.0;
+	
+	//todo
+	bool TryRaiseWeapon(bool up) {
+	
+	}
+	
+	bool TryReload(bool up) {
+	
+	}
+	
+	//--------------------------------------------------------------------------------------------------------------------------
 	// BEGIN CODE FOR FSM
 	//--------------------------------------------------------------------------------------------------------------------------
 	
@@ -294,6 +311,11 @@ class eAIPlayerHandler {
 	bool HasAShot = false;
 	
 	protected void EnterCombat() {
+		
+		// WARNING. I THINK THIS WILL CRASH A UNIT WHICH TRIES TO ENTER COMBAT AND RELOAD AT THE SAME TIME.
+		// WE NEED TO IMPLEMENT THE INTERLOCK BEFORE THIS WILL ALWAYS WORK
+		RaiseWeapon(true);
+		
 		state = eAIBehaviorGlobal.COMBAT;
 		clearWaypoints();	
 		Weapon_Base wpn = Weapon_Base.Cast(unit.GetDayZPlayerInventory().GetEntityInHands());
@@ -336,8 +358,11 @@ class eAIPlayerHandler {
 				HasAShot = false;
 				
 				// Also check if we need to exit combat
-				if (threats.Count() < 1)
+				if (threats.Count() < 1) {
+					// Similarly, this will crash a unit which exits combat after emptying last round
+					RaiseWeapon(true);
 					state = eAIBehaviorGlobal.RELAXED;
+				}
 			}
 			
 			if (wpn.CanFire() && HasAShot) {
@@ -349,10 +374,27 @@ class eAIPlayerHandler {
 	ref array<CargoBase> proxyCargos = new array<CargoBase>();// not sure what this is for yet, it is returned by GetObjectsAtPosition
 	
 	void UpdateState() {
+		Weapon_Base wpn = Weapon_Base.Cast(unit.GetDayZPlayerInventory().GetEntityInHands());
+		
 		if (state == eAIBehaviorGlobal.COMBAT)
 			UpdateCombatState();
 		
 		if (state == eAIBehaviorGlobal.RELAXED) {
+			// If we are not reloading but need to, then reload
+			if (!wpn.CanFire() && combatState != eAICombatPriority.RELOADING) {
+				unit.QuickReloadWeapon(wpn);
+				combatState = eAICombatPriority.RELOADING;
+				return;
+			}			
+			
+			// Otherwise, if we are currently reloading
+			if (combatState == eAICombatPriority.RELOADING) {
+				if (!wpn.CanFire())
+					return; // continue reloading
+				else
+					combatState = eAICombatPriority.ELIMINATE_TARGET; // done reloading but not in combat
+			}
+			
 			// maybe do this in another thread
 			// also maybe do it less often when relaxed
 			RecalcThreatList();

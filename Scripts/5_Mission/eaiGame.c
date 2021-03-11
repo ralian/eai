@@ -139,7 +139,7 @@ class eAIGame {
 		if(type == CallType.Server) {
             Print("eAI ToggleWeaponRaise RPC called.");
 			foreach (eAIPlayerHandler i : aiList) {
-				i.WeaponRaise(true);
+				//i.WeaponRaise(true);
 			}
         }
 	}
