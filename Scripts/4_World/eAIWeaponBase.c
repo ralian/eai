@@ -10,13 +10,22 @@ WeaponEventBase CreateWeaponEventFromContextAI (int packedType, DayZPlayer playe
 bool DayZPlayerInventory_OnEventForRemoteWeaponAI (int packedType, DayZPlayer player, Magazine magazine)
 {
 	PlayerBase pb = PlayerBase.Cast(player);
+	
+	if (!pb) {
+		Error("DayZPlayerInventory_OnEventForRemoteWeaponAI Callback for null PlayerBase! I am giving up, some inventory will be out of sync!");
+		return false;
+	}
+	
+	if (!pb.GetDayZPlayerInventory()) {
+		Error("DayZPlayerInventory_OnEventForRemoteWeaponAI Callback for " + pb + " has a broken inventory reference!");
+		return false;
+	}
+	
 	if (pb.GetDayZPlayerInventory().GetEntityInHands())
 	{
 		Weapon_Base wpn = Weapon_Base.Cast(pb.GetDayZPlayerInventory().GetEntityInHands());
 		if (wpn)
 		{
-			
-
 			WeaponEventBase e = CreateWeaponEventFromContextAI(packedType, player, magazine);
 			if (pb && e)
 			{

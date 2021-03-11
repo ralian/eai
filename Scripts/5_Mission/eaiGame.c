@@ -2,7 +2,7 @@ class eAIGame {
 	// List of all eAI entities
 	ref array<autoptr eAIPlayerHandler> aiList = new array<autoptr eAIPlayerHandler>();
 	
-	vector debug_offset = "-25 0 0"; // Offset from player to spawn a new AI entity at when debug called
+	vector debug_offset = "-15 0 0"; // Offset from player to spawn a new AI entity at when debug called
 	
 	float gametime = 0;
 	
@@ -263,6 +263,9 @@ class eAIGame {
 	
 	int numOfDivsPassed = 0; // Okay, so this is a terrible way to do this. But AI will recalculate once each time "Div," a div (currently) being 250ms. This int is the floor of # of divs that have passed.
 	int timeDiv = 0; // This is the number of OnUpdates that have triggered since the last Div.
+	
+	int current_ai = 0;
+	
 	void OnUpdate(bool doSim, float timeslice) {
 		gametime += (4*timeslice); // timeslice*x where x is the number of slices per second
 		timeDiv++;
@@ -277,16 +280,16 @@ class eAIGame {
 		}
 		
 		// AI pathing calculations
-		foreach (eAIPlayerHandler h : aiList) {
-			if (timeDiv == 0) {
-				numOfDivsPassed++;
-				h.UpdateState();
-				while (h.UpdateMovement()) {} // update the movement as many times as needed
-			} // set a new movement target 4 times per scond
+		
+		if (timeDiv == 0) {
+			current_ai = 0;
+			numOfDivsPassed++;
 		}
 		
-		if (timeDiv == 0 && numOfDivsPassed % 120 == 0) { // Every 30 seconds
-
+		if (current_ai < aiList.Count()) {
+			aiList[current_ai].UpdateState();
+			while (aiList[current_ai].UpdateMovement()) {} // update the movement as many times as needed (usually once, sometimes twice)
+			current_ai++;
 		}
 	}
 };
