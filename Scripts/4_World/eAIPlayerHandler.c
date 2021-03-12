@@ -95,6 +95,13 @@ class eAIPlayerHandler {
 		disallowFlags |= PGPolyFlags.JUMP;
 		
 		pgFilter.SetFlags(allowFlags, disallowFlags, 0);
+		
+		// This is a separate PGFilter for raycasting what we can "See"
+		// Todo move this to a global filter?
+		int allowFlags2 = 0;
+		allowFlags2 |= PGPolyFlags.ALL;
+		allowFlags2 |= PGPolyFlags.WALK;
+		occlusionPGFilter.SetFlags(allowFlags2, 0, 0);
 	}
 	
 	/*void ~eAIPlayerHandler() {
@@ -136,6 +143,10 @@ class eAIPlayerHandler {
 	bool WantsWeaponUp() {
 		return m_WantWeapRaise;
 	}
+	
+	//--------------------------------------------------------------------------------------------------------------------------
+	// CODE AND HELPER FUNCS FOR PATHING
+	//--------------------------------------------------------------------------------------------------------------------------
 	
 	//! Clear the array of waypoints, setting cur_waypoint_no to -1
 	void clearWaypoints() {
@@ -264,6 +275,17 @@ class eAIPlayerHandler {
 		}
 	}
 	
+	//--------------------------------------------------------------------------------------------------------------------------
+	// HELPER FUNCS FOR TARGETING
+	//--------------------------------------------------------------------------------------------------------------------------
+	
+	ref PGFilter occlusionPGFilter = new PGFilter();
+	bool IsViewOccluded(vector pos, float tolerance = 0.05) {
+		vector hitPos, hitDir;
+		return GetGame().GetWorld().GetAIWorld().RaycastNavMesh(unit.GetPosition() + "0 1.5 0", pos, occlusionPGFilter, hitPos, hitDir);
+		//return (vector.Distance(hitPos, pos) > tolerance);
+	}
+	
 	void RecalcThreatList() {
 		GetGame().GetObjectsAtPosition(unit.GetPosition(), 20.0, threats, proxyCargos);
 		
@@ -271,7 +293,8 @@ class eAIPlayerHandler {
 		int i = 0;
 		float minDistance = 1000000.0, temp;
 		while (i < threats.Count()) {
-			if (DayZInfected.Cast(threats[i]) && threats[i].IsAlive()) {
+			DayZInfected infected = DayZInfected.Cast(threats[i]);
+			if (infected && infected.IsAlive() && !IsViewOccluded(infected.GetPosition() + "0 1.5 0")) {
 				temp = vector.Distance(threats[i].GetPosition(), unit.GetPosition());
 				// See if this index is the biggest threat, if so swap it to front
 				if (temp < minDistance && i > 1) {

@@ -9,7 +9,7 @@ modded class PlayerBase {
 	eAIPlayerHandler parent;
 	
 	// Angle above the horizon we should be aiming, degrees.
-	float targetAngle = -5.0;
+	float targetAngle = 5.0;// -5.0;
 
 	bool isAI = false;
 	
