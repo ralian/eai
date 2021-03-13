@@ -51,22 +51,37 @@ bool DayZPlayerInventory_OnEventForRemoteWeaponAI (int packedType, DayZPlayer pl
 	return true;
 }
 
+class SceneGraphPoint : ScriptedEntity {
+	void SceneGraphPoint(IEntity parent, vector pos) {}
+};
+
 modded class Weapon_Base {
 	
 	// For raycasting bullets in the navmesh
 	ref PGFilter pgFilter = new PGFilter();
 	
+	vector whereIAmAimedAt = "0 0 0";
+	//array<Object> thingsICouldBeAimedAt = new array<Object>();
+	
 	// These two particles are set relative to this weapon when a SendBullet event is registered.
 	// The location can be polled on the postframe, when SendBullet is true.
-	//Particle p_front, p_back;	
+	Object p_front, p_back;	
 	//bool SendBullet = false;
+	Object toIgnore;
 	
 	// @params begin_point  The global space point where the raycast will start (front of the muzzle)
 	// @param back 			The global space point behind begin_point, usually the back of the barrel
-	void BallisticsPostFrame(vector begin_point, vector back) {
+	void BallisticsPostFrame(vector begin_point = "0 0 0", vector back = "0 0 0") {
 		//if (SendBullet) {
 			//SendBullet = false;
 			Print("Postframe reached!...");
+		
+			Object ignore = toIgnore;
+
+			// this was only required for the serverside way I was trying to do this
+			//begin_point = p_front.GetPosition();
+			//back = p_back.GetPosition();
+
 			
 			// Get ballistics info
 			float ammoDamage;
@@ -121,12 +136,21 @@ modded class Weapon_Base {
 				Object closest = null;
 				float dist = 1000000.0;
 				float testDist;
+			
 				GetGame().GetObjectsAtPosition3D(hitPosition, 1.5, objects, proxyCargos);
-				for (int i = 0; i < objects.Count(); i++) {
-					if (DayZInfected.Cast(objects[i]) || Man.Cast(objects[i])) {
-						testDist = vector.Distance(objects[i].GetPosition(), hitPosition);
+				
+				Print(objects);
+			
+				// not necessary since the ai aren't shooting themselves anymore?
+				/*for (int i = 0; i < objects.Count(); i++)
+					if (objects[i] == ignore)
+						objects.Remove(i);*/
+			
+				for (int j = 0; j < objects.Count(); j++) {
+					if (DayZInfected.Cast(objects[j]) || Man.Cast(objects[j])) {
+						testDist = vector.Distance(objects[j].GetPosition(), hitPosition);
 						if (testDist < dist) {
-							closest = objects[i];
+							closest = objects[j];
 							dist = testDist;
 						}
 					}
@@ -139,18 +163,23 @@ modded class Weapon_Base {
 				vector groundCheckDelta = hitPosition + "0 -0.05 0";
 				vector groundCheckContactPos, groundCheckContactDir;
 				int contactComponent;
-				//DayZPhysics.RaycastRV(hitPosition, groundCheckDelta, groundCheckContactPos, groundCheckContactDir, contactComponent, null, null, closest);
+			
+				
 				int allowFlags = 0;
 				allowFlags |= PGPolyFlags.ALL;
 				allowFlags |= PGPolyFlags.WALK;
 				pgFilter.SetFlags(allowFlags, 0, 0);
-				bool hitGround = GetGame().GetWorld().GetAIWorld().RaycastNavMesh(hitPosition, groundCheckDelta, pgFilter, groundCheckContactPos, groundCheckContactDir);
+				bool hitAnObject = GetGame().GetWorld().GetAIWorld().RaycastNavMesh(hitPosition, groundCheckDelta, pgFilter, groundCheckContactPos, groundCheckContactDir);
 				GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(groundCheckContactPos, vector.Zero));
+
+				//DayZPhysics.RaycastRV(hitPosition, groundCheckDelta, groundCheckContactPos, groundCheckContactDir, contactComponent, null, null, closest);
 				//bool hitGround = (vector.Distance(groundCheckDelta, groundCheckContactPos) > 0.01);
 				
-				Print("hitGround = " + hitGround.ToString());
+				Print("hitEnemy = " + closest.ToString());
+				Print("Did we hit an inanimate object? = " + hitAnObject.ToString());
+				//Print("hitGround = " + hitGround.ToString());
 				
-				if (closest && !hitGround)
+				if (closest && !hitAnObject)// && !hitGround)
 					closest.ProcessDirectDamage(DT_FIRE_ARM, null, "Torso", ammoTypeName, closest.WorldToModel(hitPosition), 1.0);
 			//}
 		}
@@ -188,28 +217,44 @@ modded class Weapon_Base {
 				// At this poin we are ready to register an event for the ballistics. BEcause of engine limitations we cannot directly 
 				// poll the world space of the barrel to my knowledge. It is necessary to create two particles, attach them to the barrel,
 				// _then wait a frame._ The new location of the Particles is then where the barrel is.
+				
+				// This was my second attempt server side...
+				
 				/*vector usti_hlavne_position = GetSelectionPositionLS("usti hlavne"); // front?
-				p_front = Particle.Cast( GetGame().CreateObject("Particle", usti_hlavne_position, true) );
-				p_front.SetSource(ParticleList.INVALID);
+				vector konec_hlavne_position = GetSelectionPositionLS("konec hlavne"); // back?
+				p_front = GetGame().CreateObject("SceneGraphPoint", usti_hlavne_position, true);
+				p_back = GetGame().CreateObject("SceneGraphPoint", konec_hlavne_position, true);
+				AddChild(p_front, -1);
+				AddChild(p_back, -1);*/
+				
+				// This is the first way I tried to do this...
+				
+				//p_front = GetGame().CreateObject("Apple", usti_hlavne_position, true);
+				/*p_front = Particle.Cast( GetGame().CreateObject("Particle", usti_hlavne_position, true) );
+				p_front.SetSource(ParticleList.DEBUG_DOT);
 				p_front.SetOrientation(vector.Zero);
 				p_front.m_ForceOrientationRelativeToWorld = false;
-				//p_front.PlayParticle();
+				p_front.PlayParticle();
 				AddChild(p_front, -1);
 				p_front.Update();
 				
 				vector konec_hlavne_position = GetSelectionPositionLS("konec hlavne"); // back?
+				p_back = GetGame().CreateObject("Apple", konec_hlavne_position, true);
 				p_back = Particle.Cast( GetGame().CreateObject("Particle", konec_hlavne_position, true) );
-				p_back.SetSource(ParticleList.INVALID);
+				p_back.SetSource(ParticleList.DEBUG_DOT);
 				p_back.m_ForceOrientationRelativeToWorld = false;
-				//p_back.PlayParticle();
+				p_back.PlayParticle();
 				AddChild(p_back, -1);
-				p_back.Update();
+				p_back.Update();*/
 				
 				Print("Waiting for postframe...");
 				
-				SendBullet = true;
-				
-				BallisticsPostFrame();*/
+				//SendBullet = true;
+				toIgnore = e.m_player;
+				// This is absolutely not the right way to do this... the correct way would be to wait for the next sFrame, but
+				// that wasn't seeming to work
+				//BallisticsPostFrame();
+				//GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(BallisticsPostFrame, 5, false);
 			}
 			
 			if (m_fsm.ProcessEvent(e) == ProcessEventResult.FSM_OK)

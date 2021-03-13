@@ -9,7 +9,7 @@ modded class PlayerBase {
 	eAIPlayerHandler parent;
 	
 	// Angle above the horizon we should be aiming, degrees.
-	float targetAngle = 5.0;// -5.0;
+	float targetAngle = -5.0;
 
 	bool isAI = false;
 	
@@ -154,7 +154,7 @@ modded class PlayerBase {
 			if (!GetHumanInventory() || !GetHumanInventory().GetEntityInHands())
 				return false;
 			
-			float delta = -((GetAimingModel().getAimY()-targetAngle)*Math.DEG2RAD)/5.0;
+			float delta = -((GetAimingModel().getAimY()-targetAngle)*Math.DEG2RAD)/8.0;
 		
 			GetInputController().OverrideAimChangeY(true, delta);
 			

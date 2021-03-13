@@ -140,6 +140,7 @@ class eAIPlayerHandler {
 	}
 	
 	// This returns true if the weapon should be raised.
+	// I need another function to do this with a delay.
 	bool WantsWeaponUp() {
 		return m_WantWeapRaise;
 	}
@@ -179,17 +180,35 @@ class eAIPlayerHandler {
 		if (state == eAIBehaviorGlobal.COMBAT) {
 			vector myPos = unit.GetPosition();
 			vector threatPos = threats[0].GetPosition();
+			vector aimPoint = "0 0 0";
+			Weapon_Base weap = Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands());
+			
+			if (weap && weap.whereIAmAimedAt != "0 0 0" && WantsWeaponUp()) {
+				// Aiming logic based on where the barrel is aimed, won't work if the weapon is not yet up
+				aimPoint = weap.whereIAmAimedAt - myPos;
+				threatPos = threatPos - myPos;
+				targetAngle = threatPos.VectorToAngles().GetRelAngles()[0];
+				heading = aimPoint.VectorToAngles().GetRelAngles()[0];
+				
+				HasAShot = true;
+				
+			} else {
+				// if the weapon is held down, or if we have no weapon out yet
+				targetAngle = vector.Direction(myPos, threatPos).VectorToAngles().GetRelAngles()[0];
+			
+				// The heading is just where we are looking at, not where the weapon is.
+				heading = -(unit.GetInputController().GetHeadingAngle() * Math.RAD2DEG); 
+				
+				HasAShot = false;
+			}
+			
+			delta = Math.DiffAngle(targetAngle, heading);
 			
 			// Do the logic for aiming along the x axis...
 			// Todo make it so the x direction is calculated from barrell
 			unit.GetInputController().OverrideMovementSpeed(true, 0.0);
 			
-			targetAngle = vector.Direction(myPos, threatPos).VectorToAngles().GetRelAngles()[0];
 			
-			// Here 10 degrees is a fudge factor based off the diff between the head and weapon angle.
-			heading = -(unit.GetInputController().GetHeadingAngle() * Math.RAD2DEG) + 10; 
-			
-			delta = Math.DiffAngle(targetAngle, heading);
 			delta /= 500;
 			delta = Math.Max(delta, -0.25);
 			delta = Math.Min(delta, 0.25);
@@ -201,8 +220,26 @@ class eAIPlayerHandler {
 			float aimAngle = Math.Atan2(targetHeight - gunHeight, vector.Distance(myPos, threatPos));
 			unit.targetAngle = aimAngle * Math.RAD2DEG;
 			
-			// Enable firing if the AI is with a threshold of 
-			HasAShot = (delta < 0.005);
+			// Make sure the AI is aimed at the target and not at anything else
+			if (HasAShot) {
+				array<Object> objects = new array<Object>();
+				ref array<CargoBase> proxyCargos = new array<CargoBase>();
+				
+				bool aimedAtTheEnemy = false;
+				
+				// Here we use 2.5 meters instead of 1.5, to allow a small threshhold for AI to miss a shot
+				GetGame().GetObjectsAtPosition3D(weap.whereIAmAimedAt, 2.5, objects, proxyCargos);
+				
+				for (int i = 0; i < objects.Count(); i++) {
+					if (objects[i] == threats[0])
+						aimedAtTheEnemy = true;
+					if (objects[i] == m_FollowOrders) // quick and dirty check for shooting at a friendly
+						HasAShot = false;
+				}
+				
+				HasAShot = (HasAShot && aimedAtTheEnemy);
+			}			
+			
 			return false;
 		}
 		
@@ -357,6 +394,10 @@ class eAIPlayerHandler {
 	
 	protected void UpdateCombatState() {
 		Weapon_Base wpn = Weapon_Base.Cast(unit.GetDayZPlayerInventory().GetEntityInHands());
+		
+		array< PlayerIdentity > identities;
+		GetGame().GetPlayerIndentities(identities);	
+		GetRPCManager().SendRPC("eAI", "ClientWeaponDataWithCallback", new Param2<Weapon_Base, string>(wpn, "ServerWeaponAimCheck"));
 		
 		if (threats.Count() == 0 || !threats[0]) {
 			state = eAIBehaviorGlobal.RELAXED;	

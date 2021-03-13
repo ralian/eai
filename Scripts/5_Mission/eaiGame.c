@@ -19,6 +19,8 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "DebugWeaponLocation", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "SpawnBullet", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("eAI", "ClientWeaponDataWithCallback", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("eAI", "ServerWeaponAimCheck", this, SingeplayerExecutionType.Client);
     }
 	
 	void SpawnEntity(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
@@ -189,31 +191,88 @@ class eAIGame {
 		Param1<Weapon_Base> data;
         if (!ctx.Read(data)) return;
 		
-		Particle p = Particle.PlayInWorld(ParticleList.DEBUG_DOT, "0 0 0");
+		/*Particle p = Particle.PlayInWorld(ParticleList.DEBUG_DOT, "0 0 0");
 		///p.SetOrientation(vector.Zero);
 		data.param1.AddChild(p, -1);
 		//data.param1.Update();
 		p.Update();
-		Print(p.GetPosition());
+		Print(p.GetPosition());*/
 		
-		vector usti_hlavne_position = data.param1.GetSelectionPositionLS("usti hlavne"); // This is therefore the begin_point
+		vector usti_hlavne_position = data.param1.GetSelectionPositionLS("usti hlavne"); // front?
+		vector konec_hlavne_position = data.param1.GetSelectionPositionLS("konec hlavne"); // back?
+		Object p_front = GetGame().CreateObject("SceneGraphPoint", usti_hlavne_position, true);
+		Object p_back = GetGame().CreateObject("SceneGraphPoint", konec_hlavne_position, true);
+		data.param1.AddChild(p_front, -1);
+		data.param1.AddChild(p_back, -1);
+		vector out_front, out_back;
+		out_front = data.param1.ModelToWorld(usti_hlavne_position);
+		out_back = data.param1.ModelToWorld(konec_hlavne_position);
+		
+		/*vector usti_hlavne_position = data.param1.GetSelectionPositionLS("usti hlavne"); // This is therefore the begin_point
 		Particle p1 = Particle.PlayInWorld(ParticleList.DEBUG_DOT, usti_hlavne_position);
 		///p1.SetOrientation(vector.Zero);
 		data.param1.AddChild(p1, -1);
-		//data.param1.Update();
-		p1.Update();
 		Print(p1.GetPosition());
 		
 		vector konec_hlavne_position = data.param1.GetSelectionPositionLS("konec hlavne");
 		Particle p2 = Particle.PlayInWorld(ParticleList.DEBUG_DOT, konec_hlavne_position);
 		p2.SetOrientation(vector.Zero);
 		data.param1.AddChild(p2, -1);
-		//data.param1.Update();
-		p2.Update();
-		Print(p2.GetPosition());
+		Print(p2.GetPosition());*/
 		
 		// Now, sync data to server.
-		GetRPCManager().SendRPC("eAI", "SpawnBullet", new Param3<Weapon_Base, vector, vector>(data.param1, p1.GetPosition(), p2.GetPosition()));
+		GetRPCManager().SendRPC("eAI", "SpawnBullet", new Param3<Weapon_Base, vector, vector>(data.param1, out_front, out_back));
+	}
+	
+	void ClientWeaponDataWithCallback(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+		Param2<Weapon_Base, string> data;
+        if (!ctx.Read(data)) return;
+
+		if(type == CallType.Client ) {
+			vector usti_hlavne_position = data.param1.GetSelectionPositionLS("usti hlavne"); // front?
+			vector konec_hlavne_position = data.param1.GetSelectionPositionLS("konec hlavne"); // back?
+			Object p_front = GetGame().CreateObject("SceneGraphPoint", usti_hlavne_position, true);
+			Object p_back = GetGame().CreateObject("SceneGraphPoint", konec_hlavne_position, true);
+			data.param1.AddChild(p_front, -1);
+			data.param1.AddChild(p_back, -1);
+			vector out_front, out_back;
+			out_front = data.param1.ModelToWorld(usti_hlavne_position);
+			out_back = data.param1.ModelToWorld(konec_hlavne_position);
+		
+			// Now, sync data to server.
+			GetRPCManager().SendRPC("eAI", data.param2, new Param3<Weapon_Base, vector, vector>(data.param1, out_front, out_back));
+		}
+		else {Error("ClientWeaponDataWithCallback called wrongfully");}
+	}
+	
+	// from weapon_base, was originally protected
+	PhxInteractionLayers hit_mask = PhxInteractionLayers.CHARACTER | PhxInteractionLayers.BUILDING | PhxInteractionLayers.DOOR | PhxInteractionLayers.VEHICLE | PhxInteractionLayers.ROADWAY | PhxInteractionLayers.TERRAIN | PhxInteractionLayers.ITEM_SMALL | PhxInteractionLayers.ITEM_LARGE | PhxInteractionLayers.FENCE | PhxInteractionLayers.AI;
+	void ServerWeaponAimCheck(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+		
+		Param3<Weapon_Base, vector, vector> data;
+        if (!ctx.Read(data)) return;
+		
+		if(type == CallType.Server ) {
+	
+			vector begin_point = data.param2;
+			vector back = data.param3;
+			
+			vector aim_point = begin_point - back;
+	
+			vector end_point = (500*aim_point) + begin_point;
+			
+			// Prep Raycast
+			Object hitObject;
+			vector hitPosition, hitNormal;
+			float hitFraction;
+			int contact_component = 0;
+			DayZPhysics.RayCastBullet(begin_point, end_point, hit_mask, null, hitObject, hitPosition, hitNormal, hitFraction);
+			
+			// This makes no guarantees that any objects were even hit
+			data.param1.whereIAmAimedAt = hitPosition;
+		}
+		else {Error("ServerWeaponAimCheck called wrongfully");}
+
 	}
 	
 	void SpawnBullet(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
