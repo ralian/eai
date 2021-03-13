@@ -3,7 +3,7 @@
 
 int atomic_findPathRunning = 0;
 
-void updateWaypoints(eAIPlayerHandler p, bool debug_waypoints = true) {
+void updateWaypoints(eAIPlayerHandler p, vector whereTo, bool addzerowaypoint = false, bool debug_waypoints = true) {
 	
 	bool success = false;
 	
@@ -12,8 +12,9 @@ void updateWaypoints(eAIPlayerHandler p, bool debug_waypoints = true) {
 	while (!success) {
 		if (++atomic_findPathRunning < 2) { // if we are the only one about to call FindPath
 			p.clearWaypoints();
-			p.waypoints.Insert(pos); // Make WP 0 the player's position. This is only necessary for the corner smoothing logic to work on the first waypoint.
-			GetGame().GetWorld().GetAIWorld().FindPath(pos, p.m_FollowOrders.GetPosition(), p.pgFilter, p.waypoints);
+			if (addzerowaypoint)
+				p.waypoints.Insert(pos); // Make WP 0 the player's position. This is only necessary for the corner smoothing logic to work on the first waypoint.
+			GetGame().GetWorld().GetAIWorld().FindPath(pos, whereTo, p.pgFilter, p.waypoints);
 			atomic_findPathRunning--;
 			success = true;
 		} else {							// else, decrement the counter then yield before trying again

@@ -37,7 +37,12 @@ class eAIPlayerHandler {
 	
 	// This is the bitmask used for pathfinding (i.e. whether we want a path that goes over a fence
 	ref PGFilter pgFilter = new PGFilter();
+	
+	// Formation following logic
 	Entity m_FollowOrders = null;
+	vector formationOffset = "0 0 0";
+	vector m_FormDir = "1 0 0";
+	vector m_FormLastPos = "0 0 0";
 	
 	// Data for the heading computation
 	float targetAngle, heading, delta;
@@ -113,7 +118,8 @@ class eAIPlayerHandler {
 	}*/
 	
 	// Set a player to follow.
-	void Follow(DayZPlayer p, float distance = 5.0) {
+	void Follow(DayZPlayer p, vector formationPos, float distance = 2.0) {
+		formationOffset = formationPos;
 		m_FollowOrders = p;
 		arrival_radius = distance;
 	}
@@ -251,11 +257,11 @@ class eAIPlayerHandler {
 			return false;
 		}
 		
-		if (m_FollowOrders) {
+		/*if (m_FollowOrders) {
 			cur_waypoint_no = -1; // can't use clearWaypoints() here because we want to preserve the distance
 			waypoints.Clear();
 			addWaypoint(m_FollowOrders.GetPosition());
-		};
+		};*/
 		
 		targetAngle = vector.Direction(unit.GetPosition(), waypoints[cur_waypoint_no]).VectorToAngles().GetRelAngles()[0];// * Math.DEG2RAD;
 		//vector heading = MiscGameplayFunctions.GetHeadingVector(this);
@@ -304,12 +310,35 @@ class eAIPlayerHandler {
 		//m_MovementState.m_CommandTypeId = DayZPlayerConstants.COMMANDID_MOVE ;
 		//m_MovementState.m_iMovement = 2;
 	}
-	
-	// For debugging purposes, I am only updating this every 30 seconds to let the player to get some distance on the AI
+
 	void UpdatePathing() { // This update needs to be done way less frequent than Movement; Default is 1 every 10 update ticks.
-		if (m_FollowOrders) { // If we have a reference to a player to follow, we refresh the waypoints.
-			thread updateWaypoints(this);
+		
+		
+		
+		if (m_FollowOrders) {
+			vector fop = m_FollowOrders.GetPosition();
+			
+			vector delta = (fop - m_FormLastPos);
+			if (delta.Length() > 0.1)
+				m_FormDir = delta.Normalized();
+			
+			// Now we need to transform to the basis of the formation dir
+			// Because the perpend function looks weird, we have to do it this way
+			vector finalPos = fop + (m_FormDir * formationOffset[2]) + (m_FormDir.Perpend() * formationOffset[0]);
+			
+			// disabling this temporarily for performance
+			//thread updateWaypoints(this, finalPos);
+			
+			 // this is the temporary workaround
+			cur_waypoint_no = -1; // can't use clearWaypoints() here because we want to preserve the distance
+			waypoints.Clear();
+			addWaypoint(finalPos);
+			
+			m_FormLastPos = fop;
+		} else {
+			clearWaypoints();
 		}
+		
 	}
 	
 	//--------------------------------------------------------------------------------------------------------------------------

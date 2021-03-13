@@ -23,52 +23,55 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "ServerWeaponAimCheck", this, SingeplayerExecutionType.Client);
     }
 	
+	void SpawnAI_Helper(PlayerBase owner, vector formOffset) {
+		//Human h = Human.Cast(GetGame().CreateObject("SurvivorF_Linda", data.param1));
+
+		PlayerBase h = PlayerBase.Cast(GetGame().CreatePlayer(null, "SurvivorF_Linda", owner.GetPosition() + debug_offset, 0, "NONE"));
+			
+		h.markAIServer( ); // Important: Mark unit as AI since we don't control the constructor.
+		 // Do the same in the clients
+			
+		//h.OnCameraChanged(new eAIDayZPlayerCamera(h, h.GetInputController()));
+			
+		h.GetHumanInventory().CreateInInventory("TTSKOPants");
+		h.GetHumanInventory().CreateInInventory("TTsKOJacket_Camo");
+		h.GetHumanInventory().CreateInInventory("CombatBoots_Black");
+		h.GetHumanInventory().CreateInInventory("ImprovisedBag");
+
+		h.GetHumanInventory().CreateInInventory("SodaCan_Pipsi");
+		h.GetHumanInventory().CreateInInventory("SpaghettiCan");
+		h.GetHumanInventory().CreateInInventory("HuntingKnife");
+		ItemBase rags = ItemBase.Cast(h.GetHumanInventory().CreateInInventory("Rag"));
+		rags.SetQuantity(4);
+
+		EntityAI primary;
+		EntityAI axe = h.GetInventory().CreateInInventory("FirefighterAxe");
+
+		EntityAI gun = h.GetHumanInventory().CreateInHands("M4A1");
+		gun.GetInventory().CreateAttachment("M4_RISHndgrd_Black");
+		gun.GetInventory().CreateAttachment("M4_MPBttstck_Black");
+		gun.GetInventory().CreateAttachment("ACOGOptic");
+		//gun.GetInventory().CreateAttachment("Mag_STANAG_30Rnd");
+		EntityAI mag = h.GetHumanInventory().CreateInInventory("Mag_STANAG_30Rnd");
+		h.GetHumanInventory().CreateInInventory("Mag_STANAG_30Rnd");
+
+		eAIPlayerHandler handler = new eAIPlayerHandler(h);
+		h.markOwner(handler);
+		
+		aiList.Insert(handler);
+		
+		// Set the target entity we should follow to the player that spawned it, then do the first pathfinding update
+		handler.Follow(owner, formOffset, 2);
+		handler.UpdatePathing();
+	}
+	
 	void SpawnEntity(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
             Print("eAI spawn entity RPC called.");
-			//Human h = Human.Cast(GetGame().CreateObject("SurvivorF_Linda", data.param1));
-				//SurvivorM_Cyril
-			PlayerBase h = PlayerBase.Cast(GetGame().CreatePlayer(null, "SurvivorF_Linda", data.param1.GetPosition() + debug_offset, 0, "NONE"));
-				
-			h.markAIServer( ); // Important: Mark unit as AI since we don't control the constructor.
-			 // Do the same in the clients
-				
-			//h.OnCameraChanged(new eAIDayZPlayerCamera(h, h.GetInputController()));
-				
-			h.GetHumanInventory().CreateInInventory("TTSKOPants");
-			h.GetHumanInventory().CreateInInventory("TTsKOJacket_Camo");
-			h.GetHumanInventory().CreateInInventory("CombatBoots_Black");
-			h.GetHumanInventory().CreateInInventory("ImprovisedBag");
-	
-			h.GetHumanInventory().CreateInInventory("SodaCan_Pipsi");
-			h.GetHumanInventory().CreateInInventory("SpaghettiCan");
-			h.GetHumanInventory().CreateInInventory("HuntingKnife");
-			ItemBase rags = ItemBase.Cast(h.GetHumanInventory().CreateInInventory("Rag"));
-			rags.SetQuantity(4);
-	
-			EntityAI primary;
-			EntityAI axe = h.GetInventory().CreateInInventory("FirefighterAxe");
-	
-			EntityAI gun = h.GetHumanInventory().CreateInHands("M4A1");
-			gun.GetInventory().CreateAttachment("M4_RISHndgrd_Black");
-			gun.GetInventory().CreateAttachment("M4_MPBttstck_Black");
-			gun.GetInventory().CreateAttachment("ACOGOptic");
-			//gun.GetInventory().CreateAttachment("Mag_STANAG_30Rnd");
-			EntityAI mag = h.GetHumanInventory().CreateInInventory("Mag_STANAG_30Rnd");
-			h.GetHumanInventory().CreateInInventory("Mag_STANAG_30Rnd");
-
-			eAIPlayerHandler handler = new eAIPlayerHandler(h);
-			h.markOwner(handler);
-			
-			aiList.Insert(handler);
-			
-			// Set the target entity we should follow to the player that spawned it, then do the first pathfinding update
-			handler.Follow(data.param1, 2);
-			handler.UpdatePathing();
-			
-			
+			SpawnAI_Helper(data.param1, Vector(-3, 0, -3)); // First number is horizontal offset, sec number is vertical
+			SpawnAI_Helper(data.param1, Vector(3, 0, -3));
 		}
 	}
 	
@@ -200,10 +203,6 @@ class eAIGame {
 		
 		vector usti_hlavne_position = data.param1.GetSelectionPositionLS("usti hlavne"); // front?
 		vector konec_hlavne_position = data.param1.GetSelectionPositionLS("konec hlavne"); // back?
-		Object p_front = GetGame().CreateObject("SceneGraphPoint", usti_hlavne_position, true);
-		Object p_back = GetGame().CreateObject("SceneGraphPoint", konec_hlavne_position, true);
-		data.param1.AddChild(p_front, -1);
-		data.param1.AddChild(p_back, -1);
 		vector out_front, out_back;
 		out_front = data.param1.ModelToWorld(usti_hlavne_position);
 		out_back = data.param1.ModelToWorld(konec_hlavne_position);
@@ -231,10 +230,6 @@ class eAIGame {
 		if(type == CallType.Client ) {
 			vector usti_hlavne_position = data.param1.GetSelectionPositionLS("usti hlavne"); // front?
 			vector konec_hlavne_position = data.param1.GetSelectionPositionLS("konec hlavne"); // back?
-			Object p_front = GetGame().CreateObject("SceneGraphPoint", usti_hlavne_position, true);
-			Object p_back = GetGame().CreateObject("SceneGraphPoint", konec_hlavne_position, true);
-			data.param1.AddChild(p_front, -1);
-			data.param1.AddChild(p_back, -1);
 			vector out_front, out_back;
 			out_front = data.param1.ModelToWorld(usti_hlavne_position);
 			out_back = data.param1.ModelToWorld(konec_hlavne_position);
@@ -346,9 +341,16 @@ class eAIGame {
 		}
 		
 		if (current_ai < aiList.Count()) {
+			aiList[current_ai].UpdatePathing();
 			aiList[current_ai].UpdateState();
 			while (aiList[current_ai].UpdateMovement()) {} // update the movement as many times as needed (usually once, sometimes twice)
 			current_ai++;
+		}
+		
+		if (timeDiv == 0 && numOfDivsPassed % 12 == 0) { // Every 3 seconds, update all pathing
+			//foreach (eAIPlayerHandler h : aiList)
+				//h.UpdatePathing();
+				
 		}
 	}
 };
