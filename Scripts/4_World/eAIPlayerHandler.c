@@ -39,7 +39,7 @@ class eAIPlayerHandler {
 	ref PGFilter pgFilter = new PGFilter();
 	
 	// Formation following logic
-	Entity m_FollowOrders = null;
+	DayZPlayer m_FollowOrders = null;
 	vector formationOffset = "0 0 0";
 	vector m_FormDir = "1 0 0";
 	vector m_FormLastPos = "0 0 0";
@@ -440,9 +440,8 @@ class eAIPlayerHandler {
 	protected void UpdateCombatState() {
 		Weapon_Base wpn = Weapon_Base.Cast(unit.GetDayZPlayerInventory().GetEntityInHands());
 		
-		array< PlayerIdentity > identities;
-		GetGame().GetPlayerIndentities(identities);	
-		GetRPCManager().SendRPC("eAI", "ClientWeaponDataWithCallback", new Param2<Weapon_Base, string>(wpn, "ServerWeaponAimCheck"));
+		// THIS WILL BREAK IF THE PLAYER DOESN'T HAVE AN OWNER
+		GetRPCManager().SendRPC("eAI", "ClientWeaponDataWithCallback", new Param2<Weapon_Base, string>(wpn, "ServerWeaponAimCheck"), false, m_FollowOrders.GetIdentity());
 		
 		if (threats.Count() == 0 || !threats[0]) {
 			state = eAIBehaviorGlobal.RELAXED;	

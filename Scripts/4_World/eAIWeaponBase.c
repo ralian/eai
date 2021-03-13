@@ -208,9 +208,10 @@ modded class Weapon_Base {
 				
 				// For now, we're just going to have a client handle this.
 				// It will duplicate events if more than 1 person is on the server (not good)
-				array< PlayerIdentity > identities;
-				GetGame().GetPlayerIndentities(identities);	
-				GetRPCManager().SendRPC("eAI", "DebugWeaponLocation", new Param1<Weapon_Base>(this));
+				//array< PlayerIdentity > identities;
+				//GetGame().GetPlayerIndentities(identities);
+				PlayerBase p = PlayerBase.Cast(e.m_player);
+				GetRPCManager().SendRPC("eAI", "DebugWeaponLocation", new Param1<Weapon_Base>(this), false, p.parent.m_FollowOrders.GetIdentity());
 				
 				// Eventually we will need to do this server side.
 				
