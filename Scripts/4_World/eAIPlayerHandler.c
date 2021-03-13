@@ -319,7 +319,7 @@ class eAIPlayerHandler {
 			vector fop = m_FollowOrders.GetPosition();
 			
 			vector delta = (fop - m_FormLastPos);
-			if (delta.Length() > 0.1)
+			if (delta.Length() > 0.2)
 				m_FormDir = delta.Normalized();
 			
 			// Now we need to transform to the basis of the formation dir
@@ -353,23 +353,39 @@ class eAIPlayerHandler {
 	}
 	
 	void RecalcThreatList() {
-		GetGame().GetObjectsAtPosition(unit.GetPosition(), 20.0, threats, proxyCargos);
+		
+		// Leave threats in that don't need cleaning
+		for (int j = 0; j < threats.Count(); j++)
+			if (!threats[j] || !threats[j].IsAlive() || vector.Distance(unit.GetPosition(), threats[j].GetPosition()) < 20.0)
+				threats.Remove(j);
+		
+		array<Object> newThreats = new array<Object>();
+		GetGame().GetObjectsAtPosition(unit.GetPosition(), 20.0, newThreats, proxyCargos);
 		
 		// Todo find a faster way to do this... like a linked list?
 		int i = 0;
 		float minDistance = 1000000.0, temp;
-		while (i < threats.Count()) {
-			DayZInfected infected = DayZInfected.Cast(threats[i]);
+		while (i < newThreats.Count()) {
+			DayZInfected infected = DayZInfected.Cast(newThreats[i]);
+			PlayerBase player = PlayerBase.Cast(newThreats[i]);
 			if (infected && infected.IsAlive() && !IsViewOccluded(infected.GetPosition() + "0 1.5 0")) {
-				temp = vector.Distance(threats[i].GetPosition(), unit.GetPosition());
-				// See if this index is the biggest threat, if so swap it to front
-				if (temp < minDistance && i > 1) {
-					threats.SwapItems(0, i);
+				// It's an infected, add it to teh threates array
+				temp = vector.Distance(newThreats[i].GetPosition(), unit.GetPosition());
+				if (temp < minDistance) {
+					threats.InsertAt(infected, 0);
 					minDistance = temp;
-				}
-				i++;
-			} else
-				threats.RemoveOrdered(i);
+				} else threats.Insert(infected);
+				
+			} // this would make them shoot at all AI
+			/* else if (player && player != m_FollowOrders && player.IsAlive() && !IsViewOccluded(player.GetPosition() + "0 1.5 0")) {
+				// If it's an enemy player
+				temp = vector.Distance(newThreats[i].GetPosition(), unit.GetPosition());
+				if (temp < minDistance) {
+					threats.InsertAt(player, 0);
+					minDistance = temp;
+				} else threats.Insert(player);
+			}*/
+			i++;
 		}
 	}
 	
@@ -453,7 +469,7 @@ class eAIPlayerHandler {
 				// Also check if we need to exit combat
 				if (threats.Count() < 1) {
 					// Similarly, this will crash a unit which exits combat after emptying last round
-					RaiseWeapon(true);
+					RaiseWeapon(false);
 					state = eAIBehaviorGlobal.RELAXED;
 				}
 			}

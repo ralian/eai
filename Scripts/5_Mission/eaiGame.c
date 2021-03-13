@@ -2,7 +2,7 @@ class eAIGame {
 	// List of all eAI entities
 	ref array<autoptr eAIPlayerHandler> aiList = new array<autoptr eAIPlayerHandler>();
 	
-	vector debug_offset = "-15 0 0"; // Offset from player to spawn a new AI entity at when debug called
+	vector debug_offset = "8 0 0"; // Offset from player to spawn a new AI entity at when debug called
 	
 	float gametime = 0;
 	
