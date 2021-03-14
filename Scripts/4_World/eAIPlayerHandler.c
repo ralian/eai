@@ -352,15 +352,18 @@ class eAIPlayerHandler {
 		//return (vector.Distance(hitPos, pos) > tolerance);
 	}
 	
-	void RecalcThreatList() {
+	void RecalcThreatList(vector center = "0 0 0") {
+		
+		if (vector.Distance(center, "0 0 0") < 1.0)
+			center = unit.GetPosition();
 		
 		// Leave threats in that don't need cleaning
 		for (int j = 0; j < threats.Count(); j++)
-			if (!threats[j] || !threats[j].IsAlive() || vector.Distance(unit.GetPosition(), threats[j].GetPosition()) < 20.0)
+			if (!threats[j] || !threats[j].IsAlive() || vector.Distance(unit.GetPosition(), threats[j].GetPosition()) < 30.0)
 				threats.Remove(j);
 		
 		array<Object> newThreats = new array<Object>();
-		GetGame().GetObjectsAtPosition(unit.GetPosition(), 20.0, newThreats, proxyCargos);
+		GetGame().GetObjectsAtPosition(center, 30.0, newThreats, proxyCargos);
 		
 		// Todo find a faster way to do this... like a linked list?
 		int i = 0;
@@ -377,7 +380,7 @@ class eAIPlayerHandler {
 				} else threats.Insert(infected);
 				
 			} // this would make them shoot at all AI
-			/* else if (player && player != m_FollowOrders && player.IsAlive() && !IsViewOccluded(player.GetPosition() + "0 1.5 0")) {
+			 /*else if (player && player != m_FollowOrders && (!player.parent || (player.parent.m_FollowOrders != m_FollowOrders)) && player.IsAlive() && !IsViewOccluded(player.GetPosition() + "0 1.5 0")) {
 				// If it's an enemy player
 				temp = vector.Distance(newThreats[i].GetPosition(), unit.GetPosition());
 				if (temp < minDistance) {

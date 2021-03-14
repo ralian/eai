@@ -98,9 +98,9 @@ modded class Weapon_Base {
 			vector end_point = (500*aim_point) + begin_point;
 			
 			// Use these to get  an idea of the direction for the raycast
-			GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(back, vector.Zero));
-			GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point, vector.Zero));
-			GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point + aim_point , vector.Zero));
+			//GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(back, vector.Zero));
+			//GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point, vector.Zero));
+			//GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point + aim_point , vector.Zero));
 			
 			
 			Print("Muzzle pos: " + begin_point.ToString() + " dir-pos: " + (end_point-begin_point).ToString());

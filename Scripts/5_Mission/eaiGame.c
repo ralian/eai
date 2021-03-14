@@ -9,6 +9,8 @@ class eAIGame {
     void eAIGame() {
 		GetRPCManager().AddRPC("eAI", "SpawnEntity", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ClearAllEntity", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("eAI", "ClearMyEntity", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("eAI", "TargetPos", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ProcessReload", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "MoveAllToPos", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "UpdateMovement", this, SingeplayerExecutionType.Client);
@@ -86,6 +88,43 @@ class eAIGame {
 			}
 			
 			aiList.Clear();
+		}
+	}
+	
+	void ClearMyEntity(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+		Param1<DayZPlayer> data; // here the parameter is unused, maybe we could use an enum instead
+        if (!ctx.Read(data)) return;
+		if(type == CallType.Server ) {
+            Print("eAI clear my entity RPC called.");
+			for (int i = 0; i < aiList.Count(); i++) {
+				if (aiList[i].m_FollowOrders == data.param1) {
+					GetGame().ObjectDelete(aiList[i].unit);
+					aiList.RemoveOrdered(i);
+				}
+			}
+			
+			// hacky workaround for now
+			for (int j = 0; j < aiList.Count(); j++) {
+				if (aiList[j].m_FollowOrders == data.param1) {
+					GetGame().ObjectDelete(aiList[j].unit);
+					aiList.RemoveOrdered(j);
+				}
+			}
+			
+		}
+	}
+	
+	void TargetPos(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+		Param2<DayZPlayer, vector> data; // here the parameter is unused, maybe we could use an enum instead
+        if (!ctx.Read(data)) return;
+		if(type == CallType.Server ) {
+			//Print("eAI TargetPOS " + data.param1 + data.param2);
+			for (int i = 0; i < aiList.Count(); i++) {
+				if (aiList[i].m_FollowOrders == data.param1) {
+					aiList[i].RecalcThreatList(data.param2);
+				}
+			}
+			
 		}
 	}
 	
@@ -277,11 +316,20 @@ class eAIGame {
 			data.param1.BallisticsPostFrame(data.param2, data.param3);		
 		}
 	}
-
-    void OnKeyPress(int key) {
+	
+	void OnKeyPress(int key) {
         switch (key) {
             case KeyCode.KC_K: {
+				//GetRPCManager().SendRPC("eAI", "ClearMyEntity", new Param1<DayZPlayer>(GetGame().GetPlayer()));
 				GetRPCManager().SendRPC("eAI", "SpawnEntity", new Param1<DayZPlayer>(GetGame().GetPlayer()));
+                break;
+            }
+			case KeyCode.KC_T: {
+				vector end = GetGame().GetCurrentCameraPosition() + (GetGame().GetCurrentCameraDirection().AnglesToVector() * 200);
+				vector hitPos, contactDir;
+				int contactComp;
+				DayZPhysics.RaycastRV(GetGame().GetCurrentCameraPosition(), end, hitPos, contactDir, contactComp);
+				GetRPCManager().SendRPC("eAI", "TargetPos", new Param2<DayZPlayer,vector>(GetGame().GetPlayer(), hitPos));
                 break;
             }
 			case KeyCode.KC_L: {

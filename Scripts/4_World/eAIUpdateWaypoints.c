@@ -3,7 +3,7 @@
 
 int atomic_findPathRunning = 0;
 
-void updateWaypoints(eAIPlayerHandler p, vector whereTo, bool addzerowaypoint = false, bool debug_waypoints = true) {
+void updateWaypoints(eAIPlayerHandler p, vector whereTo, bool addzerowaypoint = false, bool debug_waypoints = false) {
 	
 	bool success = false;
 	
