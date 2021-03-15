@@ -8,5 +8,6 @@ WELL AS A 'CHANGES' FILE DESCRIBING CHANGES MADE BY THE DERIVED WORK.
 
 Contributors to the work include:
 ralian <0xBA5E16@gmail.com>
+darc   <mokdevel@hotmail.com>
 
 Special Thanks:

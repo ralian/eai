@@ -6,17 +6,21 @@
                 {
                     "SectionName": "Developers",
                     "SectionLines": [
-                        "Ralian"
+                        "Ralian",
+						"Darc"
 						]
                 },
                 {
                     "SectionName": "Special Thanks",
                     "SectionLines": [
+						"MarioE",
+						"Wardog",
                         "Hlynge",
 						"Jacob_Mango",
 						"Arkensor",
 						"Dance Of Jesus",
-						"InclementDab"
+						"InclementDab",
+						"Zedmag(Cowboy1Bird)",
                     ]
                 }
             ]
