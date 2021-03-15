@@ -1,0 +1,16 @@
+MetaFileClass {
+ Name "{A5A2A69E67DE9B10}eai/gfx/eAI_logo_ver1_03_512.edds"
+ Author "darc"
+ ChangeDate -1025185169
+ Configurations {
+  PNGResourceClass PC {
+   SourceFile "eAI_logo_ver1_03_512.png"
+  }
+  PNGResourceClass XBOX_ONE : PC {
+  }
+  PNGResourceClass PS4 : PC {
+  }
+  PNGResourceClass LINUX : PC {
+  }
+ }
+}
