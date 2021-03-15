@@ -1,5 +1,21 @@
 class HumanLoadout {
 	static void Apply(PlayerBase h) {}
+	
+	static void AddWeapon(PlayerBase h, string weapon) {
+		EntityAI gun = h.GetHumanInventory().CreateInHands(weapon);
+		
+		Print("HumanLoadout: Add weapon: " + weapon);
+	}
+	
+	static void AddMagazine(PlayerBase h, string weapon, int count) {
+        TStringArray magazines = {};
+        GetGame().ConfigGetTextArray("CfgWeapons " + weapon + " magazines", magazines);		
+		string mag = magazines.GetRandomElement();
+		//TBD: For loop to count
+		h.GetHumanInventory().CreateInInventory(mag);
+
+		Print("HumanLoadout: Add " + count + " of " + mag + " magazines for weapon " + weapon);
+	}
 };
 
 class SoldierLoadout : HumanLoadout {
@@ -27,6 +43,10 @@ class SoldierLoadout : HumanLoadout {
 		h.GetInventory().CreateInInventory(SoldierLoadoutBackPacks.GetRandomElement());
 		h.GetInventory().CreateInInventory(SoldierLoadoutVests.GetRandomElement());
 		h.GetInventory().CreateInInventory(SoldierLoadoutMisc.GetRandomElement());
+
+		string weapon = SoldierLoadoutWeaponRifle.GetRandomElement();
+		HumanLoadout.AddWeapon(h, weapon);
+		HumanLoadout.AddMagazine(h, weapon, 2);
 	}
 }	
 
