@@ -150,26 +150,44 @@ modded class PlayerBase {
 	//}
 	
 	override bool AimingModel(float pDt, SDayZPlayerAimingModel pModel) {
-		if (isAI() && GetGame().IsServer()) {
-			if (!GetHumanInventory() || !GetHumanInventory().GetEntityInHands())
+		if (isAI() && GetGame().IsServer() && IsAlive()) {
+			if (!GetHumanInventory())
 				return false;
 			
-			float delta = -((GetAimingModel().getAimY()-targetAngle)*Math.DEG2RAD)/8.0;
-		
-			GetInputController().OverrideAimChangeY(true, delta);
+			// If we are aiming a weapon, we need to do vertical targeting logic.
+			if (GetHumanInventory().GetEntityInHands() && parent && parent.WantsWeaponUp()) {			
+				float delta = -((GetAimingModel().getAimY()-targetAngle)*Math.DEG2RAD)/8.0;
 			
-			// Ignore the fact that this works. Do not ask why it works. Or how I found out that creating a faux recoil event
-			// after updating the input controller updates the aim change. If you ask me about this code or why it is written
-			// this way, I will deny its existance.
-			//
-			// Just kidding :-)   ... or am I?
-			GetAimingModel().SetDummyRecoil(Weapon_Base.Cast(GetHumanInventory().GetEntityInHands()));
-			//return true;
+				GetInputController().OverrideAimChangeY(true, delta);
+				
+				// Ignore the fact that this works. Do not ask why it works. Or how I found out that creating a faux recoil event
+				// after updating the input controller updates the aim change. If you ask me about this code or why it is written
+				// this way, I will deny its existance.
+				//
+				// Just kidding :-)   ... or am I?
+				GetAimingModel().SetDummyRecoil(Weapon_Base.Cast(GetHumanInventory().GetEntityInHands()));
+			} else {
+				GetInputController().OverrideAimChangeY(true, 0.0);
+			}
 		}
 		
-		// If we are not 
+		// If we are not AI
 		return super.AimingModel(pDt, pModel);
-	}	
+	}
+	
+	override bool	HeadingModel(float pDt, SDayZPlayerHeadingModel pModel)
+	{
+		if ( isAI() )
+		{
+			m_fLastHeadingDiff = 0;
+			//return DayZPlayerImplementHeading.RotateOrient(pDt, pModel, m_fLastHeadingDiff);
+			return DayZPlayerImplementHeading.ClampHeading(pDt, pModel, m_fLastHeadingDiff);
+			//return DayZPlayerImplementHeading.NoHeading(pDt, pModel, m_fLastHeadingDiff);
+			//return false;
+		}
+		
+		return super.HeadingModel(pDt, pModel);
+	}
 	
 	override void CommandHandler(float pDt, int pCurrentCommandID, bool pCurrentCommandFinished)	
 	{

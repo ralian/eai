@@ -72,8 +72,9 @@ class eAIGame {
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
             Print("eAI spawn entity RPC called.");
-			SpawnAI_Helper(data.param1, Vector(-3, 0, -3)); // First number is horizontal offset, sec number is vertical
-			SpawnAI_Helper(data.param1, Vector(3, 0, -3));
+			SpawnAI_Helper(data.param1, Vector(0, 0, 0));
+			//SpawnAI_Helper(data.param1, Vector(-3, 0, -3)); // First number is horizontal offset, sec number is vertical
+			//SpawnAI_Helper(data.param1, Vector(3, 0, -3));
 		}
 	}
 	
@@ -183,7 +184,7 @@ class eAIGame {
 		if(type == CallType.Server) {
             Print("eAI ToggleWeaponRaise RPC called.");
 			foreach (eAIPlayerHandler i : aiList) {
-				i.RaiseWeapon(true);
+				i.ToggleWeaponRaise();
 			}
         }
 	}
