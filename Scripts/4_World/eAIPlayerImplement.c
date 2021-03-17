@@ -6,6 +6,7 @@ bool eAIGlobal_UnitKilled = false;
 // Todo move this to a separate child class (like PlayerBaseClient)
 modded class PlayerBase {
 	
+	// this is very bad polymorphic design, don't worry, it will be fixed
 	eAIPlayerHandler parent;
 	
 	// Angle above the horizon we should be aiming, degrees.
@@ -177,6 +178,7 @@ modded class PlayerBase {
 	
 	Object lookAt = null;
 	float headingTarget = 0.0;
+	float lastHeadingAngle = 0.0;
 	override bool HeadingModel(float pDt, SDayZPlayerHeadingModel pModel)
 	{
 		if ( isAI() )
@@ -189,13 +191,17 @@ modded class PlayerBase {
 			
 			m_fLastHeadingDiff = 0;
 			
-			while (pModel.m_fHeadingAngle > Math.PI) pModel.m_fHeadingAngle -= Math.PI2;
-			while (pModel.m_fHeadingAngle < -Math.PI) pModel.m_fHeadingAngle += Math.PI2;
-			//while (pModel.m_fOrientationAngle > Math.PI) pModel.m_fHeadingAngle -= Math.PI2;
-			//while (pModel.m_fOrientationAngle < -Math.PI) pModel.m_fHeadingAngle += Math.PI2;
+			if (pModel.m_fHeadingAngle > Math.PI) pModel.m_fHeadingAngle -= Math.PI2;
+			if (pModel.m_fHeadingAngle < -Math.PI) pModel.m_fHeadingAngle += Math.PI2;
+			lastHeadingAngle = pModel.m_fHeadingAngle;
 			
-			if (lookAt)
+			if (lookAt) {
 				headingTarget = vector.Direction(GetPosition(), lookAt.GetPosition()).VectorToAngles().GetRelAngles()[0];
+			} else if (parent.waypoints.Count() > 0) {
+				headingTarget = vector.Direction(GetPosition(), parent.waypoints[0]).VectorToAngles().GetRelAngles()[0];
+			}
+			
+			//if (parent.WantsWeaponUp())
 			
 			float delta = Math.DiffAngle(headingTarget, Math.RAD2DEG * pModel.m_fHeadingAngle);
 			
@@ -208,14 +214,13 @@ modded class PlayerBase {
 				SetOrientation(Vector(Math.RAD2DEG * pModel.m_fHeadingAngle, 0, 0));
 				pModel.m_fOrientationAngle = pModel.m_fHeadingAngle;
 			}
-			
-			//if (Math.AbsFloat(delta) < 5) delta = 0;
+
 			delta *= (1/360);
-			delta = Math.Max(delta, -0.5);
-			delta = Math.Min(delta, 0.5);
+
 			//pModel.m_fOrientationAngle += delta;
 			
-			Print("HeadingModel - orientation: " + pModel.m_fOrientationAngle + " heading: " + pModel.m_fHeadingAngle + " delta: " + delta);
+			// Can be used to make a cool graph
+			//Print("HeadingModel - orientation: " + pModel.m_fOrientationAngle + " heading: " + pModel.m_fHeadingAngle + " delta: " + delta);
 			
 			GetInputController().OverrideAimChangeX(true, delta);
 			
@@ -223,9 +228,7 @@ modded class PlayerBase {
 			//return DayZPlayerImplementHeading.ClampHeading(pDt, pModel, m_fLastHeadingDiff);
 			//return DayZPlayerImplementHeading.NoHeading(pDt, pModel, m_fLastHeadingDiff);
 			//return false;
-			
-			
-			
+
 			//return test;
 		}
 		

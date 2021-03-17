@@ -83,13 +83,11 @@ modded class DayZPlayerImplementHeading
 
 		if (aDiff < -CONST_ROTLIMIT)
 		{
-			Print("aDiff less than -CONST_ROTLIMIT");
 			pModel.m_fOrientationAngle += aDiff +  CONST_ROTLIMIT;
 			return true;
 		}
 		else if (aDiff > CONST_ROTLIMIT)
 		{
-			Print("aDiff greater than +CONST_ROTLIMIT");
 			pModel.m_fOrientationAngle += aDiff - CONST_ROTLIMIT;
 			return true;
 		}

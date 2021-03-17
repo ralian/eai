@@ -183,7 +183,7 @@ class eAIPlayerHandler {
 	bool UpdateMovement() {
 		bool needsToRunAgain = false;
 		
-		if (state == eAIBehaviorGlobal.COMBAT) {
+		/*if (state == eAIBehaviorGlobal.COMBAT) {
 			vector myPos = unit.GetPosition();
 			vector threatPos = threats[0].GetPosition();
 			vector aimPoint = "0 0 0";
@@ -242,6 +242,10 @@ class eAIPlayerHandler {
 			}			
 			
 			return false;
+		}*/
+		
+		if (m_WantWeapRaise) {
+			
 		}
 		
 		// First, if we don't have any valid waypoints, make sure to stop the AI and quit prior to the movement logic.
@@ -252,12 +256,11 @@ class eAIPlayerHandler {
 			return false;
 		}
 		
-		if (m_FollowOrders) {
+		/*if (m_FollowOrders) {
 			cur_waypoint_no = -1; // can't use clearWaypoints() here because we want to preserve the distance
 			waypoints.Clear();
 			addWaypoint(m_FollowOrders.GetPosition());
-			unit.lookAt = m_FollowOrders; // temporary
-		};
+		};*/
 		
 		//unit.headingTarget = vector.Direction(GetPosition(), waypoints[cur_waypoint_no]).VectorToAngles().GetRelAngles()[0];
 		
@@ -426,6 +429,7 @@ class eAIPlayerHandler {
 		clearWaypoints();	
 		Weapon_Base wpn = Weapon_Base.Cast(unit.GetDayZPlayerInventory().GetEntityInHands());
 		if (wpn) {
+			//unit.lookAt = threats[0];
 			if (wpn.CanFire()) {
 				combatState = eAICombatPriority.ELIMINATE_TARGET;
 			} else {
@@ -470,6 +474,7 @@ class eAIPlayerHandler {
 				if (threats.Count() < 1) {
 					// Similarly, this will crash a unit which exits combat after emptying last round
 					RaiseWeapon(false);
+					//unit.lookAt = m_FollowOrders;
 					state = eAIBehaviorGlobal.RELAXED;
 				}
 			}

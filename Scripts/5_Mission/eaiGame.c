@@ -212,7 +212,7 @@ class eAIGame {
 	
 	// Client Side: This RPC gets the client side transformation of a Weapon_Base, then sends some data back to server
 	void DebugWeaponLocation(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<Weapon_Base> data;
+		Param2<Weapon_Base, string> data;
         if (!ctx.Read(data)) return;
 		
 		// Set up the model space transformation locally on the client
