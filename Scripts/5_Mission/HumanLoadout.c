@@ -11,8 +11,12 @@ class HumanLoadout {
         TStringArray magazines = {};
         GetGame().ConfigGetTextArray("CfgWeapons " + weapon + " magazines", magazines);		
 		string mag = magazines.GetRandomElement();
-		//TBD: For loop to count
-		h.GetHumanInventory().CreateInInventory(mag);
+
+		int i;
+		for( i = 0; i < count; i++)
+		{
+			h.GetHumanInventory().CreateInInventory(mag);
+		}
 
 		Print("HumanLoadout: Add " + count + " of " + mag + " magazines for weapon " + weapon);
 	}
