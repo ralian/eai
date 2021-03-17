@@ -6,6 +6,7 @@ bool eAIGlobal_UnitKilled = false;
 // Todo move this to a separate child class (like PlayerBaseClient)
 modded class PlayerBase {
 	
+	// this is very bad polymorphic design, don't worry, it will be fixed
 	eAIPlayerHandler parent;
 	
 	// Angle above the horizon we should be aiming, degrees.
@@ -150,26 +151,89 @@ modded class PlayerBase {
 	//}
 	
 	override bool AimingModel(float pDt, SDayZPlayerAimingModel pModel) {
-		if (isAI() && GetGame().IsServer()) {
-			if (!GetHumanInventory() || !GetHumanInventory().GetEntityInHands())
+		if (isAI() && GetGame().IsServer() && IsAlive()) {
+			if (!GetHumanInventory())
 				return false;
 			
-			float delta = -((GetAimingModel().getAimY()-targetAngle)*Math.DEG2RAD)/8.0;
-		
-			GetInputController().OverrideAimChangeY(true, delta);
+			// If we are aiming a weapon, we need to do vertical targeting logic.
+			if (GetHumanInventory().GetEntityInHands() && parent && parent.WantsWeaponUp()) {			
+				float delta = -((GetAimingModel().getAimY()-targetAngle)*Math.DEG2RAD)/8.0;
 			
-			// Ignore the fact that this works. Do not ask why it works. Or how I found out that creating a faux recoil event
-			// after updating the input controller updates the aim change. If you ask me about this code or why it is written
-			// this way, I will deny its existance.
-			//
-			// Just kidding :-)   ... or am I?
-			GetAimingModel().SetDummyRecoil(Weapon_Base.Cast(GetHumanInventory().GetEntityInHands()));
-			//return true;
+				GetInputController().OverrideAimChangeY(true, delta);
+				
+				// Ignore the fact that this works. Do not ask why it works. Or how I found out that creating a faux recoil event
+				// after updating the input controller updates the aim change. If you ask me about this code or why it is written
+				// this way, I will deny its existance.
+				//
+				// Just kidding :-)   ... or am I?
+				GetAimingModel().SetDummyRecoil(Weapon_Base.Cast(GetHumanInventory().GetEntityInHands()));
+			} else {
+				GetInputController().OverrideAimChangeY(true, 0.0);
+			}
 		}
 		
-		// If we are not 
+		// If we are not AI
 		return super.AimingModel(pDt, pModel);
-	}	
+	}
+	
+	Object lookAt = null;
+	float headingTarget = 0.0;
+	float lastHeadingAngle = 0.0;
+	override bool HeadingModel(float pDt, SDayZPlayerHeadingModel pModel)
+	{
+		if ( isAI() )
+		{
+				// This should be true anyways, but double check that an AI hasn't been set on a client
+			if (!GetGame().IsServer())
+				return false;
+			
+			GetMovementState(m_MovementState);
+			
+			m_fLastHeadingDiff = 0;
+			
+			if (pModel.m_fHeadingAngle > Math.PI) pModel.m_fHeadingAngle -= Math.PI2;
+			if (pModel.m_fHeadingAngle < -Math.PI) pModel.m_fHeadingAngle += Math.PI2;
+			lastHeadingAngle = pModel.m_fHeadingAngle;
+			
+			if (lookAt) {
+				headingTarget = vector.Direction(GetPosition(), lookAt.GetPosition()).VectorToAngles().GetRelAngles()[0];
+			} else if (parent.waypoints.Count() > 0) {
+				headingTarget = vector.Direction(GetPosition(), parent.waypoints[0]).VectorToAngles().GetRelAngles()[0];
+			}
+			
+			//if (parent.WantsWeaponUp())
+			
+			float delta = Math.DiffAngle(headingTarget, Math.RAD2DEG * pModel.m_fHeadingAngle);
+			
+			// this is a workaround for pesky headbug :)
+			// Basically, under certain circumstances (seemingly after a full rotation), the m_fHeadingAngle would diverge from the 
+			// m_OrientationAngle, and there was little I could do. This bug is rare but debilitating, since it basically disables tracking 
+			// of the AI. So, for now... the best workaround seems to be resetting the unit's heading to the desired m_fHeadingAngle. For a 
+			// graph explaining it, ask me.
+			if (delta < 0.02 && Math.DiffAngle(Math.RAD2DEG * pModel.m_fOrientationAngle, Math.RAD2DEG * pModel.m_fHeadingAngle) > 60.0) {
+				SetOrientation(Vector(Math.RAD2DEG * pModel.m_fHeadingAngle, 0, 0));
+				pModel.m_fOrientationAngle = pModel.m_fHeadingAngle;
+			}
+
+			delta *= (1/360);
+
+			//pModel.m_fOrientationAngle += delta;
+			
+			// Can be used to make a cool graph
+			//Print("HeadingModel - orientation: " + pModel.m_fOrientationAngle + " heading: " + pModel.m_fHeadingAngle + " delta: " + delta);
+			
+			GetInputController().OverrideAimChangeX(true, delta);
+			
+			return DayZPlayerImplementHeading.RotateOrient(pDt, pModel, m_fLastHeadingDiff);
+			//return DayZPlayerImplementHeading.ClampHeading(pDt, pModel, m_fLastHeadingDiff);
+			//return DayZPlayerImplementHeading.NoHeading(pDt, pModel, m_fLastHeadingDiff);
+			//return false;
+
+			//return test;
+		}
+		
+		return super.HeadingModel(pDt, pModel);
+	}
 	
 	override void CommandHandler(float pDt, int pCurrentCommandID, bool pCurrentCommandFinished)	
 	{

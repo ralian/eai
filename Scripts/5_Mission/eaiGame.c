@@ -1,8 +1,9 @@
 class eAIGame {
 	// List of all eAI entities
-	ref array<autoptr eAIPlayerHandler> aiList = new array<autoptr eAIPlayerHandler>();
+	autoptr array<ref eAIPlayerHandler> aiList = {};
 	
 	vector debug_offset = "8 0 0"; // Offset from player to spawn a new AI entity at when debug called
+	vector debug_offset_2 = "20 0 0"; // Electric bugaloo
 	
 	float gametime = 0;
 	
@@ -25,6 +26,8 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "ServerWeaponAimCheck", this, SingeplayerExecutionType.Client);
     }
 	
+	//! @param owner Who is the manager of this AI
+	//! @param formOffset Where should this AI follow relative to the formation?
 	void SpawnAI_Helper(PlayerBase owner, vector formOffset) {
 		//Human h = Human.Cast(GetGame().CreateObject("SurvivorF_Linda", data.param1));
 
@@ -33,29 +36,7 @@ class eAIGame {
 		h.markAIServer( ); // Important: Mark unit as AI since we don't control the constructor.
 		 // Do the same in the clients
 			
-		//h.OnCameraChanged(new eAIDayZPlayerCamera(h, h.GetInputController()));
-			
-		h.GetHumanInventory().CreateInInventory("TTSKOPants");
-		h.GetHumanInventory().CreateInInventory("TTsKOJacket_Camo");
-		h.GetHumanInventory().CreateInInventory("CombatBoots_Black");
-		h.GetHumanInventory().CreateInInventory("ImprovisedBag");
-
-		h.GetHumanInventory().CreateInInventory("SodaCan_Pipsi");
-		h.GetHumanInventory().CreateInInventory("SpaghettiCan");
-		h.GetHumanInventory().CreateInInventory("HuntingKnife");
-		ItemBase rags = ItemBase.Cast(h.GetHumanInventory().CreateInInventory("Rag"));
-		rags.SetQuantity(4);
-
-		EntityAI primary;
-		EntityAI axe = h.GetInventory().CreateInInventory("FirefighterAxe");
-
-		EntityAI gun = h.GetHumanInventory().CreateInHands("M4A1");
-		gun.GetInventory().CreateAttachment("M4_RISHndgrd_Black");
-		gun.GetInventory().CreateAttachment("M4_MPBttstck_Black");
-		gun.GetInventory().CreateAttachment("ACOGOptic");
-		//gun.GetInventory().CreateAttachment("Mag_STANAG_30Rnd");
-		EntityAI mag = h.GetHumanInventory().CreateInInventory("Mag_STANAG_30Rnd");
-		h.GetHumanInventory().CreateInInventory("Mag_STANAG_30Rnd");
+		SoldierLoadout.Apply(h);
 
 		eAIPlayerHandler handler = new eAIPlayerHandler(h);
 		h.markOwner(handler);
@@ -67,18 +48,21 @@ class eAIGame {
 		handler.UpdatePathing();
 	}
 	
-	void SpawnEntity(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	// Server Side: This RPC spawns a helper AI next to the player, and tells them to join the player's formation.
+	void SpawnEntity(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
             Print("eAI spawn entity RPC called.");
-			SpawnAI_Helper(data.param1, Vector(-3, 0, -3)); // First number is horizontal offset, sec number is vertical
-			SpawnAI_Helper(data.param1, Vector(3, 0, -3));
+			SpawnAI_Helper(data.param1, Vector(0, 0, 0));
+			//SpawnAI_Helper(data.param1, Vector(-3, 0, -3)); // First number is horizontal offset, sec number is forwards in the formation
+			//SpawnAI_Helper(data.param1, Vector(3, 0, -3));
 		}
 	}
 	
-	void ClearAllEntity(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param1<vector> data; // here the parameter is unused, maybe we could use an enum instead
+	// Server Side: This RPC deletes all the active AI.
+	void ClearAllEntity(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+		Param1<vector> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
             Print("eAI clear all entity RPC called.");
@@ -91,8 +75,9 @@ class eAIGame {
 		}
 	}
 	
-	void ClearMyEntity(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param1<DayZPlayer> data; // here the parameter is unused, maybe we could use an enum instead
+	// Server Side: This RPC clears all entities belonging to a particular player. It is garbage code and needs rewritten.
+	void ClearMyEntity(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
             Print("eAI clear my entity RPC called.");
@@ -114,8 +99,9 @@ class eAIGame {
 		}
 	}
 	
-	void TargetPos(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param2<DayZPlayer, vector> data; // here the parameter is unused, maybe we could use an enum instead
+	// Server Side: This RPC tells AI that belong to a player to target creatures that are pointed at by the player.
+	void TargetPos(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+		Param2<DayZPlayer, vector> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
 			//Print("eAI TargetPOS " + data.param1 + data.param2);
@@ -128,22 +114,9 @@ class eAIGame {
 		}
 	}
 	
-	// This RPC is to be sent from a client to the server, so that the server can send the RPC (stored as data.param1 string) to all clients
-	/*void ServerSendGlobalRPC(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param1<string> data;
-        if ( !ctx.Read( data ) ) return;
-		if(type == CallType.Server) {
-            Print("ServerSendGlobalRPC: Synching event " + data.param1);
-			foreach (eAIPlayerHandler p : aiList) {
-				//GetRPCManager().SendRPC("eAI", data.param1, new Param1<PlayerBase>(p));
-				//GetRPCManager().SendRPC("eAI", "ProcessReload", new Param1<PlayerBase>(p));
-				p.unit.QuickReloadWeapon(p.unit.GetHumanInventory().GetEntityInHands());
-			}
-        }
-	}*/
-	
-	void ProcessReload(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param1<PlayerBase> data; // here the parameter is unused, maybe we could use an enum instead
+	// Server Side: This RPC forces all units to reload if they have a weapon, for debugging.
+	void ProcessReload(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+		Param1<PlayerBase> data;
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server || true) {
             Print("eAI ProcessReload RPC called.");
@@ -155,8 +128,9 @@ class eAIGame {
         }
 	}
 	
-	void UpdateMovement(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param1<PlayerBase> data; // here the parameter is unused, maybe we could use an enum instead
+	// Server Side: This RPC forces all AI to recalc their pathing.
+	void UpdateMovement(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+		Param1<PlayerBase> data;
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server) {
             Print("eAI UpdateMovement RPC called.");
@@ -166,8 +140,9 @@ class eAIGame {
         }
 	}
 	
-	void DebugFire(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param1<PlayerBase> data; // here the parameter is unused, maybe we could use an enum instead
+	// Server Side: This RPC forces all AI to fire their held weapon for debugging.
+	void DebugFire(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+		Param1<PlayerBase> data;
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server) {
             Print("eAI DebugFire RPC called.");
@@ -177,29 +152,32 @@ class eAIGame {
         }
 	}
 	
-	void ToggleWeaponRaise(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param1<PlayerBase> data; // here the parameter is unused, maybe we could use an enum instead
+	// Server Side: This RPC forces all AI to toggle ADS, for debugging.
+	void ToggleWeaponRaise(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+		Param1<PlayerBase> data;
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server) {
             Print("eAI ToggleWeaponRaise RPC called.");
 			foreach (eAIPlayerHandler i : aiList) {
-				i.RaiseWeapon(true);
+				i.ToggleWeaponRaise();
 			}
         }
 	}
 	
+	// Server Side: This RPC spawns a zombie. It's actually not the right way to do it. But it's only for testing.
 	// BUG: this has sometimes crashed us before. Not sure why yet.
-	void SpawnZombie(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param1<PlayerBase> data; // here the parameter is unused, maybe we could use an enum instead
+	void SpawnZombie(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+		Param1<PlayerBase> data;
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server) {
             Print("eAI SpawnZombie RPC called.");
-			GetGame().CreateObject("ZmbF_JournalistNormal_Blue", data.param1.GetPosition() + debug_offset + debug_offset, false, true, true);
+			GetGame().CreateObject("ZmbF_JournalistNormal_Blue", data.param1.GetPosition() + debug_offset_2, false, true, true);
         }
 	}
 	
-	void MoveAllToPos(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param1<vector> data; // here the parameter is unused, maybe we could use an enum instead
+	// Server Side: TP all players to the caller's position. For testing only.
+	void MoveAllToPos(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+		Param1<vector> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
             Print("Moving all units to position...");
@@ -211,7 +189,8 @@ class eAIGame {
 		}
 	}
 	
-	void DebugParticle(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	// Client Side: This RPC spawns a debug particle at a location requested by the server.
+	void DebugParticle(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param2<vector, vector> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Client ) {
@@ -220,7 +199,9 @@ class eAIGame {
 		}
 	}
 	
-	void DayZPlayerInventory_OnEventForRemoteWeaponAICallback(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	// Client Side: This RPC replaces a member function of DayZPlayerInventory that handles remote weapon events. I cannot override the functionality that 
+	// class, but this workaround seems to do a pretty good job.
+	void DayZPlayerInventory_OnEventForRemoteWeaponAICallback(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param3<int, DayZPlayer, Magazine> data;
         if (!ctx.Read(data)) return;
 		//if(type == CallType.Client ) {
@@ -229,40 +210,24 @@ class eAIGame {
 		//}
 	}
 	
-	void DebugWeaponLocation(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
-		Param1<Weapon_Base> data;
+	// Client Side: This RPC gets the client side transformation of a Weapon_Base, then sends some data back to server
+	void DebugWeaponLocation(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+		Param2<Weapon_Base, string> data;
         if (!ctx.Read(data)) return;
 		
-		/*Particle p = Particle.PlayInWorld(ParticleList.DEBUG_DOT, "0 0 0");
-		///p.SetOrientation(vector.Zero);
-		data.param1.AddChild(p, -1);
-		//data.param1.Update();
-		p.Update();
-		Print(p.GetPosition());*/
-		
+		// Set up the model space transformation locally on the client
 		vector usti_hlavne_position = data.param1.GetSelectionPositionLS("usti hlavne"); // front?
 		vector konec_hlavne_position = data.param1.GetSelectionPositionLS("konec hlavne"); // back?
 		vector out_front, out_back;
 		out_front = data.param1.ModelToWorld(usti_hlavne_position);
 		out_back = data.param1.ModelToWorld(konec_hlavne_position);
 		
-		/*vector usti_hlavne_position = data.param1.GetSelectionPositionLS("usti hlavne"); // This is therefore the begin_point
-		Particle p1 = Particle.PlayInWorld(ParticleList.DEBUG_DOT, usti_hlavne_position);
-		///p1.SetOrientation(vector.Zero);
-		data.param1.AddChild(p1, -1);
-		Print(p1.GetPosition());
-		
-		vector konec_hlavne_position = data.param1.GetSelectionPositionLS("konec hlavne");
-		Particle p2 = Particle.PlayInWorld(ParticleList.DEBUG_DOT, konec_hlavne_position);
-		p2.SetOrientation(vector.Zero);
-		data.param1.AddChild(p2, -1);
-		Print(p2.GetPosition());*/
-		
 		// Now, sync data to server.
 		GetRPCManager().SendRPC("eAI", "SpawnBullet", new Param3<Weapon_Base, vector, vector>(data.param1, out_front, out_back));
 	}
 	
-	void ClientWeaponDataWithCallback(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	// Client Side: This RPC takes the weapon data like in the previous RPC, then forwards it to the ServerWeaponAimCheck RPC
+	void ClientWeaponDataWithCallback(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param2<Weapon_Base, string> data;
         if (!ctx.Read(data)) return;
 
@@ -281,7 +246,9 @@ class eAIGame {
 	
 	// from weapon_base, was originally protected
 	PhxInteractionLayers hit_mask = PhxInteractionLayers.CHARACTER | PhxInteractionLayers.BUILDING | PhxInteractionLayers.DOOR | PhxInteractionLayers.VEHICLE | PhxInteractionLayers.ROADWAY | PhxInteractionLayers.TERRAIN | PhxInteractionLayers.ITEM_SMALL | PhxInteractionLayers.ITEM_LARGE | PhxInteractionLayers.FENCE | PhxInteractionLayers.AI;
-	void ServerWeaponAimCheck(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	
+	// Server Side: This RPC takes the client location data, and performs an aim check on the weapon's last known aimpoint.
+	void ServerWeaponAimCheck(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		
 		Param3<Weapon_Base, vector, vector> data;
         if (!ctx.Read(data)) return;
@@ -309,7 +276,8 @@ class eAIGame {
 
 	}
 	
-	void SpawnBullet(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	// Server Side: Kick off the ballistics code with the latest data from client
+	void SpawnBullet(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param3<Weapon_Base, vector, vector> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
@@ -369,7 +337,7 @@ class eAIGame {
 	int current_ai = 0;
 	
 	void OnUpdate(bool doSim, float timeslice) {
-		gametime += (4*timeslice); // timeslice*x where x is the number of slices per second
+		gametime += (8*timeslice); // timeslice*x where x is the number of slices per second
 		timeDiv++;
 		if (Math.Floor(gametime - (4*timeslice)) != Math.Floor(gametime)) {timeDiv = 0;}
 
@@ -426,7 +394,7 @@ modded class MissionGameplay
 
     void MissionGameplay()
     {
-        m_eaiGame = new ref eAIGame();
+        m_eaiGame = new eAIGame();
 
         Print( "eAI - Loaded Client Mission" );
     }
