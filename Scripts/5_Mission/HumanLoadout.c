@@ -25,7 +25,7 @@ class HumanLoadout {
 class SoldierLoadout : HumanLoadout {
 	static void Apply(PlayerBase h)
 	{
-		ref TStringArray SoldierLoadoutShirts = {"GorkaEJacket_Autumn", "GorkaEJacket_Flat", "GorkaEJacket_PautRev", "GorkaEJacket_Summer"};
+		TStringArray SoldierLoadoutShirts = {"GorkaEJacket_Autumn", "GorkaEJacket_Flat", "GorkaEJacket_PautRev", "GorkaEJacket_Summer"};
 		ref TStringArray SoldierLoadoutPants = {"GorkaPants_Autumn", "GorkaPants_Flat", "GorkaPants_PautRev", "GorkaPants_Summer"}; 							
 		ref TStringArray SoldierLoadoutShoes = {"TTSKOBoots", "CombatBoots_Black", "CombatBoots_Brown"};			
 		ref TStringArray SoldierLoadoutBackPacks = {"", "", "CoyoteBag_Brown", "CoyoteBag_Green"};					

@@ -67,7 +67,7 @@ class eAIGame {
 		handler.UpdatePathing();
 	}
 	
-	void SpawnEntity(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	void SpawnEntity(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
@@ -78,7 +78,7 @@ class eAIGame {
 		}
 	}
 	
-	void ClearAllEntity(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	void ClearAllEntity(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param1<vector> data; // here the parameter is unused, maybe we could use an enum instead
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
@@ -92,7 +92,7 @@ class eAIGame {
 		}
 	}
 	
-	void ClearMyEntity(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	void ClearMyEntity(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param1<DayZPlayer> data; // here the parameter is unused, maybe we could use an enum instead
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
@@ -115,7 +115,7 @@ class eAIGame {
 		}
 	}
 	
-	void TargetPos(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	void TargetPos(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param2<DayZPlayer, vector> data; // here the parameter is unused, maybe we could use an enum instead
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
@@ -143,7 +143,7 @@ class eAIGame {
         }
 	}*/
 	
-	void ProcessReload(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	void ProcessReload(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param1<PlayerBase> data; // here the parameter is unused, maybe we could use an enum instead
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server || true) {
@@ -156,7 +156,7 @@ class eAIGame {
         }
 	}
 	
-	void UpdateMovement(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	void UpdateMovement(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param1<PlayerBase> data; // here the parameter is unused, maybe we could use an enum instead
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server) {
@@ -167,7 +167,7 @@ class eAIGame {
         }
 	}
 	
-	void DebugFire(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	void DebugFire(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param1<PlayerBase> data; // here the parameter is unused, maybe we could use an enum instead
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server) {
@@ -178,7 +178,7 @@ class eAIGame {
         }
 	}
 	
-	void ToggleWeaponRaise(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	void ToggleWeaponRaise(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param1<PlayerBase> data; // here the parameter is unused, maybe we could use an enum instead
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server) {
@@ -190,7 +190,7 @@ class eAIGame {
 	}
 	
 	// BUG: this has sometimes crashed us before. Not sure why yet.
-	void SpawnZombie(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	void SpawnZombie(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param1<PlayerBase> data; // here the parameter is unused, maybe we could use an enum instead
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server) {
@@ -199,7 +199,7 @@ class eAIGame {
         }
 	}
 	
-	void MoveAllToPos(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	void MoveAllToPos(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param1<vector> data; // here the parameter is unused, maybe we could use an enum instead
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
@@ -212,7 +212,7 @@ class eAIGame {
 		}
 	}
 	
-	void DebugParticle(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	void DebugParticle(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param2<vector, vector> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Client ) {
@@ -221,7 +221,7 @@ class eAIGame {
 		}
 	}
 	
-	void DayZPlayerInventory_OnEventForRemoteWeaponAICallback(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	void DayZPlayerInventory_OnEventForRemoteWeaponAICallback(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param3<int, DayZPlayer, Magazine> data;
         if (!ctx.Read(data)) return;
 		//if(type == CallType.Client ) {
@@ -230,7 +230,7 @@ class eAIGame {
 		//}
 	}
 	
-	void DebugWeaponLocation(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	void DebugWeaponLocation(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param1<Weapon_Base> data;
         if (!ctx.Read(data)) return;
 		
@@ -263,7 +263,7 @@ class eAIGame {
 		GetRPCManager().SendRPC("eAI", "SpawnBullet", new Param3<Weapon_Base, vector, vector>(data.param1, out_front, out_back));
 	}
 	
-	void ClientWeaponDataWithCallback(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	void ClientWeaponDataWithCallback(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param2<Weapon_Base, string> data;
         if (!ctx.Read(data)) return;
 
@@ -282,7 +282,7 @@ class eAIGame {
 	
 	// from weapon_base, was originally protected
 	PhxInteractionLayers hit_mask = PhxInteractionLayers.CHARACTER | PhxInteractionLayers.BUILDING | PhxInteractionLayers.DOOR | PhxInteractionLayers.VEHICLE | PhxInteractionLayers.ROADWAY | PhxInteractionLayers.TERRAIN | PhxInteractionLayers.ITEM_SMALL | PhxInteractionLayers.ITEM_LARGE | PhxInteractionLayers.FENCE | PhxInteractionLayers.AI;
-	void ServerWeaponAimCheck(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	void ServerWeaponAimCheck(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		
 		Param3<Weapon_Base, vector, vector> data;
         if (!ctx.Read(data)) return;
@@ -310,7 +310,7 @@ class eAIGame {
 
 	}
 	
-	void SpawnBullet(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target) {
+	void SpawnBullet(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param3<Weapon_Base, vector, vector> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
@@ -427,7 +427,7 @@ modded class MissionGameplay
 
     void MissionGameplay()
     {
-        m_eaiGame = new ref eAIGame();
+        m_eaiGame = new eAIGame();
 
         Print( "eAI - Loaded Client Mission" );
     }
