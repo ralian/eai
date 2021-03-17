@@ -337,7 +337,7 @@ class eAIGame {
 	int current_ai = 0;
 	
 	void OnUpdate(bool doSim, float timeslice) {
-		gametime += (4*timeslice); // timeslice*x where x is the number of slices per second
+		gametime += (8*timeslice); // timeslice*x where x is the number of slices per second
 		timeDiv++;
 		if (Math.Floor(gametime - (4*timeslice)) != Math.Floor(gametime)) {timeDiv = 0;}
 

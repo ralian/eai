@@ -198,14 +198,6 @@ class eAIPlayerHandler {
 				
 				HasAShot = true;
 				
-			} else {
-				// if the weapon is held down, or if we have no weapon out yet
-				targetAngle = vector.Direction(myPos, threatPos).VectorToAngles().GetRelAngles()[0];
-			
-				// The heading is just where we are looking at, not where the weapon is.
-				heading = -(unit.GetInputController().GetHeadingAngle() * Math.RAD2DEG); 
-				
-				HasAShot = false;
 			}
 			
 			delta = Math.DiffAngle(targetAngle, heading);
@@ -219,6 +211,9 @@ class eAIPlayerHandler {
 			delta = Math.Max(delta, -0.25);
 			delta = Math.Min(delta, 0.25);
 			unit.GetInputController().OverrideAimChangeX(true, delta);
+			//unit.GetInputController().OverrideAimChangeY(true, 0.0);
+			
+			Print("UpdateMovement() - targetAngle: " + targetAngle + " heading: " + heading + " delta: " + delta);
 			
 			// Now, do the logic for aiming along the y axis.
 			float gunHeight = 1.5 + myPos[1]; 			// Todo get the actual world gun height.
@@ -257,13 +252,16 @@ class eAIPlayerHandler {
 			return false;
 		}
 		
-		/*if (m_FollowOrders) {
+		if (m_FollowOrders) {
 			cur_waypoint_no = -1; // can't use clearWaypoints() here because we want to preserve the distance
 			waypoints.Clear();
 			addWaypoint(m_FollowOrders.GetPosition());
-		};*/
+			unit.lookAt = m_FollowOrders; // temporary
+		};
 		
-		targetAngle = vector.Direction(unit.GetPosition(), waypoints[cur_waypoint_no]).VectorToAngles().GetRelAngles()[0];// * Math.DEG2RAD;
+		//unit.headingTarget = vector.Direction(GetPosition(), waypoints[cur_waypoint_no]).VectorToAngles().GetRelAngles()[0];
+		
+		/*targetAngle = vector.Direction(unit.GetPosition(), waypoints[cur_waypoint_no]).VectorToAngles().GetRelAngles()[0];// * Math.DEG2RAD;
 		//vector heading = MiscGameplayFunctions.GetHeadingVector(this);
 		
 		// This seems to be CCW is positive unlike relative angles.
@@ -280,7 +278,7 @@ class eAIPlayerHandler {
 		delta = Math.Min(delta, 0.25);
 				
 		// This is a capped PID controller, but using only the P component
-		unit.GetInputController().OverrideAimChangeX(true, delta);
+		unit.GetInputController().OverrideAimChangeX(true, delta);*/
 		
 		// Next, we handle logic flow for waypoints.
 		float currDistToWP = vector.Distance(unit.GetPosition(), waypoints[cur_waypoint_no]);

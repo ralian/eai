@@ -175,15 +175,58 @@ modded class PlayerBase {
 		return super.AimingModel(pDt, pModel);
 	}
 	
-	override bool	HeadingModel(float pDt, SDayZPlayerHeadingModel pModel)
+	Object lookAt = null;
+	float headingTarget = 0.0;
+	override bool HeadingModel(float pDt, SDayZPlayerHeadingModel pModel)
 	{
 		if ( isAI() )
 		{
+				// This should be true anyways, but double check that an AI hasn't been set on a client
+			if (!GetGame().IsServer())
+				return false;
+			
+			GetMovementState(m_MovementState);
+			
 			m_fLastHeadingDiff = 0;
-			//return DayZPlayerImplementHeading.RotateOrient(pDt, pModel, m_fLastHeadingDiff);
-			return DayZPlayerImplementHeading.ClampHeading(pDt, pModel, m_fLastHeadingDiff);
+			
+			while (pModel.m_fHeadingAngle > Math.PI) pModel.m_fHeadingAngle -= Math.PI2;
+			while (pModel.m_fHeadingAngle < -Math.PI) pModel.m_fHeadingAngle += Math.PI2;
+			//while (pModel.m_fOrientationAngle > Math.PI) pModel.m_fHeadingAngle -= Math.PI2;
+			//while (pModel.m_fOrientationAngle < -Math.PI) pModel.m_fHeadingAngle += Math.PI2;
+			
+			if (lookAt)
+				headingTarget = vector.Direction(GetPosition(), lookAt.GetPosition()).VectorToAngles().GetRelAngles()[0];
+			
+			float delta = Math.DiffAngle(headingTarget, Math.RAD2DEG * pModel.m_fHeadingAngle);
+			
+			// this is a workaround for pesky headbug :)
+			// Basically, under certain circumstances (seemingly after a full rotation), the m_fHeadingAngle would diverge from the 
+			// m_OrientationAngle, and there was little I could do. This bug is rare but debilitating, since it basically disables tracking 
+			// of the AI. So, for now... the best workaround seems to be resetting the unit's heading to the desired m_fHeadingAngle. For a 
+			// graph explaining it, ask me.
+			if (delta < 0.02 && Math.DiffAngle(Math.RAD2DEG * pModel.m_fOrientationAngle, Math.RAD2DEG * pModel.m_fHeadingAngle) > 60.0) {
+				SetOrientation(Vector(Math.RAD2DEG * pModel.m_fHeadingAngle, 0, 0));
+				pModel.m_fOrientationAngle = pModel.m_fHeadingAngle;
+			}
+			
+			//if (Math.AbsFloat(delta) < 5) delta = 0;
+			delta *= (1/360);
+			delta = Math.Max(delta, -0.5);
+			delta = Math.Min(delta, 0.5);
+			//pModel.m_fOrientationAngle += delta;
+			
+			Print("HeadingModel - orientation: " + pModel.m_fOrientationAngle + " heading: " + pModel.m_fHeadingAngle + " delta: " + delta);
+			
+			GetInputController().OverrideAimChangeX(true, delta);
+			
+			return DayZPlayerImplementHeading.RotateOrient(pDt, pModel, m_fLastHeadingDiff);
+			//return DayZPlayerImplementHeading.ClampHeading(pDt, pModel, m_fLastHeadingDiff);
 			//return DayZPlayerImplementHeading.NoHeading(pDt, pModel, m_fLastHeadingDiff);
 			//return false;
+			
+			
+			
+			//return test;
 		}
 		
 		return super.HeadingModel(pDt, pModel);
