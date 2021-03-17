@@ -33,29 +33,7 @@ class eAIGame {
 		h.markAIServer( ); // Important: Mark unit as AI since we don't control the constructor.
 		 // Do the same in the clients
 			
-		//h.OnCameraChanged(new eAIDayZPlayerCamera(h, h.GetInputController()));
-			
-		h.GetHumanInventory().CreateInInventory("TTSKOPants");
-		h.GetHumanInventory().CreateInInventory("TTsKOJacket_Camo");
-		h.GetHumanInventory().CreateInInventory("CombatBoots_Black");
-		h.GetHumanInventory().CreateInInventory("ImprovisedBag");
-
-		h.GetHumanInventory().CreateInInventory("SodaCan_Pipsi");
-		h.GetHumanInventory().CreateInInventory("SpaghettiCan");
-		h.GetHumanInventory().CreateInInventory("HuntingKnife");
-		ItemBase rags = ItemBase.Cast(h.GetHumanInventory().CreateInInventory("Rag"));
-		rags.SetQuantity(4);
-
-		EntityAI primary;
-		EntityAI axe = h.GetInventory().CreateInInventory("FirefighterAxe");
-
-		EntityAI gun = h.GetHumanInventory().CreateInHands("M4A1");
-		gun.GetInventory().CreateAttachment("M4_RISHndgrd_Black");
-		gun.GetInventory().CreateAttachment("M4_MPBttstck_Black");
-		gun.GetInventory().CreateAttachment("ACOGOptic");
-		//gun.GetInventory().CreateAttachment("Mag_STANAG_30Rnd");
-		EntityAI mag = h.GetHumanInventory().CreateInInventory("Mag_STANAG_30Rnd");
-		h.GetHumanInventory().CreateInInventory("Mag_STANAG_30Rnd");
+		SoldierLoadout.Apply(h);
 
 		eAIPlayerHandler handler = new eAIPlayerHandler(h);
 		h.markOwner(handler);
