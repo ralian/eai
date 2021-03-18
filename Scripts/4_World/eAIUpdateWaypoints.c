@@ -18,7 +18,7 @@
 int atomic_findPathRunning = 0;
 
 void updateWaypoints(eAIPlayerHandler p, vector whereTo, bool addzerowaypoint = false, bool debug_waypoints = false) {
-	
+	/*
 	bool success = false;
 	
 	vector pos = p.unit.GetPosition();
@@ -77,4 +77,5 @@ void updateWaypoints(eAIPlayerHandler p, vector whereTo, bool addzerowaypoint = 
 			GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(p.waypoints[k], vector.Zero));
 		}
 	}
+	*/
 }

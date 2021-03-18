@@ -17,32 +17,150 @@
 bool eAIGlobal_UnitKilled = false;
 
 // Todo move this to a separate child class (like PlayerBaseClient)
-modded class PlayerBase {
-	
-	// this is very bad polymorphic design, don't worry, it will be fixed
-	eAIPlayerHandler parent;
+modded class PlayerBase
+{
+	//Note: all of eAIPlayerHandler should be moved into the entity class.
+	private eAIPlayerHandler m_eAI_Handler;
+	private ref eAIAnimationST m_eAI_AnimationST;
+	private eAICommandBase m_eAI_Command;
 	
 	// Angle above the horizon we should be aiming, degrees.
 	float targetAngle = -5.0;
 
-	bool isAI = false;
+	bool m_eAI_Is = false;
+
+	void PlayerBase()
+	{
+		//todo: register net sync bool for 'isAI'
+	}
 	
 	// IMPORTANT: Since this class is always constructed in engine, we need some other way to mark a unit as AI outside of the constructor.
 	// As such, when spawning AI make sure you ALWAYS CALL MARKAI() ON THE UNIT AFTER TELLING THE ENGINE TO SPAWN THE UNIT.
 	// This is used in many functions for workarounds for AI controlled players and it will break things if AI are not properly marked.
-	bool isAI() {return isAI;}
-	void markAIServer() {
-		isAI = true;
+	bool isAI() { return m_eAI_Is; }
+
+	eAIPlayerHandler SetAI()
+	{
+		m_eAI_Is = true;
 		m_ActionManager = new ActionManagerAI(this);
+		
+		Class.CastTo(m_eAI_Handler, GetDayZGame().eAIManagerGet().AddAI(this));
+		m_eAI_AnimationST = new eAIAnimationST(this);
+
+		return m_eAI_Handler;
 	}
-	
-	void markOwner(eAIPlayerHandler p) {parent = p;}
-	
-	// Probably not actually necessary
-	void markAIClient() {
-		isAI = true;
-		//m_ActionManager = new ActionManagerClient(this);
+
+	override void CommandHandler(float pDt, int pCurrentCommandID, bool pCurrentCommandFinished) 
+	{
+		if (!isAI())
+		{
+			super.CommandHandler(pDt, pCurrentCommandID, pCurrentCommandFinished);
+			return;
+		}
+
+		if (!GetGame().IsServer())
+			return;
+		
+		m_eAI_Command = eAICommandBase.Cast(GetCommand_Script());
+
+
+		if (pCurrentCommandFinished)
+		{
+			if (PhysicsIsFalling(true))
+			{
+				StartCommand_Fall(0);
+
+				return;
+			}
+
+			StartCommand_Script(new eAICommandMove(this, m_eAI_Handler, m_eAI_AnimationST));
+		}
+
+		// taken from vanilla DayZPlayerImplement
+		if (pCurrentCommandID == DayZPlayerConstants.COMMANDID_FALL)
+		{
+			int landType = 0;
+			HumanCommandFall fall = GetCommand_Fall();
+
+			if (fall.PhysicsLanded())
+			{
+				DayZPlayerType type = GetDayZPlayerType();
+				NoiseParams npar;
+
+				// land
+				m_FallYDiff = m_FallYDiff - GetPosition()[1];
+				//Print(m_FallYDiff);
+				if (m_FallYDiff < 0.5)
+				{
+					landType = HumanCommandFall.LANDTYPE_NONE; 
+					fall.Land(landType);
+					npar = type.GetNoiseParamsLandLight();
+					AddNoise(npar);
+				}
+				else if (m_FallYDiff < 1.0)
+				{
+					landType = HumanCommandFall.LANDTYPE_LIGHT;
+					fall.Land(landType);
+					npar = type.GetNoiseParamsLandLight();
+					AddNoise(npar);
+				}
+				else if (m_FallYDiff < 2.0)
+				{
+					landType = HumanCommandFall.LANDTYPE_MEDIUM;
+					fall.Land(landType);
+					npar = type.GetNoiseParamsLandHeavy();
+					AddNoise(npar);
+				}
+				else
+				{
+					landType = HumanCommandFall.LANDTYPE_HEAVY;
+					fall.Land(landType);
+					npar = type.GetNoiseParamsLandHeavy();
+					AddNoise(npar);
+				}
+				
+				if( m_FallYDiff >= DayZPlayerImplementFallDamage.FD_DMG_FROM_HEIGHT && GetInstanceType() == DayZPlayerInstanceType.INSTANCETYPE_CLIENT )
+				{
+					this.SpawnDamageDealtEffect();
+				}
+				
+				m_FallDamage.HandleFallDamage(m_FallYDiff);
+				m_JumpClimb.CheckAndFinishJump(landType);
+			}
+
+			return;
+		}
+		
+		if (PhysicsIsFalling(false))
+		{
+			StartCommand_Fall(0);
+			m_FallYDiff = GetPosition()[1];
+			return;
+		}
+
+		if (m_ActionManager)
+		{
+			m_ActionManager.Update(DayZPlayerConstants.COMMANDID_MOVE);
+		}
+		
+		if (pCurrentCommandID == DayZPlayerConstants.COMMANDID_MOVE)
+		{
+			StartCommand_Script(new eAICommandMove(this, m_eAI_Handler, m_eAI_AnimationST));
+			return;
+		}
+		
+		if (pCurrentCommandID == DayZPlayerConstants.COMMANDID_SCRIPT )
+		{
+		}
 	}
+
+
+
+
+
+
+
+
 	
 	//Eventually we can use this instead of calling the action manager, needs more work though
 	override void ReloadWeapon( EntityAI weapon, EntityAI magazine ) {
@@ -164,104 +282,24 @@ modded class PlayerBase {
 	//}
 	
 	override bool AimingModel(float pDt, SDayZPlayerAimingModel pModel) {
-		if (isAI() && GetGame().IsServer() && IsAlive()) {
-			if (!GetHumanInventory())
-				return false;
-			
-			// If we are aiming a weapon, we need to do vertical targeting logic.
-			if (GetHumanInventory().GetEntityInHands() && parent && parent.WantsWeaponUp()) {			
-				float delta = -((GetAimingModel().getAimY()-targetAngle)*Math.DEG2RAD)/8.0;
-			
-				GetInputController().OverrideAimChangeY(true, delta);
-				
-				// Ignore the fact that this works. Do not ask why it works. Or how I found out that creating a faux recoil event
-				// after updating the input controller updates the aim change. If you ask me about this code or why it is written
-				// this way, I will deny its existance.
-				//
-				// Just kidding :-)   ... or am I?
-				GetAimingModel().SetDummyRecoil(Weapon_Base.Cast(GetHumanInventory().GetEntityInHands()));
-			} else {
-				GetInputController().OverrideAimChangeY(true, 0.0);
-			}
+		if (isAI() && m_eAI_Command)
+		{
+			return m_eAI_Command.AimingModel(pDt, pModel);
 		}
-		
-		// If we are not AI
+			
 		return super.AimingModel(pDt, pModel);
 	}
-	
-	Object lookAt = null;
-	float headingTarget = 0.0;
-	float lastHeadingAngle = 0.0;
-	bool eAI_Use_ADS_Tracking = false;
+		
 	override bool HeadingModel(float pDt, SDayZPlayerHeadingModel pModel)
 	{
-		if ( isAI() && IsAlive() )
-		{			
-			GetMovementState(m_MovementState);
-			
-			m_fLastHeadingDiff = 0;
-			
-			if (pModel.m_fHeadingAngle > Math.PI) pModel.m_fHeadingAngle -= Math.PI2;
-			if (pModel.m_fHeadingAngle < -Math.PI) pModel.m_fHeadingAngle += Math.PI2;
-			lastHeadingAngle = pModel.m_fHeadingAngle;
-			
-			if (lookAt) {
-				headingTarget = vector.Direction(GetPosition(), lookAt.GetPosition()).VectorToAngles().GetRelAngles()[0];
-			} else if (parent.waypoints.Count() > 0) {
-				headingTarget = vector.Direction(GetPosition(), parent.waypoints[0]).VectorToAngles().GetRelAngles()[0];
-			}
-			
-			float currentAngle;
-			if (eAI_Use_ADS_Tracking) {
-				AimProfile lastaim = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands()).aim;
-				// right now, we only aim with the weapon's azumith starting from the position of the player
-				if (GetGame().GetTime() - lastaim.lastUpdated > 500)
-					Print("Warning! Using old data for ADS mode for " + this.ToString());
-				currentAngle = lastaim.Azmuith;
-			} else {
-				currentAngle = Math.RAD2DEG * pModel.m_fHeadingAngle;
-			}
-			
-			float delta = Math.DiffAngle(headingTarget, currentAngle);
-			
-			// this is a workaround for pesky headbug :)
-			// Basically, under certain circumstances (seemingly after a full rotation), the m_fHeadingAngle would diverge from the 
-			// m_OrientationAngle, and there was little I could do. This bug is rare but debilitating, since it basically disables tracking 
-			// of the AI. So, for now... the best workaround seems to be resetting the unit's heading to the desired m_fHeadingAngle. For a 
-			// graph explaining it, ask me.
-			if (delta < 0.02 && Math.DiffAngle(Math.RAD2DEG * pModel.m_fOrientationAngle, currentAngle) > 60.0) {
-				SetOrientation(Vector(currentAngle, 0, 0));
-				pModel.m_fOrientationAngle = pModel.m_fHeadingAngle;
-			}
-
-			delta *= (1/360);
-			
-			// Can be used to make a cool graph
-			//Print("HeadingModel - orientation: " + pModel.m_fOrientationAngle + " heading: " + pModel.m_fHeadingAngle + " delta: " + delta);
-			
-			GetInputController().OverrideAimChangeX(true, delta);
-			
-			return DayZPlayerImplementHeading.RotateOrient(pDt, pModel, m_fLastHeadingDiff);
-			//return DayZPlayerImplementHeading.ClampHeading(pDt, pModel, m_fLastHeadingDiff);
-			//return DayZPlayerImplementHeading.NoHeading(pDt, pModel, m_fLastHeadingDiff);
-			//return false;
-
-			//return test;
+		if (isAI() && m_eAI_Command)
+		{
+			return m_eAI_Command.HeadingModel(pDt, pModel);
 		}
 		
 		return super.HeadingModel(pDt, pModel);
 	}
-	
-	override void CommandHandler(float pDt, int pCurrentCommandID, bool pCurrentCommandFinished)	
-	{
-		super.CommandHandler(pDt, pCurrentCommandID, pCurrentCommandFinished);
-		if (isAI()) {
-			//m_DirectionToCursor = m_CurrentCamera.GetBaseAngles();
-			//if (m_CurrentCamera)
-				//m_CurrentCamera.OnUpdate(pDt, m_pOutResult);
-		}
-	}
-	
+		
 	override void OnCameraChanged(DayZPlayerCameraBase new_camera)
 	{
 		Print("Camera for " + this.ToString() + " changed. old:" + m_CurrentCamera.ToString() + " new:"+new_camera.ToString());
@@ -273,7 +311,7 @@ modded class PlayerBase {
 		// Tell the server to stop computing AI stuffs
 		if (isAI() && GetGame().IsServer()) {
 			eAIGlobal_UnitKilled = true;
-			parent.markDead();
+			m_eAI_Handler.markDead();
 		}
 		super.OnCommandDeathStart();
 	}

@@ -13,8 +13,6 @@
 // limitations under the License.
 
 class eAIGame {
-	// List of all eAI entities
-	autoptr array<ref eAIPlayerHandler> aiList = {};
 	
 	// On client, list of weapons we are asked to provide a feed of
 	autoptr eAIClientAimArbiterManager m_ClientAimMngr;
@@ -37,164 +35,54 @@ class eAIGame {
 		
 		if (GetGame().IsServer()) {
 			m_ServerAimMngr = new eAIServerAimProfileManager();
-			GetRPCManager().AddRPC("eAI", "eAIAimDetails", m_ServerAimMngr, SingeplayerExecutionType.Client);
+			GetRPCManager().AddRPC("eAI", "eAIAimDetails", m_ServerAimMngr, SingeplayerExecutionType.Server);
 		}
 		
-		GetRPCManager().AddRPC("eAI", "SpawnEntity", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "ClearAllEntity", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "ClearMyEntity", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "TargetPos", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "ProcessReload", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "MoveAllToPos", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "UpdateMovement", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "DebugFire", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "DebugParticle", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "ToggleWeaponRaise", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "SpawnZombie", this, SingeplayerExecutionType.Client);
-		//GetRPCManager().AddRPC("eAI", "DebugWeaponLocation", this, SingeplayerExecutionType.Client);
-		//GetRPCManager().AddRPC("eAI", "SpawnBullet", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", this, SingeplayerExecutionType.Client);
-		//GetRPCManager().AddRPC("eAI", "ClientWeaponDataWithCallback", this, SingeplayerExecutionType.Client);
-		//GetRPCManager().AddRPC("eAI", "ServerWeaponAimCheck", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("eAI", "SpawnEntity", this, SingeplayerExecutionType.Server);
+		GetRPCManager().AddRPC("eAI", "MoveAllToPos", this, SingeplayerExecutionType.Server);
+		GetRPCManager().AddRPC("eAI", "DebugFire", this, SingeplayerExecutionType.Server);
+		GetRPCManager().AddRPC("eAI", "DebugParticle", this, SingeplayerExecutionType.Server);
+		GetRPCManager().AddRPC("eAI", "SpawnZombie", this, SingeplayerExecutionType.Server);
+		//GetRPCManager().AddRPC("eAI", "DebugWeaponLocation", this, SingeplayerExecutionType.Server);
+		//GetRPCManager().AddRPC("eAI", "SpawnBullet", this, SingeplayerExecutionType.Server);
+		GetRPCManager().AddRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", this, SingeplayerExecutionType.Server);
+		//GetRPCManager().AddRPC("eAI", "ClientWeaponDataWithCallback", this, SingeplayerExecutionType.Server);
+		//GetRPCManager().AddRPC("eAI", "ServerWeaponAimCheck", this, SingeplayerExecutionType.Server);
     }
 	
 	//! @param owner Who is the manager of this AI
 	//! @param formOffset Where should this AI follow relative to the formation?
-	void SpawnAI_Helper(PlayerBase owner, vector formOffset) {
+	void SpawnAI_Helper(DayZPlayer owner, vector formOffset) {
 		//Human h = Human.Cast(GetGame().CreateObject("SurvivorF_Linda", data.param1));
-
+		
 		PlayerBase h = PlayerBase.Cast(GetGame().CreatePlayer(null, "SurvivorF_Linda", owner.GetPosition() + debug_offset, 0, "NONE"));
 			
-		h.markAIServer( ); // Important: Mark unit as AI since we don't control the constructor.
-		 // Do the same in the clients
-			
-		SoldierLoadout.Apply(h);
-
-		eAIPlayerHandler handler = new eAIPlayerHandler(h);
-		h.markOwner(handler);
-		
-		aiList.Insert(handler);
+		eAIPlayerHandler handler = h.SetAI();
 		
 		// Set the target entity we should follow to the player that spawned it, then do the first pathfinding update
-		handler.Follow(owner, formOffset, 2);
-		handler.UpdatePathing();
+		handler.Follow(PlayerBase.Cast(owner), formOffset, 2);
+		handler.UpdatePath();
+			
+		SoldierLoadout.Apply(h);
 	}
 	
 	// Server Side: This RPC spawns a helper AI next to the player, and tells them to join the player's formation.
 	void SpawnEntity(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<DayZPlayer> data;
+		Param1<DayZPlayer> data(null);
         if (!ctx.Read(data)) return;
-		if(type == CallType.Server ) {
+		
+		if (IsMissionOffline()) data.param1 = GetGame().GetPlayer();
+		
+		if(type == CallType.Server )
+		{
             Print("eAI spawn entity RPC called.");
-			SpawnAI_Helper(data.param1, Vector(0, 0, 0));
-			//SpawnAI_Helper(data.param1, Vector(-3, 0, -3)); // First number is horizontal offset, sec number is forwards in the formation
-			//SpawnAI_Helper(data.param1, Vector(3, 0, -3));
-		}
-	}
-	
-	// Server Side: This RPC deletes all the active AI.
-	void ClearAllEntity(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<vector> data;
-        if (!ctx.Read(data)) return;
-		if(type == CallType.Server ) {
-            Print("eAI clear all entity RPC called.");
-			foreach (eAIPlayerHandler e : aiList) {
-				e.RaiseWeapon(false); // This forces ADS/Aiming with the arbiter if it is active
-				GetGame().ObjectDelete(e.unit); // This is almost certainly not the right way to do this.
-				// Need to check for mem leaks
-			}
+			//SpawnAI_Helper(data.param1, Vector(0, 0, 0));
 			
-			aiList.Clear();
+			SpawnAI_Helper(data.param1, Vector(-3, 0, -3));
+			SpawnAI_Helper(data.param1, Vector(3, 0, -3));
+			SpawnAI_Helper(data.param1, Vector(-3, 0, 3));
+			SpawnAI_Helper(data.param1, Vector(3, 0, 3));
 		}
-	}
-	
-	// Server Side: This RPC clears all entities belonging to a particular player. It is garbage code and needs rewritten.
-	void ClearMyEntity(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<DayZPlayer> data;
-        if (!ctx.Read(data)) return;
-		if(type == CallType.Server ) {
-            Print("eAI clear my entity RPC called.");
-			for (int i = 0; i < aiList.Count(); i++) {
-				if (aiList[i].m_FollowOrders == data.param1) {
-					GetGame().ObjectDelete(aiList[i].unit);
-					aiList.RemoveOrdered(i);
-				}
-			}
-			
-			// hacky workaround for now
-			for (int j = 0; j < aiList.Count(); j++) {
-				if (aiList[j].m_FollowOrders == data.param1) {
-					GetGame().ObjectDelete(aiList[j].unit);
-					aiList.RemoveOrdered(j);
-				}
-			}
-			
-		}
-	}
-	
-	// Server Side: This RPC tells AI that belong to a player to target creatures that are pointed at by the player.
-	void TargetPos(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param2<DayZPlayer, vector> data;
-        if (!ctx.Read(data)) return;
-		if(type == CallType.Server ) {
-			//Print("eAI TargetPOS " + data.param1 + data.param2);
-			for (int i = 0; i < aiList.Count(); i++) {
-				if (aiList[i].m_FollowOrders == data.param1) {
-					aiList[i].RecalcThreatList(data.param2);
-				}
-			}
-			
-		}
-	}
-	
-	// Server Side: This RPC forces all units to reload if they have a weapon, for debugging.
-	void ProcessReload(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<PlayerBase> data;
-        if ( !ctx.Read( data ) ) return;
-		if(type == CallType.Server || true) {
-            Print("eAI ProcessReload RPC called.");
-			foreach (eAIPlayerHandler p : aiList) {
-				//GetRPCManager().SendRPC("eAI", data.param1, new Param1<PlayerBase>(p));
-				//GetRPCManager().SendRPC("eAI", "ProcessReload", new Param1<PlayerBase>(p));
-				p.unit.QuickReloadWeapon(p.unit.GetHumanInventory().GetEntityInHands());
-			}
-        }
-	}
-	
-	// Server Side: This RPC forces all AI to recalc their pathing.
-	void UpdateMovement(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<PlayerBase> data;
-        if ( !ctx.Read( data ) ) return;
-		if(type == CallType.Server) {
-            Print("eAI UpdateMovement RPC called.");
-			foreach (eAIPlayerHandler i : aiList) {
-				i.UpdatePathing();
-			}
-        }
-	}
-	
-	// Server Side: This RPC forces all AI to fire their held weapon for debugging.
-	void DebugFire(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<PlayerBase> data;
-        if ( !ctx.Read( data ) ) return;
-		if(type == CallType.Server) {
-            Print("eAI DebugFire RPC called.");
-			foreach (eAIPlayerHandler i : aiList) {
-				i.FireHeldWeapon();
-			}
-        }
-	}
-	
-	// Server Side: This RPC forces all AI to toggle ADS, for debugging.
-	void ToggleWeaponRaise(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<PlayerBase> data;
-        if ( !ctx.Read( data ) ) return;
-		if(type == CallType.Server) {
-            Print("eAI ToggleWeaponRaise RPC called.");
-			foreach (eAIPlayerHandler i : aiList) {
-				i.ToggleWeaponRaise();
-			}
-        }
 	}
 	
 	// Server Side: This RPC spawns a zombie. It's actually not the right way to do it. But it's only for testing.
@@ -321,40 +209,11 @@ class eAIGame {
 	void OnKeyPress(int key) {
         switch (key) {
             case KeyCode.KC_K: {
-				//GetRPCManager().SendRPC("eAI", "ClearMyEntity", new Param1<DayZPlayer>(GetGame().GetPlayer()));
 				GetRPCManager().SendRPC("eAI", "SpawnEntity", new Param1<DayZPlayer>(GetGame().GetPlayer()));
                 break;
             }
-			case KeyCode.KC_T: {
-				vector end = GetGame().GetCurrentCameraPosition() + (GetGame().GetCurrentCameraDirection().AnglesToVector() * 200);
-				vector hitPos, contactDir;
-				int contactComp;
-				DayZPhysics.RaycastRV(GetGame().GetCurrentCameraPosition(), end, hitPos, contactDir, contactComp);
-				GetRPCManager().SendRPC("eAI", "TargetPos", new Param2<DayZPlayer,vector>(GetGame().GetPlayer(), hitPos));
-                break;
-            }
-			case KeyCode.KC_L: {
-				GetRPCManager().SendRPC("eAI", "ClearAllEntity", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
-				break;
-			}
 			case KeyCode.KC_N: {
 				GetRPCManager().SendRPC("eAI", "MoveAllToPos", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
-				break;
-			}
-			case KeyCode.KC_I: {
-				GetRPCManager().SendRPC("eAI", "UpdateMovement", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
-				break;
-			}
-			case KeyCode.KC_P: {
-				GetRPCManager().SendRPC("eAI", "DebugFire", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
-				break;
-			}
-			case KeyCode.KC_O: {
-				GetRPCManager().SendRPC("eAI", "ToggleWeaponRaise", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
-				break;
-			}
-			case KeyCode.KC_M: {
-				GetRPCManager().SendRPC("eAI", "ProcessReload", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
 				break;
 			}
 			case KeyCode.KC_B: {
@@ -363,45 +222,6 @@ class eAIGame {
 			}
         }
     }
-	
-	int numOfDivsPassed = 0; // Okay, so this is a terrible way to do this. But AI will recalculate once each time "Div," a div (currently) being 250ms. This int is the floor of # of divs that have passed.
-	int timeDiv = 0; // This is the number of OnUpdates that have triggered since the last Div.
-	
-	int current_ai = 0;
-	
-	void OnUpdate(bool doSim, float timeslice) {
-		gametime += (8*timeslice); // timeslice*x where x is the number of slices per second
-		timeDiv++;
-		if (Math.Floor(gametime - (4*timeslice)) != Math.Floor(gametime)) {timeDiv = 0;}
-
-		// If at least one unit was killed, scan for dead units and clean up.
-		if (eAIGlobal_UnitKilled) {
-			for (int i = 0; i < aiList.Count(); i++)
-				if (aiList[i] == null || aiList[i].isDead())
-					aiList.Remove(i);
-			eAIGlobal_UnitKilled = false;
-		}
-		
-		// AI pathing calculations
-		
-		if (timeDiv == 0) {
-			current_ai = 0;
-			numOfDivsPassed++;
-		}
-		
-		if (current_ai < aiList.Count()) {
-			aiList[current_ai].UpdatePathing();
-			aiList[current_ai].UpdateState();
-			while (aiList[current_ai].UpdateMovement()) {} // update the movement as many times as needed (usually once, sometimes twice)
-			current_ai++;
-		}
-		
-		if (timeDiv == 0 && numOfDivsPassed % 12 == 0) { // Every 3 seconds, update all pathing
-			//foreach (eAIPlayerHandler h : aiList)
-				//h.UpdatePathing();
-				
-		}
-	}
 };
 
 modded class MissionServer
@@ -412,13 +232,10 @@ modded class MissionServer
     {
         m_eaiGame = new ref eAIGame();
 
+		GetDayZGame().eAICreateManager();
+
         Print( "eAI - Loaded Server Mission" );
     }
-	
-	override void OnUpdate(float timeslice) {
-		m_eaiGame.OnUpdate(true, timeslice);
-		super.OnUpdate(timeslice);
-	}
 };
 
 modded class MissionGameplay
@@ -428,6 +245,8 @@ modded class MissionGameplay
     void MissionGameplay()
     {
         m_eaiGame = new eAIGame();
+
+		GetDayZGame().eAICreateManager();
 
         Print( "eAI - Loaded Client Mission" );
     }

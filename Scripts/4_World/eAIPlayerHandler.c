@@ -50,19 +50,18 @@ class eAIPlayerHandler {
 	bool m_WantWeapRaise = false;
 	
 	// This is the bitmask used for pathfinding (i.e. whether we want a path that goes over a fence
-	ref PGFilter pgFilter = new PGFilter();
+	ref PGFilter m_PathFilter;
 	
 	// Formation following logic
 	DayZPlayer m_FollowOrders = null;
-	vector formationOffset = "0 0 0";
-	vector m_FormDir = "1 0 0";
-	vector m_FormLastPos = "0 0 0";
+	vector m_FormationOffset = "0 0 0";
 	
 	// Data for the heading computation
 	float targetAngle, heading, delta;
 	
 	// Logic for waypoints
-	ref TVectorArray waypoints = new TVectorArray(); // This is the list of waypoints the AI will follow. It is set by AIWorld.
+	autoptr TVectorArray m_Path = new TVectorArray(); // This is the list of waypoints the AI will follow. It is set by AIWorld.
+	
 	int cur_waypoint_no = -1; // Next point to move to in the waypoints array. -1 for "none"
 	float arrival_radius = 2.0; // This is the distance that we consider a waypoint to be 'reached' at.
 	float lastDistToWP = -1; // If it is set to -1, the AI will not try to sprint on the first movement update.
@@ -82,38 +81,15 @@ class eAIPlayerHandler {
 		cam = new eAIDayZPlayerCamera(unit, unit.GetInputController());
 		cam.InitCameraOnPlayer(true); // force the camera active
 		
-		// Configure the pathfinding filter
-		//pgFilter.SetCost(PGAreaType.NONE, 1.0f); // not sure what kind of behaivor this causes
-		pgFilter.SetCost(PGAreaType.TERRAIN, 1.0);
-		pgFilter.SetCost(PGAreaType.WATER, 15.0);
-		pgFilter.SetCost(PGAreaType.WATER_DEEP, 15.0);
-		pgFilter.SetCost(PGAreaType.WATER_SEA, 15.0);
-		pgFilter.SetCost(PGAreaType.OBJECTS_NOFFCON, 1000000.0); // imma be real with you chief idk what this is
-		pgFilter.SetCost(PGAreaType.OBJECTS, 20.0);
-		pgFilter.SetCost(PGAreaType.BUILDING, 20.0);
-		pgFilter.SetCost(PGAreaType.ROADWAY, 0.2);
-		pgFilter.SetCost(PGAreaType.TREE, 15.0);
-		pgFilter.SetCost(PGAreaType.ROADWAY_BUILDING, 20.0);
-		pgFilter.SetCost(PGAreaType.DOOR_OPENED, 1.0);
-		pgFilter.SetCost(PGAreaType.DOOR_CLOSED, 1000000.0); // not yet implemented :)
-		pgFilter.SetCost(PGAreaType.LADDER, 1000000.0);
-		pgFilter.SetCost(PGAreaType.CRAWL, 1000000.0);
-		pgFilter.SetCost(PGAreaType.CROUCH, 1000000.0);
-		pgFilter.SetCost(PGAreaType.FENCE_WALL, 1000000.0);
-		pgFilter.SetCost(PGAreaType.JUMP, 1000000.0);
-		
-		int allowFlags = 0;
-		allowFlags |= PGPolyFlags.WALK;
-		allowFlags |= PGPolyFlags.CRAWL;
-		allowFlags |= PGPolyFlags.CROUCH;
-		
-		int disallowFlags = 0;
-		disallowFlags |= PGPolyFlags.JUMP_OVER;
-		disallowFlags |= PGPolyFlags.JUMP_DOWN;
-		disallowFlags |= PGPolyFlags.UNREACHABLE;
-		disallowFlags |= PGPolyFlags.JUMP;
-		
-		pgFilter.SetFlags(allowFlags, disallowFlags, 0);
+		m_PathFilter = new PGFilter();
+
+		int inFlags = PGPolyFlags.WALK | PGPolyFlags.DOOR | PGPolyFlags.INSIDE | PGPolyFlags.JUMP_OVER;
+		int exFlags = PGPolyFlags.DISABLED | PGPolyFlags.SWIM | PGPolyFlags.SWIM_SEA | PGPolyFlags.JUMP | PGPolyFlags.CLIMB | PGPolyFlags.CRAWL | PGPolyFlags.CROUCH;
+
+		m_PathFilter.SetFlags( inFlags, exFlags, PGPolyFlags.NONE );
+		m_PathFilter.SetCost( PGAreaType.JUMP, 0.0 );
+		m_PathFilter.SetCost( PGAreaType.FENCE_WALL, 0.0 );
+		m_PathFilter.SetCost( PGAreaType.WATER, 1.0 );
 		
 		// This is a separate PGFilter for raycasting what we can "See"
 		// Todo move this to a global filter?
@@ -127,13 +103,12 @@ class eAIPlayerHandler {
 		delete unit;
 		delete cam;
 		delete threats;
-		delete pgFilter;
-		delete waypoints;
+		delete m_PathFilter;
 	}*/
 	
 	// Set a player to follow.
 	void Follow(DayZPlayer p, vector formationPos, float distance = 2.0) {
-		formationOffset = formationPos;
+		m_FormationOffset = formationPos;
 		m_FollowOrders = p;
 		arrival_radius = distance;
 		if (m_FollowOrders.GetIdentity()) {
@@ -148,15 +123,18 @@ class eAIPlayerHandler {
 	}
 	
 	void EnableADSTracking() {
-		if (m_WantWeapRaise) // double check that this hasn't been reset
-			unit.eAI_Use_ADS_Tracking = true;
+		//if (m_WantWeapRaise) // double check that this hasn't been reset
+		//	unit.eAI_Use_ADS_Tracking = true;
 	}
 	
 	// todo fix the name of this
 	void RaiseWeapon(bool up) {
 		m_WantWeapRaise = up;
-		unit.GetInputController().OverrideRaise(true, m_WantWeapRaise);
+
 		HumanCommandMove cm = unit.GetCommand_Move();
+		if (!cm) return;
+
+		unit.GetInputController().OverrideRaise(true, m_WantWeapRaise);
 		if (m_WantWeapRaise) {
 			cm.ForceStance(DayZPlayerConstants.STANCEIDX_RAISEDERECT);
 		} else {
@@ -174,7 +152,7 @@ class eAIPlayerHandler {
 			} 
 		} else {
 			GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands())), false, m_FollowOrders.GetIdentity());
-			unit.eAI_Use_ADS_Tracking = false;
+			//unit.eAI_Use_ADS_Tracking = false;
 			Print(this.ToString() + " exiting ADS");
 		}
 	}
@@ -193,191 +171,100 @@ class eAIPlayerHandler {
 	// CODE AND HELPER FUNCS FOR PATHING
 	//--------------------------------------------------------------------------------------------------------------------------
 	
-	//! Clear the array of waypoints, setting cur_waypoint_no to -1
-	void clearWaypoints() {
-		cur_waypoint_no = -1;
-		waypoints.Clear(); // Now we need a clean array!
-		lastDistToWP = -1; // If this is set to -1, the AI will not try to sprint on the first movement update.
+	float Distance( int index, vector position )
+	{
+		vector b = m_Path[index];
+		vector e = m_Path[index + 1] - b;
+		vector p = position - b;
+		float eSize2 = e.LengthSq();
+		if ( eSize2 > 0 )
+		{
+			float t = ( e * p ) / eSize2;
+			vector nearest = b + Math.Clamp( t, 0, 1 ) * e;
+			return vector.DistanceSq( nearest, position );
+		} else
+		{
+			return vector.DistanceSq( b, position );
+		}
+	}
+
+	void PathClear()
+	{
+		m_Path.Clear();
 	}
 	
-	//! Skip to the next waypoint (returns true, unless there is no future waypoint.)
-	//! If there is not a next waypoint, returns false and clears the list of waypoints.
-	bool nextWaypoint() {
-		if (++cur_waypoint_no < waypoints.Count())
-			return true;
+	int PathCount()
+	{
+		return m_Path.Count();
+	}
+	
+	vector PathGet( int index )
+	{
+		if ( index < 0 || index >= m_Path.Count() )
+			return "0 0 0";
 		
-		// executes if there is no future waypoint
-		clearWaypoints();
-		return false;
+		return m_Path[ index ];
+	}
+
+	int FindNext( vector position )
+	{
+		float dist;
+		return FindNext( position, dist );
 	}
 	
-	// Add a waypoint, return the index of the added wp
-	int addWaypoint(vector pos) {
-		waypoints.Insert(pos);
-		return ++cur_waypoint_no;
-	}
-	
-	// Update our heading and speed to the next waypoint; if we reach a waypoint, do more wacky logic.
-	bool UpdateMovement() {
-		bool needsToRunAgain = false;
+	// Checks to see if the path between the start and end is blocked
+	bool PathBlocked( vector start, vector end )
+	{
+		vector hitPos;
+		vector hitNormal;
 		
-		/*if (state == eAIBehaviorGlobal.COMBAT) {
-			vector myPos = unit.GetPosition();
-			vector threatPos = threats[0].GetPosition();
-			vector aimPoint = "0 0 0";
-			Weapon_Base weap = Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands());
+		AIWorld world = GetGame().GetWorld().GetAIWorld();
+		
+		return world.RaycastNavMesh( start, end, m_PathFilter, hitPos, hitNormal );
+	}
+
+	int FindNext( vector position, out float minDist )
+	{
+		int index = 0;
+
+		minDist = 1000000000.0;
+
+		float epsilon = 0.1;
+		for ( int i = 0; i < m_Path.Count() - 1; ++i )
+		{
+			float dist = Distance( i, position );
 			
-			if (weap && weap.whereIAmAimedAt != "0 0 0" && WantsWeaponUp()) {
-				// Aiming logic based on where the barrel is aimed, won't work if the weapon is not yet up
-				aimPoint = weap.whereIAmAimedAt - myPos;
-				threatPos = threatPos - myPos;
-				targetAngle = threatPos.VectorToAngles().GetRelAngles()[0];
-				heading = aimPoint.VectorToAngles().GetRelAngles()[0];
-				
-				HasAShot = true;
-				
-			}
-			
-			delta = Math.DiffAngle(targetAngle, heading);
-			
-			// Do the logic for aiming along the x axis...
-			// Todo make it so the x direction is calculated from barrell
-			unit.GetInputController().OverrideMovementSpeed(true, 0.0);
-			
-			
-			delta /= 500;
-			delta = Math.Max(delta, -0.25);
-			delta = Math.Min(delta, 0.25);
-			unit.GetInputController().OverrideAimChangeX(true, delta);
-			//unit.GetInputController().OverrideAimChangeY(true, 0.0);
-			
-			Print("UpdateMovement() - targetAngle: " + targetAngle + " heading: " + heading + " delta: " + delta);
-			
-			// Now, do the logic for aiming along the y axis.
-			float gunHeight = 1.5 + myPos[1]; 			// Todo get the actual world gun height.
-			float targetHeight = 1.0 + threatPos[1]; 	// Todo get actual threat height
-			float aimAngle = Math.Atan2(targetHeight - gunHeight, vector.Distance(myPos, threatPos));
-			unit.targetAngle = aimAngle * Math.RAD2DEG;
-			
-			// Make sure the AI is aimed at the target and not at anything else
-			if (HasAShot) {
-				array<Object> objects = new array<Object>();
-				ref array<CargoBase> proxyCargos = new array<CargoBase>();
-				
-				bool aimedAtTheEnemy = false;
-				
-				// Here we use 2.5 meters instead of 1.5, to allow a small threshhold for AI to miss a shot
-				GetGame().GetObjectsAtPosition3D(weap.whereIAmAimedAt, 2.5, objects, proxyCargos);
-				
-				for (int i = 0; i < objects.Count(); i++) {
-					if (objects[i] == threats[0])
-						aimedAtTheEnemy = true;
-					if (objects[i] == m_FollowOrders) // quick and dirty check for shooting at a friendly
-						HasAShot = false;
+			if ( minDist >= dist - epsilon )
+			{
+				if ( !PathBlocked( position, m_Path[i + 1] ) )
+				{
+					minDist = dist;
+					index = i;
 				}
-				
-				HasAShot = (HasAShot && aimedAtTheEnemy);
-			}			
-			
-			return false;
-		}*/
-		
-		if (m_WantWeapRaise) {
-			
+			}
 		}
-		
-		// First, if we don't have any valid waypoints, make sure to stop the AI and quit prior to the movement logic.
-		// Otherwise, the AimChange would be undefined in this case (leading to some hilarious behavior including disappearing heads)
-		if (cur_waypoint_no < 0) {
-			unit.GetInputController().OverrideMovementSpeed(true, 0.0);
-			unit.GetInputController().OverrideAimChangeX(true, 0.0);
-			return false;
-		}
-		
-		/*if (m_FollowOrders) {
-			cur_waypoint_no = -1; // can't use clearWaypoints() here because we want to preserve the distance
-			waypoints.Clear();
-			addWaypoint(m_FollowOrders.GetPosition());
-		};*/
-		
-		//unit.headingTarget = vector.Direction(GetPosition(), waypoints[cur_waypoint_no]).VectorToAngles().GetRelAngles()[0];
-		
-		/*targetAngle = vector.Direction(unit.GetPosition(), waypoints[cur_waypoint_no]).VectorToAngles().GetRelAngles()[0];// * Math.DEG2RAD;
-		//vector heading = MiscGameplayFunctions.GetHeadingVector(this);
-		
-		// This seems to be CCW is positive unlike relative angles.
-		// ALSO THIS ISN'T CAPPED AT +-180. I HAVE SEEN IT IN THE THOUSANDS.
-		heading = -(unit.GetInputController().GetHeadingAngle() * Math.RAD2DEG); 
 
-		
-		//heading = GetDirection()[0]*180 + 90; // The documentation does not cover this but the angle this spits out is between (-1..1). WHAT?! (also seems to be angle of feet)
-		
-		delta = Math.DiffAngle(targetAngle, heading);
-		
-		delta /= 500;
-		delta = Math.Max(delta, -0.25);
-		delta = Math.Min(delta, 0.25);
-				
-		// This is a capped PID controller, but using only the P component
-		unit.GetInputController().OverrideAimChangeX(true, delta);*/
-		
-		// Next, we handle logic flow for waypoints.
-		float currDistToWP = vector.Distance(unit.GetPosition(), waypoints[cur_waypoint_no]);
-		bool gettingCloser = (lastDistToWP > currDistToWP); // If we are getting closer to the WP (a GOOD thing!) - otherwise we can only walk
-		
-		if (Math.AbsFloat(delta) > 0.24) {															// If we need to turn a lot, we don't want to start walking
-			unit.GetInputController().OverrideMovementSpeed(true, 0.0); 
-		} else if (currDistToWP > 2 * arrival_radius) { //&& gettingCloser) { 							// If we have a WP but it is far away			
-			unit.GetInputController().OverrideMovementSpeed(true, 2.0);
-		} else if (currDistToWP > arrival_radius) { 												// If we are getting close to a WP
-			unit.GetInputController().OverrideMovementSpeed(true, 1.0);
-		} else { 																					// If we are 'at' a WP
-			// We have reached our current waypoint
-			if (!nextWaypoint())
-				clearWaypoints();
-			
-			needsToRunAgain = true; // Run again, to either go to next WP or cancel all movement
-		}
-		
-		lastDistToWP = currDistToWP;
-		
-		// Should this be moved to setup?
-		unit.GetInputController().OverrideMovementAngle(true, targetAngle*Math.DEG2RAD);//Math.PI/2.0);
-		
-		return needsToRunAgain;
-		
-		//m_MovementState.m_CommandTypeId = DayZPlayerConstants.COMMANDID_MOVE ;
-		//m_MovementState.m_iMovement = 2;
+		return index + 1;
 	}
 
-	void UpdatePathing() { // This update needs to be done way less frequent than Movement; Default is 1 every 10 update ticks.
-		
-		
-		
-		if (m_FollowOrders) {
-			vector fop = m_FollowOrders.GetPosition();
-			
-			vector delta = (fop - m_FormLastPos);
-			if (delta.Length() > 0.2)
-				m_FormDir = delta.Normalized();
-			
-			// Now we need to transform to the basis of the formation dir
-			// Because the perpend function looks weird, we have to do it this way
-			vector finalPos = fop + (m_FormDir * formationOffset[2]) + (m_FormDir.Perpend() * formationOffset[0]);
-			
-			// disabling this temporarily for performance
-			//thread updateWaypoints(this, finalPos);
-			
-			 // this is the temporary workaround
-			cur_waypoint_no = -1; // can't use clearWaypoints() here because we want to preserve the distance
-			waypoints.Clear();
-			addWaypoint(finalPos);
-			
-			m_FormLastPos = fop;
-		} else {
-			clearWaypoints();
+	float AngleBetweenPoints( vector pos1, vector pos2 )
+	{
+		return vector.Direction( pos1, pos2 ).Normalized().VectorToAngles()[0];
+	}
+
+	void UpdatePath()
+	{
+		if ( !m_PathFilter || !m_FollowOrders )
+		{
+			PathClear();
+			return;
 		}
 		
+		m_Path.Clear();
+		
+		AIWorld world = GetGame().GetWorld().GetAIWorld();
+
+		world.FindPath( unit.GetPosition(), m_FollowOrders.GetPosition() + m_FormationOffset, m_PathFilter, m_Path );
 	}
 	
 	//--------------------------------------------------------------------------------------------------------------------------
@@ -464,7 +351,9 @@ class eAIPlayerHandler {
 		RaiseWeapon(true);
 		
 		state = eAIBehaviorGlobal.COMBAT;
-		clearWaypoints();	
+
+		PathClear();	
+
 		Weapon_Base wpn = Weapon_Base.Cast(unit.GetDayZPlayerInventory().GetEntityInHands());
 		if (wpn) {
 			//unit.lookAt = threats[0];
