@@ -51,139 +51,17 @@ bool DayZPlayerInventory_OnEventForRemoteWeaponAI (int packedType, DayZPlayer pl
 	return true;
 }
 
-class SceneGraphPoint : ScriptedEntity {
-	void SceneGraphPoint(IEntity parent, vector pos) {}
-};
-
 modded class Weapon_Base {
 	
+	// This is the latest updated aiming data for the weapon, on the server
+	autoptr AimProfile aim = new AimProfile("0 0 0", "0 0 0");
+	
 	// For raycasting bullets in the navmesh
-	ref PGFilter pgFilter = new PGFilter();
+	autoptr PGFilter pgFilter = new PGFilter();
 	
 	vector whereIAmAimedAt = "0 0 0";
 	//array<Object> thingsICouldBeAimedAt = new array<Object>();
-	
-	// These two particles are set relative to this weapon when a SendBullet event is registered.
-	// The location can be polled on the postframe, when SendBullet is true.
-	Object p_front, p_back;	
-	//bool SendBullet = false;
-	Object toIgnore;
-	
-	// @params begin_point  The global space point where the raycast will start (front of the muzzle)
-	// @param back 			The global space point behind begin_point, usually the back of the barrel
-	void BallisticsPostFrame(vector begin_point = "0 0 0", vector back = "0 0 0") {
-		//if (SendBullet) {
-			//SendBullet = false;
-			Print("Postframe reached!...");
-		
-			Object ignore = toIgnore;
 
-			// this was only required for the serverside way I was trying to do this
-			//begin_point = p_front.GetPosition();
-			//back = p_back.GetPosition();
-
-			
-			// Get ballistics info
-			float ammoDamage;
-			string ammoTypeName;
-			GetCartridgeInfo(GetCurrentMuzzle(), ammoDamage, ammoTypeName);
-			
-			// Get geometry info
-			
-			//vector begin_point = p_front.GetPosition();
-			//vector back = p_back.GetPosition();
-			
-			vector aim_point = begin_point - back;
-
-			vector end_point = (500*aim_point) + begin_point;
-			
-			// Use these to get  an idea of the direction for the raycast
-			//GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(back, vector.Zero));
-			//GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point, vector.Zero));
-			//GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point + aim_point , vector.Zero));
-			
-			
-			Print("Muzzle pos: " + begin_point.ToString() + " dir-pos: " + (end_point-begin_point).ToString());
-			
-			// Prep Raycast
-			Object hitObject;
-			vector hitPosition, hitNormal;
-			float hitFraction;
-			int contact_component = 0;
-			DayZPhysics.RayCastBullet(begin_point, end_point, hit_mask, this, hitObject, hitPosition, hitNormal, hitFraction);
-			//DayZPhysics.RaycastRV(begin_point, aim_point, hitPosition, hitNormal, contact_component, null, null, null, false, false, ObjIntersectFire);
-			
-			GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(hitPosition, vector.Zero));
-			
-			Print("Raycast hitObject: " + hitObject.ToString() + " hitPosition-pos: " + (hitPosition-begin_point).ToString() + " hitNormal: " + hitNormal.ToString() + " hitFraction " + hitFraction.ToString());
-			
-			//if (hitPosition && hitNormal) {
-			//	Particle p = Particle.PlayInWorld(ParticleList.DEBUG_DOT, hitPosition);
-			//	p.SetOrientation(hitNormal);
-				
-			//}
-			
-			// So here is an interesting bug... hitObject is always still null even if the raycast succeeded
-			// If it succeded then hitPosition, hitNormal, and hitFraction will be accurate
-			if (hitFraction > 0.00001) {
-				// this could be useful in the future
-				//ref array<Object> nearest_objects = new array<Object>;
-				//ref array<CargoBase> proxy_cargos = new array<CargoBase>;
-				//GetGame().GetObjectsAtPosition ( hitPosition, 1.0, nearest_objects, proxy_cargos );		
-													
-				array<Object> objects = new array<Object>();
-				ref array<CargoBase> proxyCargos = new array<CargoBase>();
-				Object closest = null;
-				float dist = 1000000.0;
-				float testDist;
-			
-				GetGame().GetObjectsAtPosition3D(hitPosition, 1.5, objects, proxyCargos);
-				
-				Print(objects);
-			
-				// not necessary since the ai aren't shooting themselves anymore?
-				/*for (int i = 0; i < objects.Count(); i++)
-					if (objects[i] == ignore)
-						objects.Remove(i);*/
-			
-				for (int j = 0; j < objects.Count(); j++) {
-					if (DayZInfected.Cast(objects[j]) || Man.Cast(objects[j])) {
-						testDist = vector.Distance(objects[j].GetPosition(), hitPosition);
-						if (testDist < dist) {
-							closest = objects[j];
-							dist = testDist;
-						}
-					}
-				}
-			
-				// BUG: hitGround is sometimes still false even when we hit the top of an object.
-				
-				// As a quick workaround, do a raycast 5cm down from hitPosition
-				// If we hit something other than object within 5cm, then we know we have hit the ground and we should not damage "closest."
-				vector groundCheckDelta = hitPosition + "0 -0.05 0";
-				vector groundCheckContactPos, groundCheckContactDir;
-				int contactComponent;
-			
-				
-				int allowFlags = 0;
-				allowFlags |= PGPolyFlags.ALL;
-				allowFlags |= PGPolyFlags.WALK;
-				pgFilter.SetFlags(allowFlags, 0, 0);
-				bool hitAnObject = GetGame().GetWorld().GetAIWorld().RaycastNavMesh(hitPosition, groundCheckDelta, pgFilter, groundCheckContactPos, groundCheckContactDir);
-				GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(groundCheckContactPos, vector.Zero));
-
-				//DayZPhysics.RaycastRV(hitPosition, groundCheckDelta, groundCheckContactPos, groundCheckContactDir, contactComponent, null, null, closest);
-				//bool hitGround = (vector.Distance(groundCheckDelta, groundCheckContactPos) > 0.01);
-				
-				Print("hitEnemy = " + closest.ToString());
-				Print("Did we hit an inanimate object? = " + hitAnObject.ToString());
-				//Print("hitGround = " + hitGround.ToString());
-				
-				if (closest && !hitAnObject)// && !hitGround)
-					closest.ProcessDirectDamage(DT_FIRE_ARM, null, "Torso", ammoTypeName, closest.WorldToModel(hitPosition), 1.0);
-			//}
-		}
-	}
 	
 	/**@fn	ProcessWeaponEvent
 	 * @brief	weapon's fsm handling of events
@@ -213,14 +91,105 @@ modded class Weapon_Base {
 				PlayerBase p = PlayerBase.Cast(e.m_player);
 				
 				
-				Print("Waiting for postframe...");
+				// Get ballistics info
+				float ammoDamage;
+				string ammoTypeName;
+				GetCartridgeInfo(GetCurrentMuzzle(), ammoDamage, ammoTypeName);
 				
-				//SendBullet = true;
-				toIgnore = e.m_player;
-				// This is absolutely not the right way to do this... the correct way would be to wait for the next sFrame, but
-				// that wasn't seeming to work
-				//BallisticsPostFrame();
-				//GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(BallisticsPostFrame, 5, false);
+				// Get geometry info
+				
+				vector begin_point = aim.out_front;
+				vector back = aim.out_back;
+				
+				vector aim_point = begin_point - back;
+	
+				vector end_point = (500*aim_point) + begin_point;
+				
+				// Use these to get  an idea of the direction for the raycast
+				GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(back, vector.Zero));
+				GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point, vector.Zero));
+				GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point + aim_point , vector.Zero));
+				
+				
+				Print("Muzzle pos: " + begin_point.ToString() + " dir-pos: " + (end_point-begin_point).ToString());
+				
+				// Prep Raycast
+				Object hitObject;
+				vector hitPosition, hitNormal;
+				float hitFraction;
+				int contact_component = 0;
+				DayZPhysics.RayCastBullet(begin_point, end_point, hit_mask, this, hitObject, hitPosition, hitNormal, hitFraction);
+				//DayZPhysics.RaycastRV(begin_point, aim_point, hitPosition, hitNormal, contact_component, null, null, null, false, false, ObjIntersectFire);
+				
+				GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(hitPosition, vector.Zero));
+				
+				Print("Raycast hitObject: " + hitObject.ToString() + " hitPosition-pos: " + (hitPosition-begin_point).ToString() + " hitNormal: " + hitNormal.ToString() + " hitFraction " + hitFraction.ToString());
+				
+				//if (hitPosition && hitNormal) {
+				//	Particle p = Particle.PlayInWorld(ParticleList.DEBUG_DOT, hitPosition);
+				//	p.SetOrientation(hitNormal);
+					
+				//}
+				
+				// So here is an interesting bug... hitObject is always still null even if the raycast succeeded
+				// If it succeded then hitPosition, hitNormal, and hitFraction will be accurate
+				if (hitFraction > 0.00001) {
+					// this could be useful in the future
+					//ref array<Object> nearest_objects = new array<Object>;
+					//ref array<CargoBase> proxy_cargos = new array<CargoBase>;
+					//GetGame().GetObjectsAtPosition ( hitPosition, 1.0, nearest_objects, proxy_cargos );		
+														
+					array<Object> objects = new array<Object>();
+					ref array<CargoBase> proxyCargos = new array<CargoBase>();
+					Object closest = null;
+					float dist = 1000000.0;
+					float testDist;
+				
+					GetGame().GetObjectsAtPosition3D(hitPosition, 1.5, objects, proxyCargos);
+					
+					Print(objects);
+				
+					// not necessary since the ai aren't shooting themselves anymore?
+					/*for (int i = 0; i < objects.Count(); i++)
+						if (objects[i] == ignore)
+							objects.Remove(i);*/
+				
+					for (int j = 0; j < objects.Count(); j++) {
+						if (DayZInfected.Cast(objects[j]) || Man.Cast(objects[j])) {
+							testDist = vector.Distance(objects[j].GetPosition(), hitPosition);
+							if (testDist < dist) {
+								closest = objects[j];
+								dist = testDist;
+							}
+						}
+					}
+				
+					// BUG: hitGround is sometimes still false even when we hit the top of an object.
+					
+					// As a quick workaround, do a raycast 5cm down from hitPosition
+					// If we hit something other than object within 5cm, then we know we have hit the ground and we should not damage "closest."
+					vector groundCheckDelta = hitPosition + "0 -0.05 0";
+					vector groundCheckContactPos, groundCheckContactDir;
+					int contactComponent;
+				
+					
+					int allowFlags = 0;
+					allowFlags |= PGPolyFlags.ALL;
+					allowFlags |= PGPolyFlags.WALK;
+					pgFilter.SetFlags(allowFlags, 0, 0);
+					bool hitAnObject = GetGame().GetWorld().GetAIWorld().RaycastNavMesh(hitPosition, groundCheckDelta, pgFilter, groundCheckContactPos, groundCheckContactDir);
+					GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(groundCheckContactPos, vector.Zero));
+	
+					//DayZPhysics.RaycastRV(hitPosition, groundCheckDelta, groundCheckContactPos, groundCheckContactDir, contactComponent, null, null, closest);
+					//bool hitGround = (vector.Distance(groundCheckDelta, groundCheckContactPos) > 0.01);
+					
+					Print("hitEnemy = " + closest.ToString());
+					Print("Did we hit an inanimate object? = " + hitAnObject.ToString());
+					//Print("hitGround = " + hitGround.ToString());
+					
+					if (closest && !hitAnObject)// && !hitGround)
+						closest.ProcessDirectDamage(DT_FIRE_ARM, null, "Torso", ammoTypeName, closest.WorldToModel(hitPosition), 1.0);
+				}
 			}
 			
 			if (m_fsm.ProcessEvent(e) == ProcessEventResult.FSM_OK)

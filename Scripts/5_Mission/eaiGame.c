@@ -2,12 +2,30 @@ class eAIGame {
 	// List of all eAI entities
 	autoptr array<ref eAIPlayerHandler> aiList = {};
 	
+	// On client, list of weapons we are asked to provide a feed of
+	autoptr eAIClientAimArbiterManager m_ClientAimMngr;
+	
+	// Server side list of weapon data 
+	autoptr eAIServerAimProfileManager m_ServerAimMngr;
+	
 	vector debug_offset = "8 0 0"; // Offset from player to spawn a new AI entity at when debug called
 	vector debug_offset_2 = "20 0 0"; // Electric bugaloo
 	
 	float gametime = 0;
 	
     void eAIGame() {
+		if (GetGame().IsClient()) {
+			m_ClientAimMngr = new eAIClientAimArbiterManager();
+			GetRPCManager().AddRPC("eAI", "eAIAimArbiterSetup", m_ClientAimMngr, SingeplayerExecutionType.Client);
+			GetRPCManager().AddRPC("eAI", "eAIAimArbiterStart", m_ClientAimMngr, SingeplayerExecutionType.Client);
+			GetRPCManager().AddRPC("eAI", "eAIAimArbiterStop", m_ClientAimMngr, SingeplayerExecutionType.Client);
+		}
+		
+		if (GetGame().IsServer()) {
+			m_ServerAimMngr = new eAIServerAimProfileManager();
+			GetRPCManager().AddRPC("eAI", "eAIAimDetails", m_ServerAimMngr, SingeplayerExecutionType.Client);
+		}
+		
 		GetRPCManager().AddRPC("eAI", "SpawnEntity", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ClearAllEntity", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ClearMyEntity", this, SingeplayerExecutionType.Client);
@@ -19,11 +37,11 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "DebugParticle", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ToggleWeaponRaise", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "SpawnZombie", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "DebugWeaponLocation", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "SpawnBullet", this, SingeplayerExecutionType.Client);
+		//GetRPCManager().AddRPC("eAI", "DebugWeaponLocation", this, SingeplayerExecutionType.Client);
+		//GetRPCManager().AddRPC("eAI", "SpawnBullet", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "ClientWeaponDataWithCallback", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "ServerWeaponAimCheck", this, SingeplayerExecutionType.Client);
+		//GetRPCManager().AddRPC("eAI", "ClientWeaponDataWithCallback", this, SingeplayerExecutionType.Client);
+		//GetRPCManager().AddRPC("eAI", "ServerWeaponAimCheck", this, SingeplayerExecutionType.Client);
     }
 	
 	//! @param owner Who is the manager of this AI
@@ -277,13 +295,13 @@ class eAIGame {
 	}
 	
 	// Server Side: Kick off the ballistics code with the latest data from client
-	void SpawnBullet(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+	/*void SpawnBullet(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param3<Weapon_Base, vector, vector> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
 			data.param1.BallisticsPostFrame(data.param2, data.param3);		
 		}
-	}
+	}*/
 	
 	void OnKeyPress(int key) {
         switch (key) {
