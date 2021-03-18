@@ -122,6 +122,10 @@ class eAIPlayerHandler {
 		formationOffset = formationPos;
 		m_FollowOrders = p;
 		arrival_radius = distance;
+		if (m_FollowOrders.GetIdentity()) {
+			// This is unsafe, we need to do it on weapon swap as well
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands())), false, m_FollowOrders.GetIdentity());
+		}
 	}
 	
 	void FireHeldWeapon() {
@@ -138,6 +142,15 @@ class eAIPlayerHandler {
 			cm.ForceStance(DayZPlayerConstants.STANCEIDX_RAISEDERECT);
 		} else {
 			cm.ForceStance(DayZPlayerConstants.STANCEIDX_ERECT);
+		}
+		
+		// Now, we need to kick off the client weapon aim arbitration.
+		if (up) {
+			if (m_FollowOrders.GetIdentity()) {
+				GetRPCManager().SendRPC("eAI", "eAIAimArbiterStart", new Param2<Weapon_Base, int>(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands()), 250), false, m_FollowOrders.GetIdentity());
+			} else {
+				GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands())), false, m_FollowOrders.GetIdentity());
+			}
 		}
 	}
 	

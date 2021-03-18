@@ -182,11 +182,7 @@ modded class PlayerBase {
 	override bool HeadingModel(float pDt, SDayZPlayerHeadingModel pModel)
 	{
 		if ( isAI() )
-		{
-				// This should be true anyways, but double check that an AI hasn't been set on a client
-			if (!GetGame().IsServer())
-				return false;
-			
+		{			
 			GetMovementState(m_MovementState);
 			
 			m_fLastHeadingDiff = 0;

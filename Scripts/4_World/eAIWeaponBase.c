@@ -211,42 +211,7 @@ modded class Weapon_Base {
 				//array< PlayerIdentity > identities;
 				//GetGame().GetPlayerIndentities(identities);
 				PlayerBase p = PlayerBase.Cast(e.m_player);
-				GetRPCManager().SendRPC("eAI", "DebugWeaponLocation", new Param1<Weapon_Base>(this), false, p.parent.m_FollowOrders.GetIdentity());
 				
-				// Eventually we will need to do this server side.
-				
-				// At this poin we are ready to register an event for the ballistics. BEcause of engine limitations we cannot directly 
-				// poll the world space of the barrel to my knowledge. It is necessary to create two particles, attach them to the barrel,
-				// _then wait a frame._ The new location of the Particles is then where the barrel is.
-				
-				// This was my second attempt server side...
-				
-				/*vector usti_hlavne_position = GetSelectionPositionLS("usti hlavne"); // front?
-				vector konec_hlavne_position = GetSelectionPositionLS("konec hlavne"); // back?
-				p_front = GetGame().CreateObject("SceneGraphPoint", usti_hlavne_position, true);
-				p_back = GetGame().CreateObject("SceneGraphPoint", konec_hlavne_position, true);
-				AddChild(p_front, -1);
-				AddChild(p_back, -1);*/
-				
-				// This is the first way I tried to do this...
-				
-				//p_front = GetGame().CreateObject("Apple", usti_hlavne_position, true);
-				/*p_front = Particle.Cast( GetGame().CreateObject("Particle", usti_hlavne_position, true) );
-				p_front.SetSource(ParticleList.DEBUG_DOT);
-				p_front.SetOrientation(vector.Zero);
-				p_front.m_ForceOrientationRelativeToWorld = false;
-				p_front.PlayParticle();
-				AddChild(p_front, -1);
-				p_front.Update();
-				
-				vector konec_hlavne_position = GetSelectionPositionLS("konec hlavne"); // back?
-				p_back = GetGame().CreateObject("Apple", konec_hlavne_position, true);
-				p_back = Particle.Cast( GetGame().CreateObject("Particle", konec_hlavne_position, true) );
-				p_back.SetSource(ParticleList.DEBUG_DOT);
-				p_back.m_ForceOrientationRelativeToWorld = false;
-				p_back.PlayParticle();
-				AddChild(p_back, -1);
-				p_back.Update();*/
 				
 				Print("Waiting for postframe...");
 				
