@@ -14,6 +14,8 @@ class eAICommandMove extends eAICommandBase
 	private float m_TurnTargetSpeed;
 	private float m_MaxTurnSpeed;
 	private float m_MaxTurnAcceleration;
+
+	private vector m_Direction;
 	
 	private float m_Speed;
 	private float m_TargetSpeed;
@@ -104,7 +106,11 @@ class eAICommandMove extends eAICommandBase
 		SetSpeedMapping(3, 7.0);
 
 		m_ST.SetMovementSpeed(this, m_Speed);
-		m_ST.SetMovementDirection(this, 0);
+		
+		float movementDirection = Math.NormalizeAngle(m_Direction.VectorToAngles()[0]);
+		if (movementDirection > 180.0) movementDirection = movementDirection - 360.0;
+
+		m_ST.SetMovementDirection(this, movementDirection);
 		
 		m_ST.SetRaised(this, false);
 	}
@@ -128,14 +134,16 @@ class eAICommandMove extends eAICommandBase
 		vector transform[4];
 		m_Entity.GetTransform(transform);
 
-		vector movementDirection = "0 0 1";
-
 		float wayPointDistance;
 		int wayPointIndex = m_Handler.FindNext(m_Entity.GetPosition(), wayPointDistance);
 		vector wayPoint = m_Handler.PathGet(wayPointIndex);
 		wayPointDistance = vector.Distance(m_Entity.GetPosition(), wayPoint);
+
+		bool isFinal = wayPointIndex == m_Handler.PathCount();
 		
-		m_PathAngle = Math.NormalizeAngle(m_Handler.AngleBetweenPoints(m_Entity.GetPosition(), wayPoint));
+		if (!isFinal && wayPointDistance > 0.5)
+			m_PathAngle = Math.NormalizeAngle(m_Handler.AngleBetweenPoints(m_Entity.GetPosition(), wayPoint));
+		
 		float currentYaw = Math.NormalizeAngle(m_Entity.GetOrientation()[0]);
 		if (m_PathAngle > 180.0) m_PathAngle = m_PathAngle - 360.0;
 		if (currentYaw > 180.0) currentYaw = currentYaw - 360.0;
@@ -151,22 +159,67 @@ class eAICommandMove extends eAICommandBase
 			m_TargetSpeed = 0.0;
 			
 			angleDt *= 40.0;
-		} else
+		}
+		else
 		{
-			m_TargetSpeed = 3;
+			m_TargetSpeed = 3.0;
 			
 			angleDt *= 0.5;
 		}
 		
-		if (wayPointDistance < 0.5) m_TargetSpeed = 0;
+		if (isFinal && wayPointDistance < 1.0) m_TargetSpeed = 0;
+
+		float animationIndexAcceleration = Math.Clamp((m_TargetSpeed - m_Speed), -3.0 * 40.0, 1.0) * pDt;
+		m_Speed = Math.Clamp(m_Speed + animationIndexAcceleration, 0.0, 3.0);
 		
-		float acceleration = Math.Clamp((m_TargetSpeed - m_Speed), -3.0 * 40.0, 1.0) * pDt;
-		m_Speed = Math.Clamp(m_Speed + acceleration, 0.0, 3.0);
+		vector CHECK_MIN_HEIGHT = "0 1 0";
+
+		Object hitObject;
+		vector hitPosition, hitNormal;
+		float hitFraction;
+		PhxInteractionLayers hit_mask = PhxInteractionLayers.BUILDING | PhxInteractionLayers.DOOR | PhxInteractionLayers.VEHICLE | PhxInteractionLayers.ITEM_LARGE | PhxInteractionLayers.FENCE | PhxInteractionLayers.AI;
+		bool hit = DayZPhysics.SphereCastBullet(transform[3] + CHECK_MIN_HEIGHT, transform[3] + (2.0 * transform[2]) + CHECK_MIN_HEIGHT, 0.25, hit_mask, m_Entity, hitObject, hitPosition, hitNormal, hitFraction);
+
+		m_Direction = "0 0 1";
+
+		//m_Speed *= 1.0 - hitFraction;
+		
+		if (hit)
+		{
+			m_Direction = "0 0 0";
+
+			vector leftPos;
+			vector rightPos;
+			vector outNormal;
+
+			m_Handler.PathBlocked(transform[3] + CHECK_MIN_HEIGHT, transform[3] + (-5.0 * transform[0]) + CHECK_MIN_HEIGHT, leftPos, outNormal); // check the left
+			m_Handler.PathBlocked(transform[3] + CHECK_MIN_HEIGHT, transform[3] + (5.0 * transform[0]) + CHECK_MIN_HEIGHT, rightPos, outNormal); // check the right
+
+			float leftDist = vector.DistanceSq(transform[3], leftPos);
+			float rightDist = vector.DistanceSq(transform[3], rightPos);
+
+			if (rightDist < 1.0)
+			{
+				m_Direction = "0 0 0";
+			}
+			else if (leftDist < rightDist)
+			{
+				m_Direction = "1 0 0";
+			}
+			else
+			{
+				m_Direction = "-1 0 0";
+			}
+			
+			m_Direction = vector.Lerp(m_Direction, "0 0 1", hitFraction * hitFraction);
+
+			m_Speed *= Math.Clamp(m_Direction.LengthSq(), 0, 1);
+		}
 		
 		float speedMs = GetSpeedMS(m_Speed);
 		
 		PrePhys_SetAngles(Vector(angleDt, 0, 0));
-		PrePhys_SetTranslation(movementDirection * speedMs * pDt);
+		PrePhys_SetTranslation(m_Direction * speedMs * pDt);
 	}
 
 	override bool PostPhysUpdate(float pDt)

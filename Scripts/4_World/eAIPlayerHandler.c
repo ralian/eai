@@ -222,6 +222,14 @@ class eAIPlayerHandler {
 		
 		return world.RaycastNavMesh( start, end, m_PathFilter, hitPos, hitNormal );
 	}
+	
+	// Checks to see if the path between the start and end is blocked
+	bool PathBlocked( vector start, vector end, out vector hitPos, out vector hitNormal )
+	{
+		AIWorld world = GetGame().GetWorld().GetAIWorld();
+		
+		return world.RaycastNavMesh( start, end, m_PathFilter, hitPos, hitNormal );
+	}
 
 	int FindNext( vector position, out float minDist )
 	{
@@ -263,8 +271,12 @@ class eAIPlayerHandler {
 		m_Path.Clear();
 		
 		AIWorld world = GetGame().GetWorld().GetAIWorld();
+		
+		vector outPos = m_FollowOrders.GetPosition() + m_FormationOffset;
+		vector outNormal;
+		PathBlocked(m_FollowOrders.GetPosition(), outPos, outPos, outNormal);
 
-		world.FindPath( unit.GetPosition(), m_FollowOrders.GetPosition() + m_FormationOffset, m_PathFilter, m_Path );
+		world.FindPath( unit.GetPosition(), outPos, m_PathFilter, m_Path );
 	}
 	
 	//--------------------------------------------------------------------------------------------------------------------------
