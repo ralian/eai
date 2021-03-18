@@ -156,10 +156,12 @@ class eAIPlayerHandler {
 				GetRPCManager().SendRPC("eAI", "eAIAimArbiterStart", new Param2<Weapon_Base, int>(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands()), 250), false, m_FollowOrders.GetIdentity());
 				// Use ADS instead of view for targeting, but we have to wait until our data from the client is valid
 				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.EnableADSTracking, 1000, false);
-			} else {
-				GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands())), false, m_FollowOrders.GetIdentity());
-				unit.eAI_Use_ADS_Tracking = false;
-			}
+				Print(this.ToString() + " entering ADS");
+			} 
+		} else {
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands())), false, m_FollowOrders.GetIdentity());
+			unit.eAI_Use_ADS_Tracking = false;
+			Print(this.ToString() + " exiting ADS");
 		}
 	}
 	

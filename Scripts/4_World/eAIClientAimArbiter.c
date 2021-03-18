@@ -8,21 +8,24 @@ enum eAIBoneTrust {
 class eAIClientAimArbiter {
 	int delay_ms = -1;
 	bool flag_for_deletion = false;
+	Weapon_Base weapon;
 	
 	// Activate the Aim callback to the server, then call continuously until deactivated
 	// @return returns true if the RPC was sent
-	bool Activate(Weapon_Base weap, int new_delay_ms = -1) {
-		if (!weap)
+	bool Activate(Weapon_Base newWeapon = null, int new_delay_ms = -1) {
+		if (newWeapon)
+			weapon = newWeapon;
+		if (!weapon)
 			return Deactivate();
-		vector usti_hlavne_position = weap.GetSelectionPositionLS("usti hlavne"); // front?
-		vector konec_hlavne_position = weap.GetSelectionPositionLS("konec hlavne"); // back?
-		vector out_front = weap.ModelToWorld(usti_hlavne_position);
-		vector out_back = weap.ModelToWorld(konec_hlavne_position);
-		GetRPCManager().SendRPC("eAI", "eAIAimDetails", new Param3<Weapon_Base, vector, vector>(weap, out_front, out_back));
+		vector usti_hlavne_position = weapon.GetSelectionPositionLS("usti hlavne"); // front?
+		vector konec_hlavne_position = weapon.GetSelectionPositionLS("konec hlavne"); // back?
+		vector out_front = weapon.ModelToWorld(usti_hlavne_position);
+		vector out_back = weapon.ModelToWorld(konec_hlavne_position);
+		GetRPCManager().SendRPC("eAI", "eAIAimDetails", new Param3<Weapon_Base, vector, vector>(weapon, out_front, out_back));
 		if (new_delay_ms > 0)
 			delay_ms = new_delay_ms;
 		if (delay_ms > 0) {
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.Activate, delay_ms, false, weap);
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.Activate, delay_ms, false);
 			return true;
 		}
 		return false;
