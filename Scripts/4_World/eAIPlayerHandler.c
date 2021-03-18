@@ -51,6 +51,7 @@ class eAIPlayerHandler {
 	
 	// This is the bitmask used for pathfinding (i.e. whether we want a path that goes over a fence
 	ref PGFilter m_PathFilter;
+	autoptr array<Shape> m_DebugShapeArray = new array<Shape>();
 	
 	// Formation following logic
 	DayZPlayer m_FollowOrders = null;
@@ -171,6 +172,20 @@ class eAIPlayerHandler {
 	// CODE AND HELPER FUNCS FOR PATHING
 	//--------------------------------------------------------------------------------------------------------------------------
 	
+#ifndef SERVER
+	void ClearDebugShapes()
+	{
+		for (int i = m_DebugShapeArray.Count() - 1; i >= 0; i--)
+			m_DebugShapeArray[i].Destroy();
+		m_DebugShapeArray.Clear();
+	}
+	
+	void AddShape(Shape shape)
+	{
+		m_DebugShapeArray.Insert(shape);
+	}
+#endif	
+
 	float Distance( int index, vector position )
 	{
 		vector b = m_Path[index];
@@ -220,7 +235,19 @@ class eAIPlayerHandler {
 		
 		AIWorld world = GetGame().GetWorld().GetAIWorld();
 		
-		return world.RaycastNavMesh( start, end, m_PathFilter, hitPos, hitNormal );
+		bool blocked = world.RaycastNavMesh( start, end, m_PathFilter, hitPos, hitNormal );
+
+#ifndef SERVER
+		int debugColour = 0xFF00FF00;
+		if (blocked) debugColour = 0xFFFF0000;
+		vector points[2];
+		points[0] = start;
+		points[1] = end;
+		if (blocked) points[1] = hitPos;
+		m_DebugShapeArray.Insert(Shape.CreateLines(debugColour, ShapeFlags.NOZBUFFER, points, 2));
+#endif
+
+		return blocked;
 	}
 	
 	// Checks to see if the path between the start and end is blocked
@@ -228,7 +255,19 @@ class eAIPlayerHandler {
 	{
 		AIWorld world = GetGame().GetWorld().GetAIWorld();
 		
-		return world.RaycastNavMesh( start, end, m_PathFilter, hitPos, hitNormal );
+		bool blocked = world.RaycastNavMesh( start, end, m_PathFilter, hitPos, hitNormal );
+
+#ifndef SERVER
+		int debugColour = 0xFF00FF00;
+		if (blocked) debugColour = 0xFFFF0000;
+		vector points[2];
+		points[0] = start;
+		points[1] = end;
+		if (blocked) points[1] = hitPos;
+		m_DebugShapeArray.Insert(Shape.CreateLines(debugColour, ShapeFlags.NOZBUFFER, points, 2));
+#endif
+
+		return blocked;
 	}
 
 	int FindNext( vector position, out float minDist )

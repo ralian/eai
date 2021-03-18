@@ -60,6 +60,7 @@ class eAIGame {
 		eAIPlayerHandler handler = h.SetAI();
 		
 		// Set the target entity we should follow to the player that spawned it, then do the first pathfinding update
+		
 		handler.Follow(PlayerBase.Cast(owner), formOffset, 2);
 		handler.UpdatePath();
 			
@@ -76,12 +77,12 @@ class eAIGame {
 		if(type == CallType.Server )
 		{
             Print("eAI spawn entity RPC called.");
-			//SpawnAI_Helper(data.param1, Vector(0, 0, 0));
+			SpawnAI_Helper(data.param1, Vector(Math.RandomFloat(0.0, 360.0), 0, 0).AnglesToVector() * Math.RandomFloat(3.0, 12.0));
 			
-			SpawnAI_Helper(data.param1, Vector(-3, 0, -3));
-			SpawnAI_Helper(data.param1, Vector(3, 0, -3));
-			SpawnAI_Helper(data.param1, Vector(-3, 0, 3));
-			SpawnAI_Helper(data.param1, Vector(3, 0, 3));
+			//SpawnAI_Helper(data.param1, Vector(-3, 0, -3));
+			//SpawnAI_Helper(data.param1, Vector(3, 0, -3));
+			//SpawnAI_Helper(data.param1, Vector(-3, 0, 3));
+			//SpawnAI_Helper(data.param1, Vector(3, 0, 3));
 		}
 	}
 	
