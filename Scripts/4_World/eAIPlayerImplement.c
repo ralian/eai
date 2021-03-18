@@ -179,9 +179,10 @@ modded class PlayerBase {
 	Object lookAt = null;
 	float headingTarget = 0.0;
 	float lastHeadingAngle = 0.0;
+	bool eAI_Use_ADS_Tracking = false;
 	override bool HeadingModel(float pDt, SDayZPlayerHeadingModel pModel)
 	{
-		if ( isAI() )
+		if ( isAI() && IsAlive() )
 		{			
 			GetMovementState(m_MovementState);
 			
@@ -197,23 +198,30 @@ modded class PlayerBase {
 				headingTarget = vector.Direction(GetPosition(), parent.waypoints[0]).VectorToAngles().GetRelAngles()[0];
 			}
 			
-			//if (parent.WantsWeaponUp())
+			float currentAngle;
+			if (eAI_Use_ADS_Tracking) {
+				AimProfile lastaim = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands()).aim;
+				// right now, we only aim with the weapon's azumith starting from the position of the player
+				if (GetGame().GetTime() - lastaim.lastUpdated > 500)
+					Print("Warning! Using old data for ADS mode for " + this.ToString());
+				currentAngle = lastaim.Azmuith;
+			} else {
+				currentAngle = Math.RAD2DEG * pModel.m_fHeadingAngle;
+			}
 			
-			float delta = Math.DiffAngle(headingTarget, Math.RAD2DEG * pModel.m_fHeadingAngle);
+			float delta = Math.DiffAngle(headingTarget, currentAngle);
 			
 			// this is a workaround for pesky headbug :)
 			// Basically, under certain circumstances (seemingly after a full rotation), the m_fHeadingAngle would diverge from the 
 			// m_OrientationAngle, and there was little I could do. This bug is rare but debilitating, since it basically disables tracking 
 			// of the AI. So, for now... the best workaround seems to be resetting the unit's heading to the desired m_fHeadingAngle. For a 
 			// graph explaining it, ask me.
-			if (delta < 0.02 && Math.DiffAngle(Math.RAD2DEG * pModel.m_fOrientationAngle, Math.RAD2DEG * pModel.m_fHeadingAngle) > 60.0) {
-				SetOrientation(Vector(Math.RAD2DEG * pModel.m_fHeadingAngle, 0, 0));
+			if (delta < 0.02 && Math.DiffAngle(Math.RAD2DEG * pModel.m_fOrientationAngle, currentAngle) > 60.0) {
+				SetOrientation(Vector(currentAngle, 0, 0));
 				pModel.m_fOrientationAngle = pModel.m_fHeadingAngle;
 			}
 
 			delta *= (1/360);
-
-			//pModel.m_fOrientationAngle += delta;
 			
 			// Can be used to make a cool graph
 			//Print("HeadingModel - orientation: " + pModel.m_fOrientationAngle + " heading: " + pModel.m_fHeadingAngle + " delta: " + delta);

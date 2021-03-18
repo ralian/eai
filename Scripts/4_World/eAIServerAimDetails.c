@@ -3,6 +3,7 @@
 class AimProfile {
 	int lastUpdated = -1;
 	vector out_front, out_back;
+	float Azmuith;
 	void AimProfile(vector out_f, vector out_b) {
 		out_front = out_f;
 		out_back = out_b;
@@ -29,8 +30,13 @@ class eAIServerAimProfileManager {
 		}*/
 		
 		// Add an additional temporary way to lookup the two positions
-		data.param1.aim.out_front = data.param2;
-		data.param1.aim.out_back = data.param3;
-		data.param1.aim.lastUpdated = GetGame().GetTime();
+		if (data.param1 && data.param1.aim) {
+			data.param1.aim.out_front = data.param2;
+			data.param1.aim.out_back = data.param3;
+			data.param1.aim.lastUpdated = GetGame().GetTime();
+			data.param1.aim.Azmuith = (data.param2 - data.param3).VectorToAngles().GetRelAngles()[0];
+		} else {
+			Print("eAIAimDetails updated, but no weapon exists! At: " + data.param2.ToString());
+		}
 	}
 };

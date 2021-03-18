@@ -98,6 +98,9 @@ modded class Weapon_Base {
 				
 				// Get geometry info
 				
+				if (GetGame().GetTime() - aim.lastUpdated > 500)
+					Print("Warning! Using old data for ballistics for weapon " + this.ToString());
+				
 				vector begin_point = aim.out_front;
 				vector back = aim.out_back;
 				

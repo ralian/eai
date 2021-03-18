@@ -133,6 +133,11 @@ class eAIPlayerHandler {
 		unit.GetInputController().OverrideAimChangeY(true, 0.0);
 	}
 	
+	void EnableADSTracking() {
+		if (m_WantWeapRaise) // double check that this hasn't been reset
+			unit.eAI_Use_ADS_Tracking = true;
+	}
+	
 	// todo fix the name of this
 	void RaiseWeapon(bool up) {
 		m_WantWeapRaise = up;
@@ -147,9 +152,13 @@ class eAIPlayerHandler {
 		// Now, we need to kick off the client weapon aim arbitration.
 		if (up) {
 			if (m_FollowOrders.GetIdentity()) {
+				// Start the client arbiter for this AI's weapon. The arbiter must already be init'ed
 				GetRPCManager().SendRPC("eAI", "eAIAimArbiterStart", new Param2<Weapon_Base, int>(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands()), 250), false, m_FollowOrders.GetIdentity());
+				// Use ADS instead of view for targeting, but we have to wait until our data from the client is valid
+				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.EnableADSTracking, 1000, false);
 			} else {
 				GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands())), false, m_FollowOrders.GetIdentity());
+				unit.eAI_Use_ADS_Tracking = false;
 			}
 		}
 	}

@@ -85,6 +85,7 @@ class eAIGame {
 		if(type == CallType.Server ) {
             Print("eAI clear all entity RPC called.");
 			foreach (eAIPlayerHandler e : aiList) {
+				e.RaiseWeapon(false); // This forces ADS/Aiming with the arbiter if it is active
 				GetGame().ObjectDelete(e.unit); // This is almost certainly not the right way to do this.
 				// Need to check for mem leaks
 			}
