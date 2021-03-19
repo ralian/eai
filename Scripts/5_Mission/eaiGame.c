@@ -42,7 +42,6 @@ class eAIGame {
 		
 		GetRPCManager().AddRPC("eAI", "SpawnEntity", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ClearAllEntity", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "ClearMyEntity", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "TargetPos", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ProcessReload", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "MoveAllToPos", this, SingeplayerExecutionType.Client);
@@ -66,7 +65,6 @@ class eAIGame {
 		PlayerBase h = PlayerBase.Cast(GetGame().CreatePlayer(null, "SurvivorF_Linda", owner.GetPosition() + debug_offset, 0, "NONE"));
 			
 		h.markAIServer( ); // Important: Mark unit as AI since we don't control the constructor.
-		 // Do the same in the clients
 			
 		SoldierLoadout.Apply(h);
 
@@ -87,8 +85,8 @@ class eAIGame {
 		if(type == CallType.Server ) {
             Print("eAI spawn entity RPC called.");
 			//SpawnAI_Helper(data.param1, Vector(0, 0, 0));
-			SpawnAI_Helper(data.param1, Vector(-3, 0, -3)); // First number is horizontal offset, sec number is forwards in the formation
-			SpawnAI_Helper(data.param1, Vector(3, 0, -3));
+			SpawnAI_Helper(data.param1, Vector(-3, 0, -1)); // First number is horizontal offset, sec number is forwards in the formation
+			SpawnAI_Helper(data.param1, Vector(3, 0, -1));
 		}
 	}
 	
@@ -105,30 +103,6 @@ class eAIGame {
 			}
 			
 			aiList.Clear();
-		}
-	}
-	
-	// Server Side: This RPC clears all entities belonging to a particular player. It is garbage code and needs rewritten.
-	void ClearMyEntity(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<DayZPlayer> data;
-        if (!ctx.Read(data)) return;
-		if(type == CallType.Server ) {
-            Print("eAI clear my entity RPC called.");
-			for (int i = 0; i < aiList.Count(); i++) {
-				if (aiList[i].m_FollowOrders == data.param1) {
-					GetGame().ObjectDelete(aiList[i].unit);
-					aiList.RemoveOrdered(i);
-				}
-			}
-			
-			// hacky workaround for now
-			for (int j = 0; j < aiList.Count(); j++) {
-				if (aiList[j].m_FollowOrders == data.param1) {
-					GetGame().ObjectDelete(aiList[j].unit);
-					aiList.RemoveOrdered(j);
-				}
-			}
-			
 		}
 	}
 	
