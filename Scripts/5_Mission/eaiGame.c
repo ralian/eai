@@ -56,9 +56,8 @@ class eAIGame {
 		//Human h = Human.Cast(GetGame().CreateObject("SurvivorF_Linda", data.param1));
 		
 		PlayerBase h = PlayerBase.Cast(GetGame().CreatePlayer(null, "SurvivorF_Linda", owner.GetPosition() + debug_offset, 0, "NONE"));
-			
+
 		eAIPlayerHandler handler = h.SetAI();
-		
 		// Set the target entity we should follow to the player that spawned it, then do the first pathfinding update
 		
 		handler.Follow(PlayerBase.Cast(owner), formOffset, 2);
@@ -165,47 +164,6 @@ class eAIGame {
 		}
 		else {Error("ClientWeaponDataWithCallback called wrongfully");}
 	}
-	
-	// from weapon_base, was originally protected
-	PhxInteractionLayers hit_mask = PhxInteractionLayers.CHARACTER | PhxInteractionLayers.BUILDING | PhxInteractionLayers.DOOR | PhxInteractionLayers.VEHICLE | PhxInteractionLayers.ROADWAY | PhxInteractionLayers.TERRAIN | PhxInteractionLayers.ITEM_SMALL | PhxInteractionLayers.ITEM_LARGE | PhxInteractionLayers.FENCE | PhxInteractionLayers.AI;
-	
-	// Server Side: This RPC takes the client location data, and performs an aim check on the weapon's last known aimpoint.
-	void ServerWeaponAimCheck(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		
-		Param3<Weapon_Base, vector, vector> data;
-        if (!ctx.Read(data)) return;
-		
-		if(type == CallType.Server ) {
-	
-			vector begin_point = data.param2;
-			vector back = data.param3;
-			
-			vector aim_point = begin_point - back;
-	
-			vector end_point = (500*aim_point) + begin_point;
-			
-			// Prep Raycast
-			Object hitObject;
-			vector hitPosition, hitNormal;
-			float hitFraction;
-			int contact_component = 0;
-			DayZPhysics.RayCastBullet(begin_point, end_point, hit_mask, null, hitObject, hitPosition, hitNormal, hitFraction);
-			
-			// This makes no guarantees that any objects were even hit
-			data.param1.whereIAmAimedAt = hitPosition;
-		}
-		else {Error("ServerWeaponAimCheck called wrongfully");}
-
-	}
-	
-	// Server Side: Kick off the ballistics code with the latest data from client
-	/*void SpawnBullet(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param3<Weapon_Base, vector, vector> data;
-        if (!ctx.Read(data)) return;
-		if(type == CallType.Server ) {
-			data.param1.BallisticsPostFrame(data.param2, data.param3);		
-		}
-	}*/
 	
 	void OnKeyPress(int key) {
         switch (key) {

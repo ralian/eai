@@ -94,7 +94,6 @@ modded class WeaponManager {
 			m_PendingTargetMagazine = mag;
 			m_PendingInventoryLocation = il;
 			
-			DumpStack();
 			StartPendingAction();
 			
 			return true;

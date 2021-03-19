@@ -100,13 +100,6 @@ class eAIPlayerHandler {
 		occlusionPGFilter.SetFlags(allowFlags2, 0, 0);
 	}
 	
-	/*void ~eAIPlayerHandler() {
-		delete unit;
-		delete cam;
-		delete threats;
-		delete m_PathFilter;
-	}*/
-	
 	// Set a player to follow.
 	void Follow(DayZPlayer p, vector formationPos, float distance = 2.0) {
 		m_FormationOffset = formationPos;
@@ -144,13 +137,15 @@ class eAIPlayerHandler {
 		
 		// Now, we need to kick off the client weapon aim arbitration.
 		if (up) {
-			if (m_FollowOrders.GetIdentity()) {
+			if (m_FollowOrders && m_FollowOrders.GetIdentity()) {
 				// Start the client arbiter for this AI's weapon. The arbiter must already be init'ed
 				GetRPCManager().SendRPC("eAI", "eAIAimArbiterStart", new Param2<Weapon_Base, int>(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands()), 250), false, m_FollowOrders.GetIdentity());
 				// Use ADS instead of view for targeting, but we have to wait until our data from the client is valid
 				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.EnableADSTracking, 1000, false);
 				Print(this.ToString() + " entering ADS");
-			} 
+			} else {
+				Error("Tried entering ADS, but no available aim arbiter was available!");
+			}
 		} else {
 			GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands())), false, m_FollowOrders.GetIdentity());
 			//unit.eAI_Use_ADS_Tracking = false;
@@ -407,7 +402,7 @@ class eAIPlayerHandler {
 
 		Weapon_Base wpn = Weapon_Base.Cast(unit.GetDayZPlayerInventory().GetEntityInHands());
 		if (wpn) {
-			//unit.lookAt = threats[0];
+			unit.lookAt = threats[0];
 			if (wpn.CanFire()) {
 				combatState = eAICombatPriority.ELIMINATE_TARGET;
 			} else {
@@ -422,9 +417,6 @@ class eAIPlayerHandler {
 	
 	protected void UpdateCombatState() {
 		Weapon_Base wpn = Weapon_Base.Cast(unit.GetDayZPlayerInventory().GetEntityInHands());
-		
-		// THIS WILL BREAK IF THE PLAYER DOESN'T HAVE AN OWNER
-		GetRPCManager().SendRPC("eAI", "ClientWeaponDataWithCallback", new Param2<Weapon_Base, string>(wpn, "ServerWeaponAimCheck"), false, m_FollowOrders.GetIdentity());
 		
 		if (threats.Count() == 0 || !threats[0]) {
 			state = eAIBehaviorGlobal.RELAXED;	
@@ -446,13 +438,14 @@ class eAIPlayerHandler {
 			
 			if (!threats[0] || !threats[0].IsAlive()) {
 				RecalcThreatList();
+				unit.lookAt = threats[0];
 				HasAShot = false;
 				
 				// Also check if we need to exit combat
 				if (threats.Count() < 1) {
 					// Similarly, this will crash a unit which exits combat after emptying last round
 					RaiseWeapon(false);
-					//unit.lookAt = m_FollowOrders;
+					unit.lookAt = null;
 					state = eAIBehaviorGlobal.RELAXED;
 				}
 			}

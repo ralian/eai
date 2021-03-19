@@ -26,7 +26,7 @@ bool DayZPlayerInventory_OnEventForRemoteWeaponAI (int packedType, DayZPlayer pl
 	PlayerBase pb = PlayerBase.Cast(player);
 	
 	if (!pb) {
-		Error("DayZPlayerInventory_OnEventForRemoteWeaponAI Callback for null PlayerBase! I am giving up, some inventory will be out of sync!");
+		Print("DayZPlayerInventory_OnEventForRemoteWeaponAI Callback for null PlayerBase! I am giving up, some inventory will be out of sync!");
 		return false;
 	}
 	
@@ -72,10 +72,6 @@ modded class Weapon_Base {
 	
 	// For raycasting bullets in the navmesh
 	autoptr PGFilter pgFilter = new PGFilter();
-	
-	vector whereIAmAimedAt = "0 0 0";
-	//array<Object> thingsICouldBeAimedAt = new array<Object>();
-
 	
 	/**@fn	ProcessWeaponEvent
 	 * @brief	weapon's fsm handling of events
@@ -125,8 +121,6 @@ modded class Weapon_Base {
 				// Use these to get  an idea of the direction for the raycast
 				GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(back, vector.Zero));
 				GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point, vector.Zero));
-				GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point + aim_point , vector.Zero));
-				
 				
 				Print("Muzzle pos: " + begin_point.ToString() + " dir-pos: " + (end_point-begin_point).ToString());
 				
@@ -142,19 +136,9 @@ modded class Weapon_Base {
 				
 				Print("Raycast hitObject: " + hitObject.ToString() + " hitPosition-pos: " + (hitPosition-begin_point).ToString() + " hitNormal: " + hitNormal.ToString() + " hitFraction " + hitFraction.ToString());
 				
-				//if (hitPosition && hitNormal) {
-				//	Particle p = Particle.PlayInWorld(ParticleList.DEBUG_DOT, hitPosition);
-				//	p.SetOrientation(hitNormal);
-					
-				//}
-				
 				// So here is an interesting bug... hitObject is always still null even if the raycast succeeded
 				// If it succeded then hitPosition, hitNormal, and hitFraction will be accurate
-				if (hitFraction > 0.00001) {
-					// this could be useful in the future
-					//ref array<Object> nearest_objects = new array<Object>;
-					//ref array<CargoBase> proxy_cargos = new array<CargoBase>;
-					//GetGame().GetObjectsAtPosition ( hitPosition, 1.0, nearest_objects, proxy_cargos );		
+				if (hitFraction > 0.00001) {	
 														
 					array<Object> objects = new array<Object>();
 					ref array<CargoBase> proxyCargos = new array<CargoBase>();
@@ -205,7 +189,7 @@ modded class Weapon_Base {
 					//Print("hitGround = " + hitGround.ToString());
 					
 					if (closest && !hitAnObject)// && !hitGround)
-						closest.ProcessDirectDamage(DT_FIRE_ARM, null, "Torso", ammoTypeName, closest.WorldToModel(hitPosition), 1.0);
+						closest.ProcessDirectDamage(DT_FIRE_ARM, e.m_player, "Torso", ammoTypeName, closest.WorldToModel(hitPosition), 1.0);
 				}
 			}
 			
