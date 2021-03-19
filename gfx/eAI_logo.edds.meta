@@ -1,10 +1,10 @@
 MetaFileClass {
- Name "{A5A2A69E67DE9B10}eai/gfx/eAI_logo_ver1_03_512.edds"
- Author "darc"
- ChangeDate -1025185169
+ Name "{F6B9C9F5799B02F6}eai/gfx/eAI_logo.edds"
+ Author "pelikone"
+ ChangeDate 71592563
  Configurations {
   PNGResourceClass PC {
-   SourceFile "eAI_logo_ver1_03_512.png"
+   SourceFile "eAI_logo.png"
   }
   PNGResourceClass XBOX_ONE : PC {
   }
