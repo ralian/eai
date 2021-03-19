@@ -1,6 +1,26 @@
+// Copyright 2021 William Bowers
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 class eAIGame {
 	// List of all eAI entities
 	autoptr array<ref eAIPlayerHandler> aiList = {};
+	
+	// On client, list of weapons we are asked to provide a feed of
+	autoptr eAIClientAimArbiterManager m_ClientAimMngr;
+	
+	// Server side list of weapon data 
+	autoptr eAIServerAimProfileManager m_ServerAimMngr;
 	
 	vector debug_offset = "8 0 0"; // Offset from player to spawn a new AI entity at when debug called
 	vector debug_offset_2 = "20 0 0"; // Electric bugaloo
@@ -8,9 +28,20 @@ class eAIGame {
 	float gametime = 0;
 	
     void eAIGame() {
+		if (GetGame().IsClient()) {
+			m_ClientAimMngr = new eAIClientAimArbiterManager();
+			GetRPCManager().AddRPC("eAI", "eAIAimArbiterSetup", m_ClientAimMngr, SingeplayerExecutionType.Client);
+			GetRPCManager().AddRPC("eAI", "eAIAimArbiterStart", m_ClientAimMngr, SingeplayerExecutionType.Client);
+			GetRPCManager().AddRPC("eAI", "eAIAimArbiterStop", m_ClientAimMngr, SingeplayerExecutionType.Client);
+		}
+		
+		if (GetGame().IsServer()) {
+			m_ServerAimMngr = new eAIServerAimProfileManager();
+			GetRPCManager().AddRPC("eAI", "eAIAimDetails", m_ServerAimMngr, SingeplayerExecutionType.Client);
+		}
+		
 		GetRPCManager().AddRPC("eAI", "SpawnEntity", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ClearAllEntity", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "ClearMyEntity", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "TargetPos", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ProcessReload", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "MoveAllToPos", this, SingeplayerExecutionType.Client);
@@ -19,11 +50,11 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "DebugParticle", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "ToggleWeaponRaise", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "SpawnZombie", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "DebugWeaponLocation", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "SpawnBullet", this, SingeplayerExecutionType.Client);
+		//GetRPCManager().AddRPC("eAI", "DebugWeaponLocation", this, SingeplayerExecutionType.Client);
+		//GetRPCManager().AddRPC("eAI", "SpawnBullet", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "ClientWeaponDataWithCallback", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("eAI", "ServerWeaponAimCheck", this, SingeplayerExecutionType.Client);
+		//GetRPCManager().AddRPC("eAI", "ClientWeaponDataWithCallback", this, SingeplayerExecutionType.Client);
+		//GetRPCManager().AddRPC("eAI", "ServerWeaponAimCheck", this, SingeplayerExecutionType.Client);
     }
 	
 	//! @param owner Who is the manager of this AI
@@ -34,7 +65,6 @@ class eAIGame {
 		PlayerBase h = PlayerBase.Cast(GetGame().CreatePlayer(null, "SurvivorF_Linda", owner.GetPosition() + debug_offset, 0, "NONE"));
 			
 		h.markAIServer( ); // Important: Mark unit as AI since we don't control the constructor.
-		 // Do the same in the clients
 			
 		SoldierLoadout.Apply(h);
 
@@ -54,9 +84,9 @@ class eAIGame {
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
             Print("eAI spawn entity RPC called.");
-			SpawnAI_Helper(data.param1, Vector(0, 0, 0));
-			//SpawnAI_Helper(data.param1, Vector(-3, 0, -3)); // First number is horizontal offset, sec number is forwards in the formation
-			//SpawnAI_Helper(data.param1, Vector(3, 0, -3));
+			//SpawnAI_Helper(data.param1, Vector(0, 0, 0));
+			SpawnAI_Helper(data.param1, Vector(-3, 0, -1)); // First number is horizontal offset, sec number is forwards in the formation
+			SpawnAI_Helper(data.param1, Vector(3, 0, -1));
 		}
 	}
 	
@@ -67,35 +97,12 @@ class eAIGame {
 		if(type == CallType.Server ) {
             Print("eAI clear all entity RPC called.");
 			foreach (eAIPlayerHandler e : aiList) {
+				e.RaiseWeapon(false); // This forces ADS/Aiming with the arbiter if it is active
 				GetGame().ObjectDelete(e.unit); // This is almost certainly not the right way to do this.
 				// Need to check for mem leaks
 			}
 			
 			aiList.Clear();
-		}
-	}
-	
-	// Server Side: This RPC clears all entities belonging to a particular player. It is garbage code and needs rewritten.
-	void ClearMyEntity(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<DayZPlayer> data;
-        if (!ctx.Read(data)) return;
-		if(type == CallType.Server ) {
-            Print("eAI clear my entity RPC called.");
-			for (int i = 0; i < aiList.Count(); i++) {
-				if (aiList[i].m_FollowOrders == data.param1) {
-					GetGame().ObjectDelete(aiList[i].unit);
-					aiList.RemoveOrdered(i);
-				}
-			}
-			
-			// hacky workaround for now
-			for (int j = 0; j < aiList.Count(); j++) {
-				if (aiList[j].m_FollowOrders == data.param1) {
-					GetGame().ObjectDelete(aiList[j].unit);
-					aiList.RemoveOrdered(j);
-				}
-			}
-			
 		}
 	}
 	
@@ -242,47 +249,6 @@ class eAIGame {
 			GetRPCManager().SendRPC("eAI", data.param2, new Param3<Weapon_Base, vector, vector>(data.param1, out_front, out_back));
 		}
 		else {Error("ClientWeaponDataWithCallback called wrongfully");}
-	}
-	
-	// from weapon_base, was originally protected
-	PhxInteractionLayers hit_mask = PhxInteractionLayers.CHARACTER | PhxInteractionLayers.BUILDING | PhxInteractionLayers.DOOR | PhxInteractionLayers.VEHICLE | PhxInteractionLayers.ROADWAY | PhxInteractionLayers.TERRAIN | PhxInteractionLayers.ITEM_SMALL | PhxInteractionLayers.ITEM_LARGE | PhxInteractionLayers.FENCE | PhxInteractionLayers.AI;
-	
-	// Server Side: This RPC takes the client location data, and performs an aim check on the weapon's last known aimpoint.
-	void ServerWeaponAimCheck(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		
-		Param3<Weapon_Base, vector, vector> data;
-        if (!ctx.Read(data)) return;
-		
-		if(type == CallType.Server ) {
-	
-			vector begin_point = data.param2;
-			vector back = data.param3;
-			
-			vector aim_point = begin_point - back;
-	
-			vector end_point = (500*aim_point) + begin_point;
-			
-			// Prep Raycast
-			Object hitObject;
-			vector hitPosition, hitNormal;
-			float hitFraction;
-			int contact_component = 0;
-			DayZPhysics.RayCastBullet(begin_point, end_point, hit_mask, null, hitObject, hitPosition, hitNormal, hitFraction);
-			
-			// This makes no guarantees that any objects were even hit
-			data.param1.whereIAmAimedAt = hitPosition;
-		}
-		else {Error("ServerWeaponAimCheck called wrongfully");}
-
-	}
-	
-	// Server Side: Kick off the ballistics code with the latest data from client
-	void SpawnBullet(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param3<Weapon_Base, vector, vector> data;
-        if (!ctx.Read(data)) return;
-		if(type == CallType.Server ) {
-			data.param1.BallisticsPostFrame(data.param2, data.param3);		
-		}
 	}
 	
 	void OnKeyPress(int key) {

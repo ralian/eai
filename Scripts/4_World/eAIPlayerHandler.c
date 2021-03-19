@@ -1,3 +1,17 @@
+// Copyright 2021 William Bowers
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 enum eAIBehaviorGlobal { // Global states that dictate each unit's actions
 	BRAINDEAD, 	// Do absolutely nothing. For optimization of units outside a certain radius (or unconcious, etc.)
 	RELAXED, 	// Idle and watch surroundings loosely. Will leisurely walk to waypoint.
@@ -65,9 +79,6 @@ class eAIPlayerHandler {
 		state = eAIBehaviorGlobal.RELAXED;
 		combatState = eAICombatPriority.ELIMINATE_TARGET;
 		
-		cam = new eAIDayZPlayerCamera(unit, unit.GetInputController());
-		cam.InitCameraOnPlayer(true); // force the camera active
-		
 		// Configure the pathfinding filter
 		//pgFilter.SetCost(PGAreaType.NONE, 1.0f); // not sure what kind of behaivor this causes
 		pgFilter.SetCost(PGAreaType.TERRAIN, 1.0);
@@ -109,24 +120,25 @@ class eAIPlayerHandler {
 		occlusionPGFilter.SetFlags(allowFlags2, 0, 0);
 	}
 	
-	/*void ~eAIPlayerHandler() {
-		delete unit;
-		delete cam;
-		delete threats;
-		delete pgFilter;
-		delete waypoints;
-	}*/
-	
 	// Set a player to follow.
 	void Follow(DayZPlayer p, vector formationPos, float distance = 2.0) {
 		formationOffset = formationPos;
 		m_FollowOrders = p;
 		arrival_radius = distance;
+		if (m_FollowOrders.GetIdentity()) {
+			// This is unsafe, we need to do it on weapon swap as well
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands())), false, m_FollowOrders.GetIdentity());
+		}
 	}
 	
 	void FireHeldWeapon() {
 		unit.GetWeaponManager().Fire(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands()));
 		unit.GetInputController().OverrideAimChangeY(true, 0.0);
+	}
+	
+	void EnableADSTracking() {
+		if (m_WantWeapRaise) // double check that this hasn't been reset
+			unit.eAI_Use_ADS_Tracking = true;
 	}
 	
 	// todo fix the name of this
@@ -138,6 +150,23 @@ class eAIPlayerHandler {
 			cm.ForceStance(DayZPlayerConstants.STANCEIDX_RAISEDERECT);
 		} else {
 			cm.ForceStance(DayZPlayerConstants.STANCEIDX_ERECT);
+		}
+		
+		// Now, we need to kick off the client weapon aim arbitration.
+		if (up) {
+			if (m_FollowOrders && m_FollowOrders.GetIdentity()) {
+				// Start the client arbiter for this AI's weapon. The arbiter must already be init'ed
+				GetRPCManager().SendRPC("eAI", "eAIAimArbiterStart", new Param2<Weapon_Base, int>(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands()), 250), false, m_FollowOrders.GetIdentity());
+				// Use ADS instead of view for targeting, but we have to wait until our data from the client is valid
+				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.EnableADSTracking, 1000, false);
+				Print(this.ToString() + " entering ADS");
+			} else {
+				Error("Tried entering ADS, but no available aim arbiter was available!");
+			}
+		} else {
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands())), false, m_FollowOrders.GetIdentity());
+			unit.eAI_Use_ADS_Tracking = false;
+			Print(this.ToString() + " exiting ADS");
 		}
 	}
 	
@@ -179,73 +208,54 @@ class eAIPlayerHandler {
 		return ++cur_waypoint_no;
 	}
 	
+	autoptr array<Object> aimObjects;
+	vector aimPos;
+	//autoptr array<CargoBase> proxyCargos;
+	// from weapon_base, was originally protected
+	PhxInteractionLayers hit_mask = PhxInteractionLayers.CHARACTER | PhxInteractionLayers.BUILDING | PhxInteractionLayers.DOOR | PhxInteractionLayers.VEHICLE | PhxInteractionLayers.ROADWAY | PhxInteractionLayers.TERRAIN | PhxInteractionLayers.ITEM_SMALL | PhxInteractionLayers.ITEM_LARGE | PhxInteractionLayers.FENCE | PhxInteractionLayers.AI;
+	
+	
 	// Update our heading and speed to the next waypoint; if we reach a waypoint, do more wacky logic.
 	bool UpdateMovement() {
 		bool needsToRunAgain = false;
+
+		Weapon_Base weap = Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands());
 		
-		/*if (state == eAIBehaviorGlobal.COMBAT) {
-			vector myPos = unit.GetPosition();
-			vector threatPos = threats[0].GetPosition();
-			vector aimPoint = "0 0 0";
-			Weapon_Base weap = Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands());
-			
-			if (weap && weap.whereIAmAimedAt != "0 0 0" && WantsWeaponUp()) {
-				// Aiming logic based on where the barrel is aimed, won't work if the weapon is not yet up
-				aimPoint = weap.whereIAmAimedAt - myPos;
-				threatPos = threatPos - myPos;
-				targetAngle = threatPos.VectorToAngles().GetRelAngles()[0];
-				heading = aimPoint.VectorToAngles().GetRelAngles()[0];
-				
-				HasAShot = true;
-				
-			}
-			
-			delta = Math.DiffAngle(targetAngle, heading);
-			
-			// Do the logic for aiming along the x axis...
-			// Todo make it so the x direction is calculated from barrell
-			unit.GetInputController().OverrideMovementSpeed(true, 0.0);
-			
-			
-			delta /= 500;
-			delta = Math.Max(delta, -0.25);
-			delta = Math.Min(delta, 0.25);
-			unit.GetInputController().OverrideAimChangeX(true, delta);
-			//unit.GetInputController().OverrideAimChangeY(true, 0.0);
-			
-			Print("UpdateMovement() - targetAngle: " + targetAngle + " heading: " + heading + " delta: " + delta);
+		// Here we are determining the logic for whether the AI is allowed to pull the trigger.
+		if (state == eAIBehaviorGlobal.COMBAT && weap && weap.aim) {
 			
 			// Now, do the logic for aiming along the y axis.
+			vector myPos = unit.GetPosition();
+			vector threatPos = threats[0].GetPosition();
 			float gunHeight = 1.5 + myPos[1]; 			// Todo get the actual world gun height.
 			float targetHeight = 1.0 + threatPos[1]; 	// Todo get actual threat height
 			float aimAngle = Math.Atan2(targetHeight - gunHeight, vector.Distance(myPos, threatPos));
+			Print("aimAngle: " + aimAngle);
 			unit.targetAngle = aimAngle * Math.RAD2DEG;
 			
-			// Make sure the AI is aimed at the target and not at anything else
-			if (HasAShot) {
-				array<Object> objects = new array<Object>();
-				ref array<CargoBase> proxyCargos = new array<CargoBase>();
-				
-				bool aimedAtTheEnemy = false;
-				
-				// Here we use 2.5 meters instead of 1.5, to allow a small threshhold for AI to miss a shot
-				GetGame().GetObjectsAtPosition3D(weap.whereIAmAimedAt, 2.5, objects, proxyCargos);
-				
-				for (int i = 0; i < objects.Count(); i++) {
-					if (objects[i] == threats[0])
-						aimedAtTheEnemy = true;
-					if (objects[i] == m_FollowOrders) // quick and dirty check for shooting at a friendly
-						HasAShot = false;
-				}
-				
-				HasAShot = (HasAShot && aimedAtTheEnemy);
-			}			
+			// Now, do a raycast check at where I'm aimed.
+			Object hitObject;
+			vector hitPosition, hitNormal;
+			float hitFraction;
+			int contact_component = 0;
+			vector start_pos = weap.aim.out_front;
+			vector dir = (start_pos - weap.aim.out_back) * 200; // todo normalize
+			DayZPhysics.RayCastBullet(start_pos, start_pos + dir, hit_mask, null, hitObject, hitPosition, hitNormal, hitFraction);
 			
-			return false;
-		}*/
-		
-		if (m_WantWeapRaise) {
+			// Now, check objects near the impact.			
+			aimObjects = new array<Object>();
+			proxyCargos = new array<CargoBase>();
+			// Here we use 2.5 meters instead of 1.5, to allow a small threshhold for AI to miss a shot
+			GetGame().GetObjectsAtPosition3D(hitPosition, 2.5, aimObjects, proxyCargos);
 			
+			for (int i = 0; i < aimObjects.Count(); i++) {
+				if (aimObjects[i] == threats[0])
+					HasAShot = true;
+				if (aimObjects[i] == m_FollowOrders) // quick and dirty check for shooting at a friendly
+					HasAShot = false;
+			}
+		} else {
+			HasAShot = false;
 		}
 		
 		// First, if we don't have any valid waypoints, make sure to stop the AI and quit prior to the movement logic.
@@ -255,33 +265,6 @@ class eAIPlayerHandler {
 			unit.GetInputController().OverrideAimChangeX(true, 0.0);
 			return false;
 		}
-		
-		/*if (m_FollowOrders) {
-			cur_waypoint_no = -1; // can't use clearWaypoints() here because we want to preserve the distance
-			waypoints.Clear();
-			addWaypoint(m_FollowOrders.GetPosition());
-		};*/
-		
-		//unit.headingTarget = vector.Direction(GetPosition(), waypoints[cur_waypoint_no]).VectorToAngles().GetRelAngles()[0];
-		
-		/*targetAngle = vector.Direction(unit.GetPosition(), waypoints[cur_waypoint_no]).VectorToAngles().GetRelAngles()[0];// * Math.DEG2RAD;
-		//vector heading = MiscGameplayFunctions.GetHeadingVector(this);
-		
-		// This seems to be CCW is positive unlike relative angles.
-		// ALSO THIS ISN'T CAPPED AT +-180. I HAVE SEEN IT IN THE THOUSANDS.
-		heading = -(unit.GetInputController().GetHeadingAngle() * Math.RAD2DEG); 
-
-		
-		//heading = GetDirection()[0]*180 + 90; // The documentation does not cover this but the angle this spits out is between (-1..1). WHAT?! (also seems to be angle of feet)
-		
-		delta = Math.DiffAngle(targetAngle, heading);
-		
-		delta /= 500;
-		delta = Math.Max(delta, -0.25);
-		delta = Math.Min(delta, 0.25);
-				
-		// This is a capped PID controller, but using only the P component
-		unit.GetInputController().OverrideAimChangeX(true, delta);*/
 		
 		// Next, we handle logic flow for waypoints.
 		float currDistToWP = vector.Distance(unit.GetPosition(), waypoints[cur_waypoint_no]);
@@ -313,9 +296,7 @@ class eAIPlayerHandler {
 	}
 
 	void UpdatePathing() { // This update needs to be done way less frequent than Movement; Default is 1 every 10 update ticks.
-		
-		
-		
+
 		if (m_FollowOrders) {
 			vector fop = m_FollowOrders.GetPosition();
 			
@@ -429,7 +410,7 @@ class eAIPlayerHandler {
 		clearWaypoints();	
 		Weapon_Base wpn = Weapon_Base.Cast(unit.GetDayZPlayerInventory().GetEntityInHands());
 		if (wpn) {
-			//unit.lookAt = threats[0];
+			unit.lookAt = threats[0];
 			if (wpn.CanFire()) {
 				combatState = eAICombatPriority.ELIMINATE_TARGET;
 			} else {
@@ -444,9 +425,6 @@ class eAIPlayerHandler {
 	
 	protected void UpdateCombatState() {
 		Weapon_Base wpn = Weapon_Base.Cast(unit.GetDayZPlayerInventory().GetEntityInHands());
-		
-		// THIS WILL BREAK IF THE PLAYER DOESN'T HAVE AN OWNER
-		GetRPCManager().SendRPC("eAI", "ClientWeaponDataWithCallback", new Param2<Weapon_Base, string>(wpn, "ServerWeaponAimCheck"), false, m_FollowOrders.GetIdentity());
 		
 		if (threats.Count() == 0 || !threats[0]) {
 			state = eAIBehaviorGlobal.RELAXED;	
@@ -468,13 +446,14 @@ class eAIPlayerHandler {
 			
 			if (!threats[0] || !threats[0].IsAlive()) {
 				RecalcThreatList();
+				unit.lookAt = threats[0];
 				HasAShot = false;
 				
 				// Also check if we need to exit combat
 				if (threats.Count() < 1) {
 					// Similarly, this will crash a unit which exits combat after emptying last round
 					RaiseWeapon(false);
-					//unit.lookAt = m_FollowOrders;
+					unit.lookAt = null;
 					state = eAIBehaviorGlobal.RELAXED;
 				}
 			}
