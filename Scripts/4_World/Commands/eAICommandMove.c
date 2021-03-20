@@ -19,8 +19,11 @@ class eAICommandMove extends eAICommandBase
 	private float m_MovementDirection;
 	private float m_TargetMovementDirection;
 	
+	private bool m_Raised;
+	
 	private float m_Speed;
 	private float m_TargetSpeed;
+	private float m_SpeedLimit;
 	private float m_SpeedMapping[8];
 
 	private vector m_Transform[4];
@@ -38,6 +41,8 @@ class eAICommandMove extends eAICommandBase
 
 	override void OnActivate()
 	{
+		SetSpeedLimit(-1);
+		
 		m_Entity.GetTransform(m_Transform);
 		
 		m_PreviousInteractionLayer = dBodyGetInteractionLayer(m_Entity);
@@ -47,6 +52,18 @@ class eAICommandMove extends eAICommandBase
 	override void OnDeactivate()
 	{
 		dBodySetInteractionLayer(m_Entity, m_PreviousInteractionLayer);
+	}
+
+	void SetSpeedLimit(float speedIdx)
+	{
+		m_SpeedLimit = speedIdx;
+
+		if (m_SpeedLimit < 0 || m_SpeedLimit > 3) m_SpeedLimit = 3;
+	}
+	
+	void SetRaised(bool raised)
+	{
+		m_Raised = raised;
 	}
 
 	void SetSpeedMapping(int i, float speedMS)
@@ -121,15 +138,14 @@ class eAICommandMove extends eAICommandBase
 
 		m_ST.SetMovementDirection(this, m_MovementDirection);
 		
-		m_ST.SetRaised(this, false);
+		m_ST.SetRaised(this, m_Raised);
+		
+		//m_ST.SetAimX(this, false);
+		//m_ST.SetAimY(this, false);
 	}
 
 	override void PrePhysUpdate(float pDt)
 	{
-#ifndef SERVER
-		m_Handler.ClearDebugShapes();
-#endif
-
 		if (m_Handler.PathCount() == 0)
 		{
 			m_Speed = 0;
@@ -237,7 +253,7 @@ class eAICommandMove extends eAICommandBase
 		m_Handler.AddShape(Shape.CreateSphere(0xFF00FF00, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, wayPoint, 0.05));
 #endif
 		
-		float animationIndexAcceleration = Math.Clamp((m_TargetSpeed - m_Speed), -1000.0, 1.0) * pDt;
+		float animationIndexAcceleration = Math.Clamp((Math.Min(m_TargetSpeed, m_SpeedLimit) - m_Speed), -1000.0, 1.0) * pDt;
 		m_Speed = Math.Clamp(m_Speed + animationIndexAcceleration, 0.0, 3.0);
 		
 		PrePhys_SetAngles(Vector(angleDt, 0, 0));

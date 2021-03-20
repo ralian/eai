@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-enum eAIBehaviorGlobal { // Global states that dictate each unit's actions
-	BRAINDEAD, 	// Do absolutely nothing. For optimization of units outside a certain radius (or unconcious, etc.)
-	RELAXED, 	// Idle and watch surroundings loosely. Will leisurely walk to waypoint.
+enum eAIBehaviorGlobal { // Global states that dictate each m_Unit's actions
+	//BRAINDEAD = -1, 	// Do absolutely nothing. For optimization of units outside a certain radius (or unconcious, etc.)
+	RELAXED = 0, 	// Idle and watch surroundings loosely. Will leisurely walk to waypoint.
 	ALERT, 		// Scan surroundings carefully. Will run to waypoint.
-	PANIC, 		// Unused, temp state if shot or injured from unknown direction
+	//PANIC, 		// Unused, temp m_State if shot or injured from unknown direction
 	COMBAT 		// Will engage the threats in the threat list in order. Will ignore waypoints to seek out threats.
 };
 
@@ -30,6 +30,13 @@ enum eAICombatPriority {
 	OPPORTUNITY_SHOT	// The enemy does not see us (such as an infected) and we should only shoot if we have to.
 };
 
+enum eAICombatFlags
+{
+	NONE = 0,
+	FIRING = 1,
+	RELOADING = 2
+};
+
 enum eAIActionInterlock { // To be implemented later, so that only one anim runs at a time
 	NONE,
 	WEAPON_UPDOWN,
@@ -37,25 +44,148 @@ enum eAIActionInterlock { // To be implemented later, so that only one anim runs
 	FIRING
 };
 
+/*
+class eAIGoalList
+{
+	eAIGoal m_Head;
+	eAIGoal m_Tail;
+
+	// Get the next goal
+	eAIGoal Get()
+	{
+		return m_Head;
+	}
+
+	// Clears the list
+	void Clear()
+	{
+		while (m_Head != nullptr) delete Pop();
+	}
+
+	// Push to the end
+	void Push(eAIGoal goal)
+	{
+		goal.m_List = this;
+
+		if (m_Head == null)
+		{
+			m_Head = goal;
+			m_Tail = goal;
+			goal.m_Previous = null;
+			goal.m_Next = null;
+			return;
+		}
+
+		m_Tail.m_Next = goal;
+		goal.m_Previous = m_Tail;
+		goal.m_Next = null;
+		goal = m_Tail;
+	}
+
+	// Remove the front
+	eAIGoal Pop()
+	{
+		if (m_Head == null)
+		{
+			return null;
+		}
+		
+		eAIGoal popped = m_Head;
+		m_Head.m_Next.m_Previous = null;
+		m_Head = m_Head.m_Next;
+
+		return popped;
+	}
+};
+*/
+
+class eAIGoal
+{
+	//eAIGoalList m_List;
+
+	ref eAIGoal m_Previous;
+	ref eAIGoal m_Next;
+
+	Object TargetObject;
+	vector Position_WorldSpace;
+	float ThreatCost;
+
+	void ~eAIGoal()
+	{
+#ifndef SERVER
+		DestroyDebug();
+#endif
+	}
+
+#ifndef SERVER
+	Widget LayoutRoot;
+	TextWidget TextA;
+	TextWidget TextB;
+	TextWidget TextC;
+
+	void DestroyDebug()
+	{
+		if (LayoutRoot) LayoutRoot.Unlink();
+	}
+
+	void Debug(eAIPlayerHandler handler, int idx)
+	{
+		if (!LayoutRoot)
+		{
+			LayoutRoot = GetGame().GetWorkspace().CreateWidgets("eai/GUI/eai_goal_debug.layout");
+			if (!LayoutRoot) return;
+
+			Class.CastTo(TextA, LayoutRoot.FindAnyWidget("TextWidget0"));
+			Class.CastTo(TextB, LayoutRoot.FindAnyWidget("TextWidget1"));
+			Class.CastTo(TextC, LayoutRoot.FindAnyWidget("TextWidget2"));
+		}
+
+		vector screenPos = GetGame().GetScreenPos(Position_WorldSpace);
+		LayoutRoot.SetPos(screenPos[0], screenPos[1]);
+		LayoutRoot.Show(screenPos[2] > 0); 
+
+		TextA.SetText("Type: " + TargetObject.GetType());
+		TextB.SetText("Cost: " + ThreatCost);
+		TextC.SetText("Index: " + idx);
+
+		handler.AddShape(Shape.CreateSphere(0xFFFFFFFF, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, Position_WorldSpace, 0.01));
+	}
+#endif
+};
+
 // This class is assigned to a single PlayerBase to manage its behavior.
-class eAIPlayerHandler {
-	PlayerBase unit;
-	
-	ref eAIDayZPlayerCamera cam;
+class eAIPlayerHandler
+{
+	PlayerBase m_Unit;
+	//private autoptr eAIGoalList m_Goals();
+	private autoptr array<ref eAIGoal> m_Goals = new array<ref eAIGoal>;
+
+	private bool m_IsDead;
+	private float m_LastUpdateTime;
+
+	private vector m_LookDirection_WorldSpace;
+	private vector m_AimDirection_WorldSpace;
+
+	private vector m_LookDirection_ModelSpace;
+	private vector m_AimDirection_ModelSpace;
+
+	private DayZPlayer m_Leader = null;
+	private vector m_FormationOffset = "0 0 0";
 	
 	// Brain data
-	ref array<Object> threats = new array<Object>();
-	eAIBehaviorGlobal state;
-	eAICombatPriority combatState;
-	bool m_WantWeapRaise = false;
+	private int m_State; // (eAIBehaviorGlobal)
+	private float m_StateTime;
+
+	private int m_CombatFlags;
+	private bool m_UpdateCombat;
+
+	private eAICombatPriority m_CombatState;
 	
 	// This is the bitmask used for pathfinding (i.e. whether we want a path that goes over a fence
 	ref PGFilter m_PathFilter;
 	autoptr array<Shape> m_DebugShapeArray = new array<Shape>();
 	
 	// Formation following logic
-	DayZPlayer m_FollowOrders = null;
-	vector m_FormationOffset = "0 0 0";
 	
 	// Data for the heading computation
 	float targetAngle, heading, delta;
@@ -71,17 +201,14 @@ class eAIPlayerHandler {
 		if (!GetGame().IsServer())
 			Error("AI may only be managed server side!");
 				
-		if (p.isAI())
-			unit = p;
+		if (p.IsAI())
+			m_Unit = p;
 		else
 			Error("Attempting to call eAIPlayerHandler() on " + p.ToString() + ", which is not marked as AI.");
 		
-		state = eAIBehaviorGlobal.RELAXED;
-		combatState = eAICombatPriority.ELIMINATE_TARGET;
-		
-		cam = new eAIDayZPlayerCamera(unit, unit.GetInputController());
-		cam.InitCameraOnPlayer(true); // force the camera active
-		
+		m_State = eAIBehaviorGlobal.RELAXED;
+		m_CombatState = eAICombatPriority.ELIMINATE_TARGET;
+				
 		m_PathFilter = new PGFilter();
 
 		int inFlags = PGPolyFlags.WALK | PGPolyFlags.DOOR | PGPolyFlags.INSIDE | PGPolyFlags.JUMP_OVER;
@@ -100,81 +227,34 @@ class eAIPlayerHandler {
 		occlusionPGFilter.SetFlags(allowFlags2, 0, 0);
 	}
 	
+	void ~eAIPlayerHandler()
+	{
+#ifndef SERVER
+		DestroyDebug();
+#endif
+	}
+	
 	// Set a player to follow.
-	void Follow(DayZPlayer p, vector formationPos, float distance = 2.0) {
+	void SetLeader(DayZPlayer p, vector formationPos) {
 		m_FormationOffset = formationPos;
-		m_FollowOrders = p;
-		arrival_radius = distance;
-		if (m_FollowOrders.GetIdentity()) {
-			// This is unsafe, we need to do it on weapon swap as well
-			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands())), false, m_FollowOrders.GetIdentity());
-		}
+		m_Leader = p;
 	}
 	
-	void FireHeldWeapon() {
-		unit.GetWeaponManager().Fire(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands()));
-		unit.GetInputController().OverrideAimChangeY(true, 0.0);
+	void notifyDeath()
+	{
+		m_IsDead = true;
 	}
-	
-	void EnableADSTracking() {
-		//if (m_WantWeapRaise) // double check that this hasn't been reset
-		//	unit.eAI_Use_ADS_Tracking = true;
-	}
-	
-	// todo fix the name of this
-	void RaiseWeapon(bool up) {
-		m_WantWeapRaise = up;
 
-		HumanCommandMove cm = unit.GetCommand_Move();
-		if (!cm) return;
-
-		unit.GetInputController().OverrideRaise(true, m_WantWeapRaise);
-		if (m_WantWeapRaise) {
-			cm.ForceStance(DayZPlayerConstants.STANCEIDX_RAISEDERECT);
-		} else {
-			cm.ForceStance(DayZPlayerConstants.STANCEIDX_ERECT);
-		}
-		
-		// Now, we need to kick off the client weapon aim arbitration.
-		if (up) {
-			if (m_FollowOrders && m_FollowOrders.GetIdentity()) {
-				// Start the client arbiter for this AI's weapon. The arbiter must already be init'ed
-				GetRPCManager().SendRPC("eAI", "eAIAimArbiterStart", new Param2<Weapon_Base, int>(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands()), 250), false, m_FollowOrders.GetIdentity());
-				// Use ADS instead of view for targeting, but we have to wait until our data from the client is valid
-				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.EnableADSTracking, 1000, false);
-				Print(this.ToString() + " entering ADS");
-			} else {
-				Error("Tried entering ADS, but no available aim arbiter was available!");
-			}
-		} else {
-			GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(Weapon_Base.Cast(unit.GetHumanInventory().GetEntityInHands())), false, m_FollowOrders.GetIdentity());
-			//unit.eAI_Use_ADS_Tracking = false;
-			Print(this.ToString() + " exiting ADS");
-		}
-	}
-	
-	void ToggleWeaponRaise() {
-		RaiseWeapon(!m_WantWeapRaise);
-	}
-	
-	// This returns true if the weapon should be raised.
-	// I need another function to do this with a delay.
-	bool WantsWeaponUp() {
-		return m_WantWeapRaise;
+	bool isDead()
+	{
+		return m_IsDead;
 	}
 	
 	//--------------------------------------------------------------------------------------------------------------------------
 	// CODE AND HELPER FUNCS FOR PATHING
 	//--------------------------------------------------------------------------------------------------------------------------
 	
-#ifndef SERVER
-	void ClearDebugShapes()
-	{
-		for (int i = m_DebugShapeArray.Count() - 1; i >= 0; i--)
-			m_DebugShapeArray[i].Destroy();
-		m_DebugShapeArray.Clear();
-	}
-	
+#ifndef SERVER	
 	void AddShape(Shape shape)
 	{
 		m_DebugShapeArray.Insert(shape);
@@ -294,198 +374,279 @@ class eAIPlayerHandler {
 		return vector.Direction( pos1, pos2 ).Normalized().VectorToAngles()[0];
 	}
 
-	void UpdatePath()
+	void OnUpdate(float pDt)
 	{
-		if ( !m_PathFilter || !m_FollowOrders )
+		if (m_State != eAIBehaviorGlobal.COMBAT) return;
+		
+		Command_UpdateCombat(pDt);
+
+		vector transform[4];
+		m_Unit.GetTransform(transform);
+
+		m_AimDirection_ModelSpace = m_AimDirection_WorldSpace.InvMultiply3(transform);
+
+		vector aimAngles = m_AimDirection_ModelSpace.VectorToAngles();
+		if (aimAngles[0] > 180.0) aimAngles[0] = aimAngles[0] - 360.0;
+		if (aimAngles[1] > 180.0) aimAngles[1] = aimAngles[1] - 360.0;
+
+		HumanCommandWeapons hcw = m_Unit.GetCommandModifier_Weapons();
+
+		float dtLR = (aimAngles[0] - hcw.GetBaseAimingAngleLR()) * pDt * 0.1;
+		float dtUD = (aimAngles[1] - hcw.GetBaseAimingAngleUD()) * pDt * 0.1;
+		
+		m_Unit.GetInputController().OverrideAimChangeX(true, dtLR);
+		m_Unit.GetInputController().OverrideAimChangeY(true, dtUD);
+	}
+
+	void OnTick()
+	{
+		float tickTime = GetGame().GetTickTime();
+		float deltaTime = m_LastUpdateTime - tickTime;
+		m_LastUpdateTime = tickTime;
+		
+		//TODO: check if we have an outside given goal:
+		// e.g. such as a player telling an AI to go to position - if so,
+		// only check to see if there are nearby zombies that might need
+		// dealing with or if picking up a weapon is imperiative
+
+		int i, j;
+
+		m_Goals.Clear();
+		
+		//TODO: use particle system
+		array<Object> threats();
+		array<CargoBase> proxyCargos();
+		GetGame().GetObjectsAtPosition(m_Unit.GetPosition(), 30.0, threats, proxyCargos);
+		for (i = 0; i < threats.Count(); i++)
 		{
-			PathClear();
-			return;
+			float cost = ComputeThreatCost(threats[i]);
+			if (cost > 0)
+			{
+				if (IsViewOccluded(threats[i].GetPosition())) continue;
+
+				eAIGoal goal = new eAIGoal();
+				goal.TargetObject = threats[i];
+				goal.Position_WorldSpace = threats[i].GetPosition();
+				goal.ThreatCost = cost;
+
+				m_Goals.Insert(goal);
+			}
 		}
 		
-		m_Path.Clear();
+		goal = new eAIGoal();
+		goal.TargetObject = m_Leader;
+		goal.Position_WorldSpace = m_Leader.GetPosition();
+		goal.ThreatCost = 0;
+		m_Goals.Insert(goal);
+
+		for (i = 1; i < m_Goals.Count(); i++)
+		{
+			goal = m_Goals[i];
+			for (j = i - 1; j >= 0; j--)
+			{
+				if (goal.ThreatCost < m_Goals[j].ThreatCost) break;
+				m_Goals[j + 1] = m_Goals[j];
+			}
+			m_Goals[j + 1] = goal;
+		}
+
+		goal = m_Goals[0];
+
+		if (goal.ThreatCost > 50.0) SetState(eAIBehaviorGlobal.COMBAT);
+
+		if (m_StateTime > 5.0) SetState(m_State - 1);
 		
+		switch (m_State)
+		{
+			case eAIBehaviorGlobal.RELAXED:
+				UpdateRelaxed(deltaTime);
+				break;
+			case eAIBehaviorGlobal.ALERT:
+				UpdateAlert(deltaTime);
+				break;
+			case eAIBehaviorGlobal.COMBAT:
+				UpdateCombat(deltaTime);
+				break;
+		}
+	}
+
+	void UpdateRelaxed(float pDt)
+	{
+		m_Unit.GetCommand_AIMove().SetSpeedLimit(3);
+		m_Unit.GetCommand_AIMove().SetRaised(false);
+
+		m_Path.Clear();
+
 		AIWorld world = GetGame().GetWorld().GetAIWorld();
 		
-		vector outPos = m_FollowOrders.GetPosition() + m_FormationOffset;
+		vector outPos = m_Leader.GetPosition() + m_FormationOffset;
 		vector outNormal;
-		PathBlocked(m_FollowOrders.GetPosition(), outPos, outPos, outNormal);
+		PathBlocked(m_Leader.GetPosition(), outPos, outPos, outNormal);
 
-		world.FindPath( unit.GetPosition(), outPos, m_PathFilter, m_Path );
+		world.FindPath(m_Unit.GetPosition(), outPos, m_PathFilter, m_Path);
+	}
+
+	void UpdateAlert(float pDt)
+	{
+		UpdateRelaxed(pDt);
+	}
+
+	void UpdateCombat(float pDt)
+	{
+		eAIGoal goal = m_Goals[0];
+
+		m_Unit.GetCommand_AIMove().SetSpeedLimit(1);
+		m_Unit.GetCommand_AIMove().SetRaised(true);
+
+		if (vector.DistanceSq(goal.Position_WorldSpace, m_Unit.GetPosition()) > 100.0)
+		{
+			m_CombatFlags = eAICombatFlags.NONE;
+
+			m_Path.Clear();
+
+			AIWorld world = GetGame().GetWorld().GetAIWorld();
+
+			vector outPos = goal.Position_WorldSpace;
+			vector outNormal;
+			world.SampleNavmeshPosition(outPos, 10.0, m_PathFilter, outPos);
+
+			world.FindPath(m_Unit.GetPosition(), outPos, m_PathFilter, m_Path);
+
+			return;
+		}
+
+		m_AimDirection_WorldSpace = vector.Direction(m_Unit.ModelToWorld("0 1 0"), goal.TargetObject.ModelToWorld("0 1 0")).Normalized();
+		
+		m_UpdateCombat = true;
 	}
 	
-	//--------------------------------------------------------------------------------------------------------------------------
-	// HELPER FUNCS FOR TARGETING
-	//--------------------------------------------------------------------------------------------------------------------------
+	bool m_Reloading = false;
+	bool m_Firing = false;
+	
+	void Command_UpdateCombat(float pDt)
+	{
+		if (!m_UpdateCombat) return;
+		m_UpdateCombat = false;
+		
+		EntityAI hands = m_Unit.GetHumanInventory().GetEntityInHands();
+
+		Weapon_Base weapon_base;
+		if (Class.CastTo(weapon_base, hands))
+		{
+			if (m_Unit.GetWeaponManager() && m_Unit.GetWeaponManager().IsRunning()) return;
+
+			if (weapon_base.IsChamberEmpty(weapon_base.GetCurrentMuzzle()))
+			{
+				m_Unit.QuickReloadWeapon(weapon_base);
+				m_Reloading = true;
+				return;
+			}
+
+			if (weapon_base.CanFire())
+			{
+				m_Unit.GetWeaponManager().Fire(weapon_base);
+				m_Firing = true;
+				return;
+			}
+
+			return;
+		}
+	}
+
+	void SetState(int state)
+	{
+		m_State = state;
+		if (m_State < 0) m_State = 0;
+		m_StateTime = 0;
+	}
+
+#ifndef SERVER
+	Widget LayoutRoot;
+	TextWidget TextA;
+	TextWidget TextB;
+	TextWidget TextC;
+
+	void DestroyDebug()
+	{
+		if (LayoutRoot) LayoutRoot.Unlink();
+	}
+
+	void DebugUI()
+	{
+		if (!LayoutRoot)
+		{
+			LayoutRoot = GetGame().GetWorkspace().CreateWidgets("eai/GUI/eai_goal_debug.layout");
+			if (!LayoutRoot) return;
+
+			Class.CastTo(TextA, LayoutRoot.FindAnyWidget("TextWidget0"));
+			Class.CastTo(TextB, LayoutRoot.FindAnyWidget("TextWidget1"));
+			Class.CastTo(TextC, LayoutRoot.FindAnyWidget("TextWidget2"));
+		}
+		
+		vector aimAngles = m_AimDirection_ModelSpace.VectorToAngles();
+		if (aimAngles[0] > 180.0) aimAngles[0] = aimAngles[0] - 360.0;
+		if (aimAngles[1] > 180.0) aimAngles[1] = aimAngles[1] - 360.0;
+		
+		HumanCommandWeapons hcw = m_Unit.GetCommandModifier_Weapons();
+
+		vector currAim = Vector(hcw.GetBaseAimingAngleLR(), hcw.GetBaseAimingAngleUD(), 0);
+		
+		TextA.SetText("m_State: " + aimAngles);
+		TextB.SetText("m_State: " + currAim);
+		TextC.SetText("m_Reloading: " + m_Reloading + " m_Firing: " + m_Firing);
+	}
+#endif
+		
+	void OnDebug()
+	{
+#ifndef SERVER
+		for (int i = m_DebugShapeArray.Count() - 1; i >= 0; i--)
+			m_DebugShapeArray[i].Destroy();
+		m_DebugShapeArray.Clear();
+
+		for (i = 0; i < m_Goals.Count(); i++)
+		{
+			m_Goals[i].Debug(this, i);
+		}
+		
+		DebugUI();
+#endif
+	}
 	
 	ref PGFilter occlusionPGFilter = new PGFilter();
-	bool IsViewOccluded(vector pos, float tolerance = 0.05) {
+	bool IsViewOccluded(vector pos, float tolerance = 0.05)
+	{
 		vector hitPos, hitDir;
-		return GetGame().GetWorld().GetAIWorld().RaycastNavMesh(unit.GetPosition() + "0 1.5 0", pos, occlusionPGFilter, hitPos, hitDir);
+		return GetGame().GetWorld().GetAIWorld().RaycastNavMesh(m_Unit.GetPosition() + "0 1.5 0", pos, occlusionPGFilter, hitPos, hitDir);
 		//return (vector.Distance(hitPos, pos) > tolerance);
 	}
-	
-	void RecalcThreatList(vector center = "0 0 0") {
-		
-		if (vector.Distance(center, "0 0 0") < 1.0)
-			center = unit.GetPosition();
-		
-		// Leave threats in that don't need cleaning
-		for (int j = 0; j < threats.Count(); j++)
-			if (!threats[j] || !threats[j].IsAlive() || vector.Distance(unit.GetPosition(), threats[j].GetPosition()) < 30.0)
-				threats.Remove(j);
-		
-		array<Object> newThreats = new array<Object>();
-		GetGame().GetObjectsAtPosition(center, 30.0, newThreats, proxyCargos);
-		
-		// Todo find a faster way to do this... like a linked list?
-		int i = 0;
-		float minDistance = 1000000.0, temp;
-		while (i < newThreats.Count()) {
-			DayZInfected infected = DayZInfected.Cast(newThreats[i]);
-			PlayerBase player = PlayerBase.Cast(newThreats[i]);
-			if (infected && infected.IsAlive() && !IsViewOccluded(infected.GetPosition() + "0 1.5 0")) {
-				// It's an infected, add it to teh threates array
-				temp = vector.Distance(newThreats[i].GetPosition(), unit.GetPosition());
-				if (temp < minDistance) {
-					threats.InsertAt(infected, 0);
-					minDistance = temp;
-				} else threats.Insert(infected);
-				
-			} // this would make them shoot at all AI
-			 /*else if (player && player != m_FollowOrders && (!player.parent || (player.parent.m_FollowOrders != m_FollowOrders)) && player.IsAlive() && !IsViewOccluded(player.GetPosition() + "0 1.5 0")) {
-				// If it's an enemy player
-				temp = vector.Distance(newThreats[i].GetPosition(), unit.GetPosition());
-				if (temp < minDistance) {
-					threats.InsertAt(player, 0);
-					minDistance = temp;
-				} else threats.Insert(player);
-			}*/
-			i++;
-		}
-	}
-	
-	bool dead;
-	void markDead() {dead = true;}
-	bool isDead() {return dead;}
-	
-	//--------------------------------------------------------------------------------------------------------------------------
-	// BEGIN CODE FOR ACTION INTERLOCKS
-	//--------------------------------------------------------------------------------------------------------------------------
-	
-	float interlockTimeout = 0.0;
-	
-	//todo
-	bool TryRaiseWeapon(bool up) {
-	
-	}
-	
-	bool TryReload(bool up) {
-	
-	}
-	
-	//--------------------------------------------------------------------------------------------------------------------------
-	// BEGIN CODE FOR FSM
-	//--------------------------------------------------------------------------------------------------------------------------
-	
-	// This is used in combat state, is true when the target is sufficiently being aimed at
-	bool HasAShot = false;
-	
-	protected void EnterCombat() {
-		
-		// WARNING. I THINK THIS WILL CRASH A UNIT WHICH TRIES TO ENTER COMBAT AND RELOAD AT THE SAME TIME.
-		// WE NEED TO IMPLEMENT THE INTERLOCK BEFORE THIS WILL ALWAYS WORK
-		RaiseWeapon(true);
-		
-		state = eAIBehaviorGlobal.COMBAT;
 
-		PathClear();	
+	float ComputeThreatCost(Object threat)
+	{
+		float cost = 0;
 
-		Weapon_Base wpn = Weapon_Base.Cast(unit.GetDayZPlayerInventory().GetEntityInHands());
-		if (wpn) {
-			unit.lookAt = threats[0];
-			if (wpn.CanFire()) {
-				combatState = eAICombatPriority.ELIMINATE_TARGET;
-			} else {
-				combatState = eAICombatPriority.RELOADING;
-				unit.QuickReloadWeapon(wpn);
-			}
-		} else {
-			// If we don't have a weapon in hands, we need to switch weapons. But I haven't added this logic yet.
-			combatState = eAICombatPriority.FIND_COVER;
+		DayZInfected infected;
+		if (Class.CastTo(infected, threat))
+		{
+			cost += 10.0;
+			cost += 100.0 / vector.Distance(threat.GetPosition(), m_Unit.GetPosition());
+			DayZInfectedInputController infected_IC = infected.GetInputController();
+			Object infected_Target = infected_IC.GetTargetEntity();
+			if (infected_Target == null) cost -= 10.0;
+			else if (infected_Target == m_Unit) cost += 20.0;
+			else if (infected_Target == m_Leader) cost += 20.0;
 		}
-	}
-	
-	protected void UpdateCombatState() {
-		Weapon_Base wpn = Weapon_Base.Cast(unit.GetDayZPlayerInventory().GetEntityInHands());
-		
-		if (threats.Count() == 0 || !threats[0]) {
-			state = eAIBehaviorGlobal.RELAXED;	
-			return;
-		}
-		
-		if (wpn.CanFire() && combatState == eAICombatPriority.RELOADING) {
-			// we are done reloading, we can continue
-			combatState = eAICombatPriority.ELIMINATE_TARGET;
-		} else if (!wpn.CanFire() && combatState != eAICombatPriority.RELOADING) {
-			// need to reload again
-			combatState = eAICombatPriority.RELOADING;
-			unit.QuickReloadWeapon(wpn);
-			return;
-		}
-		
-		
-		if (combatState == eAICombatPriority.ELIMINATE_TARGET) {
-			
-			if (!threats[0] || !threats[0].IsAlive()) {
-				RecalcThreatList();
-				unit.lookAt = threats[0];
-				HasAShot = false;
-				
-				// Also check if we need to exit combat
-				if (threats.Count() < 1) {
-					// Similarly, this will crash a unit which exits combat after emptying last round
-					RaiseWeapon(false);
-					unit.lookAt = null;
-					state = eAIBehaviorGlobal.RELAXED;
-				}
-			}
-			
-			if (wpn.CanFire() && HasAShot) {
-				FireHeldWeapon();
-			}
-		}
-	}
-	
-	ref array<CargoBase> proxyCargos = new array<CargoBase>();// not sure what this is for yet, it is returned by GetObjectsAtPosition
-	
-	void UpdateState() {
-		Weapon_Base wpn = Weapon_Base.Cast(unit.GetDayZPlayerInventory().GetEntityInHands());
-		
-		if (state == eAIBehaviorGlobal.COMBAT)
-			UpdateCombatState();
-		
-		if (state == eAIBehaviorGlobal.RELAXED) {
-			// If we are not reloading but need to, then reload
-			if (!wpn.CanFire() && combatState != eAICombatPriority.RELOADING) {
-				unit.QuickReloadWeapon(wpn);
-				combatState = eAICombatPriority.RELOADING;
-				return;
-			}			
-			
-			// Otherwise, if we are currently reloading
-			if (combatState == eAICombatPriority.RELOADING) {
-				if (!wpn.CanFire())
-					return; // continue reloading
-				else
-					combatState = eAICombatPriority.ELIMINATE_TARGET; // done reloading but not in combat
-			}
-			
-			// maybe do this in another thread
-			// also maybe do it less often when relaxed
-			RecalcThreatList();
-			if (threats.Count() > 0)
-				EnterCombat();
-		}
+
+		return cost;
 	}
 
+	bool HeadingModel(float pDt, SDayZPlayerHeadingModel pModel)
+	{
+		return false;
+	}
+
+    bool AimingModel(float pDt, SDayZPlayerAimingModel pModel)
+    {
+        return false;
+    }
 };

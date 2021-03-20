@@ -13,7 +13,7 @@ class eAIManager extends eAIManagerBase
 
     private int m_ProcessingIndex = 0;
 	private int m_MaxProcessingAI = 0;
-	private const float m_MinimumTime = 0.050; // 20hz
+	private float m_MinimumTime = 0.5; // 0.050; // 20hz
 	private float m_ProcessingTime = 0;
 
     override ref Class AddAI(DayZPlayer entity)
@@ -93,8 +93,7 @@ class eAIManager extends eAIManagerBase
 			}
 
 			// update the AI
-			ai_Handler.UpdatePath();
-			ai_Handler.UpdateState();
+			ai_Handler.OnTick();
 
 			// mark the AI as processed
 			m_AIStates.Insert(eAIProcessingState.PROCESSED);

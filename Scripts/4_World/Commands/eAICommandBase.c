@@ -14,15 +14,4 @@ class eAICommandBase extends HumanCommandScript
 		AnglesToQuat(angles, rotation);
 		PrePhys_SetRotation(rotation);
 	}
-
-    //! Override these
-	bool HeadingModel(float pDt, SDayZPlayerHeadingModel pModel)
-	{
-		return false;
-	}
-
-    bool AimingModel(float pDt, SDayZPlayerAimingModel pModel)
-    {
-        return false;
-    }
 };

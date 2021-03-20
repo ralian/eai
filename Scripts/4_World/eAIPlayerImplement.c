@@ -12,11 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This is a global flag which is set to true if any (or multiple) units are killed on a tick
-// For performance, the mission only cleans up the AI list if it knows at least one died
-bool eAIGlobal_UnitKilled = false;
-
-// Todo move this to a separate child class (like PlayerBaseClient)
 modded class PlayerBase
 {
 	//Note: all of eAIPlayerHandler should be moved into the entity class.
@@ -24,20 +19,20 @@ modded class PlayerBase
 	private ref eAIAnimationST m_eAI_AnimationST;
 	private eAICommandBase m_eAI_Command;
 	
-	// Angle above the horizon we should be aiming, degrees.
-	float targetAngle = -5.0;
-
-	bool m_eAI_Is = false;
+	private bool m_eAI_Is = false;
 
 	void PlayerBase()
 	{
-		//todo: register net sync bool for 'isAI'
+		//todo: register net sync bool for 'm_eAI_Is'
 	}
 	
 	// IMPORTANT: Since this class is always constructed in engine, we need some other way to mark a unit as AI outside of the constructor.
 	// As such, when spawning AI make sure you ALWAYS CALL MARKAI() ON THE UNIT AFTER TELLING THE ENGINE TO SPAWN THE UNIT.
 	// This is used in many functions for workarounds for AI controlled players and it will break things if AI are not properly marked.
-	bool isAI() { return m_eAI_Is; }
+	bool IsAI()
+	{
+		return m_eAI_Is;
+	}
 
 	eAIPlayerHandler SetAI()
 	{
@@ -50,19 +45,36 @@ modded class PlayerBase
 		return m_eAI_Handler;
 	}
 
+	eAICommandMove GetCommand_AIMove()
+	{
+		return eAICommandMove.Cast(GetCommand_Script());
+	}
+
 	override void CommandHandler(float pDt, int pCurrentCommandID, bool pCurrentCommandFinished) 
 	{
-		if (!isAI())
+		if (!IsAI())
 		{
 			super.CommandHandler(pDt, pCurrentCommandID, pCurrentCommandFinished);
 			return;
 		}
 
+#ifndef SERVER
+		m_eAI_Handler.OnDebug();
+#endif
+
 		if (!GetGame().IsServer())
 			return;
+
+		if (m_WeaponManager) m_WeaponManager.Update(pDt);
+		if (m_EmoteManager) m_EmoteManager.Update(pDt);
+		
+		GetPlayerSoundManagerServer().Update();
+		GetHumanInventory().Update(pDt);
+		UpdateDelete();
+		
+		m_eAI_Handler.OnUpdate(pDt);
 		
 		m_eAI_Command = eAICommandBase.Cast(GetCommand_Script());
-
 
 		if (pCurrentCommandFinished)
 		{
@@ -153,58 +165,10 @@ modded class PlayerBase
 		{
 		}
 	}
-
-
-
-
-
-
-
-
-	
-	//Eventually we can use this instead of calling the action manager, needs more work though
-	override void ReloadWeapon( EntityAI weapon, EntityAI magazine ) {
-		// The only reason this is an override is because there is a client-only condition here that I have removed.
-		// There is probably a better way to do this.
-		Print(this.ToString() + "(DayZPlayerInstanceType." + GetInstanceType().ToString() + ") is trying to reload " + magazine.ToString() + " into " + weapon.ToString());
-		ActionManagerClient mngr_client;
-		CastTo(mngr_client, GetActionManager());
 		
-		if (mngr_client && FirearmActionLoadMultiBulletRadial.Cast(mngr_client.GetRunningAction()))
-		{
-			mngr_client.Interrupt();
-		}
-		else if ( GetHumanInventory().GetEntityInHands()!= magazine )
-		{
-			Weapon_Base wpn;
-			Magazine mag;
-			Class.CastTo( wpn,  weapon );
-			Class.CastTo( mag,  magazine );
-			if ( GetWeaponManager().CanUnjam(wpn) )
-			{
-				GetWeaponManager().Unjam();
-			}
-			else if ( GetWeaponManager().CanAttachMagazine( wpn, mag ) )
-			{
-				GetWeaponManager().AttachMagazine(mag);
-			}
-			else if ( GetWeaponManager().CanSwapMagazine( wpn, mag ) )
-			{
-				GetWeaponManager().SwapMagazine( mag );
-			}
-			else if ( GetWeaponManager().CanLoadBullet( wpn, mag ) )
-			{
-				//GetWeaponManager().LoadMultiBullet( mag );
-
-				ActionTarget atrg = new ActionTarget(mag, this, -1, vector.Zero, -1.0);
-				if ( mngr_client && !mngr_client.GetRunningAction() && mngr_client.GetAction(FirearmActionLoadMultiBulletRadial).Can(this, atrg, wpn) )
-					mngr_client.PerformActionStart(mngr_client.GetAction(FirearmActionLoadMultiBulletRadial), atrg, wpn);
-			}
-		}
-	}
-	
 	// We should integrate this into ReloadWeapon
-	void ReloadWeaponAI( EntityAI weapon, EntityAI magazine ) {
+	void ReloadWeaponAI( EntityAI weapon, EntityAI magazine )
+	{
 		// The only reason this is an override is because there is a client-only condition here that I have removed.
 		// There is probably a better way to do this.
 		Print(this.ToString() + "(DayZPlayerInstanceType." + GetInstanceType().ToString() + ") is trying to reload " + magazine.ToString() + " into " + weapon.ToString());
@@ -244,47 +208,42 @@ modded class PlayerBase
 		}
 	}
 	
-	override void QuickReloadWeapon( EntityAI weapon )
+	override void QuickReloadWeapon(EntityAI weapon)
 	{
-		EntityAI magazine = GetMagazineToReload( weapon );
-		if (isAI())
-			ReloadWeaponAI( weapon, magazine );
-		else
-			ReloadWeapon( weapon, magazine );
+		if (!IsAI())
+		{
+			super.QuickReloadWeapon(weapon);
+			return;
+		}
+
+		ReloadWeaponAI(weapon, GetMagazineToReload(weapon));
 	}
 	
 	// As with many things we do, this is an almagomation of the client and server code
 	override void CheckLiftWeapon()
 	{
-		if (isAI() && GetGame().IsServer()) {	
-			bool state = false;
+		if (IsAI())
+		{
+			if (!GetGame().IsServer()) return;
+
 			Weapon_Base weap;
 			if ( Weapon_Base.CastTo(weap, GetItemInHands()) )
 			{
-				state = m_LiftWeapon_player;
-				bool limited = weap.LiftWeaponCheck(this);
-				if (limited) //(limited && !m_WantWeapRaise)
-					state = false;
+				m_LiftWeapon_player = weap.LiftWeaponCheck(this);
 			}
-			
-			// Now the server code
-			ScriptJunctureData pCtx = new ScriptJunctureData;
-			pCtx.Write(state);
-			SendSyncJuncture(DayZPlayerSyncJunctures.SJ_WEAPON_LIFT, pCtx);
+
+			return;
 		}
-		else super.CheckLiftWeapon();
+
+		super.CheckLiftWeapon();
 	}
 	
-	
-	
-	//void eAIUpdateTargeting(float pDt) {
 		
-	//}
-	
-	override bool AimingModel(float pDt, SDayZPlayerAimingModel pModel) {
-		if (isAI() && m_eAI_Command)
+	override bool AimingModel(float pDt, SDayZPlayerAimingModel pModel)
+	{
+		if (IsAI())
 		{
-			return m_eAI_Command.AimingModel(pDt, pModel);
+			return m_eAI_Handler.AimingModel(pDt, pModel);
 		}
 			
 		return super.AimingModel(pDt, pModel);
@@ -292,27 +251,21 @@ modded class PlayerBase
 		
 	override bool HeadingModel(float pDt, SDayZPlayerHeadingModel pModel)
 	{
-		if (isAI() && m_eAI_Command)
+		if (IsAI())
 		{
-			return m_eAI_Command.HeadingModel(pDt, pModel);
+			return m_eAI_Handler.HeadingModel(pDt, pModel);
 		}
 		
 		return super.HeadingModel(pDt, pModel);
 	}
-		
-	override void OnCameraChanged(DayZPlayerCameraBase new_camera)
-	{
-		Print("Camera for " + this.ToString() + " changed. old:" + m_CurrentCamera.ToString() + " new:"+new_camera.ToString());
-		m_CameraSwayModifier = new_camera.GetWeaponSwayModifier();
-		m_CurrentCamera = new_camera;
-	}
 	
-	override void OnCommandDeathStart() {
-		// Tell the server to stop computing AI stuffs
-		if (isAI() && GetGame().IsServer()) {
-			eAIGlobal_UnitKilled = true;
-			m_eAI_Handler.markDead();
+	override void OnCommandDeathStart()
+	{
+		if (IsAI() && GetGame().IsServer())
+		{
+			m_eAI_Handler.notifyDeath();
 		}
+
 		super.OnCommandDeathStart();
 	}
 	
@@ -370,5 +323,4 @@ modded class PlayerBase
 
         return Vector(total_vertices[0] / count, total_vertices[1] / count, total_vertices[2] / count); // divide by vertice count to get center
     }
-
 };

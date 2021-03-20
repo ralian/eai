@@ -53,17 +53,15 @@ class eAIGame {
 	//! @param owner Who is the manager of this AI
 	//! @param formOffset Where should this AI follow relative to the formation?
 	void SpawnAI_Helper(DayZPlayer owner, vector formOffset) {
-		//Human h = Human.Cast(GetGame().CreateObject("SurvivorF_Linda", data.param1));
-		
-		PlayerBase h = PlayerBase.Cast(GetGame().CreatePlayer(null, "SurvivorF_Linda", owner.GetPosition() + debug_offset, 0, "NONE"));
+		PlayerBase pb_Human;
+		if (!Class.CastTo(pb_Human, owner)) return;
 
-		eAIPlayerHandler handler = h.SetAI();
-		// Set the target entity we should follow to the player that spawned it, then do the first pathfinding update
-		
-		handler.Follow(PlayerBase.Cast(owner), formOffset, 2);
-		handler.UpdatePath();
+		PlayerBase pb_AI;
+		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, "SurvivorF_Linda", pb_Human.GetPosition() + debug_offset, 0, "NONE"))) return;
+
+		pb_AI.SetAI().SetLeader(pb_Human, formOffset);
 			
-		SoldierLoadout.Apply(h);
+		SoldierLoadout.Apply(pb_AI);
 	}
 	
 	// Server Side: This RPC spawns a helper AI next to the player, and tells them to join the player's formation.

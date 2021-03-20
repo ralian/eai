@@ -100,7 +100,7 @@ modded class WeaponManager {
 		}
 		
 		// Note that we added a condition to continue if server exec for an AI unit.
-		if (GetGame().IsMultiplayer() && GetGame().IsServer() && !m_player.isAI())
+		if (GetGame().IsMultiplayer() && GetGame().IsServer() && !m_player.IsAI())
 			return false;
 		
 		if ( !ScriptInputUserData.CanStoreInputUserData() )
@@ -114,7 +114,7 @@ modded class WeaponManager {
 		
 		if ( !GetGame().IsMultiplayer() ) {
 			m_readyToStart = true;
-		} else if (/*GetGame().IsServer() && */m_player.isAI()) {
+		} else if (/*GetGame().IsServer() && */m_player.IsAI()) {
 			m_PendingTargetMagazine = mag;
 			m_PendingInventoryLocation = il;
 			SynchronizeServer(mag, il);
@@ -130,7 +130,7 @@ modded class WeaponManager {
 	// since we are already on the server.
 	// This function is only used by the WeaponManager of AI units and executes server-side.
 	private bool SynchronizeServer(Magazine mag, InventoryLocation il){
-		if(GetGame().IsServer() && m_player.isAI()) {
+		if(GetGame().IsServer() && m_player.IsAI()) {
 			Print("WeaponManager::SynchronizeServer for AI unit " + m_player.ToString() + " started.");
 			
 			m_PendingWeaponActionAcknowledgmentID = ++m_LastAcknowledgmentID;
@@ -247,7 +247,7 @@ modded class WeaponManager {
 			return accepted;
 		}
 		
-		Print("WeaponManager::SynchronizeServer failed! IsServer? " + GetGame().IsServer().ToString() + ". IsAI? " + m_player.isAI().ToString());
+		Print("WeaponManager::SynchronizeServer failed! IsServer? " + GetGame().IsServer().ToString() + ". IsAI? " + m_player.IsAI().ToString());
 		
 		return false; // This case is only executed if the conditions are not met
 	}
