@@ -12,37 +12,188 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/* TODO: class eAIBase extends PlayerBase // needs config entries */
+typedef PlayerBase eAIBase;
 modded class PlayerBase
 {
-	//Note: all of eAIPlayerHandler should be moved into the entity class.
-	private eAIPlayerHandler m_eAI_Handler;
+	private bool m_eAI_Is = false;
+
+	private autoptr array<ref eAIGoal> m_Goals = new array<ref eAIGoal>;
+
+	private ref eAIHFSM m_FSM;
+
+    // Command handling
 	private ref eAIAnimationST m_eAI_AnimationST;
 	private eAICommandBase m_eAI_Command;
-	
-	private bool m_eAI_Is = false;
+
+    // Look/Aiming
+	private vector m_eAI_LookDirection_WorldSpace;
+	private vector m_eAI_AimDirection_WorldSpace;
+
+	private vector m_eAI_LookDirection_ModelSpace;
+	private vector m_eAI_AimDirection_ModelSpace;
+
+    private ref eAIGroup m_eAI_Group;
+    
+    // Path Finding
+	private ref PGFilter m_PathFilter;
+	private autoptr array<vector> m_Path = new array<vector>();
+
+#ifndef SERVER
+	private autoptr array<Shape> m_DebugShapes = new array<Shape>();
+#endif
 
 	void PlayerBase()
 	{
-		//todo: register net sync bool for 'm_eAI_Is'
 	}
 	
-	// IMPORTANT: Since this class is always constructed in engine, we need some other way to mark a unit as AI outside of the constructor.
-	// As such, when spawning AI make sure you ALWAYS CALL MARKAI() ON THE UNIT AFTER TELLING THE ENGINE TO SPAWN THE UNIT.
-	// This is used in many functions for workarounds for AI controlled players and it will break things if AI are not properly marked.
 	bool IsAI()
 	{
 		return m_eAI_Is;
 	}
 
-	eAIPlayerHandler SetAI()
+	ref eAIGroup SetAI(ref eAIGroup group = null)
 	{
 		m_eAI_Is = true;
+        m_eAI_Group = group;
+        if (!m_eAI_Group) m_eAI_Group = new eAIGroup();
+
 		m_ActionManager = new ActionManagerAI(this);
 		
-		Class.CastTo(m_eAI_Handler, GetDayZGame().eAIManagerGet().AddAI(this));
 		m_eAI_AnimationST = new eAIAnimationST(this);
 
-		return m_eAI_Handler;
+		m_PathFilter = new PGFilter();
+
+		int inFlags = PGPolyFlags.WALK | PGPolyFlags.DOOR | PGPolyFlags.INSIDE | PGPolyFlags.JUMP_OVER;
+		int exFlags = PGPolyFlags.DISABLED | PGPolyFlags.SWIM | PGPolyFlags.SWIM_SEA | PGPolyFlags.JUMP | PGPolyFlags.CLIMB | PGPolyFlags.CRAWL | PGPolyFlags.CROUCH;
+
+		m_PathFilter.SetFlags( inFlags, exFlags, PGPolyFlags.NONE );
+		m_PathFilter.SetCost( PGAreaType.JUMP, 0.0 );
+		m_PathFilter.SetCost( PGAreaType.FENCE_WALL, 0.0 );
+		m_PathFilter.SetCost( PGAreaType.WATER, 1.0 );
+
+		m_FSM = new eAIHFSM(null);
+		m_FSM.LoadXML("eAI/scripts/Targetting_StateMachine.xml");
+
+		return m_eAI_Group;
+	}
+	
+#ifndef SERVER	
+	void AddShape(Shape shape)
+	{
+		m_DebugShapes.Insert(shape);
+	}
+#endif	
+
+	float Distance(int index, vector position)
+	{
+		vector begin = m_Path[index];
+		vector end = m_Path[index + 1] - begin;
+		vector relative = position - begin;
+		float eSize2 = end.LengthSq();
+		if (eSize2 > 0)
+		{
+			float time = (end * relative) / eSize2;
+			vector nearest = begin + Math.Clamp(time, 0, 1) * end;
+			return vector.DistanceSq(nearest, position);
+		}
+
+		return vector.DistanceSq(begin, position);
+	}
+
+	void PathClear()
+	{
+		m_Path.Clear();
+	}
+	
+	int PathCount()
+	{
+		return m_Path.Count();
+	}
+	
+	vector PathGet(int index)
+	{
+		if (index < 0 || index >= m_Path.Count()) return "0 0 0";
+		
+		return m_Path[index];
+	}
+
+	int FindNext(vector position)
+	{
+		float dist;
+		return FindNext(position, dist);
+	}
+	
+	// Checks to see if the path between the start and end is blocked
+	bool PathBlocked(vector start, vector end)
+	{
+		vector hitPos;
+		vector hitNormal;
+		
+		AIWorld world = GetGame().GetWorld().GetAIWorld();
+		
+		bool blocked = world.RaycastNavMesh(start, end, m_PathFilter, hitPos, hitNormal);
+
+#ifndef SERVER
+		int debugColour = 0xFF00FF00;
+		if (blocked) debugColour = 0xFFFF0000;
+		vector points[2];
+		points[0] = start;
+		points[1] = end;
+		if (blocked) points[1] = hitPos;
+		m_DebugShapes.Insert(Shape.CreateLines(debugColour, ShapeFlags.NOZBUFFER, points, 2));
+#endif
+
+		return blocked;
+	}
+	
+	// Checks to see if the path between the start and end is blocked
+	bool PathBlocked(vector start, vector end, out vector hitPos, out vector hitNormal)
+	{
+		AIWorld world = GetGame().GetWorld().GetAIWorld();
+		
+		bool blocked = world.RaycastNavMesh(start, end, m_PathFilter, hitPos, hitNormal);
+
+#ifndef SERVER
+		int debugColour = 0xFF00FF00;
+		if (blocked) debugColour = 0xFFFF0000;
+		vector points[2];
+		points[0] = start;
+		points[1] = end;
+		if (blocked) points[1] = hitPos;
+		m_DebugShapes.Insert(Shape.CreateLines(debugColour, ShapeFlags.NOZBUFFER, points, 2));
+#endif
+
+		return blocked;
+	}
+
+	int FindNext(vector position, out float minDist)
+	{
+		int index = 0;
+
+		minDist = 1000000000.0;
+
+		float epsilon = 0.1;
+		for (int i = 0; i < m_Path.Count() - 1; ++i)
+		{
+			float dist = Distance(i, position);
+			
+			if (minDist >= dist - epsilon)
+			{
+				if (!PathBlocked(position, m_Path[i + 1]))
+				{
+					minDist = dist;
+					index = i;
+				}
+			}
+		}
+
+		return index + 1;
+	}
+
+	float AngleBetweenPoints(vector pos1, vector pos2)
+	{
+		return vector.Direction(pos1, pos2).Normalized().VectorToAngles()[0];
 	}
 
 	eAICommandMove GetCommand_AIMove()
@@ -59,11 +210,12 @@ modded class PlayerBase
 		}
 
 #ifndef SERVER
-		m_eAI_Handler.OnDebug();
+		for (int i = m_DebugShapes.Count() - 1; i >= 0; i--)
+			m_DebugShapes[i].Destroy();
+		m_DebugShapes.Clear();
 #endif
 
-		if (!GetGame().IsServer())
-			return;
+		if (!GetGame().IsServer()) return;
 
 		if (m_WeaponManager) m_WeaponManager.Update(pDt);
 		if (m_EmoteManager) m_EmoteManager.Update(pDt);
@@ -71,8 +223,6 @@ modded class PlayerBase
 		GetPlayerSoundManagerServer().Update();
 		GetHumanInventory().Update(pDt);
 		UpdateDelete();
-		
-		m_eAI_Handler.OnUpdate(pDt);
 		
 		m_eAI_Command = eAICommandBase.Cast(GetCommand_Script());
 
@@ -85,7 +235,7 @@ modded class PlayerBase
 				return;
 			}
 
-			StartCommand_Script(new eAICommandMove(this, m_eAI_Handler, m_eAI_AnimationST));
+			StartCommand_Script(new eAICommandMove(this, m_eAI_AnimationST));
 		}
 
 		// taken from vanilla DayZPlayerImplement
@@ -157,11 +307,11 @@ modded class PlayerBase
 		
 		if (pCurrentCommandID == DayZPlayerConstants.COMMANDID_MOVE)
 		{
-			StartCommand_Script(new eAICommandMove(this, m_eAI_Handler, m_eAI_AnimationST));
+			StartCommand_Script(new eAICommandMove(this, m_eAI_AnimationST));
 			return;
 		}
 		
-		if (pCurrentCommandID == DayZPlayerConstants.COMMANDID_SCRIPT )
+		if (pCurrentCommandID == DayZPlayerConstants.COMMANDID_SCRIPT)
 		{
 		}
 	}
@@ -169,8 +319,6 @@ modded class PlayerBase
 	// We should integrate this into ReloadWeapon
 	void ReloadWeaponAI( EntityAI weapon, EntityAI magazine )
 	{
-		// The only reason this is an override is because there is a client-only condition here that I have removed.
-		// There is probably a better way to do this.
 		Print(this.ToString() + "(DayZPlayerInstanceType." + GetInstanceType().ToString() + ") is trying to reload " + magazine.ToString() + " into " + weapon.ToString());
 		ActionManagerAI mngr_ai;
 		CastTo(mngr_ai, GetActionManager());
@@ -179,27 +327,27 @@ modded class PlayerBase
 		{
 			mngr_ai.Interrupt();
 		}
-		else if ( GetHumanInventory().GetEntityInHands()!= magazine )
+		else if (GetHumanInventory().GetEntityInHands() != magazine)
 		{
 			Weapon_Base wpn;
 			Magazine mag;
 			Class.CastTo( wpn,  weapon );
 			Class.CastTo( mag,  magazine );
-			if ( GetWeaponManager().CanUnjam(wpn) )
+			if (GetWeaponManager().CanUnjam(wpn))
 			{
 				GetWeaponManager().Unjam();
 			}
-			else if ( GetWeaponManager().CanAttachMagazine( wpn, mag ) )
+			else if (GetWeaponManager().CanAttachMagazine(wpn, mag))
 			{
-				GetWeaponManager().AttachMagazine(mag);//, new FirearmActionAttachMagazineQuick() );
+				GetWeaponManager().AttachMagazine(mag);
 			}
-			else if ( GetWeaponManager().CanSwapMagazine( wpn, mag ) )
+			else if (GetWeaponManager().CanSwapMagazine( wpn, mag))
 			{
-				GetWeaponManager().SwapMagazine( mag );
+				GetWeaponManager().SwapMagazine( mag);
 			}
-			else if ( GetWeaponManager().CanLoadBullet( wpn, mag ) )
+			else if (GetWeaponManager().CanLoadBullet( wpn, mag))
 			{
-				GetWeaponManager().LoadMultiBullet( mag );
+				GetWeaponManager().LoadMultiBullet(mag);
 
 				ActionTarget atrg = new ActionTarget(mag, this, -1, vector.Zero, -1.0);
 				if ( mngr_ai && !mngr_ai.GetRunningAction() && mngr_ai.GetAction(FirearmActionLoadMultiBulletRadial).Can(this, atrg, wpn) )
@@ -227,7 +375,7 @@ modded class PlayerBase
 			if (!GetGame().IsServer()) return;
 
 			Weapon_Base weap;
-			if ( Weapon_Base.CastTo(weap, GetItemInHands()) )
+			if (Weapon_Base.CastTo(weap, GetItemInHands()))
 			{
 				m_LiftWeapon_player = weap.LiftWeaponCheck(this);
 			}
@@ -237,13 +385,12 @@ modded class PlayerBase
 
 		super.CheckLiftWeapon();
 	}
-	
 		
 	override bool AimingModel(float pDt, SDayZPlayerAimingModel pModel)
 	{
 		if (IsAI())
 		{
-			return m_eAI_Handler.AimingModel(pDt, pModel);
+			return false;
 		}
 			
 		return super.AimingModel(pDt, pModel);
@@ -253,7 +400,7 @@ modded class PlayerBase
 	{
 		if (IsAI())
 		{
-			return m_eAI_Handler.HeadingModel(pDt, pModel);
+			return false;
 		}
 		
 		return super.HeadingModel(pDt, pModel);
@@ -261,14 +408,14 @@ modded class PlayerBase
 	
 	override void OnCommandDeathStart()
 	{
-		if (IsAI() && GetGame().IsServer())
-		{
-			m_eAI_Handler.notifyDeath();
-		}
-
 		super.OnCommandDeathStart();
 	}
 	
+
+
+
+
+
 	// Credit: Wardog
 	// Thanks for the amazing help!
 	EntityAI GetHands()

@@ -59,7 +59,7 @@ class eAIGame {
 		PlayerBase pb_AI;
 		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, "SurvivorF_Linda", pb_Human.GetPosition() + debug_offset, 0, "NONE"))) return;
 
-		pb_AI.SetAI().SetLeader(pb_Human, formOffset);
+		pb_AI.SetAI();
 			
 		SoldierLoadout.Apply(pb_AI);
 	}

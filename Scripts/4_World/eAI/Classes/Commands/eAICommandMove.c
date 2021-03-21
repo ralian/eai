@@ -2,8 +2,7 @@
 
 class eAICommandMove extends eAICommandBase
 {
-	private DayZPlayerImplement m_Entity;
-    private eAIPlayerHandler m_Handler;
+	private PlayerBase m_Unit;
 	private eAIAnimationST m_ST;
 
 	private int m_PreviousInteractionLayer;
@@ -28,10 +27,9 @@ class eAICommandMove extends eAICommandBase
 
 	private vector m_Transform[4];
 
-	void eAICommandMove(DayZPlayerImplement ai, eAIPlayerHandler handler, eAIAnimationST st)
+	void eAICommandMove(PlayerBase unit, eAIAnimationST st)
 	{
-		m_Entity = ai;
-        m_Handler = handler;
+		m_Unit = unit;
 		m_ST = st;
 	}
 	
@@ -43,15 +41,15 @@ class eAICommandMove extends eAICommandBase
 	{
 		SetSpeedLimit(-1);
 		
-		m_Entity.GetTransform(m_Transform);
+		m_Unit.GetTransform(m_Transform);
 		
-		m_PreviousInteractionLayer = dBodyGetInteractionLayer(m_Entity);
-		dBodySetInteractionLayer(m_Entity, PhxInteractionLayers.CHARACTER | PhxInteractionLayers.BUILDING | PhxInteractionLayers.DOOR | PhxInteractionLayers.VEHICLE | PhxInteractionLayers.ITEM_LARGE | PhxInteractionLayers.FENCE | PhxInteractionLayers.AI);
+		m_PreviousInteractionLayer = dBodyGetInteractionLayer(m_Unit);
+		dBodySetInteractionLayer(m_Unit, PhxInteractionLayers.CHARACTER | PhxInteractionLayers.BUILDING | PhxInteractionLayers.DOOR | PhxInteractionLayers.VEHICLE | PhxInteractionLayers.ITEM_LARGE | PhxInteractionLayers.FENCE | PhxInteractionLayers.AI);
 	}
 
 	override void OnDeactivate()
 	{
-		dBodySetInteractionLayer(m_Entity, m_PreviousInteractionLayer);
+		dBodySetInteractionLayer(m_Unit, m_PreviousInteractionLayer);
 	}
 
 	void SetSpeedLimit(float speedIdx)
@@ -146,7 +144,7 @@ class eAICommandMove extends eAICommandBase
 
 	override void PrePhysUpdate(float pDt)
 	{
-		if (m_Handler.PathCount() == 0)
+		if (m_Unit.PathCount() == 0)
 		{
 			m_Speed = 0;
 			
@@ -159,20 +157,20 @@ class eAICommandMove extends eAICommandBase
 		m_MaxTurnSpeed = 25.0;
 		m_MaxTurnAcceleration = 10.0;
 		
-		vector expectedPosition = m_Entity.GetPosition() + (m_Direction * GetSpeedMS(m_Speed) * pDt);
+		vector expectedPosition = m_Unit.GetPosition() + (m_Direction * GetSpeedMS(m_Speed) * pDt);
 
 		float wayPointDistance;
-		int wayPointIndex = m_Handler.FindNext(expectedPosition, wayPointDistance);
-		vector wayPoint = m_Handler.PathGet(wayPointIndex);
+		int wayPointIndex = m_Unit.FindNext(expectedPosition, wayPointDistance);
+		vector wayPoint = m_Unit.PathGet(wayPointIndex);
 		wayPointDistance = vector.DistanceSq(Vector(expectedPosition[0], 0, expectedPosition[2]), Vector(wayPoint[0], 0, wayPoint[2]));
 
-		bool isFinal = wayPointIndex == m_Handler.PathCount() - 1;
+		bool isFinal = wayPointIndex == m_Unit.PathCount() - 1;
 		
 		if (!isFinal || (isFinal && wayPointDistance > 0.5))
 		{
-			m_PathAngle = Math.NormalizeAngle(m_Handler.AngleBetweenPoints(expectedPosition, wayPoint));
+			m_PathAngle = Math.NormalizeAngle(m_Unit.AngleBetweenPoints(expectedPosition, wayPoint));
 			
-			float currentYaw = Math.NormalizeAngle(m_Entity.GetOrientation()[0]);
+			float currentYaw = Math.NormalizeAngle(m_Unit.GetOrientation()[0]);
 			if (m_PathAngle > 180.0) m_PathAngle = m_PathAngle - 360.0;
 			if (currentYaw > 180.0) currentYaw = currentYaw - 360.0;
 			
@@ -180,12 +178,12 @@ class eAICommandMove extends eAICommandBase
 			m_TurnSpeed = Math.Clamp(pathAngleDiff, -m_MaxTurnSpeed, m_MaxTurnSpeed);
 		} else
 		{
-			m_PathAngle = m_Entity.GetOrientation()[0];
+			m_PathAngle = m_Unit.GetOrientation()[0];
 			m_TurnSpeed = 0;
 		}
 		
 		Vector(m_PathAngle, 0, 0).RotationMatrixFromAngles(m_Transform);
-		m_Transform[3] = m_Entity.GetPosition();
+		m_Transform[3] = m_Unit.GetPosition();
 		
 		float angleDt = m_TurnSpeed * pDt * 10.0;
 		
@@ -209,7 +207,7 @@ class eAICommandMove extends eAICommandBase
 		vector forwardPos;
 		vector outNormal;
 			
-		bool blockedForward = m_Handler.PathBlocked(m_Transform[3], m_Transform[3] + (7.0 * pDt * m_Transform[2]), forwardPos, outNormal); // check forward
+		bool blockedForward = m_Unit.PathBlocked(m_Transform[3], m_Transform[3] + (7.0 * pDt * m_Transform[2]), forwardPos, outNormal); // check forward
 		float hitFraction = CheckPhysicsInFront();
 		float forwardBlocking = hitFraction;
 		if (blockedForward)
@@ -217,8 +215,8 @@ class eAICommandMove extends eAICommandBase
 			forwardBlocking *= vector.DistanceSq(m_Transform[3], forwardPos) / (49.0 * pDt);
 		}
 		
-		m_Handler.PathBlocked(m_Transform[3], m_Transform[3] + (-5.0 * m_Transform[0]), leftPos, outNormal); // check the left
-		m_Handler.PathBlocked(m_Transform[3], m_Transform[3] + (5.0 * m_Transform[0]), rightPos, outNormal); // check the right
+		m_Unit.PathBlocked(m_Transform[3], m_Transform[3] + (-5.0 * m_Transform[0]), leftPos, outNormal); // check the left
+		m_Unit.PathBlocked(m_Transform[3], m_Transform[3] + (5.0 * m_Transform[0]), rightPos, outNormal); // check the right
 
 		float leftDist = vector.DistanceSq(m_Transform[3], leftPos) / 25;
 		float rightDist = vector.DistanceSq(m_Transform[3], rightPos) / 25;
@@ -248,9 +246,9 @@ class eAICommandMove extends eAICommandBase
 		m_Direction = Vector(movementDirectionCorrected, 0, 0).AnglesToVector();
 
 #ifndef SERVER
-		m_Handler.AddShape(Shape.CreateSphere(0xFF0000FF, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, m_Entity.ModelToWorld(m_Direction), 0.05));
-		m_Handler.AddShape(Shape.CreateSphere(0xFFFF0000, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, m_Entity.GetPosition() + m_Transform[2], 0.05));
-		m_Handler.AddShape(Shape.CreateSphere(0xFF00FF00, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, wayPoint, 0.05));
+		m_Unit.AddShape(Shape.CreateSphere(0xFF0000FF, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, m_Unit.ModelToWorld(m_Direction), 0.05));
+		m_Unit.AddShape(Shape.CreateSphere(0xFFFF0000, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, m_Unit.GetPosition() + m_Transform[2], 0.05));
+		m_Unit.AddShape(Shape.CreateSphere(0xFF00FF00, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, wayPoint, 0.05));
 #endif
 		
 		float animationIndexAcceleration = Math.Clamp((Math.Min(m_TargetSpeed, m_SpeedLimit) - m_Speed), -1000.0, 1.0) * pDt;
@@ -273,7 +271,7 @@ class eAICommandMove extends eAICommandBase
 		vector hitPosition, hitNormal;
 		float hitFraction;
 		PhxInteractionLayers hit_mask = PhxInteractionLayers.CHARACTER | PhxInteractionLayers.DOOR | PhxInteractionLayers.VEHICLE | PhxInteractionLayers.ITEM_LARGE | PhxInteractionLayers.FENCE | PhxInteractionLayers.AI;
-		bool hit = DayZPhysics.SphereCastBullet(m_Transform[3] + CHECK_MIN_HEIGHT, m_Transform[3] + (1.0 * m_Transform[2]) + CHECK_MIN_HEIGHT, 0.5, hit_mask, m_Entity, hitObject, hitPosition, hitNormal, hitFraction);
+		bool hit = DayZPhysics.SphereCastBullet(m_Transform[3] + CHECK_MIN_HEIGHT, m_Transform[3] + (1.0 * m_Transform[2]) + CHECK_MIN_HEIGHT, 0.5, hit_mask, m_Unit, hitObject, hitPosition, hitNormal, hitFraction);
 		hitFraction = 1.0 - hitFraction;
 			
 #ifndef SERVER
@@ -283,7 +281,7 @@ class eAICommandMove extends eAICommandBase
 		points2[0] = m_Transform[3] + CHECK_MIN_HEIGHT;
 		points2[1] = m_Transform[3] + (1.0 * m_Transform[2]) + CHECK_MIN_HEIGHT;
 		if (hit) points2[1] = hitPosition;
-		m_Handler.AddShape(Shape.CreateLines(debugColour, ShapeFlags.NOZBUFFER, points2, 2));
+		m_Unit.AddShape(Shape.CreateLines(debugColour, ShapeFlags.NOZBUFFER, points2, 2));
 #endif
 
 		return hitFraction;

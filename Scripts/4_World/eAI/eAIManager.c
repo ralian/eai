@@ -7,6 +7,7 @@ enum eAIProcessingState
 
 class eAIManager extends eAIManagerBase
 {
+	/*
 	// List of all eAI entities
 	private autoptr array<eAIProcessingState> m_AIStates = {};
 	private autoptr array<ref eAIPlayerHandler> m_AI = {};
@@ -104,4 +105,5 @@ class eAIManager extends eAIManagerBase
 			m_ProcessingIndex = 0; 
 		}
 	}
+	*/
 };
