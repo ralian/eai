@@ -21,14 +21,19 @@ class eAIStateType
         m_Types.Insert(type.m_ClassName, type);
     }
 
-    ref eAIState Spawn(ref eAIHFSM fsm)
+    static eAIStateType Get(string type)
     {
-        ref eAIState retValue = null;
+        return m_Types[type];
+    }
+
+    eAIState Spawn(eAIHFSM fsm)
+    {
+        eAIState retValue = null;
         m_Module.CallFunction(null, "Create_" + m_ClassName, retValue, fsm);
         return retValue;
     }
 
-    static ref eAIState Spawn(string type, ref eAIHFSM fsm)
+    static eAIState Spawn(string type, eAIHFSM fsm)
     {
         return m_Types[type].Spawn(fsm);
     }
@@ -53,17 +58,17 @@ class eAIState
         m_FSM = fsm;
     }
 
-    ref eAIHFSM GetFSM()
+    eAIHFSM GetFSM()
     {
         return m_FSM;
     }
 
-    static ref eAIState LoadXML(ref eAIHFSM fsm, ref CF_XML_Tag xml_root_tag)
+    static eAIStateType LoadXML(string fsm, CF_XML_Tag xml_root_tag, ScriptModule module)
     {
         string name = xml_root_tag.GetAttribute("name").ValueAsString();
-        string class_name = "eAI_" + fsm.GetName() + "_" + name + "_State";
+        string class_name = "eAI_" + fsm + "_" + name + "_State";
 
-        if (eAIStateType.Contains(class_name)) return eAIStateType.Spawn(class_name, fsm);
+        if (eAIStateType.Contains(class_name)) return eAIStateType.Get(class_name);
 
         eAIStateType new_type = new eAIStateType();
 		new_type.m_ClassName = class_name;
@@ -89,8 +94,8 @@ class eAIState
 		}
 
         FPrintln(file, "void " + class_name + "(eAIHFSM fsm) {");
-        FPrintln(file, "m_Name = \"" + name + "\"");
-        FPrintln(file, "m_ClassName = \"" + class_name + "\"");
+        FPrintln(file, "m_Name = \"" + name + "\";");
+        FPrintln(file, "m_ClassName = \"" + class_name + "\";");
         FPrintln(file, "}");
 
         auto event_entry = xml_root_tag.GetTag("event_entry");
@@ -119,21 +124,21 @@ class eAIState
 
         FPrintln(file, "}");
 
-        FPrintln(file, "ref eAIState Create_" + class_name + "(eAIHFSM fsm) {");
+        FPrintln(file, "eAIState Create_" + class_name + "(eAIHFSM fsm) {");
         FPrintln(file, "return new " + class_name + "(fsm);");
         FPrintln(file, "}");
 
         CloseFile(file);
         
 		eAIStateType.Add(new_type);
-        new_type.m_Module = ScriptModule.LoadScript(GetGame().GetMission().MissionScript, script_path, false);
+        new_type.m_Module = ScriptModule.LoadScript(module, script_path, false);
         if (new_type.m_Module == null)
         {
             Error("There was an error loading in the state.");
             return null;
         }
 		
-		return new_type.Spawn(fsm);
+		return new_type;
     }
 
     /* IMPLEMENTED IN XML */

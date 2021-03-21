@@ -27,6 +27,8 @@ modded class PlayerBase
 	private eAICommandBase m_eAI_Command;
 
     // Look/Aiming
+	private vector m_TargetLocation;
+
 	private vector m_eAI_LookDirection_WorldSpace;
 	private vector m_eAI_AimDirection_WorldSpace;
 
@@ -72,10 +74,20 @@ modded class PlayerBase
 		m_PathFilter.SetCost( PGAreaType.FENCE_WALL, 0.0 );
 		m_PathFilter.SetCost( PGAreaType.WATER, 1.0 );
 
-		m_FSM = new eAIHFSM(null);
-		m_FSM.LoadXML("eAI/scripts/Targetting_StateMachine.xml");
+		eAIHFSMType type = eAIHFSM.LoadXML("eAI/scripts/Targetting_StateMachine.xml");
+		if (type) m_FSM = type.Spawn(this, null);
 
 		return m_eAI_Group;
+	}
+
+	ref eAIGroup GetGroup()
+	{
+		return m_eAI_Group;
+	}
+
+	void SetTargetLocation(vector location)
+	{
+		m_TargetLocation = location;
 	}
 	
 #ifndef SERVER	
@@ -214,6 +226,14 @@ modded class PlayerBase
 			m_DebugShapes[i].Destroy();
 		m_DebugShapes.Clear();
 #endif
+
+		m_Path.Clear();
+		if (m_PathFilter)
+		{
+			AIWorld world = GetGame().GetWorld().GetAIWorld();
+			world.FindPath(GetPosition(), m_TargetLocation, m_PathFilter, m_Path);
+		}
+	
 
 		if (!GetGame().IsServer()) return;
 

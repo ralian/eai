@@ -54,7 +54,7 @@
         <transition>
             <guard>
                 auto leader = unit.GetGroup().GetLeader();
-                if (!leader) return FAIL();
+                if (!leader) return FAIL;
 
                 vector pos = leader.GetPosition();
                 if (vector.Distance(pos, unit.GetPosition()) > 50.0) return FAIL;
@@ -67,7 +67,7 @@
         <transition>
             <guard>
                 auto leader = unit.GetGroup().GetLeader();
-                if (!leader) return FAIL();
+                if (!leader) return FAIL;
 
                 vector pos = leader.GetPosition();
                 if (vector.Distance(pos, unit.GetPosition()) > 50.0) return FAIL;
