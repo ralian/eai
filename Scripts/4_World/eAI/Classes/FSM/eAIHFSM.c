@@ -118,6 +118,7 @@ class eAIHFSM
 
         FPrintln(file, "void " + class_name + "(eAIBase unit, eAIState parentState) {");
         FPrintln(file, "m_Name = \"" + name + "\";");
+        FPrintln(file, "Setup();");
         FPrintln(file, "}");
 
         FPrintln(file, "void Setup() {");
