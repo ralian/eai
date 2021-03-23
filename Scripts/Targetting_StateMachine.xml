@@ -1,8 +1,8 @@
 <hfsm name="Targetting">
-    <states>
+    <states default="Idle">
         <state name="Idle">
             <variables>
-                <variable name="time" type="int"/>
+                <variable name="time" type="float"/>
             </variables>
             <editor_data>
                 <position x="0" y="0"/>
@@ -13,16 +13,18 @@
             <event_exit>
             </event_exit>
             <event_update>
+                unit.SetTargetLocation(unit.GetPosition());
+                
                 time += DeltaTime;
-                if (time < 1.0) return REEVALUTATE;
+                if (time < 1.0) return CONTINUE;
 
                 time = 0;
-                return CONTINUE;
+                return REEVALUTATE;
             </event_update>
         </state>
         <state name="GoToLeader">
             <variables>
-                <variable name="time" type="int"/>
+                <variable name="time" type="float"/>
                 <variable name="leader" type="PlayerBase"/>
             </variables>
             <editor_data>
@@ -53,7 +55,10 @@
     <transitions>
         <transition>
             <guard>
-                auto leader = unit.GetGroup().GetLeader();
+                auto group = unit.GetGroup();
+                if (!group) return FAIL;
+
+                auto leader = group.GetLeader();
                 if (!leader) return FAIL;
 
                 vector pos = leader.GetPosition();
@@ -61,19 +66,24 @@
 
                 return SUCCESS;
             </guard>
+            <event name=""/>
             <from_state name="Idle"/>
             <to_state name="GoToLeader"/>
         </transition>
         <transition>
             <guard>
-                auto leader = unit.GetGroup().GetLeader();
-                if (!leader) return FAIL;
+                auto group = unit.GetGroup();
+                if (!group) return FAIL;
+
+                auto leader = group.GetLeader();
+                if (!leader) return SUCCESS;
 
                 vector pos = leader.GetPosition();
-                if (vector.Distance(pos, unit.GetPosition()) > 50.0) return FAIL;
+                if (vector.Distance(pos, unit.GetPosition()) > 50.0) return SUCCESS;
 
-                return SUCCESS;
+                return FAIL;
             </guard>
+            <event name=""/>
             <from_state name="GoToLeader"/>
             <to_state name="Idle"/>
         </transition>

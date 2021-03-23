@@ -54,7 +54,7 @@ modded class PlayerBase
 		return m_eAI_Is;
 	}
 
-	ref eAIGroup SetAI(ref eAIGroup group = null)
+	ref eAIGroup SetAI(eAIGroup group = null)
 	{
 		m_eAI_Is = true;
         m_eAI_Group = group;
@@ -73,14 +73,23 @@ modded class PlayerBase
 		m_PathFilter.SetCost( PGAreaType.JUMP, 0.0 );
 		m_PathFilter.SetCost( PGAreaType.FENCE_WALL, 0.0 );
 		m_PathFilter.SetCost( PGAreaType.WATER, 1.0 );
+		
+		string stateMachine = "eAI/scripts/Targetting_StateMachine.xml";
 
-		eAIHFSMType type = eAIHFSM.LoadXML("eAI/scripts/Targetting_StateMachine.xml");
-		if (type) m_FSM = type.Spawn(this, null);
+		Print(stateMachine);
+		eAIHFSMType type = eAIHFSM.LoadXML(stateMachine);
+		Print(type);
+		if (type)
+		{
+			m_FSM = type.Spawn(this, null);
+			Print(m_FSM);
+			m_FSM.StartDefault();
+		}
 
 		return m_eAI_Group;
 	}
 
-	ref eAIGroup GetGroup()
+	eAIGroup GetGroup()
 	{
 		return m_eAI_Group;
 	}
@@ -239,6 +248,7 @@ modded class PlayerBase
 
 		if (m_WeaponManager) m_WeaponManager.Update(pDt);
 		if (m_EmoteManager) m_EmoteManager.Update(pDt);
+		if (m_FSM) m_FSM.Update(pDt);
 		
 		GetPlayerSoundManagerServer().Update();
 		GetHumanInventory().Update(pDt);

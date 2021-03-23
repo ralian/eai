@@ -1,6 +1,6 @@
 class eAIStateType
 {
-    private static ref map<string, eAIStateType> m_Types = new map<string, eAIStateType>();
+    private static ref map<string, ref eAIStateType> m_Types = new map<string, ref eAIStateType>();
 
 	string m_ClassName;
     ScriptModule m_Module;
@@ -53,14 +53,9 @@ class eAIState
     /* STATE VARIABLES */
     protected eAIBase unit;
 
-    void eAIState(eAIHFSM fsm)
+    void eAIState(eAIBase _unit)
     {
-        m_FSM = fsm;
-    }
-
-    eAIHFSM GetFSM()
-    {
-        return m_FSM;
+        unit = _unit;
     }
 
     static eAIStateType LoadXML(string fsm, CF_XML_Tag xml_root_tag, ScriptModule module)
@@ -93,7 +88,7 @@ class eAIState
 	        }
 		}
 
-        FPrintln(file, "void " + class_name + "(eAIHFSM fsm) {");
+        FPrintln(file, "void " + class_name + "(eAIBase _unit) {");
         FPrintln(file, "m_Name = \"" + name + "\";");
         FPrintln(file, "m_ClassName = \"" + class_name + "\";");
         FPrintln(file, "}");
@@ -124,19 +119,20 @@ class eAIState
 
         FPrintln(file, "}");
 
-        FPrintln(file, "eAIState Create_" + class_name + "(eAIHFSM fsm) {");
-        FPrintln(file, "return new " + class_name + "(fsm);");
+        FPrintln(file, "eAIState Create_" + class_name + "(eAIBase _unit) {");
+        FPrintln(file, "return new " + class_name + "(_unit);");
         FPrintln(file, "}");
 
         CloseFile(file);
         
-		eAIStateType.Add(new_type);
         new_type.m_Module = ScriptModule.LoadScript(module, script_path, false);
         if (new_type.m_Module == null)
         {
             Error("There was an error loading in the state.");
             return null;
         }
+		
+		eAIStateType.Add(new_type);
 		
 		return new_type;
     }
@@ -154,6 +150,6 @@ class eAIState
 
     int OnUpdate(float DeltaTime)
     {
-
+        return REEVALUTATE;
     }
 };

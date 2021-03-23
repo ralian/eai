@@ -1,6 +1,6 @@
 class eAITransitionType
 {
-    private static ref map<string, eAITransitionType> m_Types = new map<string, eAITransitionType>();
+    private static ref map<string, ref eAITransitionType> m_Types = new map<string, ref eAITransitionType>();
 
 	string m_ClassName;
     ScriptModule m_Module;
@@ -44,10 +44,13 @@ class eAITransition
 
     protected string m_ClassName;
 
-    protected ref eAIHFSM m_FSM;
-
     /* STATE VARIABLES */
     protected eAIBase unit;
+
+    void eAITransition(eAIBase _unit, eAIHFSM _fsm)
+    {
+        unit = _unit;
+    }
 
     eAIState GetSource()
     {
@@ -59,9 +62,14 @@ class eAITransition
         return null;
     }
 
-    bool Guard()
+    string GetEvent()
     {
-        return false;
+        return "";
+    }
+
+    int Guard()
+    {
+        return SUCCESS;
     }
 
     static eAITransitionType LoadXML(string fsm, CF_XML_Tag xml_root_tag, ScriptModule module)
@@ -69,12 +77,20 @@ class eAITransition
         string from_state_name;
         auto from_state = xml_root_tag.GetTag("from_state");
         if (from_state.Count() > 0) from_state_name = from_state[0].GetAttribute("name").ValueAsString();
-        string from_state_class = "eAI_" + fsm + "_" + from_state_name + "_State";
+        string from_state_class = "";
+        if (from_state_name != "") from_state_class = "eAI_" + fsm + "_" + from_state_name + "_State";
 
         string to_state_name;
         auto to_state = xml_root_tag.GetTag("to_state");
         if (to_state.Count() > 0) to_state_name = to_state[0].GetAttribute("name").ValueAsString();
-        string to_state_class = "eAI_" + fsm + "_" + to_state_name + "_State";
+        string to_state_class = "";
+        if (to_state_name != "") to_state_class = "eAI_" + fsm + "_" + to_state_name + "_State";
+
+        string event_name;
+        auto evt = xml_root_tag.GetTag("event");
+        if (evt.Count() > 0) event_name = evt[0].GetAttribute("name").ValueAsString();
+        string event_class = "";
+        if (event_name != "") event_class = "eAI_" + event_name + "_Event";
 
         string class_name = "eAI_" + fsm + "_" + from_state_name + "_" + to_state_name + "_Transition";
 
@@ -93,10 +109,10 @@ class eAITransition
         FPrintln(file, "private " + from_state_class + " m_Source;");
         FPrintln(file, "private " + to_state_class + " m_Destination;");
 
-        FPrintln(file, "void " + class_name + "(eAIHFSM fsm) {");
+        FPrintln(file, "void " + class_name + "(eAIBase _unit, eAIHFSM _fsm) {");
         FPrintln(file, "m_ClassName = \"" + class_name + "\";");
-        FPrintln(file, "m_Source = fsm.GetState(\"" + from_state_class + "\");");
-        FPrintln(file, "m_Destination = fsm.GetState(\"" + to_state_class + "\");");
+        FPrintln(file, "m_Source = _fsm.GetState(\"" + from_state_class + "\");");
+        FPrintln(file, "m_Destination = _fsm.GetState(\"" + to_state_class + "\");");
         FPrintln(file, "}");
 
         auto guard = xml_root_tag.GetTag("guard");
@@ -107,24 +123,26 @@ class eAITransition
             FPrintln(file, "}");
         }
         
-        FPrintln(file, "eAIState GetSource() { return m_Source; }");
-        FPrintln(file, "eAIState GetDestination() { return m_Destination; }");
+        FPrintln(file, "override eAIState GetSource() { return m_Source; }");
+        FPrintln(file, "override eAIState GetDestination() { return m_Destination; }");
+        FPrintln(file, "override string GetEvent() { return \"" + event_class + "\"; }");
 
         FPrintln(file, "}");
 
-        FPrintln(file, "eAITransition Create_" + class_name + "(eAIHFSM fsm) {");
-        FPrintln(file, "return new " + class_name + "(fsm);");
+        FPrintln(file, "eAITransition Create_" + class_name + "(eAIBase _unit, eAIHFSM _fsm) {");
+        FPrintln(file, "return new " + class_name + "(_unit, _fsm);");
         FPrintln(file, "}");
 
         CloseFile(file);
         
-		eAITransitionType.Add(new_type);
         new_type.m_Module = ScriptModule.LoadScript(module, script_path, false);
         if (new_type.m_Module == null)
         {
             Error("There was an error loading in the transition.");
             return null;
         }
+		
+		eAITransitionType.Add(new_type);
 		
 		return new_type;
     }
