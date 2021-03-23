@@ -1,19 +1,17 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <hfsm name="Targetting">
-    <states default="Idle">
-        <state name="Idle">
-            <variables>
-                <variable name="time" type="float"/>
-            </variables>
-            <editor_data>
-                <position x="100" y="100"/>
-                <size width="100" height="100"/>
-            </editor_data>
-            <event_entry>
-            </event_entry>
-            <event_exit>
-            </event_exit>
-            <event_update>
+	<states default="Idle">
+		<state name="Idle">
+			<variables>
+				<variable name="time" type="float" />
+			</variables>
+			<editor_data>
+				<position x="100" y="100" />
+				<size width="150" height="40" />
+			</editor_data>
+			<event_entry></event_entry>
+			<event_exit></event_exit>
+			<event_update>
                 unit.SetTargetLocation(unit.GetPosition());
                 
                 time += DeltaTime;
@@ -22,22 +20,21 @@
                 time = 0;
                 return REEVALUTATE;
             </event_update>
-        </state>
-        <state name="GoToLeader">
-            <variables>
-                <variable name="time" type="float"/>
-                <variable name="leader" type="PlayerBase"/>
-            </variables>
-            <editor_data>
-                <position x="300" y="100"/>
-                <size width="100" height="100"/>
-            </editor_data>
-            <event_entry>
+		</state>
+		<state name="GoToLeader">
+			<variables>
+				<variable name="time" type="float" />
+				<variable name="leader" type="PlayerBase" />
+			</variables>
+			<editor_data>
+				<position x="300" y="100" />
+				<size width="150" height="40" />
+			</editor_data>
+			<event_entry>
                 leader = unit.GetGroup().GetLeader();
             </event_entry>
-            <event_exit>
-            </event_exit>
-            <event_update>
+			<event_exit></event_exit>
+			<event_update>
                 time += DeltaTime;
                 if (time &gt; 0.5)
                 {
@@ -51,15 +48,15 @@
 
                 return CONTINUE;
             </event_update>
-        </state>
-    </states>
-    <transitions>
-        <transition>
-            <editor_data>
-                <position_source x="1.0" y="0.3"/>
-                <position_destination x="0.0" y="0.3"/>
-            </editor_data>
-            <guard>
+		</state>
+	</states>
+	<transitions>
+		<transition>
+			<editor_data>
+				<position_source x="1" y="0.3" />
+				<position_destination x="0" y="0.3" />
+			</editor_data>
+			<guard>
                 auto group = unit.GetGroup();
                 if (!group) return FAIL;
 
@@ -71,16 +68,16 @@
 
                 return SUCCESS;
             </guard>
-            <event name=""/>
-            <from_state name="Idle"/>
-            <to_state name="GoToLeader"/>
-        </transition>
-        <transition>
-            <editor_data>
-                <position_source x="0.0" y="0.7"/>
-                <position_destination x="1.0" y="0.7"/>
-            </editor_data>
-            <guard>
+			<event name="" />
+			<from_state name="Idle" />
+			<to_state name="GoToLeader" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
                 auto group = unit.GetGroup();
                 if (!group) return FAIL;
 
@@ -92,9 +89,9 @@
 
                 return FAIL;
             </guard>
-            <event name=""/>
-            <from_state name="GoToLeader"/>
-            <to_state name="Idle"/>
-        </transition>
-    </transitions>
+			<event name="" />
+			<from_state name="GoToLeader" />
+			<to_state name="Idle" />
+		</transition>
+	</transitions>
 </hfsm>
