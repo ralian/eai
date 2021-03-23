@@ -203,8 +203,6 @@ modded class MissionGameplay
     {
         m_eaiGame = new eAIGame();
 
-		GetDayZGame().eAICreateManager();
-
         Print( "eAI - Loaded Client Mission" );
     }
 

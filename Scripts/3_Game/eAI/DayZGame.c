@@ -8,7 +8,7 @@ modded class DayZGame
         m_eAI_Manager = eAIManagerBase.Cast("eAIManager".ToType().Spawn());
     }
 
-    ref eAIManagerBase eAIManagerGet()
+    eAIManagerBase eAIManagerGet()
     {
         return m_eAI_Manager;
     }
@@ -17,6 +17,7 @@ modded class DayZGame
     {
         super.OnUpdate(doSim, timeslice);
 
-        m_eAI_Manager.OnUpdate(doSim, timeslice);
+		if (m_eAI_Manager) 
+			m_eAI_Manager.OnUpdate(doSim, timeslice);
     }
 };
