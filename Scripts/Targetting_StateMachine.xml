@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <hfsm name="Targetting">
     <states default="Idle">
         <state name="Idle">
@@ -6,7 +7,7 @@
             </variables>
             <editor_data>
                 <position x="0" y="0"/>
-                <size width="0" height="0"/>
+                <size width="100" height="100"/>
             </editor_data>
             <event_entry>
             </event_entry>
@@ -16,7 +17,7 @@
                 unit.SetTargetLocation(unit.GetPosition());
                 
                 time += DeltaTime;
-                if (time < 1.0) return CONTINUE;
+                if (time &lt; 1.0) return CONTINUE;
 
                 time = 0;
                 return REEVALUTATE;
@@ -28,8 +29,8 @@
                 <variable name="leader" type="PlayerBase"/>
             </variables>
             <editor_data>
-                <position x="0" y="0"/>
-                <size width="0" height="0"/>
+                <position x="200" y="0"/>
+                <size width="100" height="100"/>
             </editor_data>
             <event_entry>
                 leader = unit.GetGroup().GetLeader();
@@ -38,7 +39,7 @@
             </event_exit>
             <event_update>
                 time += DeltaTime;
-                if (time > 0.5)
+                if (time &gt; 0.5)
                 {
                     if (!leader) return EXIT;
 
@@ -62,7 +63,7 @@
                 if (!leader) return FAIL;
 
                 vector pos = leader.GetPosition();
-                if (vector.Distance(pos, unit.GetPosition()) > 50.0) return FAIL;
+                if (vector.Distance(pos, unit.GetPosition()) &gt; 50.0) return FAIL;
 
                 return SUCCESS;
             </guard>
@@ -79,7 +80,7 @@
                 if (!leader) return SUCCESS;
 
                 vector pos = leader.GetPosition();
-                if (vector.Distance(pos, unit.GetPosition()) > 50.0) return SUCCESS;
+                if (vector.Distance(pos, unit.GetPosition()) &gt; 50.0) return SUCCESS;
 
                 return FAIL;
             </guard>
@@ -87,5 +88,5 @@
             <from_state name="GoToLeader"/>
             <to_state name="Idle"/>
         </transition>
-    </transition>
+    </transitions>
 </hfsm>
