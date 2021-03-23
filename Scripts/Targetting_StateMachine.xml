@@ -55,6 +55,10 @@
     </states>
     <transitions>
         <transition>
+            <editor_data>
+                <position_source x="50" y="0"/>
+                <position_destination x="-50" y="0"/>
+            </editor_data>
             <guard>
                 auto group = unit.GetGroup();
                 if (!group) return FAIL;
@@ -72,6 +76,10 @@
             <to_state name="GoToLeader"/>
         </transition>
         <transition>
+            <editor_data>
+                <position_source x="-50" y="0"/>
+                <position_destination x="50" y="0"/>
+            </editor_data>
             <guard>
                 auto group = unit.GetGroup();
                 if (!group) return FAIL;
