@@ -33,7 +33,7 @@
 			<event_exit></event_exit>
 			<event_update>
                 time += DeltaTime;
-                if (time &gt; 0.5)
+                if (time &gt; 0.25)
                 {
                     unit.SetTargetLocation(unit.GetGroup().GetFormationMemberDest(unit));
                     time = 0;

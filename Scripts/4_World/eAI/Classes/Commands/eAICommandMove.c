@@ -24,6 +24,7 @@ class eAICommandMove extends eAICommandBase
 	private float m_TargetSpeed;
 	private float m_SpeedLimit;
 	private float m_SpeedMapping[8];
+	private int m_ChangeCounter = 0;
 
 	private vector m_Transform[4];
 
@@ -190,15 +191,16 @@ class eAICommandMove extends eAICommandBase
 		m_TargetSpeed = 0.0;
 		
 		if (Math.AbsFloat(angleDt) < 0.125)
-		{
-			m_TargetSpeed = 3.0;
-			angleDt = angleDt / 10.0;
-		} else
-		{
-			m_TargetSpeed = 0;
-		}
+			angleDt = 0;
 		
-		if (isFinal && wayPointDistance < 0.5)
+		if (wayPointDistance < 20.0)
+			m_TargetSpeed = 2.0;
+		else if (wayPointDistance < 8.0)
+			m_TargetSpeed = 1.0;
+		else
+			m_TargetSpeed = 3.0;
+		
+		if (isFinal && wayPointDistance < 1.0)
 			m_TargetSpeed = 0.0;
 
 		
@@ -250,9 +252,20 @@ class eAICommandMove extends eAICommandBase
 		m_Unit.AddShape(Shape.CreateSphere(0xFFFF0000, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, m_Unit.GetPosition() + m_Transform[2], 0.05));
 		m_Unit.AddShape(Shape.CreateSphere(0xFF00FF00, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, wayPoint, 0.05));
 #endif
+		//float dS = 2*(Math.Min(m_TargetSpeed, m_SpeedLimit) - m_Speed);
+		//float animationIndexAcceleration = Math.Clamp(dS, -1000.0, 1.0) * pDt;
+		//m_Speed= Math.Clamp(m_Speed + animationIndexAcceleration, 0.0, 3.0);
 		
-		float animationIndexAcceleration = Math.Clamp((Math.Min(m_TargetSpeed, m_SpeedLimit) - m_Speed), -1000.0, 1.0) * pDt;
-		m_Speed = Math.Clamp(m_Speed + animationIndexAcceleration, 0.0, 3.0);
+		// This is an integer smoother to prevent m_Speed from rapidly changing
+		if (Math.AbsFloat(m_TargetSpeed - m_Speed) > 0.20) {
+			if (++m_ChangeCounter > 7) {
+				if (m_TargetSpeed > m_Speed)
+					m_Speed++;
+				else m_Speed--;
+				//m_Speed = m_TargetSpeed;
+				m_ChangeCounter = 0;
+			}
+		} else m_ChangeCounter = 0;
 		
 		PrePhys_SetAngles(Vector(angleDt, 0, 0));
 		PrePhys_SetTranslation(m_Direction * GetSpeedMS(m_Speed) * pDt);
