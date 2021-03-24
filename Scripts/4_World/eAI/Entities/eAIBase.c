@@ -58,7 +58,14 @@ modded class PlayerBase
 	{
 		m_eAI_Is = true;
         m_eAI_Group = group;
-        if (!m_eAI_Group) m_eAI_Group = new eAIGroup();
+		
+        if (m_eAI_Group) {
+			m_eAI_Group.AddMember(this);
+		} else {
+			// We will only be using this case with AI which don't already have a group leader.
+			m_eAI_Group = new eAIGroup();
+			m_eAI_Group.SetLeader(this);
+		}
 
 		m_ActionManager = new ActionManagerAI(this);
 		

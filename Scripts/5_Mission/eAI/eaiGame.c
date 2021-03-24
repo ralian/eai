@@ -50,16 +50,20 @@ class eAIGame {
 		//GetRPCManager().AddRPC("eAI", "ServerWeaponAimCheck", this, SingeplayerExecutionType.Server);
     }
 	
+	// TEMPORARY FIX THAT WILL ONLY WORK WITH ONE PERSON ONLINE
+	autoptr eAIGroup m_group = new eAIGroup();
+	
 	//! @param owner Who is the manager of this AI
 	//! @param formOffset Where should this AI follow relative to the formation?
-	void SpawnAI_Helper(DayZPlayer owner, vector formOffset) {
+	void SpawnAI_Helper(DayZPlayer owner) {
 		PlayerBase pb_Human;
 		if (!Class.CastTo(pb_Human, owner)) return;
 
 		eAIBase pb_AI;
 		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, "SurvivorF_Linda", pb_Human.GetPosition() + debug_offset, 0, "NONE"))) return;
 
-		pb_AI.SetAI().SetLeader(pb_Human);
+		m_group.SetLeader(pb_Human);
+		pb_AI.SetAI(m_group);
 			
 		SoldierLoadout.Apply(pb_AI);
 	}
@@ -74,7 +78,7 @@ class eAIGame {
 		if(type == CallType.Server )
 		{
             Print("eAI spawn entity RPC called.");
-			SpawnAI_Helper(data.param1, Vector(Math.RandomFloat(0.0, 360.0), 0, 0).AnglesToVector() * Math.RandomFloat(3.0, 12.0));
+			SpawnAI_Helper(data.param1);
 			
 			//SpawnAI_Helper(data.param1, Vector(-3, 0, -3));
 			//SpawnAI_Helper(data.param1, Vector(3, 0, -3));
