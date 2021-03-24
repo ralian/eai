@@ -43,6 +43,7 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "DebugFire", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "DebugParticle", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "SpawnZombie", this, SingeplayerExecutionType.Server);
+		GetRPCManager().AddRPC("eAI", "ClearAllAI", this, SingeplayerExecutionType.Server);
 		//GetRPCManager().AddRPC("eAI", "DebugWeaponLocation", this, SingeplayerExecutionType.Server);
 		//GetRPCManager().AddRPC("eAI", "SpawnBullet", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", this, SingeplayerExecutionType.Server);
@@ -50,8 +51,19 @@ class eAIGame {
 		//GetRPCManager().AddRPC("eAI", "ServerWeaponAimCheck", this, SingeplayerExecutionType.Server);
     }
 	
-	// TEMPORARY FIX THAT WILL ONLY WORK WITH ONE PERSON ONLINE
-	autoptr eAIGroup m_group = new eAIGroup();
+	// Todo we may want to make a "group manager" class
+	autoptr array<autoptr eAIGroup> m_groups = {};
+	
+	// return the group owned by leader, otherwise create a new one.
+	eAIGroup GetGroupByLeader(PlayerBase leader) {
+		for (int i = 0; i < m_groups.Count(); i++)
+			if (m_groups[i].GetLeader() == leader)
+				return m_groups[i];
+		
+		eAIGroup newGroup = m_groups.Get(m_groups.Insert(new eAIGroup()));
+		newGroup.SetLeader(leader);
+		return newGroup;
+	}
 	
 	//! @param owner Who is the manager of this AI
 	//! @param formOffset Where should this AI follow relative to the formation?
@@ -61,9 +73,8 @@ class eAIGame {
 
 		eAIBase pb_AI;
 		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, "SurvivorF_Linda", pb_Human.GetPosition() + debug_offset, 0, "NONE"))) return;
-
-		m_group.SetLeader(pb_Human);
-		pb_AI.SetAI(m_group);
+		
+		pb_AI.SetAI(GetGroupByLeader(pb_Human));
 			
 		SoldierLoadout.Apply(pb_AI);
 	}
@@ -77,13 +88,8 @@ class eAIGame {
 		
 		if(type == CallType.Server )
 		{
-            Print("eAI spawn entity RPC called.");
+            Print("eAI: spawn entity RPC called.");
 			SpawnAI_Helper(data.param1);
-			
-			//SpawnAI_Helper(data.param1, Vector(-3, 0, -3));
-			//SpawnAI_Helper(data.param1, Vector(3, 0, -3));
-			//SpawnAI_Helper(data.param1, Vector(-3, 0, 3));
-			//SpawnAI_Helper(data.param1, Vector(3, 0, 3));
 		}
 	}
 	
@@ -93,7 +99,7 @@ class eAIGame {
 		Param1<PlayerBase> data;
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server) {
-            Print("eAI SpawnZombie RPC called.");
+            Print("eAI: SpawnZombie RPC called.");
 			GetGame().CreateObject("ZmbF_JournalistNormal_Blue", data.param1.GetPosition() + debug_offset_2, false, true, true);
         }
 	}
@@ -103,11 +109,29 @@ class eAIGame {
 		Param1<vector> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
-            Print("Moving all units to position...");
+            Print("eAI: Moving all units to position...");
 			array<Man> players = new array<Man>();
 			GetGame().GetPlayers(players);
 			foreach (Man p : players) {
 				p.SetPosition(data.param1);
+			}
+		}
+	}
+	
+	// Server Side: Delete AI.
+	void ClearAllAI(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+		Param1<PlayerBase> data;
+        if (!ctx.Read(data)) return;
+		if(type == CallType.Server ) {
+            Print("eAI: ClearAllAI called.");
+			foreach (eAIGroup g : m_groups) {
+				for (int i = g.Count() - 1; i > -1; i--) {
+					PlayerBase p = g.GetMember(i);
+					if (p.IsAI()) {
+						g.RemoveMember(i);
+						GetGame().ObjectDelete(p);
+					}
+				}	
 			}
 		}
 	}
@@ -177,8 +201,12 @@ class eAIGame {
 				GetRPCManager().SendRPC("eAI", "MoveAllToPos", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
 				break;
 			}
+			case KeyCode.KC_L: {
+				GetRPCManager().SendRPC("eAI", "ClearAllAI", new Param1<PlayerBase>(GetGame().GetPlayer()));
+				break;
+			}
 			case KeyCode.KC_B: {
-				GetRPCManager().SendRPC("eAI", "SpawnZombie", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
+				GetRPCManager().SendRPC("eAI", "SpawnZombie", new Param1<PlayerBase>(GetGame().GetPlayer()));
 				break;
 			}
         }

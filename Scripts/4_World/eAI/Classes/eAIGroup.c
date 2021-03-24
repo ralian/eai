@@ -27,6 +27,23 @@ class eAIGroup
 		return m_Members.Insert(member);
 	}
 	
+	bool RemoveMember(int i) {
+		if (i < m_Members.Count()) {
+			m_Members.RemoveOrdered(i);
+			return true;
+		}
+		
+		return false;
+	}
+	
+	PlayerBase GetMember(int i) {
+		return m_Members[i];
+	}
+	
+	int Count() {
+		return m_Members.Count();
+	}
+	
 	void UpdateFormDir() {
 		if (!m_Members[0])
 			return;
