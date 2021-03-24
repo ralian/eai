@@ -44,6 +44,7 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "DebugParticle", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "SpawnZombie", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "ClearAllAI", this, SingeplayerExecutionType.Server);
+		GetRPCManager().AddRPC("eAI", "ProcessReload", this, SingeplayerExecutionType.Server);
 		//GetRPCManager().AddRPC("eAI", "DebugWeaponLocation", this, SingeplayerExecutionType.Server);
 		//GetRPCManager().AddRPC("eAI", "SpawnBullet", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", this, SingeplayerExecutionType.Server);
@@ -136,6 +137,23 @@ class eAIGame {
 		}
 	}
 	
+	// Server Side: Delete AI.
+	void ProcessReload(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+		Param1<PlayerBase> data;
+        if (!ctx.Read(data)) return;
+		if(type == CallType.Server ) {
+            Print("eAI: ProcessReload called.");
+			foreach (eAIGroup g : m_groups) {
+				for (int i = g.Count() - 1; i > -1; i--) {
+					PlayerBase p = g.GetMember(i);
+					Weapon_Base w = Weapon_Base.Cast(p.GetHumanInventory().GetEntityInHands());
+					if (p.IsAI() && w)
+						p.QuickReloadWeapon(w);
+				}	
+			}
+		}
+	}
+	
 	// Client Side: This RPC spawns a debug particle at a location requested by the server.
 	void DebugParticle(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param2<vector, vector> data;
@@ -203,6 +221,10 @@ class eAIGame {
 			}
 			case KeyCode.KC_L: {
 				GetRPCManager().SendRPC("eAI", "ClearAllAI", new Param1<PlayerBase>(GetGame().GetPlayer()));
+				break;
+			}
+			case KeyCode.KC_M: {
+				GetRPCManager().SendRPC("eAI", "ProcessReload", new Param1<PlayerBase>(GetGame().GetPlayer()));
 				break;
 			}
 			case KeyCode.KC_B: {

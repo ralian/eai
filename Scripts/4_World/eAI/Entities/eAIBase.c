@@ -351,6 +351,8 @@ modded class PlayerBase
 		if (pCurrentCommandID == DayZPlayerConstants.COMMANDID_SCRIPT)
 		{
 		}
+		
+		//OnCommandHandlerTick(pDt, pCurrentCommandID);
 	}
 		
 	// We should integrate this into ReloadWeapon

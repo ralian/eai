@@ -375,4 +375,7 @@ class ActionManagerAI: ActionManagerBase
 	{
 		m_InventoryActionHandler.DeactiveAction();
 	}
+	
+	// This might be the issue 
+
 };
