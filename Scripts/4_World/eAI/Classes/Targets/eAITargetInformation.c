@@ -1,21 +1,46 @@
-typedef Param4<eAIGroup, int, int, autoptr set<eAIBase>> eAITargetGroup;
+//typedef Param5<eAIGroup, int, int, ref set<eAIBase>, eAITargetInformation> eAITargetGroup;
+
+class eAITargetGroup
+{
+    eAIGroup param1;
+    int param2;
+    int param3;
+    autoptr set<eAIBase> param4;
+    eAITargetInformation param5;
+
+    void eAITargetGroup(eAIGroup _param1, int _param2, int _param3, autoptr set<eAIBase> _param4, eAITargetInformation _param5)
+    {
+        param1 = _param1;
+        param2 = _param2;
+        param3 = _param3;
+        param4 = _param4;
+        param5 = _param5;
+    }
+};
 
 class eAITargetInformation
 {
-    private EntityAI m_Target;
-
     // in most circumstances an entity should only be in 1 group
     private autoptr map<int, ref eAITargetGroup> m_Groups;
 
-    void eAITargetInformation(EntityAI target)
+    void eAITargetInformation()
     {
-        m_Target = target;
         m_Groups = new map<int, ref eAITargetGroup>();
+    }
+
+    void ~eAITargetInformation()
+    {
+        foreach (int id, eAITargetGroup info : m_Groups) Remove(id);
     }
 
     EntityAI GetEntity()
     {
-        return m_Target;
+        return null;
+    }
+
+    vector GetPosition(eAIBase ai = null)
+    {
+        return "0 0 0";
     }
 
     void Process(int group_id)
@@ -23,7 +48,7 @@ class eAITargetInformation
         eAITargetGroup params;
         if (!m_Groups.Find(group_id, params))
         {
-            Error("eAITargetInformation::Process called when target is not in group specified | m_Target=" + Object.GetDebugName(m_Target) + " group_id=" + group_id)
+            Error("eAITargetInformation::Process called when target is not in group specified | group_id=" + group_id)
             return;
         }
 
@@ -36,7 +61,7 @@ class eAITargetInformation
     eAITargetGroup Insert(eAIGroup group, int max_time = 10000)
     {
         eAITargetGroup params;
-        params = new eAITargetGroup(group, GetGame().GetTime(), max_time, new array<eAIBase>());
+        params = new eAITargetGroup(group, GetGame().GetTime(), max_time, new set<eAIBase>(), this);
         if (!m_Groups.Insert(group.GetID(), params)) return null;
 
         group.OnTargetAdded(this);
@@ -48,8 +73,9 @@ class eAITargetInformation
     {
         eAITargetGroup params;
         params = Insert(ai.GetGroup(), max_time);
+        if (!params) return null; 
         params.param4.Insert(ai);
-        ai.OnAddTarget(this);
+        ai.OnAddTarget(params);
         return params;
     }
 
@@ -60,7 +86,9 @@ class eAITargetInformation
         if (!m_Groups.Find(group_id, params)) return Insert(ai);
 
         params.param4.Insert(ai);
-        ai.OnAddTarget(this);
+        ai.OnAddTarget(params);
+
+        return params;
     }
 
     bool RemoveAI(eAIBase ai)
@@ -73,7 +101,7 @@ class eAITargetInformation
         if (idx == -1) return false;
 
         params.param4.Remove(idx);
-        ai.OnRemoveTarget(this);
+        ai.OnRemoveTarget(params);
 
         if (params.param4.Count() == 0)
         {
@@ -124,9 +152,10 @@ class eAITargetInformation
 
         params.param1.OnTargetRemoved(this);
 
-        foreach (eAIBase ai : params.param4) ai.OnRemoveTarget();
+        foreach (eAIBase ai : params.param4) ai.OnRemoveTarget(params);
 
         m_Groups.Remove(group_id);
+        delete params;
     }
 
     void Remove(eAIGroup group)
@@ -135,6 +164,8 @@ class eAITargetInformation
         
         Remove(group_id);
     }
+
+    //! entity specific implementations
 
     void OnDeath()
     {
@@ -171,13 +202,5 @@ class eAITargetInformation
         if (Class.CastTo(car, entity)) return car.GetTargetInformation();
 
         return null;
-    }
-};
-
-class eAIEntity<Class T>
-{
-    static eAITargetInformation GetTargetInformation(T entity)
-    {
-        return entity.GetTargetInformation();
     }
 };

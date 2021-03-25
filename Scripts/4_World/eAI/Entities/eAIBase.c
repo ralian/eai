@@ -107,19 +107,19 @@ modded class PlayerBase
 		return m_FSM;
 	}
 
-	void OnAddTarget(eAITargetInformation target)
+	array<eAITargetGroup> GetTargets()
+	{
+		return m_eAI_Targets;
+	}
+
+	void OnAddTarget(eAITargetGroup target)
 	{
 		m_eAI_Targets.Insert(target);
 	}
 
-	void OnRemoveTarget(eAITargetInformation target)
+	void OnRemoveTarget(eAITargetGroup target)
 	{
 		m_eAI_Targets.RemoveItem(target);
-	}
-
-	void SetTargetLocation(vector location)
-	{
-		m_TargetLocation = location;
 	}
 	
 #ifndef SERVER	
@@ -259,15 +259,19 @@ modded class PlayerBase
 		m_DebugShapes.Clear();
 #endif
 
-		m_Path.Clear();
-		if (m_PathFilter)
-		{
-			AIWorld world = GetGame().GetWorld().GetAIWorld();
-			world.FindPath(GetPosition(), m_TargetLocation, m_PathFilter, m_Path);
-		}
-	
-
 		if (!GetGame().IsServer()) return;
+
+		m_Path.Clear();
+
+		//Print(m_eAI_Targets);
+
+		if (m_PathFilter && m_eAI_Targets.Count() > 0)
+		{
+			//Print(m_eAI_Targets[0]);
+
+			AIWorld world = GetGame().GetWorld().GetAIWorld();
+			world.FindPath(GetPosition(), m_eAI_Targets[0].param5.GetPosition(this), m_PathFilter, m_Path);
+		}
 
 		HumanInputController hic = GetInputController();
 		EntityAI entityInHands = GetHumanInventory().GetEntityInHands();

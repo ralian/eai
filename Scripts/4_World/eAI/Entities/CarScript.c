@@ -1,6 +1,6 @@
 modded class CarScript
 {
-    private autoptr eAITargetInformation m_TargetInformation = new eAITargetInformation(this);
+    private autoptr eAITargetInformation m_TargetInformation = new eAIEntityTargetInformation(this);
 
     eAITargetInformation GetTargetInformation()
     {

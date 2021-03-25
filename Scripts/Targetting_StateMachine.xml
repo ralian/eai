@@ -11,9 +11,7 @@
 			</editor_data>
 			<event_entry></event_entry>
 			<event_exit></event_exit>
-			<event_update>
-                unit.SetTargetLocation(unit.GetPosition());
-                
+			<event_update>                
                 time += DeltaTime;
                 if (time &lt; 1.0) return CONTINUE;
 
@@ -33,15 +31,10 @@
 			<event_exit></event_exit>
 			<event_update>
                 time += DeltaTime;
-                if (time &gt; 0.25)
-                {
-                    unit.SetTargetLocation(unit.GetGroup().GetFormationMemberDest(unit));
-                    time = 0;
-
-                    return REEVALUTATE;
-                }
-
-                return CONTINUE;
+                if (time &lt; 0.25) return CONTINUE;
+				
+				time = 0;
+                return REEVALUTATE;
             </event_update>
 		</state>
 		<state name="Reload">
@@ -82,6 +75,11 @@
                 vector pos = leader.GetPosition();
                 if (vector.Distance(pos, unit.GetPosition()) &gt; 50.0) return FAIL;
 
+				auto target = eAIEntity&lt;DayZPlayerImplement&gt;.GetTargetInformation(leader);
+                if (!target) return FAIL;
+				
+				target.AddAI(unit);
+
                 return SUCCESS;
             </guard>
 			<event name="" />
@@ -100,8 +98,15 @@
                 auto leader = group.GetLeader();
                 if (!leader) return SUCCESS;
 
-                vector pos = leader.GetPosition();
-                if (vector.Distance(pos, unit.GetPosition()) &gt; 50.0) return SUCCESS;
+				auto target = eAIEntity&lt;DayZPlayerImplement&gt;.GetTargetInformation(leader);
+                if (!target) return SUCCESS;
+
+                vector pos = target.GetPosition(unit);
+                if (vector.Distance(pos, unit.GetPosition()) &gt; 50.0)
+				{
+					target.RemoveAI(unit);
+					return SUCCESS;
+				}
 
                 return FAIL;
             </guard>
