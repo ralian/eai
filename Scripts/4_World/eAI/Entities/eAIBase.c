@@ -434,167 +434,172 @@ modded class PlayerBase
 	}
 
 	override void HandleWeapons(float pDt, Entity pInHands, HumanInputController pInputs, out bool pExitIronSights)
-	{		
+	{
+		if (!IsAI())
+		{
+			super.HandleWeapons(pDt, pInHands, pInputs, pExitIronSights);
+			return;
+		}
+
 		HumanCommandWeapons		hcw = GetCommandModifier_Weapons();
     	GetDayZPlayerInventory().HandleWeaponEvents(pDt, pExitIronSights);
 
-		if (!IsAI()) {
 
-			Weapon_Base weapon;
-			Class.CastTo(weapon, pInHands);
-			
-			CheckLiftWeapon();
-			ProcessLiftWeapon();
-			
-			GetMovementState(m_MovementState);
-			
-			//Print("IsInIronsights " + IsInIronsights());
-			//Print("IsInOptics " + IsInOptics());
-			// hold breath
-			if (pInputs.IsHoldBreath() && m_MovementState.IsRaised() && (IsInIronsights() || IsInOptics()))
+		Weapon_Base weapon;
+		Class.CastTo(weapon, pInHands);
+		
+		CheckLiftWeapon();
+		ProcessLiftWeapon();
+		
+		GetMovementState(m_MovementState);
+		
+		//Print("IsInIronsights " + IsInIronsights());
+		//Print("IsInOptics " + IsInOptics());
+		// hold breath
+		if (pInputs.IsHoldBreath() && m_MovementState.IsRaised() && (IsInIronsights() || IsInOptics()))
+		{
+			m_IsTryingHoldBreath = true;
+		}
+		else
+		{
+			m_IsTryingHoldBreath = false;
+		}
+		
+		ItemOptics optic = weapon.GetAttachedOptics();
+	
+		if (pInputs.IsFireModeChange())
+		{
+			GetWeaponManager().SetNextMuzzleMode();
+		}
+		if (pInputs.IsZeroingUp())
+		{
+			if (optic && (optic.IsInOptics() || optic.IsUsingWeaponIronsightsOverride()) )
+				optic.StepZeroingUp();
+			else
 			{
-				m_IsTryingHoldBreath = true;
+				//weapon.StepZeroingUp(weapon.GetCurrentMuzzle());
+				weapon.StepZeroingUpAllMuzzles();
+			}
+		}
+		if (pInputs.IsZeroingDown())
+		{
+			if (optic && (optic.IsInOptics() || optic.IsUsingWeaponIronsightsOverride()) )
+				optic.StepZeroingDown();
+			else
+			{
+				//weapon.StepZeroingDown(weapon.GetCurrentMuzzle());
+				weapon.StepZeroingDownAllMuzzles();
+			}
+		}
+		
+		if (!m_LiftWeapon_player && (m_CameraIronsight || !weapon.CanEnterIronsights() || m_CameraOptics/*m_ForceHandleOptics*/)) 	// HACK straight to optics, if ironsights not allowed
+		{
+			if (optic)
+				HandleOptic(optic, false, pInputs, pExitIronSights);
+		}
+	
+		/*if (!m_LiftWeapon_player && weapon && weapon.CanProcessWeaponEvents())
+		{
+			if (pInputs.IsReloadOrMechanismContinuousUseStart())
+			{
+				if (GetWeaponManager().CanUnjam(weapon))
+				{
+					//weapon.ProcessWeaponEvent(new WeaponEventUnjam(this));
+					GetWeaponManager().Unjam();
+					//pExitIronSights = true;
+				}
+			}
+		}*/
+	
+		if (!m_MovementState.IsRaised())
+		{
+			m_IsFireWeaponRaised = false;
+			if (weapon && weapon.IsInOptics())
+				weapon.ExitOptics();
+			
+			StopADSTimer();
+	
+			return; // if not raised => return
+		}
+		else
+		{
+			m_IsFireWeaponRaised = true;
+			if ( !m_WeaponRaiseCompleted && (!m_ADSAutomationTimer || (m_ADSAutomationTimer && !m_ADSAutomationTimer.IsRunning())) )
+			{
+				if (GetInstanceType() == DayZPlayerInstanceType.INSTANCETYPE_SERVER || !GetGame().IsMultiplayer())
+					RunADSTimer();
+			}
+			if (m_ProcessWeaponRaiseCompleted)
+			{
+				CompleteWeaponRaise();
+				m_ProcessWeaponRaiseCompleted = false;
+			}
+		}
+		
+		#ifdef PLATFORM_CONSOLE
+			if ( !pInputs.IsMeleeFastAttackModifier() )
+			{
+		#endif
+		#ifdef SERVER_FOR_CONSOLE
+			if ( !pInputs.IsMeleeFastAttackModifier() )
+			{
+		#endif
+		
+		//! fire
+		//if (!m_LiftWeapon_player && weapon && !weapon.IsDamageDestroyed() && weapon.CanProcessWeaponEvents() )
+		if (GetWeaponManager().CanFire(weapon))
+		{
+			bool autofire = weapon.GetCurrentModeAutoFire(weapon.GetCurrentMuzzle()) && weapon.IsChamberEjectable(weapon.GetCurrentMuzzle());
+			int burst = weapon.GetCurrentModeBurstSize(weapon.GetCurrentMuzzle());
+			if (!autofire)
+			{
+				if (pInputs.IsUseButtonDown())
+				{
+					GetWeaponManager().Fire(weapon);
+				}
 			}
 			else
 			{
-				m_IsTryingHoldBreath = false;
+				if (pInputs.IsUseButton())
+				{
+					GetWeaponManager().Fire(weapon);
+				}
 			}
+		}		
+	
+		#ifdef PLATFORM_CONSOLE
+		if( GetGame().GetInput().LocalRelease( "UAFire", false ) || m_ShouldReload )
+		{
+			if( !weapon.IsWaitingForActionFinish() && !IsFighting() )
+			{
+				int muzzle_index = weapon.GetCurrentMuzzle();
 			
-			ItemOptics optic = weapon.GetAttachedOptics();
-	
-			if (pInputs.IsFireModeChange())
-			{
-				GetWeaponManager().SetNextMuzzleMode();
-			}
-			if (pInputs.IsZeroingUp())
-			{
-				if (optic && (optic.IsInOptics() || optic.IsUsingWeaponIronsightsOverride()) )
-					optic.StepZeroingUp();
-				else
+				if ( weapon.IsChamberFiredOut( muzzle_index ) )
 				{
-					//weapon.StepZeroingUp(weapon.GetCurrentMuzzle());
-					weapon.StepZeroingUpAllMuzzles();
-				}
-			}
-			if (pInputs.IsZeroingDown())
-			{
-				if (optic && (optic.IsInOptics() || optic.IsUsingWeaponIronsightsOverride()) )
-					optic.StepZeroingDown();
-				else
-				{
-					//weapon.StepZeroingDown(weapon.GetCurrentMuzzle());
-					weapon.StepZeroingDownAllMuzzles();
-				}
-			}
-			
-			if (!m_LiftWeapon_player && (m_CameraIronsight || !weapon.CanEnterIronsights() || m_CameraOptics/*m_ForceHandleOptics*/)) 	// HACK straight to optics, if ironsights not allowed
-			{
-				if (optic)
-					HandleOptic(optic, false, pInputs, pExitIronSights);
-			}
-	
-			/*if (!m_LiftWeapon_player && weapon && weapon.CanProcessWeaponEvents())
-			{
-				if (pInputs.IsReloadOrMechanismContinuousUseStart())
-				{
-					if (GetWeaponManager().CanUnjam(weapon))
+					if ( weapon.CanProcessWeaponEvents() )
 					{
-						//weapon.ProcessWeaponEvent(new WeaponEventUnjam(this));
-						GetWeaponManager().Unjam();
-						//pExitIronSights = true;
-					}
-				}
-			}*/
-	
-			if (!m_MovementState.IsRaised())
-			{
-				m_IsFireWeaponRaised = false;
-				if (weapon && weapon.IsInOptics())
-					weapon.ExitOptics();
-				
-				StopADSTimer();
-	
-				return; // if not raised => return
-			}
-			else
-			{
-				m_IsFireWeaponRaised = true;
-				if ( !m_WeaponRaiseCompleted && (!m_ADSAutomationTimer || (m_ADSAutomationTimer && !m_ADSAutomationTimer.IsRunning())) )
-				{
-					if (GetInstanceType() == DayZPlayerInstanceType.INSTANCETYPE_SERVER || !GetGame().IsMultiplayer())
-						RunADSTimer();
-				}
-				if (m_ProcessWeaponRaiseCompleted)
-				{
-					CompleteWeaponRaise();
-					m_ProcessWeaponRaiseCompleted = false;
-				}
-			}
-			
-			#ifdef PLATFORM_CONSOLE
-				if ( !pInputs.IsMeleeFastAttackModifier() )
-				{
-			#endif
-			#ifdef SERVER_FOR_CONSOLE
-				if ( !pInputs.IsMeleeFastAttackModifier() )
-				{
-			#endif
-			
-			//! fire
-			//if (!m_LiftWeapon_player && weapon && !weapon.IsDamageDestroyed() && weapon.CanProcessWeaponEvents() )
-			if (GetWeaponManager().CanFire(weapon))
-			{
-				bool autofire = weapon.GetCurrentModeAutoFire(weapon.GetCurrentMuzzle()) && weapon.IsChamberEjectable(weapon.GetCurrentMuzzle());
-				int burst = weapon.GetCurrentModeBurstSize(weapon.GetCurrentMuzzle());
-				if (!autofire)
-				{
-					if (pInputs.IsUseButtonDown())
-					{
-						GetWeaponManager().Fire(weapon);
-					}
-				}
-				else
-				{
-					if (pInputs.IsUseButton())
-					{
-						GetWeaponManager().Fire(weapon);
-					}
-				}
-			}		
-	
-			#ifdef PLATFORM_CONSOLE
-			if( GetGame().GetInput().LocalRelease( "UAFire", false ) || m_ShouldReload )
-			{
-				if( !weapon.IsWaitingForActionFinish() && !IsFighting() )
-				{
-					int muzzle_index = weapon.GetCurrentMuzzle();
-				
-					if ( weapon.IsChamberFiredOut( muzzle_index ) )
-					{
-						if ( weapon.CanProcessWeaponEvents() )
+						if ( GetWeaponManager().CanEjectBullet(weapon) )
 						{
-							if ( GetWeaponManager().CanEjectBullet(weapon) )
-							{
-								GetWeaponManager().EjectBullet();
-								pExitIronSights = true;
-								m_ShouldReload = false;
-							}
+							GetWeaponManager().EjectBullet();
+							pExitIronSights = true;
+							m_ShouldReload = false;
 						}
 					}
 				}
-				else
-				{
-					m_ShouldReload = true;
-				}
 			}
-			#endif
-			#ifdef PLATFORM_CONSOLE
-				}
-			#endif
-			#ifdef SERVER_FOR_CONSOLE
-				}
-			#endif
+			else
+			{
+				m_ShouldReload = true;
 			}
+		}
+		#endif
+		#ifdef PLATFORM_CONSOLE
+			}
+		#endif
+		#ifdef SERVER_FOR_CONSOLE
+			}
+		#endif
+		}
 	}
 	
 	// As with many things we do, this is an almagomation of the client and server code
