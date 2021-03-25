@@ -83,8 +83,16 @@ class eAIState
 	        {
 	            string variable_name = variable.GetAttribute("name").ValueAsString();
 	            string variable_type = variable.GetAttribute("type").ValueAsString();
+	            string variable_default = "";
+                if (variable.GetAttribute("default")) variable_default = variable.GetAttribute("default").ValueAsString();
+
 	            new_type.m_Variables.Insert(variable_name);
-	            FPrintln(file, "private " + variable_type + " " + variable_name + ";");
+
+                string variable_line = "" + variable_type + " " + variable_name;
+                if (variable_default != "") variable_line = variable_line + " = " + variable_default;
+                variable_line = variable_line + ";";
+
+	            FPrintln(file, variable_line);
 	        }
 		}
 

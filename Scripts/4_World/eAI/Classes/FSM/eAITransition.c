@@ -106,13 +106,13 @@ class eAITransition
 
         FPrintln(file, "class " + class_name + " extends eAITransition {");
 
-        FPrintln(file, "private " + from_state_class + " m_Source;");
-        FPrintln(file, "private " + to_state_class + " m_Destination;");
+        FPrintln(file, "private " + from_state_class + " src;");
+        FPrintln(file, "private " + to_state_class + " dst;");
 
         FPrintln(file, "void " + class_name + "(eAIBase _unit, eAIHFSM _fsm) {");
         FPrintln(file, "m_ClassName = \"" + class_name + "\";");
-        FPrintln(file, "m_Source = _fsm.GetState(\"" + from_state_class + "\");");
-        FPrintln(file, "m_Destination = _fsm.GetState(\"" + to_state_class + "\");");
+        FPrintln(file, "src = _fsm.GetState(\"" + from_state_class + "\");");
+        FPrintln(file, "dst = _fsm.GetState(\"" + to_state_class + "\");");
         FPrintln(file, "}");
 
         auto guard = xml_root_tag.GetTag("guard");
@@ -123,8 +123,8 @@ class eAITransition
             FPrintln(file, "}");
         }
         
-        FPrintln(file, "override eAIState GetSource() { return m_Source; }");
-        FPrintln(file, "override eAIState GetDestination() { return m_Destination; }");
+        FPrintln(file, "override eAIState GetSource() { return src; }");
+        FPrintln(file, "override eAIState GetDestination() { return dst; }");
         FPrintln(file, "override string GetEvent() { return \"" + event_class + "\"; }");
 
         FPrintln(file, "}");
