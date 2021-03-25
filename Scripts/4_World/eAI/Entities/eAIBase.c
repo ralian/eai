@@ -536,16 +536,7 @@ modded class PlayerBase
 				m_ProcessWeaponRaiseCompleted = false;
 			}
 		}
-		
-		#ifdef PLATFORM_CONSOLE
-			if ( !pInputs.IsMeleeFastAttackModifier() )
-			{
-		#endif
-		#ifdef SERVER_FOR_CONSOLE
-			if ( !pInputs.IsMeleeFastAttackModifier() )
-			{
-		#endif
-		
+			
 		//! fire
 		//if (!m_LiftWeapon_player && weapon && !weapon.IsDamageDestroyed() && weapon.CanProcessWeaponEvents() )
 		if (GetWeaponManager().CanFire(weapon))
@@ -567,40 +558,6 @@ modded class PlayerBase
 				}
 			}
 		}		
-	
-		#ifdef PLATFORM_CONSOLE
-		if( GetGame().GetInput().LocalRelease( "UAFire", false ) || m_ShouldReload )
-		{
-			if( !weapon.IsWaitingForActionFinish() && !IsFighting() )
-			{
-				int muzzle_index = weapon.GetCurrentMuzzle();
-			
-				if ( weapon.IsChamberFiredOut( muzzle_index ) )
-				{
-					if ( weapon.CanProcessWeaponEvents() )
-					{
-						if ( GetWeaponManager().CanEjectBullet(weapon) )
-						{
-							GetWeaponManager().EjectBullet();
-							pExitIronSights = true;
-							m_ShouldReload = false;
-						}
-					}
-				}
-			}
-			else
-			{
-				m_ShouldReload = true;
-			}
-		}
-		#endif
-		#ifdef PLATFORM_CONSOLE
-			}
-		#endif
-		#ifdef SERVER_FOR_CONSOLE
-			}
-		#endif
-		}
 	}
 	
 	// As with many things we do, this is an almagomation of the client and server code
