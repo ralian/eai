@@ -1,5 +1,10 @@
 class eAIGroup
 {
+	private static int m_IDCounter = 0;
+
+	private autoptr array<eAITargetInformation> m_Targets;
+	private int m_ID;
+
 	// Ordered array of group members. 0 is the leader.
 	autoptr array<PlayerBase> m_Members = {};
 	
@@ -9,6 +14,34 @@ class eAIGroup
 	float m_DirRecalcDistSq = 25.0;
 	vector m_LeaderDir = "0 0 0";
 	vector m_LeaderDirPerp = "0 0 0";
+
+	void eAIGroup()
+	{
+		m_Targets = new array<eAITargetInformation>();
+
+		m_IDCounter++;
+		m_ID = m_IDCounter;
+	}
+
+	int GetID()
+	{
+		return m_ID;
+	}
+
+	void OnTargetAdded(eAITargetInformation target)
+	{
+		m_Targets.Insert(target);
+	}
+
+	void OnTargetRemoved(eAITargetInformation target)
+	{
+		m_Targets.RemoveItem(target);
+	}
+
+	void ProcessTargets()
+	{
+		for (int i = m_Targets.Count() - 1; i >= 0; i--) m_Targets[i].Process(m_ID);
+	}
 
 	void SetLeader(PlayerBase leader)
 	{

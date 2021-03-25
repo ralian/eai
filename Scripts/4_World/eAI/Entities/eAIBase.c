@@ -49,7 +49,7 @@ modded class PlayerBase
 	{
 	}
 	
-	bool IsAI()
+	override bool IsAI()
 	{
 		return m_eAI_Is;
 	}
@@ -100,6 +100,11 @@ modded class PlayerBase
 	eAIGroup GetGroup()
 	{
 		return m_eAI_Group;
+	}
+
+	eAIHFSM GetFSM()
+	{
+		return m_FSM;
 	}
 
 	void SetTargetLocation(vector location)
