@@ -1,4 +1,4 @@
-typedef Param4<eAIGroup, int, int, autoptr array<eAIBase>> eAITargetGroup;
+typedef Param4<eAIGroup, int, int, autoptr set<eAIBase>> eAITargetGroup;
 
 class eAITargetInformation
 {
@@ -49,7 +49,40 @@ class eAITargetInformation
         eAITargetGroup params;
         params = Insert(ai.GetGroup(), max_time);
         params.param4.Insert(ai);
+        ai.OnAddTarget(this);
         return params;
+    }
+
+    eAITargetGroup AddAI(eAIBase ai)
+    {
+        eAITargetGroup params;
+        int group_id = ai.GetGroup().GetID();
+        if (!m_Groups.Find(group_id, params)) return Insert(ai);
+
+        params.param4.Insert(ai);
+        ai.OnAddTarget(this);
+    }
+
+    bool RemoveAI(eAIBase ai)
+    {
+        eAITargetGroup params;
+        int group_id = ai.GetGroup().GetID();
+        if (!m_Groups.Find(group_id, params)) return false;
+
+        int idx = params.param4.Find(ai);
+        if (idx == -1) return false;
+
+        params.param4.Remove(idx);
+        ai.OnRemoveTarget(this);
+
+        if (params.param4.Count() == 0)
+        {
+            params.param1.OnTargetRemoved(this);
+
+            m_Groups.Remove(group_id);
+        }
+
+        return true;
     }
 
     bool IsTargetted()
@@ -91,6 +124,8 @@ class eAITargetInformation
 
         params.param1.OnTargetRemoved(this);
 
+        foreach (eAIBase ai : params.param4) ai.OnRemoveTarget();
+
         m_Groups.Remove(group_id);
     }
 
@@ -98,12 +133,7 @@ class eAITargetInformation
     {
         int group_id = group.GetID();
         
-        if (m_Groups.Contains(group_id))
-        {
-            group.OnTargetRemoved(this);
-
-            m_Groups.Remove(group_id);
-        }
+        Remove(group_id);
     }
 
     void OnDeath()

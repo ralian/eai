@@ -18,12 +18,13 @@ modded class PlayerBase
 {
 	private bool m_eAI_Is = false;
 
-	private autoptr array<ref eAIGoal> m_Goals = new array<ref eAIGoal>;
+	private autoptr eAIHFSM m_FSM;
+    private autoptr eAIGroup m_eAI_Group;
 
-	private ref eAIHFSM m_FSM;
+	private autoptr array<eAITargetGroup> m_eAI_Targets;
 
     // Command handling
-	private ref eAIAnimationST m_eAI_AnimationST;
+	private autoptr eAIAnimationST m_eAI_AnimationST;
 	private eAICommandBase m_eAI_Command;
 
     // Look/Aiming
@@ -34,11 +35,9 @@ modded class PlayerBase
 
 	private vector m_eAI_LookDirection_ModelSpace;
 	private vector m_eAI_AimDirection_ModelSpace;
-
-    private ref eAIGroup m_eAI_Group;
     
     // Path Finding
-	private ref PGFilter m_PathFilter;
+	private autoptr PGFilter m_PathFilter;
 	private autoptr array<vector> m_Path = new array<vector>();
 
 #ifndef SERVER
@@ -58,10 +57,15 @@ modded class PlayerBase
 	{
 		m_eAI_Is = true;
         m_eAI_Group = group;
+
+		m_eAI_Targets = new array<eAITargetGroup>();
 		
-        if (m_eAI_Group) {
+        if (m_eAI_Group)
+		{
 			m_eAI_Group.AddMember(this);
-		} else {
+		}
+		else
+		{
 			// We will only be using this case with AI which don't already have a group leader.
 			m_eAI_Group = new eAIGroup();
 			m_eAI_Group.SetLeader(this);
@@ -83,14 +87,10 @@ modded class PlayerBase
 		m_PathFilter.SetCost( PGAreaType.WATER, 1.0 );
 		
 		string stateMachine = "eAI/scripts/Targetting_StateMachine.xml";
-
-		Print(stateMachine);
 		eAIHFSMType type = eAIHFSM.LoadXML(stateMachine);
-		Print(type);
 		if (type)
 		{
 			m_FSM = type.Spawn(this, null);
-			Print(m_FSM);
 			m_FSM.StartDefault();
 		}
 
@@ -105,6 +105,16 @@ modded class PlayerBase
 	eAIHFSM GetFSM()
 	{
 		return m_FSM;
+	}
+
+	void OnAddTarget(eAITargetInformation target)
+	{
+		m_eAI_Targets.Insert(target);
+	}
+
+	void OnRemoveTarget(eAITargetInformation target)
+	{
+		m_eAI_Targets.RemoveItem(target);
 	}
 
 	void SetTargetLocation(vector location)
