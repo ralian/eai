@@ -55,7 +55,7 @@ class InventoryActionHandlerAI
 	
 	void SetAction(ActionBase action, ActionTarget target, ItemBase main_item )
 	{
-		ActionManagerAI mngr;
+		eAIActionManager mngr;
 		Class.CastTo(mngr, m_player.GetActionManager());
 		
 		m_action = action;
@@ -122,7 +122,7 @@ class InventoryActionHandlerAI
 		
 		m_isActive = false;
 		
-		ActionManagerAI mngr;
+		eAIActionManager mngr;
 		Class.CastTo(mngr, m_player.GetActionManager());
 		
 		// Since this unit is managed by the server we shouldn't actually ever see an action interrupted (perhaps by death, maybe?)

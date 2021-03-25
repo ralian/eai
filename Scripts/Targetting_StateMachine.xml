@@ -6,7 +6,7 @@
 				<variable name="time" type="float" />
 			</variables>
 			<editor_data>
-				<position x="100" y="100" />
+				<position x="99" y="89" />
 				<size width="150" height="40" />
 			</editor_data>
 			<event_entry></event_entry>
