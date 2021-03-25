@@ -8,7 +8,7 @@ class eAITargetGroup
     autoptr set<eAIBase> param4;
     eAITargetInformation param5;
 
-    void eAITargetGroup(eAIGroup _param1, int _param2, int _param3, autoptr set<eAIBase> _param4, eAITargetInformation _param5)
+    void eAITargetGroup(eAIGroup _param1, int _param2, int _param3, set<eAIBase> _param4, eAITargetInformation _param5)
     {
         param1 = _param1;
         param2 = _param2;
@@ -152,7 +152,9 @@ class eAITargetInformation
 
         params.param1.OnTargetRemoved(this);
 
-        foreach (eAIBase ai : params.param4) ai.OnRemoveTarget(params);
+        foreach (eAIBase ai : params.param4)
+			if (ai)
+				ai.OnRemoveTarget(params);
 
         m_Groups.Remove(group_id);
         delete params;
