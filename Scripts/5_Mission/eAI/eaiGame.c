@@ -71,11 +71,13 @@ class eAIGame {
 	void SpawnAI_Helper(DayZPlayer owner) {
 		PlayerBase pb_Human;
 		if (!Class.CastTo(pb_Human, owner)) return;
+		
+		eAIGroup ownerGrp = GetGroupByLeader(pb_Human);
 
 		eAIBase pb_AI;
-		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, "SurvivorF_Linda", pb_Human.GetPosition() + debug_offset, 0, "NONE"))) return;
+		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, "SurvivorF_Linda", ownerGrp.GlobalFormPos(ownerGrp.Count()), 0, "NONE"))) return;
 		
-		pb_AI.SetAI(GetGroupByLeader(pb_Human));
+		pb_AI.SetAI(ownerGrp);
 			
 		SoldierLoadout.Apply(pb_AI);
 	}

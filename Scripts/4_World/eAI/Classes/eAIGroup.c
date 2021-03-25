@@ -76,20 +76,21 @@ class eAIGroup
 	
 	// Todo: build a class called FormationBase and do polymorphism for different types of forms
 	// First number is horizontal offset, sec number is forwards in the formation
-	// Could also do this algorithmically instead of case based but meh
 	vector LocalFormPos(int member_no) {
-		switch (member_no) {
-			case 0: return "0 0 0";
-			case 1: return "2 0 -2";
-			case 2: return "-2 0 -2";
-			case 3: return "4 0 -4";
-			case 4: return "-4 0 -4";
-			case 5: return "6 0 -6";
-			case 6: return "-6 0 -6";
-		}
-		return "0 0 -6";
+		int offset = Math.Floor((member_no+1)/2);
+		float scaled_offset = 2*offset;
+		if (member_no % 2 == 0)
+			return Vector(scaled_offset, 0, -scaled_offset); // Right side
+		else
+			return Vector(-scaled_offset, 0, -scaled_offset); // Left Side
 	}
 	
+	// get the global formation position of the i'th formation member
+	vector GlobalFormPos(int i) {
+		return FormToWorld(LocalFormPos(i));
+	}
+	
+	// Get where a specific member of the group should run to
 	vector GetFormationMemberDest(PlayerBase member) {
 		
 		// Todo we will probably want to do this more slowly in a separate loop.
@@ -97,7 +98,7 @@ class eAIGroup
 		
 		for (int i = 0; i < m_Members.Count(); i++)
 			if (m_Members[i] == member)
-				return FormToWorld(LocalFormPos(i));
+				return GlobalFormPos(i);
 		
 		// Fallback, if not found in the group
 		return "0 0 0";
