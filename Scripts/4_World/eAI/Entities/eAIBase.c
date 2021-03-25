@@ -35,6 +35,8 @@ modded class PlayerBase
 
 	private vector m_eAI_LookDirection_ModelSpace;
 	private vector m_eAI_AimDirection_ModelSpace;
+	
+	private bool m_WeaponRaised;
     
     // Path Finding
 	private autoptr PGFilter m_PathFilter;
@@ -604,6 +606,32 @@ modded class PlayerBase
 		}
 
 		super.CheckLiftWeapon();
+	}
+	
+	// @param true to put weapon up, false to lower
+	void RaiseWeapon(bool up) {
+		m_WeaponRaised = up;
+		eAICommandMove.Cast(m_eAI_Command).SetRaised(up);
+	}
+	
+	bool IsWeaponRaised() {
+		return m_WeaponRaised;
+	}
+	
+	// @param LookWS a position in WorldSpace to look at
+	void SetLookDir(vector LookWS) {
+		LookWS[1] = LookWS[1] - 1.5; // Compensate for the height of the unit (from where they are looking)
+		m_eAI_LookDirection_WorldSpace = (LookWS - GetPosition()).VectorToAngles();
+		LookWS = WorldToModel(LookWS);
+		m_eAI_LookDirection_ModelSpace = LookWS.VectorToAngles();
+	}
+	
+	// @param AimWS a position in WorldSpace to Aim at
+	void SetAimDir(vector AimWS) {
+		AimWS[1] = AimWS[1] - 1.5; // Compensate for the height of the unit (from where they are looking)
+		m_eAI_LookDirection_WorldSpace = (AimWS - GetPosition()).VectorToAngles();
+		AimWS = WorldToModel(AimWS);
+		m_eAI_LookDirection_ModelSpace = AimWS.VectorToAngles();
 	}
 		
 	override bool AimingModel(float pDt, SDayZPlayerAimingModel pModel)

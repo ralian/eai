@@ -150,7 +150,7 @@ class eAIGame {
 					PlayerBase p = g.GetMember(i);
 					Weapon_Base w = Weapon_Base.Cast(p.GetHumanInventory().GetEntityInHands());
 					if (p.IsAI() && w)
-						p.QuickReloadWeapon(w);
+						p.RaiseWeapon(!p.IsWeaponRaised());
 				}	
 			}
 		}
