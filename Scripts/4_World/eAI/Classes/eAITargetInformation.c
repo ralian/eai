@@ -118,6 +118,11 @@ class eAITargetInformation
         foreach (int id, eAITargetGroup info : m_Groups) foreach (eAIBase ai : info.param4) ai.GetFSM().Start("TargetHit");
     }
 
+    // this is really bad but unfortunately we can't reasonably mod the EntityAI class
+    // and for some circumstances using templates just won't work.
+    //
+    // wherever possible, please use 
+    //    'eAIEntity<DayZPlayerImplement>.GetTargetInformation(GetGame().GetPlayer())`
     static eAITargetInformation GetTargetInformation(EntityAI entity)
     {
         DayZPlayerImplement player;
