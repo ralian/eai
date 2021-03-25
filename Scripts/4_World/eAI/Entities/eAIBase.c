@@ -444,6 +444,7 @@ modded class PlayerBase
 		HumanCommandWeapons		hcw = GetCommandModifier_Weapons();
     	GetDayZPlayerInventory().HandleWeaponEvents(pDt, pExitIronSights);
 
+		return;
 
 		Weapon_Base weapon;
 		Class.CastTo(weapon, pInHands);
