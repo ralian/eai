@@ -75,7 +75,7 @@ class eAIGame {
 		eAIGroup ownerGrp = GetGroupByLeader(pb_Human);
 
 		eAIBase pb_AI;
-		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, "SurvivorF_Linda", ownerGrp.GlobalFormPos(ownerGrp.Count()), 0, "NONE"))) return;
+		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, "SurvivorF_Linda", pb_Human.GetPosition(), 0, "NONE"))) return;
 		
 		pb_AI.SetAI(ownerGrp);
 			
@@ -258,6 +258,8 @@ modded class MissionGameplay
     void MissionGameplay()
     {
         m_eaiGame = new eAIGame();
+
+		GetDayZGame().eAICreateManager();
 
         Print( "eAI - Loaded Client Mission" );
     }

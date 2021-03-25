@@ -1,26 +1,35 @@
 class eAIGroup
 {
+	static autoptr array<eAIGroup> GROUPS = new array<eAIGroup>();
+
 	private static int m_IDCounter = 0;
 
 	private autoptr array<eAITargetInformation> m_Targets;
 	private int m_ID;
 
+	// other groups can also reference this
+    private autoptr eAIGroupTargetInformation m_TargetInformation;
+
 	// Ordered array of group members. 0 is the leader.
-	autoptr array<PlayerBase> m_Members = {};
-	
-	// The LeaderPosOld is used to calculate the heading of the formation
-	// Recalculation of azumith is done only when m_DirRecalcDistSq is surpassed
-	vector m_LeaderPosOld = "0 0 0";
-	float m_DirRecalcDistSq = 25.0;
-	vector m_LeaderDir = "0 0 0";
-	vector m_LeaderDirPerp = "0 0 0";
+	private autoptr array<PlayerBase> m_Members;
 
 	void eAIGroup()
 	{
+		m_TargetInformation = new eAIGroupTargetInformation(this);
 		m_Targets = new array<eAITargetInformation>();
 
 		m_IDCounter++;
 		m_ID = m_IDCounter;
+
+		m_Members = new array<PlayerBase>();
+
+		GROUPS.Insert(this);
+	}
+
+	void ~eAIGroup()
+	{
+		int idx = GROUPS.Find(this);
+		if (idx != -1) GROUPS.RemoveOrdered(idx);
 	}
 
 	int GetID()
@@ -43,97 +52,71 @@ class eAIGroup
 		for (int i = m_Targets.Count() - 1; i >= 0; i--) m_Targets[i].Process(m_ID);
 	}
 
+    eAITargetInformation GetTargetInformation()
+    {
+        return m_TargetInformation;
+    }
+
+	void Update(float pDt)
+	{
+		ProcessTargets();
+
+		m_TargetInformation.Update(pDt);
+	}
+
 	void SetLeader(PlayerBase leader)
 	{
-		if (m_Members[0])
-			m_Members[0] = leader;
-		else
-			AddMember(leader);
+		if (!IsMember(leader)) AddMember(leader);
+
+		PlayerBase temp = m_Members[0];
+		if (temp == leader) return;
+		m_Members[0] = leader;
+
+		for (int i = 1; i < Count(); i++)
+		{
+			if (m_Members[i] == leader)
+			{
+				m_Members[i] = temp;
+				return;
+			}
+		}
 	}
 
 	PlayerBase GetLeader()
 	{
 		return m_Members[0];
 	}
+
+	bool IsMember(PlayerBase player)
+	{
+		return m_Members.Find(player) != -1;
+ 	}
 	
-	int AddMember(PlayerBase member) {
+	int AddMember(PlayerBase member)
+	{
 		return m_Members.Insert(member);
 	}
-	
-	bool RemoveMember(int i) {
-		if (i < m_Members.Count()) {
-			m_Members.RemoveOrdered(i);
-			return true;
-		}
 		
-		return false;
+	bool RemoveMember(int i)
+	{
+		if (i < 0 || i >= m_Members.Count()) return false;
+
+		m_Members.RemoveOrdered(i);
+		return true;
 	}
 	
-	PlayerBase GetMember(int i) {
+	PlayerBase GetMember(int i)
+	{
 		return m_Members[i];
 	}
-	
-	int Count() {
-		return m_Members.Count();
-	}
-	
-	void UpdateFormDir() {
-		if (!m_Members[0])
-			return;
-		
-		vector newPos = m_Members[0].GetPosition();
 
-		if (vector.DistanceSq(newPos, m_LeaderPosOld) < m_DirRecalcDistSq)
-			return;
-		
-		// Update the direction and perpend vectors
-		m_LeaderDir = newPos - m_LeaderPosOld;
-		m_LeaderDir.Normalize();
-		m_LeaderDirPerp = m_LeaderDir.Perpend(); // This should come out normalized already.
-		
-		// Set the old pos for next time
-		m_LeaderPosOld = newPos;
+	int GetIndex(PlayerBase player)
+	{
+		return m_Members.Find(player);
 	}
 	
-	// Get the world location of a position within the formation.
-	vector FormToWorld(vector formationOffset) {
-		vector FormBasePos;
-		
-		if (m_Members[0])
-			FormBasePos = m_Members[0].GetPosition();
-		else
-			FormBasePos = m_LeaderPosOld;
-		
-		return FormBasePos + (m_LeaderDir * formationOffset[2]) + (m_LeaderDirPerp * formationOffset[0]);
-	}
-	
-	// Todo: build a class called FormationBase and do polymorphism for different types of forms
-	// First number is horizontal offset, sec number is forwards in the formation
-	vector LocalFormPos(int member_no) {
-		int offset = Math.Floor((member_no+1)/2);
-		float scaled_offset = 2*offset;
-		if (member_no % 2 == 0)
-			return Vector(scaled_offset, 0, -scaled_offset); // Right side
-		else
-			return Vector(-scaled_offset, 0, -scaled_offset); // Left Side
-	}
-	
-	// get the global formation position of the i'th formation member
-	vector GlobalFormPos(int i) {
-		return FormToWorld(LocalFormPos(i));
-	}
-	
-	// Get where a specific member of the group should run to
-	vector GetFormationMemberDest(PlayerBase member) {
-		
-		// Todo we will probably want to do this more slowly in a separate loop.
-		UpdateFormDir();
-		
-		for (int i = 0; i < m_Members.Count(); i++)
-			if (m_Members[i] == member)
-				return GlobalFormPos(i);
-		
-		// Fallback, if not found in the group
-		return "0 0 0";
+	int Count()
+	{
+		return m_Members.Count();
 	}
 };

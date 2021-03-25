@@ -14,8 +14,6 @@ class eAIEntityTargetInformation extends eAITargetInformation
 
     override vector GetPosition(eAIBase ai = null)
     {
-        if (ai.GetGroup().GetLeader() == m_Target) return ai.GetGroup().GetFormationMemberDest(ai);
-        
         return m_Target.GetPosition();
     }
 };

@@ -17,7 +17,6 @@ modded class DayZGame
     {
         super.OnUpdate(doSim, timeslice);
 
-		if (m_eAI_Manager) 
-			m_eAI_Manager.OnUpdate(doSim, timeslice);
+		m_eAI_Manager.OnUpdate(doSim, timeslice);
     }
 };

@@ -22,6 +22,7 @@
 		<state name="Follow">
 			<variables>
 				<variable name="time" type="float" />
+				<variable name="target" type="eAITargetInformation" />
 			</variables>
 			<editor_data>
 				<position x="551" y="94" />
@@ -32,6 +33,8 @@
 			<event_update>
                 time += DeltaTime;
                 if (time &lt; 0.25) return CONTINUE;
+
+				target.Update(unit.GetGroup());
 				
 				time = 0;
                 return REEVALUTATE;
@@ -72,13 +75,13 @@
                 auto leader = group.GetLeader();
                 if (!leader) return FAIL;
 
-                vector pos = leader.GetPosition();
+				dst.target = group.GetTargetInformation();
+                if (!dst.target) return FAIL;
+
+                vector pos = dst.target.GetPosition(unit);
                 if (vector.Distance(pos, unit.GetPosition()) &gt; 50.0) return FAIL;
 
-				auto target = eAIEntity&lt;DayZPlayerImplement&gt;.GetTargetInformation(leader);
-                if (!target) return FAIL;
-				
-				target.AddAI(unit);
+				dst.target.AddAI(unit);
 
                 return SUCCESS;
             </guard>
@@ -98,7 +101,7 @@
                 auto leader = group.GetLeader();
                 if (!leader) return SUCCESS;
 
-				auto target = eAIEntity&lt;DayZPlayerImplement&gt;.GetTargetInformation(leader);
+				auto target = group.GetTargetInformation();
                 if (!target) return SUCCESS;
 
                 vector pos = target.GetPosition(unit);

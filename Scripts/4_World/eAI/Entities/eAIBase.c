@@ -47,6 +47,14 @@ modded class PlayerBase
 	void PlayerBase()
 	{
 	}
+
+	void ~PlayerBase()
+	{
+		if (IsAI())
+		{
+			m_eAI_Group.RemoveMember(m_eAI_Group.GetIndex(this));
+		}
+	}
 	
 	override bool IsAI()
 	{
@@ -263,7 +271,7 @@ modded class PlayerBase
 
 		m_Path.Clear();
 
-		//Print(m_eAI_Targets);
+		//Print(m_eAI_Targets.Count());
 
 		if (m_PathFilter && m_eAI_Targets.Count() > 0)
 		{

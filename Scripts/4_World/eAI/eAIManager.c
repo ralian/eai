@@ -7,6 +7,18 @@ enum eAIProcessingState
 
 class eAIManager extends eAIManagerBase
 {
+	override void OnUpdate(bool doSim, float timeslice)
+    {
+        // don't process if we aren't the server
+        if (!GetGame().IsServer()) return;
+
+		int count = eAIGroup.GROUPS.Count();
+		for (int i = 0; i < count; i++)
+		{
+			eAIGroup.GROUPS[i].Update(timeslice);
+		}
+	}
+
 	/*
 	// List of all eAI entities
 	private autoptr array<eAIProcessingState> m_AIStates = {};
