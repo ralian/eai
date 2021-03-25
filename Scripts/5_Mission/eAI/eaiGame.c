@@ -222,15 +222,15 @@ class eAIGame {
 				break;
 			}
 			case KeyCode.KC_L: {
-				GetRPCManager().SendRPC("eAI", "ClearAllAI", new Param1<PlayerBase>(GetGame().GetPlayer()));
+				GetRPCManager().SendRPC("eAI", "ClearAllAI", new Param1<PlayerBase>(PlayerBase.Cast(GetGame().GetPlayer())));
 				break;
 			}
 			case KeyCode.KC_M: {
-				GetRPCManager().SendRPC("eAI", "ProcessReload", new Param1<PlayerBase>(GetGame().GetPlayer()));
+				GetRPCManager().SendRPC("eAI", "ProcessReload", new Param1<PlayerBase>(PlayerBase.Cast(GetGame().GetPlayer())));
 				break;
 			}
 			case KeyCode.KC_B: {
-				GetRPCManager().SendRPC("eAI", "SpawnZombie", new Param1<PlayerBase>(GetGame().GetPlayer()));
+				GetRPCManager().SendRPC("eAI", "SpawnZombie", new Param1<PlayerBase>(PlayerBase.Cast(GetGame().GetPlayer())));
 				break;
 			}
         }

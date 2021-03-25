@@ -48,7 +48,7 @@ class eAITargetInformation
         eAITargetGroup params;
         if (!m_Groups.Find(group_id, params))
         {
-            Error("eAITargetInformation::Process called when target is not in group specified | group_id=" + group_id)
+            Error("eAITargetInformation::Process called when target is not in group specified | group_id=" + group_id);
             return;
         }
 
