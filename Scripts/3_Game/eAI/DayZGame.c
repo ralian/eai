@@ -16,7 +16,8 @@ modded class DayZGame
     override void OnUpdate(bool doSim, float timeslice)
     {
         super.OnUpdate(doSim, timeslice);
-
-		m_eAI_Manager.OnUpdate(doSim, timeslice);
+		
+		if (m_eAI_Manager)
+			m_eAI_Manager.OnUpdate(doSim, timeslice);
     }
 };
