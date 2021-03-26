@@ -1,10 +1,5 @@
-//todo: handle weapon firing from this command. In vanilla dayz, weapon firing doesn't work outside of HumanCommandMove anyways so there is no loss of functionality.
-
 class eAICommandMove extends eAICommandBase
 {
-	private PlayerBase m_Unit;
-	private eAIAnimationST m_ST;
-
 	private int m_PreviousInteractionLayer;
 	
 	private float m_PathAngle;
@@ -17,6 +12,10 @@ class eAICommandMove extends eAICommandBase
 	private vector m_Direction;
 	private float m_MovementDirection;
 	private float m_TargetMovementDirection;
+
+	private bool m_Look;
+	private float m_LookLR;
+	private float m_LookUD;
 	
 	private bool m_Raised;
 	
@@ -28,10 +27,8 @@ class eAICommandMove extends eAICommandBase
 
 	private vector m_Transform[4];
 
-	void eAICommandMove(PlayerBase unit, eAIAnimationST st)
+	void eAICommandMove(eAIBase unit, eAIAnimationST st)
 	{
-		m_Unit = unit;
-		m_ST = st;
 	}
 	
 	void ~eAICommandMove()
@@ -40,17 +37,28 @@ class eAICommandMove extends eAICommandBase
 
 	override void OnActivate()
 	{
+		SetSpeedMapping(0, 0.0);
+		SetSpeedMapping(1, 2.0);
+		SetSpeedMapping(2, 4.0);
+		SetSpeedMapping(3, 7.0);
+
 		SetSpeedLimit(-1);
 		
 		m_Unit.GetTransform(m_Transform);
 		
-		m_PreviousInteractionLayer = dBodyGetInteractionLayer(m_Unit);
 		dBodySetInteractionLayer(m_Unit, PhxInteractionLayers.CHARACTER | PhxInteractionLayers.BUILDING | PhxInteractionLayers.DOOR | PhxInteractionLayers.VEHICLE | PhxInteractionLayers.ITEM_LARGE | PhxInteractionLayers.FENCE | PhxInteractionLayers.AI);
 	}
 
 	override void OnDeactivate()
 	{
-		dBodySetInteractionLayer(m_Unit, m_PreviousInteractionLayer);
+	}
+
+	override void SetLookDirection(vector direction)
+	{
+		vector angles = direction.VectorToAngles();
+		m_LookLR = angles[0];
+		m_LookUD = angles[1];
+		m_Look = (Math.AbsFloat(m_LookLR) > 0.01) || (Math.AbsFloat(m_LookUD) > 0.01);
 	}
 
 	void SetSpeedLimit(float speedIdx)
@@ -125,22 +133,20 @@ class eAICommandMove extends eAICommandBase
 
 	override void PreAnimUpdate(float pDt)
 	{
-		SetSpeedMapping(0, 0.0);
-		SetSpeedMapping(1, 2.0);
-		SetSpeedMapping(2, 4.0);
-		SetSpeedMapping(3, 7.0);
+		PreAnim_SetFilteredHeading(0, 0.3, 180);
 
-		m_ST.SetMovementSpeed(this, m_Speed);
+		m_Table.SetMovementSpeed(this, m_Speed);
 		
 		m_TargetMovementDirection = Math.NormalizeAngle(m_Direction.VectorToAngles()[0]);
 		if (m_TargetMovementDirection > 180.0) m_TargetMovementDirection = m_TargetMovementDirection - 360.0;
 
-		m_ST.SetMovementDirection(this, m_MovementDirection);
+		m_Table.SetMovementDirection(this, m_MovementDirection);
 		
-		m_ST.SetRaised(this, m_Raised);
-		
-		//m_ST.SetAimX(this, false);
-		//m_ST.SetAimY(this, false);
+		m_Table.SetRaised(this, m_Raised);
+
+		m_Table.SetLook(this, m_Look);
+		m_Table.SetLookDirX(this, m_LookLR);
+		m_Table.SetLookDirY(this, m_LookUD);
 	}
 
 	override void PrePhysUpdate(float pDt)
@@ -227,13 +233,16 @@ class eAICommandMove extends eAICommandBase
 
 		m_TargetMovementDirection = 0.0;
 		
-		if (rightDist > leftDist && forwardBlocking < 0.9)
+		if (forwardBlocking < 0.9)
 		{
-			m_TargetMovementDirection = 90.0;
-		}
-		else if (leftDist < rightDist && forwardBlocking < 0.9)
-		{
-			m_TargetMovementDirection = -90.0;
+			if (rightDist > leftDist)
+			{
+				m_TargetMovementDirection = 90.0;
+			}
+			else if (leftDist < rightDist)
+			{
+				m_TargetMovementDirection = -90.0;
+			}
 		}
 		
 		m_MovementDirection += Math.Clamp((m_TargetMovementDirection - m_MovementDirection) * pDt, -180.0, 180.0);
@@ -252,20 +261,9 @@ class eAICommandMove extends eAICommandBase
 		m_Unit.AddShape(Shape.CreateSphere(0xFFFF0000, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, m_Unit.GetPosition() + m_Transform[2], 0.05));
 		m_Unit.AddShape(Shape.CreateSphere(0xFF00FF00, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, wayPoint, 0.05));
 #endif
-		//float dS = 2*(Math.Min(m_TargetSpeed, m_SpeedLimit) - m_Speed);
-		//float animationIndexAcceleration = Math.Clamp(dS, -1000.0, 1.0) * pDt;
-		//m_Speed= Math.Clamp(m_Speed + animationIndexAcceleration, 0.0, 3.0);
-		
-		// This is an integer smoother to prevent m_Speed from rapidly changing
-		if (Math.AbsFloat(m_TargetSpeed - m_Speed) > 0.20) {
-			if (++m_ChangeCounter > 7) {
-				if (m_TargetSpeed > m_Speed)
-					m_Speed++;
-				else m_Speed--;
-				//m_Speed = m_TargetSpeed;
-				m_ChangeCounter = 0;
-			}
-		} else m_ChangeCounter = 0;
+
+		float animationIndexAcceleration = Math.Clamp(Math.Min(m_TargetSpeed, m_SpeedLimit) - m_Speed, -120.0, 40.0) * pDt;
+		m_Speed = Math.Clamp(m_Speed + animationIndexAcceleration, 0.0, 3.0);
 		
 		PrePhys_SetAngles(Vector(angleDt, 0, 0));
 		PrePhys_SetTranslation(m_Direction * GetSpeedMS(m_Speed) * pDt);
