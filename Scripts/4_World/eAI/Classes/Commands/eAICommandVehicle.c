@@ -62,6 +62,8 @@ class eAICommandVehicle extends eAICommandBase
 		vector angles = direction.VectorToAngles();
 		m_LookLR = angles[0];
 		m_LookUD = angles[1];
+		if (m_LookLR > 180) m_LookLR = m_LookLR - 360;
+		if (m_LookUD > 180) m_LookUD = m_LookUD - 360;
 		m_Look = (Math.AbsFloat(m_LookLR) > 0.01) || (Math.AbsFloat(m_LookUD) > 0.01);
 	}
 

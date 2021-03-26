@@ -12,10 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+enum eAITargetOverriding
+{
+	NONE,
+	POSITION,
+	PATH
+};
+
 /* TODO: class eAIBase extends PlayerBase // needs config entries */
 typedef PlayerBase eAIBase;
 modded class PlayerBase
 {
+	static autoptr array<eAIBase> m_eAI = new array<eAIBase>();
+
 	private bool m_eAI_Is = false;
 
 	private autoptr eAIHFSM m_FSM;
@@ -32,17 +41,21 @@ modded class PlayerBase
     // Look/Aiming
 	private vector m_TargetLocation;
 
-	private vector m_eAI_LookDirection_WorldSpace;
-	private vector m_eAI_AimDirection_WorldSpace;
+	private vector m_eAI_LookPosition_WorldSpace;
+	private vector m_eAI_AimPosition_WorldSpace;
 
 	private vector m_eAI_LookDirection_ModelSpace;
+	private bool m_eAI_LookDirection_Recalculate;
 	private vector m_eAI_AimDirection_ModelSpace;
+	private bool m_eAI_AimDirection_Recalculate;
 	
 	private bool m_WeaponRaised;
     
     // Path Finding
 	private autoptr PGFilter m_PathFilter;
 	private autoptr array<vector> m_Path = new array<vector>();
+	private vector m_TargetPosition;
+	private eAITargetOverriding m_eAI_TargetOverriding = eAITargetOverriding.NONE;
 
 #ifndef SERVER
 	private autoptr array<Shape> m_DebugShapes = new array<Shape>();
@@ -57,6 +70,8 @@ modded class PlayerBase
 		if (IsAI())
 		{
 			m_eAI_Group.RemoveMember(m_eAI_Group.GetIndex(this));
+
+			m_eAI.RemoveItem(this);
 		}
 	}
 	
@@ -83,6 +98,8 @@ modded class PlayerBase
 			m_eAI_Group.SetLeader(this);
 		}
 
+		m_eAI.Insert(this);
+
 		m_AimingModel = new eAIImplementAiming(this);
 		m_ActionManager = new eAIActionManager(this);
 		m_WeaponManager = new eAIWeaponManager(this);
@@ -106,6 +123,9 @@ modded class PlayerBase
 			m_FSM = type.Spawn(this, null);
 			m_FSM.StartDefault();
 		}
+
+		LookAtDirection("0 0 1");
+		AimAtDirection("0 0 1");
 
 		return m_eAI_Group;
 	}
@@ -253,6 +273,11 @@ modded class PlayerBase
 		return vector.Direction(pos1, pos2).Normalized().VectorToAngles()[0];
 	}
 
+	vector GetTargetPosition()
+	{
+		return m_TargetPosition;
+	}
+
 	eAICommandMove GetCommand_MoveAI()
 	{
 		return eAICommandMove.Cast(GetCommand_Script());
@@ -295,12 +320,16 @@ modded class PlayerBase
 
 		if (!GetGame().IsServer()) return;
 
-		m_Path.Clear();
-
-		if (m_PathFilter && m_eAI_Targets.Count() > 0)
+		if (m_eAI_TargetOverriding != eAITargetOverriding.PATH)
 		{
-			AIWorld world = GetGame().GetWorld().GetAIWorld();
-			world.FindPath(GetPosition(), m_eAI_Targets[0].param5.GetPosition(this), m_PathFilter, m_Path);
+			m_Path.Clear();
+
+			if (m_PathFilter && m_eAI_Targets.Count() > 0)
+			{
+				AIWorld world = GetGame().GetWorld().GetAIWorld();
+				if (m_eAI_TargetOverriding != eAITargetOverriding.POSITION) m_TargetPosition = m_eAI_Targets[0].param5.GetPosition(this);
+				world.FindPath(GetPosition(), m_TargetPosition, m_PathFilter, m_Path);
+			}
 		}
 		
 		//! handle death with high priority
@@ -311,9 +340,11 @@ modded class PlayerBase
 
 		vector transform[4];
 		GetTransform(transform);
+		
+		AimAtPosition(GetGame().GetPlayer().GetPosition());
 
-		m_eAI_LookDirection_ModelSpace = m_eAI_LookDirection_WorldSpace.Multiply3(transform);
-		m_eAI_AimDirection_ModelSpace = m_eAI_AimDirection_WorldSpace.Multiply3(transform);
+		if (m_eAI_LookDirection_Recalculate) m_eAI_LookDirection_ModelSpace = (m_eAI_LookPosition_WorldSpace - transform[3]).Normalized().Multiply3(transform);
+		if (m_eAI_AimDirection_Recalculate) m_eAI_AimDirection_ModelSpace = (m_eAI_AimPosition_WorldSpace - transform[3]).Normalized().InvMultiply3(transform);
 
 		HumanInputController hic = GetInputController();
 		EntityAI entityInHands = GetHumanInventory().GetEntityInHands();
@@ -560,16 +591,27 @@ modded class PlayerBase
 			return;
 		}
 
-		HumanCommandWeapons		hcw = GetCommandModifier_Weapons();
+		HumanCommandWeapons hcw = GetCommandModifier_Weapons();
     	GetDayZPlayerInventory().HandleWeaponEvents(pDt, pExitIronSights);
 		
-		if (m_WeaponRaised) {
-			float targetAngle = -15.0;
-			float delta = -((GetAimingModel().GetAimY()-targetAngle)*Math.DEG2RAD);
-			Print("Aim Debugging - X: " + GetAimingModel().GetAimX() + " Y: " + GetAimingModel().GetAimY() + " deltaY: " + delta);
-			pInputs.OverrideAimChangeX(true, 90.0);
-			pInputs.OverrideAimChangeY(true, 90.0);
-			GetAimingModel().SetDummyRecoil(Weapon_Base.Cast(pInHands));
+		if (m_WeaponRaised)
+		{
+			vector angles = m_eAI_AimDirection_ModelSpace.VectorToAngles();
+			float targetLR = angles[0];
+			float targetUD  = angles[1];
+			float currentLR = hcw.GetBaseAimingAngleLR();
+			float currentUD  = hcw.GetBaseAimingAngleUD();
+			if (targetLR > 180) targetLR = targetLR - 360;
+			if (targetUD > 180) targetUD = targetUD - 360;
+			float deltaLR = (targetLR - currentLR) * pDt;
+			float deltaUD = (targetUD - currentUD) * pDt;
+			
+			//Print("currentLR=" + currentLR + " targetLR=" + targetLR + " currentUD=" + currentUD + " targetUD=" + targetUD + " deltaLR=" + deltaLR + " deltaUD=" + deltaUD);
+
+			pInputs.OverrideAimChangeY(true, deltaLR);
+			pInputs.OverrideAimChangeX(true, deltaUD);
+
+			//GetAimingModel().SetDummyRecoil(Weapon_Base.Cast(pInHands));
 		}
 
 		return;
@@ -706,33 +748,29 @@ modded class PlayerBase
 	}
 	
 	// @param LookWS a position in WorldSpace to look at
-	void SetLookDir(vector pPositionWS, bool pImmediate = false)
+	void LookAtPosition(vector pPositionWS)
 	{
-		const float playerHeadHeight = 1.5;
-		pPositionWS[1] = pPositionWS[1] - playerHeadHeight; // Compensate for the height of the unit (from where they are looking)
-		
-		vector transform[4];
-		GetTransform(transform);
-
-		m_eAI_LookDirection_WorldSpace = (pPositionWS - transform[3]).Normalized();
-		
-		if (pImmediate)
-			m_eAI_LookDirection_ModelSpace = m_eAI_LookDirection_WorldSpace.Multiply3(transform);
+		m_eAI_LookPosition_WorldSpace = pPositionWS;
+		m_eAI_LookDirection_Recalculate = true;
 	}
 	
 	// @param AimWS a position in WorldSpace to Aim at
-	void SetAimDir(vector pPositionWS, bool pImmediate = false)
+	void AimAtPosition(vector pPositionWS)
 	{
-		const float playerHeadHeight = 1.5;
-		pPositionWS[1] = pPositionWS[1] - playerHeadHeight; // Compensate for the height of the unit (from where they are looking)
-		
-		vector transform[4];
-		GetTransform(transform);
+		m_eAI_AimPosition_WorldSpace = pPositionWS;
+		m_eAI_AimDirection_Recalculate = true;
+	}
 
-		m_eAI_AimDirection_WorldSpace = (pPositionWS - transform[3]).Normalized();
-		
-		if (pImmediate)
-			m_eAI_AimDirection_ModelSpace = m_eAI_AimDirection_WorldSpace.Multiply3(transform);
+	void LookAtDirection(vector pDirectionMS)
+	{
+		m_eAI_LookDirection_ModelSpace = pDirectionMS;
+		m_eAI_LookDirection_Recalculate = false;
+	}
+
+	void AimAtDirection(vector pDirectionMS)
+	{
+		m_eAI_AimDirection_ModelSpace = pDirectionMS;
+		m_eAI_AimDirection_Recalculate = false;
 	}
 		
 	override bool AimingModel(float pDt, SDayZPlayerAimingModel pModel)

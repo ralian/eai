@@ -20,9 +20,16 @@ class eAICommandMove extends eAICommandBase
 	private bool m_Raised;
 	
 	private float m_Speed;
+	private float m_PhysicsSpeed;
 	private float m_TargetSpeed;
 	private float m_SpeedLimit;
-	private float m_SpeedMapping[8];
+	
+	private float m_LastSpeedChangeTime;
+	
+	private const float WALK_SPEED = 2.0;
+	private const float RUN_SPEED = 4.0;
+	private const float SPRINT_SPEED = 7.0;
+	
 	private int m_ChangeCounter = 0;
 
 	private vector m_Transform[4];
@@ -37,11 +44,6 @@ class eAICommandMove extends eAICommandBase
 
 	override void OnActivate()
 	{
-		SetSpeedMapping(0, 0.0);
-		SetSpeedMapping(1, 2.0);
-		SetSpeedMapping(2, 4.0);
-		SetSpeedMapping(3, 7.0);
-
 		SetSpeedLimit(-1);
 		
 		m_Unit.GetTransform(m_Transform);
@@ -58,6 +60,8 @@ class eAICommandMove extends eAICommandBase
 		vector angles = direction.VectorToAngles();
 		m_LookLR = angles[0];
 		m_LookUD = angles[1];
+		if (m_LookLR > 180) m_LookLR = m_LookLR - 360;
+		if (m_LookUD > 180) m_LookUD = m_LookUD - 360;
 		m_Look = (Math.AbsFloat(m_LookLR) > 0.01) || (Math.AbsFloat(m_LookUD) > 0.01);
 	}
 
@@ -68,54 +72,23 @@ class eAICommandMove extends eAICommandBase
 		if (m_SpeedLimit < 0 || m_SpeedLimit > 3) m_SpeedLimit = 3;
 	}
 	
+	void SetTargetSpeed(float target)
+	{
+		if (m_LastSpeedChangeTime < 0.5) return;
+		
+		m_LastSpeedChangeTime = 0;
+		m_TargetSpeed = target;
+	}
+	
 	void SetRaised(bool raised)
 	{
 		m_Raised = raised;
 	}
-
-	void SetSpeedMapping(int i, float speedMS)
-	{
-		int index = i * 2;
-		m_SpeedMapping[ index ]		= i;
-		m_SpeedMapping[ index + 1 ]	= speedMS;
-	}
-
-	float GetSpeedMS(float speedIdx)
-	{
-		int index = Math.Floor(speedIdx);
-		if (index >= 3)
-			return m_SpeedMapping[ 7 ];
-
-		float a = m_SpeedMapping[ (index * 2) + 1 ];
-		float b = m_SpeedMapping[ ((index + 1) * 2) + 1 ];
-
-		return Math.Lerp(a, b, speedIdx - index);
-	}
-
-	float GetSpeedIndex(float speedMs)
-	{
-		int i = 0;
-		while (i < 4)
-		{
-			if (m_SpeedMapping[ i * 2 + 1 ] > speedMs)
-				break;
-
-			++i;
-		}
-
-		if (i >= 3)
-			return m_SpeedMapping[ 6 ];
-
-		float a = m_SpeedMapping[ i * 2 + 1 ];
-		float b = m_SpeedMapping[ (i + 1) * 2 + 1 ];
-
-		return i + ((a - speedMs) / (a - b));
-	}
 	
 	float ShortestAngle(float a, float b)
 	{
-		//if (a - b > 0) return a - b;
-		//return b - a;
+		if (a - b > 0) return a - b;
+		return b - a;
 		
 		int aa = a;
 		int bb = b;
@@ -133,8 +106,6 @@ class eAICommandMove extends eAICommandBase
 
 	override void PreAnimUpdate(float pDt)
 	{
-		PreAnim_SetFilteredHeading(0, 0.3, 180);
-
 		m_Table.SetMovementSpeed(this, m_Speed);
 		
 		m_TargetMovementDirection = Math.NormalizeAngle(m_Direction.VectorToAngles()[0]);
@@ -161,10 +132,12 @@ class eAICommandMove extends eAICommandBase
 			return;
 		}
 		
+		m_LastSpeedChangeTime += pDt;
+		
 		m_MaxTurnSpeed = 25.0;
 		m_MaxTurnAcceleration = 10.0;
 		
-		vector expectedPosition = m_Unit.GetPosition() + (m_Direction * GetSpeedMS(m_Speed) * pDt);
+		vector expectedPosition = m_Unit.ModelToWorld(m_Direction * m_PhysicsSpeed * pDt);
 
 		float wayPointDistance;
 		int wayPointIndex = m_Unit.FindNext(expectedPosition, wayPointDistance);
@@ -174,16 +147,15 @@ class eAICommandMove extends eAICommandBase
 		bool isFinal = wayPointIndex == m_Unit.PathCount() - 1;
 		
 		if (!isFinal || (isFinal && wayPointDistance > 0.5))
-		{
-			m_PathAngle = Math.NormalizeAngle(m_Unit.AngleBetweenPoints(expectedPosition, wayPoint));
+		{			
+			vector pathDir = m_Unit.WorldToModel(wayPoint).Normalized();
+			float pathAngleDiff = pathDir.VectorToAngles()[0];
+			if (pathAngleDiff > 180.0) pathAngleDiff = pathAngleDiff - 360.0;
 			
-			float currentYaw = Math.NormalizeAngle(m_Unit.GetOrientation()[0]);
-			if (m_PathAngle > 180.0) m_PathAngle = m_PathAngle - 360.0;
-			if (currentYaw > 180.0) currentYaw = currentYaw - 360.0;
-			
-			float pathAngleDiff = ShortestAngle(m_PathAngle, currentYaw);
 			m_TurnSpeed = Math.Clamp(pathAngleDiff, -m_MaxTurnSpeed, m_MaxTurnSpeed);
-		} else
+			m_PathAngle = m_Unit.GetOrientation()[0] + m_TurnSpeed;
+		}
+		else
 		{
 			m_PathAngle = m_Unit.GetOrientation()[0];
 			m_TurnSpeed = 0;
@@ -194,21 +166,33 @@ class eAICommandMove extends eAICommandBase
 		
 		float angleDt = m_TurnSpeed * pDt * 10.0;
 		
-		m_TargetSpeed = 0.0;
 		
-		if (Math.AbsFloat(angleDt) < 0.125)
-			angleDt = 0;
-		
-		if (wayPointDistance < 20.0)
-			m_TargetSpeed = 2.0;
-		else if (wayPointDistance < 8.0)
-			m_TargetSpeed = 1.0;
+		if (Math.AbsFloat(angleDt) < 0.125 * m_PhysicsSpeed)
+		{			
+			if (isFinal)
+			{
+				if (wayPointDistance < 1.0)
+					SetTargetSpeed(0.0);
+				else if (wayPointDistance < 8.0)
+					SetTargetSpeed(1.0);
+				else if (wayPointDistance < 20.0)
+					SetTargetSpeed(2.0);
+				else 
+					SetTargetSpeed(3.0);
+			}
+			else
+				SetTargetSpeed(3.0);
+			
+			angleDt = angleDt / 10.0;
+		}
 		else
-			m_TargetSpeed = 3.0;
+		{
+			//! turn in place - todo: perform animation
+			SetTargetSpeed(0.0);
+		}
 		
-		if (isFinal && wayPointDistance < 1.0)
-			m_TargetSpeed = 0.0;
-
+		if (m_Raised) SetSpeedLimit(1);
+		
 		
 		vector leftPos;
 		vector rightPos;
@@ -246,12 +230,7 @@ class eAICommandMove extends eAICommandBase
 		}
 		
 		m_MovementDirection += Math.Clamp((m_TargetMovementDirection - m_MovementDirection) * pDt, -180.0, 180.0);
-		
-		if (maxLRDist < 0.1)
-		{
-		//	m_TargetSpeed = 0.0;
-		}
-		
+				
 		float movementDirectionCorrected = m_MovementDirection;
 		if (movementDirectionCorrected < 0) movementDirectionCorrected = 360.0 - movementDirectionCorrected;
 		m_Direction = Vector(movementDirectionCorrected, 0, 0).AnglesToVector();
@@ -261,12 +240,28 @@ class eAICommandMove extends eAICommandBase
 		m_Unit.AddShape(Shape.CreateSphere(0xFFFF0000, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, m_Unit.GetPosition() + m_Transform[2], 0.05));
 		m_Unit.AddShape(Shape.CreateSphere(0xFF00FF00, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, wayPoint, 0.05));
 #endif
-
-		float animationIndexAcceleration = Math.Clamp(Math.Min(m_TargetSpeed, m_SpeedLimit) - m_Speed, -120.0, 40.0) * pDt;
-		m_Speed = Math.Clamp(m_Speed + animationIndexAcceleration, 0.0, 3.0);
+		float speedCheck = m_TargetSpeed;
+		if (speedCheck > m_SpeedLimit && m_SpeedLimit != -1) speedCheck = m_SpeedLimit;
 		
+		m_PhysicsSpeed = 0.0;
+		m_Speed = 0;
+		
+		if (speedCheck == 1)
+		{
+			m_Speed = 1;
+			m_PhysicsSpeed = WALK_SPEED;
+		} else if (speedCheck == 2)
+		{
+			m_Speed = 2;
+			m_PhysicsSpeed = RUN_SPEED;
+		} else if (speedCheck > 2)
+		{
+			m_Speed = Math.Clamp(speedCheck, 2, 3);
+			m_PhysicsSpeed = Math.Lerp(RUN_SPEED, SPRINT_SPEED, m_Speed - 2);
+		}
+						
 		PrePhys_SetAngles(Vector(angleDt, 0, 0));
-		PrePhys_SetTranslation(m_Direction * GetSpeedMS(m_Speed) * pDt);
+		PrePhys_SetTranslation(m_Direction * m_PhysicsSpeed * pDt);
 	}
 
 	override bool PostPhysUpdate(float pDt)

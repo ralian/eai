@@ -60,6 +60,11 @@ class eAIGroupTargetInformation extends eAITargetInformation
 
     void Update(float pDt)
     {
+		for (int i = 0; i < m_Target.Count(); i++)
+		{
+			//Print("" + i + "  " + m_Target.GetMember(i));
+		}
+		
 		vector newPos = GetLeaderPosition();
 		if (vector.DistanceSq(newPos, m_LeaderPosOld) < m_DirRecalcDistSq)
 			return;
