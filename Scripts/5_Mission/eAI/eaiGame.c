@@ -213,10 +213,6 @@ class eAIGame {
 	
 	void OnKeyPress(int key) {
         switch (key) {
-            case KeyCode.KC_K: {
-				GetRPCManager().SendRPC("eAI", "SpawnEntity", new Param1<DayZPlayer>(GetGame().GetPlayer()));
-                break;
-            }
 			case KeyCode.KC_N: {
 				GetRPCManager().SendRPC("eAI", "MoveAllToPos", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
 				break;
@@ -239,11 +235,11 @@ class eAIGame {
 
 modded class MissionServer
 {
-    ref eAIGame m_eaiGame;
+    autoptr eAIGame m_eaiGame;
 
     void MissionServer()
     {
-        m_eaiGame = new ref eAIGame();
+        m_eaiGame = new eAIGame();
 
 		GetDayZGame().eAICreateManager();
 
@@ -253,11 +249,13 @@ modded class MissionServer
 
 modded class MissionGameplay
 {
-    ref eAIGame m_eaiGame;
+    autoptr eAIGame m_eaiGame;
+	UAInput m_eAIRadialKey;
 
     void MissionGameplay()
     {
         m_eaiGame = new eAIGame();
+		m_eAIRadialKey = GetUApi().GetInputByName("eAIOpenRadial");
 
 		GetDayZGame().eAICreateManager();
 
@@ -270,4 +268,11 @@ modded class MissionGameplay
 
         m_eaiGame.OnKeyPress( key );
     }
+	
+	override void OnUpdate(float timeslice) {
+		super.OnUpdate(timeslice);
+
+		if (m_eAIRadialKey.LocalPress())
+			GetRPCManager().SendRPC("eAI", "SpawnEntity", new Param1<DayZPlayer>(GetGame().GetPlayer()));
+	}
 };
