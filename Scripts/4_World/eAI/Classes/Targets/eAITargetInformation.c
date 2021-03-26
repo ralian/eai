@@ -149,12 +149,14 @@ class eAITargetInformation
     {
         eAITargetGroup params;
         if (!m_Groups.Find(group_id, params)) return;
-
-        params.param1.OnTargetRemoved(this);
-
-        foreach (eAIBase ai : params.param4)
-			if (ai)
-				ai.OnRemoveTarget(params);
+		
+		if (params.param1 && params.param4) {
+	        params.param1.OnTargetRemoved(this);
+	
+	        foreach (eAIBase ai : params.param4)
+				if (ai)
+					ai.OnRemoveTarget(params);
+		}
 
         m_Groups.Remove(group_id);
         delete params;

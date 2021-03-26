@@ -313,9 +313,13 @@ modded class PlayerBase
 		UpdateDelete();
 		
 		m_eAI_Command = eAICommandBase.Cast(GetCommand_Script());
-
-		if (pCurrentCommandFinished)
-		{
+		
+		if (m_WeaponRaised) {
+			//if (m_eAI_Command)
+			//	m_eAI_Command.SetFlagFinished(true);
+		}
+		
+		if (pCurrentCommandFinished) {
 			if (PhysicsIsFalling(true))
 			{
 				StartCommand_Fall(0);
@@ -408,7 +412,7 @@ modded class PlayerBase
 		{
 		}
 		
-		//OnCommandHandlerTick(pDt, pCurrentCommandID);
+		OnCommandHandlerTick(pDt, pCurrentCommandID);
 	}
 		
 	// We should integrate this into ReloadWeapon
@@ -472,6 +476,15 @@ modded class PlayerBase
 
 		HumanCommandWeapons		hcw = GetCommandModifier_Weapons();
     	GetDayZPlayerInventory().HandleWeaponEvents(pDt, pExitIronSights);
+		
+		if (m_WeaponRaised) {
+			float targetAngle = -15.0;
+			float delta = -((GetAimingModel().getAimY()-targetAngle)*Math.DEG2RAD);
+			Print("Aim Debugging - X: " + GetAimingModel().getAimX() + " Y: " + GetAimingModel().getAimY() + " deltaY: " + delta);
+			pInputs.OverrideAimChangeX(true, 90.0);
+			pInputs.OverrideAimChangeY(true, 90.0);
+			GetAimingModel().SetDummyRecoil(Weapon_Base.Cast(pInHands));
+		}
 
 		return;
 
@@ -527,19 +540,6 @@ modded class PlayerBase
 			if (optic)
 				HandleOptic(optic, false, pInputs, pExitIronSights);
 		}
-	
-		/*if (!m_LiftWeapon_player && weapon && weapon.CanProcessWeaponEvents())
-		{
-			if (pInputs.IsReloadOrMechanismContinuousUseStart())
-			{
-				if (GetWeaponManager().CanUnjam(weapon))
-				{
-					//weapon.ProcessWeaponEvent(new WeaponEventUnjam(this));
-					GetWeaponManager().Unjam();
-					//pExitIronSights = true;
-				}
-			}
-		}*/
 	
 		if (!m_MovementState.IsRaised())
 		{
@@ -611,7 +611,14 @@ modded class PlayerBase
 	// @param true to put weapon up, false to lower
 	void RaiseWeapon(bool up) {
 		m_WeaponRaised = up;
+		//GetInputController().OverrideRaise(true, up);
 		eAICommandMove.Cast(m_eAI_Command).SetRaised(up);
+		HumanCommandMove cm = GetCommand_Move();
+		if (m_WeaponRaised) {
+			cm.ForceStance(DayZPlayerConstants.STANCEIDX_RAISEDERECT);
+		} else {
+			cm.ForceStance(DayZPlayerConstants.STANCEIDX_ERECT);
+		}
 	}
 	
 	bool IsWeaponRaised() {
@@ -636,7 +643,7 @@ modded class PlayerBase
 		
 	override bool AimingModel(float pDt, SDayZPlayerAimingModel pModel)
 	{
-		if (IsAI())
+		if (IsAI() && !m_WeaponRaised)
 		{
 			return false;
 		}
@@ -646,7 +653,7 @@ modded class PlayerBase
 		
 	override bool HeadingModel(float pDt, SDayZPlayerHeadingModel pModel)
 	{
-		if (IsAI())
+		if (IsAI() && !m_WeaponRaised)
 		{
 			return false;
 		}
