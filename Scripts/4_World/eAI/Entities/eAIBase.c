@@ -273,15 +273,17 @@ modded class PlayerBase
 
 		m_Path.Clear();
 
-		//Print(m_eAI_Targets.Count());
-
 		if (m_PathFilter && m_eAI_Targets.Count() > 0)
 		{
-			//Print(m_eAI_Targets[0]);
-
 			AIWorld world = GetGame().GetWorld().GetAIWorld();
 			world.FindPath(GetPosition(), m_eAI_Targets[0].param5.GetPosition(this), m_PathFilter, m_Path);
 		}
+
+		vector transform[4];
+		GetTransform(transform);
+
+		m_eAI_LookDirection_ModelSpace = m_eAI_LookDirection_WorldSpace.Multiply3(transform);
+		m_eAI_AimDirection_ModelSpace = m_eAI_AimDirection_WorldSpace.Multiply3(transform);
 
 		HumanInputController hic = GetInputController();
 		EntityAI entityInHands = GetHumanInventory().GetEntityInHands();
@@ -410,6 +412,8 @@ modded class PlayerBase
 		
 		if (pCurrentCommandID == DayZPlayerConstants.COMMANDID_SCRIPT)
 		{
+			eAICommandMove hcm = eAICommandMove.Cast(m_eAI_Command);
+			hcm.SetRaised(m_WeaponRaised);
 		}
 		
 		OnCommandHandlerTick(pDt, pCurrentCommandID);
@@ -609,16 +613,9 @@ modded class PlayerBase
 	}
 	
 	// @param true to put weapon up, false to lower
-	void RaiseWeapon(bool up) {
+	void RaiseWeapon(bool up)
+	{
 		m_WeaponRaised = up;
-		//GetInputController().OverrideRaise(true, up);
-		eAICommandMove.Cast(m_eAI_Command).SetRaised(up);
-		HumanCommandMove cm = GetCommand_Move();
-		if (m_WeaponRaised) {
-			cm.ForceStance(DayZPlayerConstants.STANCEIDX_RAISEDERECT);
-		} else {
-			cm.ForceStance(DayZPlayerConstants.STANCEIDX_ERECT);
-		}
 	}
 	
 	bool IsWeaponRaised() {
@@ -626,19 +623,33 @@ modded class PlayerBase
 	}
 	
 	// @param LookWS a position in WorldSpace to look at
-	void SetLookDir(vector LookWS) {
-		LookWS[1] = LookWS[1] - 1.5; // Compensate for the height of the unit (from where they are looking)
-		m_eAI_LookDirection_WorldSpace = (LookWS - GetPosition()).VectorToAngles();
-		LookWS = WorldToModel(LookWS);
-		m_eAI_LookDirection_ModelSpace = LookWS.VectorToAngles();
+	void SetLookDir(vector pPositionWS, bool pImmediate = false)
+	{
+		const float playerHeadHeight = 1.5;
+		pPositionWS[1] = pPositionWS[1] - playerHeadHeight; // Compensate for the height of the unit (from where they are looking)
+		
+		vector transform[4];
+		GetTransform(transform);
+
+		m_eAI_LookDirection_WorldSpace = (pPositionWS - transform[3]).Normalized();
+		
+		if (pImmediate)
+			m_eAI_LookDirection_ModelSpace = m_eAI_LookDirection_WorldSpace.Multiply3(transform);
 	}
 	
 	// @param AimWS a position in WorldSpace to Aim at
-	void SetAimDir(vector AimWS) {
-		AimWS[1] = AimWS[1] - 1.5; // Compensate for the height of the unit (from where they are looking)
-		m_eAI_LookDirection_WorldSpace = (AimWS - GetPosition()).VectorToAngles();
-		AimWS = WorldToModel(AimWS);
-		m_eAI_LookDirection_ModelSpace = AimWS.VectorToAngles();
+	void SetAimDir(vector pPositionWS, bool pImmediate = false)
+	{
+		const float playerHeadHeight = 1.5;
+		pPositionWS[1] = pPositionWS[1] - playerHeadHeight; // Compensate for the height of the unit (from where they are looking)
+		
+		vector transform[4];
+		GetTransform(transform);
+
+		m_eAI_AimDirection_WorldSpace = (pPositionWS - transform[3]).Normalized();
+		
+		if (pImmediate)
+			m_eAI_AimDirection_ModelSpace = m_eAI_AimDirection_WorldSpace.Multiply3(transform);
 	}
 		
 	override bool AimingModel(float pDt, SDayZPlayerAimingModel pModel)
