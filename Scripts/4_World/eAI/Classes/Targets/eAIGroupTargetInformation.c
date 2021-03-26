@@ -19,6 +19,13 @@ class eAIGroupTargetInformation extends eAITargetInformation
         return m_Target.GetLeader();
     }
 
+	vector GetLeaderPosition()
+	{
+		if (GetEntity()) return GetEntity().GetPosition();
+
+		return m_LeaderPosOld;
+	}
+
     override vector GetPosition(eAIBase ai = null)
     {
         if (ai.GetGroup() == m_Target)
@@ -29,7 +36,7 @@ class eAIGroupTargetInformation extends eAITargetInformation
             return worldPos;
         }
 
-        return GetEntity().GetPosition();
+        return GetLeaderPosition();
     }
 
 	// Todo: build a class called FormationBase and do polymorphism for different types of forms
@@ -53,8 +60,7 @@ class eAIGroupTargetInformation extends eAITargetInformation
 
     void Update(float pDt)
     {
-		vector newPos = GetEntity().GetPosition();
-
+		vector newPos = GetLeaderPosition();
 		if (vector.DistanceSq(newPos, m_LeaderPosOld) < m_DirRecalcDistSq)
 			return;
 		
