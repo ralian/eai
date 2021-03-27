@@ -39,7 +39,6 @@ class eAIGame {
 		}
 		
 		GetRPCManager().AddRPC("eAI", "SpawnEntity", this, SingeplayerExecutionType.Server);
-		GetRPCManager().AddRPC("eAI", "MoveAllToPos", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "DebugFire", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "DebugParticle", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "SpawnZombie", this, SingeplayerExecutionType.Server);
@@ -107,20 +106,6 @@ class eAIGame {
         }
 	}
 	
-	// Server Side: TP all players to the caller's position. For testing only.
-	void MoveAllToPos(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<vector> data;
-        if (!ctx.Read(data)) return;
-		if(type == CallType.Server ) {
-            Print("eAI: Moving all units to position...");
-			array<Man> players = new array<Man>();
-			GetGame().GetPlayers(players);
-			foreach (Man p : players) {
-				p.SetPosition(data.param1);
-			}
-		}
-	}
-	
 	// Server Side: Delete AI.
 	void ClearAllAI(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param1<PlayerBase> data;
@@ -145,14 +130,16 @@ class eAIGame {
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
             Print("eAI: ProcessReload called.");
-			foreach (eAIGroup g : m_groups) {
-				for (int i = g.Count() - 1; i > -1; i--) {
-					PlayerBase p = g.GetMember(i);
-					Weapon_Base w = Weapon_Base.Cast(p.GetHumanInventory().GetEntityInHands());
-					if (p.IsAI() && w)
-						p.RaiseWeapon(!p.IsWeaponRaised());
-				}	
-			}
+			
+			eAIGroup g = GetGroupByLeader(data.param1);
+
+			for (int i = g.Count() - 1; i > -1; i--) {
+				PlayerBase p = g.GetMember(i);
+				Weapon_Base w = Weapon_Base.Cast(p.GetHumanInventory().GetEntityInHands());
+				if (p.IsAI() && w)
+					p.QuickReloadWeapon(w);
+			}	
+
 		}
 	}
 	
@@ -210,27 +197,6 @@ class eAIGame {
 		}
 		else {Error("ClientWeaponDataWithCallback called wrongfully");}
 	}
-	
-	void OnKeyPress(int key) {
-        switch (key) {
-			case KeyCode.KC_N: {
-				GetRPCManager().SendRPC("eAI", "MoveAllToPos", new Param1<vector>(GetGame().GetPlayer().GetPosition()));
-				break;
-			}
-			case KeyCode.KC_L: {
-				GetRPCManager().SendRPC("eAI", "ClearAllAI", new Param1<PlayerBase>(PlayerBase.Cast(GetGame().GetPlayer())));
-				break;
-			}
-			case KeyCode.KC_M: {
-				GetRPCManager().SendRPC("eAI", "ProcessReload", new Param1<PlayerBase>(PlayerBase.Cast(GetGame().GetPlayer())));
-				break;
-			}
-			case KeyCode.KC_B: {
-				GetRPCManager().SendRPC("eAI", "SpawnZombie", new Param1<PlayerBase>(PlayerBase.Cast(GetGame().GetPlayer())));
-				break;
-			}
-        }
-    }
 };
 
 modded class MissionServer
@@ -260,13 +226,6 @@ modded class MissionGameplay
 		GetDayZGame().eAICreateManager();
 
         Print( "eAI - Loaded Client Mission" );
-    }
-
-    override void OnKeyPress( int key )
-    {
-        super.OnKeyPress( key );
-
-        m_eaiGame.OnKeyPress( key );
     }
 	
 	override void OnUpdate(float timeslice) {

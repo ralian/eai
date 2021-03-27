@@ -197,10 +197,10 @@ class eAICommandMenu extends UIScriptedMenu
 		//All categories
 		if (category == eAICommandCategories.CATEGORIES)
 		{
-			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_MOVEMENT, "MOVEMENT", eAICommandCategories.CATEGORIES));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_FORMATION, "FORMATION", eAICommandCategories.CATEGORIES));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_STATUS, "STATUS", eAICommandCategories.CATEGORIES));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_DEBUG, "DEBUG", eAICommandCategories.CATEGORIES));
+			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_MOVEMENT, "Movement", eAICommandCategories.CATEGORIES));
+			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_FORMATION, "Formation", eAICommandCategories.CATEGORIES));
+			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_STATUS, "Status", eAICommandCategories.CATEGORIES));
+			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_DEBUG, "Debug", eAICommandCategories.CATEGORIES));
 		}
 
 		//Category 1 - Movement
@@ -224,7 +224,7 @@ class eAICommandMenu extends UIScriptedMenu
 		//Category 3 - Status
 		else if (category == eAICommandCategories.CAT_STATUS)
 		{
-			gesture_items.Insert(new eAICommandMenuItem(eAICommands.STA_SITREP, "SITREP", eAICommandCategories.CAT_STATUS));
+			gesture_items.Insert(new eAICommandMenuItem(eAICommands.STA_SITREP, "Report Situation", eAICommandCategories.CAT_STATUS));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.STA_POSITION, "Report Position", eAICommandCategories.CAT_STATUS));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.STA_THREATS, "Report Threats", eAICommandCategories.CAT_STATUS));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.STA_UNUSED, "UNUSED", eAICommandCategories.CAT_STATUS));
@@ -233,9 +233,10 @@ class eAICommandMenu extends UIScriptedMenu
 		//Category 4 - Debug
 		else if (category == eAICommandCategories.CAT_DEBUG)
 		{
-			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_SPAWNALLY, "Spawn Friend", eAICommandCategories.CAT_DEBUG));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_TOGSTANCE, "Toggle Stance", eAICommandCategories.CAT_DEBUG));
+			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_SPAWNALLY, "Spawn Ally", eAICommandCategories.CAT_DEBUG));
+			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_CLEARALL, "Clear All AI", eAICommandCategories.CAT_DEBUG));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_RELOAD, "Force Reload", eAICommandCategories.CAT_DEBUG));
+			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_SPAWNZOM, "Spawn Zombie", eAICommandCategories.CAT_DEBUG));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_AIMAP, "AI Menu", eAICommandCategories.CAT_DEBUG));
 		}
 	}
