@@ -270,6 +270,7 @@ class eAICommandMenu extends UIScriptedMenu
 			radial_menu.SetOffsetFromTop(0);
 			radial_menu.SetItemCardRadiusOffset(0.25);
 			radial_menu.ActivateControllerTimeout(false);
+			radial_menu.SetSelectorColors(ARGB(255,21,84,21), ARGB(255,21,84,21));
 		}
 
 		//refresh radial menu
@@ -355,6 +356,9 @@ class eAICommandMenu extends UIScriptedMenu
 		{
 			m_CategoryNameText = TextWidget.Cast(layoutRoot.FindAnyWidget(CATEGORY_NAME));
 		}
+		
+		if (!name || name.Length() == 0)
+			name = "eAI Commands";
 
 		m_CategoryNameText.SetText(name);
 	}
