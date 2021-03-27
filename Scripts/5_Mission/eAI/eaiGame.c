@@ -255,7 +255,7 @@ modded class MissionGameplay
     void MissionGameplay()
     {
         m_eaiGame = new eAIGame();
-		m_eAIRadialKey = GetUApi().GetInputByName("eAIOpenRadial");
+		m_eAIRadialKey = GetUApi().GetInputByName("eAICommandMenu");
 
 		GetDayZGame().eAICreateManager();
 
@@ -272,7 +272,17 @@ modded class MissionGameplay
 	override void OnUpdate(float timeslice) {
 		super.OnUpdate(timeslice);
 
-		if (m_eAIRadialKey.LocalPress())
-			GetRPCManager().SendRPC("eAI", "SpawnEntity", new Param1<DayZPlayer>(GetGame().GetPlayer()));
+		if (m_eAIRadialKey.LocalPress()) {
+			if (!eAICommandMenu.instance) new eAICommandMenu();
+			
+			GetUIManager().ShowScriptedMenu(eAICommandMenu.instance, null);
+		}
+		
+		if (m_eAIRadialKey.LocalRelease()) {
+			eAICommandMenu.instance.OnMenuRelease();
+			GetGame().GetUIManager().Back();
+		}
+			//GetUIManager().HideScriptedMenu(eAICommandMenu.instance);
+
 	}
 };

@@ -2,11 +2,11 @@
 <modded_inputs>
 	<inputs>
 		<actions>
-			<input name="eAIOpenRadial" loc="AI Radial Menu"/>
+			<input name="eAICommandMenu" loc="eAI Command Menu"/>
 		</actions>
 	</inputs>
 	<preset>
-		<input name="eAIOpenRadial">
+		<input name="eAICommandMenu">
 			<btn name="kK"/>
 		</input>
 	</preset>

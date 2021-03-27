@@ -1,6 +1,11 @@
 modded class DayZGame
 {
     private ref eAIManagerBase m_eAI_Manager;
+	private ref eAICommandManager m_eAI_CommandManager;
+	
+	void DayZGame() {
+		m_eAI_CommandManager = new eAICommandManagerClient();
+	}
 
     void eAICreateManager()
     {
@@ -20,4 +25,8 @@ modded class DayZGame
 		if (m_eAI_Manager)
 			m_eAI_Manager.OnUpdate(doSim, timeslice);
     }
+	
+	eAICommandManager GetEAICommandManager() {
+		return m_eAI_CommandManager;
+	}
 };
