@@ -218,7 +218,7 @@ class eAICommandMenu extends UIScriptedMenu
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.FOR_VEE, "Form Vee", eAICommandCategories.CAT_FORMATION));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.FOR_FILE, "Form File", eAICommandCategories.CAT_FORMATION));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.FOR_WALL, "Form Wall", eAICommandCategories.CAT_FORMATION));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommands.FOR_DIAMOND, "Form Diamond", eAICommandCategories.CAT_FORMATION));
+			gesture_items.Insert(new eAICommandMenuItem(eAICommands.FOR_COL, "Form Column", eAICommandCategories.CAT_FORMATION));
 		}
 
 		//Category 3 - Status

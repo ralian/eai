@@ -9,7 +9,7 @@ enum eAICommands
 	FOR_VEE,
 	FOR_FILE,
 	FOR_WALL,
-	FOR_DIAMOND,
+	FOR_COL,
 	// Status
 	STA_SITREP, // report health and ammo level
 	STA_POSITION, // report position

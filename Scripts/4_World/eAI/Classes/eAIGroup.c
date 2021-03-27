@@ -12,6 +12,9 @@ class eAIGroup
 
 	// Ordered array of group members. 0 is the leader.
 	private autoptr array<PlayerBase> m_Members;
+	
+	// What formation the group should keep
+	private autoptr eAIFormation m_Form = new eAIFormationVee();
 
 	void eAIGroup()
 	{
@@ -85,6 +88,16 @@ class eAIGroup
 	PlayerBase GetLeader()
 	{
 		return m_Members[0];
+	}
+	
+	eAIFormation GetFormation()
+	{
+		return m_Form;
+	}
+	
+	void SetFormation(eAIFormation f)
+	{
+		m_Form = f;
 	}
 
 	bool IsMember(PlayerBase player)

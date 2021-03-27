@@ -44,11 +44,8 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "SpawnZombie", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "ClearAllAI", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "ProcessReload", this, SingeplayerExecutionType.Server);
-		//GetRPCManager().AddRPC("eAI", "DebugWeaponLocation", this, SingeplayerExecutionType.Server);
-		//GetRPCManager().AddRPC("eAI", "SpawnBullet", this, SingeplayerExecutionType.Server);
+		GetRPCManager().AddRPC("eAI", "ReqFormationChange", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", this, SingeplayerExecutionType.Server);
-		//GetRPCManager().AddRPC("eAI", "ClientWeaponDataWithCallback", this, SingeplayerExecutionType.Server);
-		//GetRPCManager().AddRPC("eAI", "ServerWeaponAimCheck", this, SingeplayerExecutionType.Server);
     }
 	
 	// Todo we may want to make a "group manager" class
@@ -196,6 +193,32 @@ class eAIGame {
 			GetRPCManager().SendRPC("eAI", data.param2, new Param3<Weapon_Base, vector, vector>(data.param1, out_front, out_back));
 		}
 		else {Error("ClientWeaponDataWithCallback called wrongfully");}
+	}
+	
+	void ReqFormationChange(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+		Param2<DayZPlayer, int> data;
+        if (!ctx.Read(data)) return;
+		if(type == CallType.Server ) {
+			Print("eAI: ReqFormationChange called.");
+			eAIGroup g = GetGroupByLeader(data.param1);
+			eAIFormation newForm;
+			switch (data.param2) {
+				case eAICommands.FOR_VEE:
+					newForm = new eAIFormationVee();
+					break;
+				case eAICommands.FOR_FILE:
+					newForm = new eAIFormationFile();
+					break;
+				case eAICommands.FOR_WALL:
+					newForm = new eAIFormationWall();
+					break;
+				case eAICommands.FOR_COL:
+					newForm = new eAIFormationColumn();
+					break;
+				// no default needed here
+			}
+			g.SetFormation(newForm);
+		}
 	}
 };
 

@@ -5,7 +5,7 @@ class eAIGroupTargetInformation extends eAITargetInformation
 	// The LeaderPosOld is used to calculate the heading of the formation
 	// Recalculation of azumith is done only when m_DirRecalcDistSq is surpassed
 	private vector m_LeaderPosOld = "0 0 0";
-	private float m_DirRecalcDistSq = 25.0;
+	private float m_DirRecalcDistSq = 9.0; // every 3 meters
 	private vector m_LeaderDir = "0 0 0";
 	private vector m_LeaderDirPerp = "0 0 0";
 
@@ -36,11 +36,7 @@ class eAIGroupTargetInformation extends eAITargetInformation
 	// First number is horizontal offset, sec number is forwards in the formation
 	vector LocalFormPos(int member_no)
     {
-		int offset = Math.Floor((member_no + 1) / 2);
-		float scaled_offset = 2 * offset;
-		if (member_no % 2 == 0) return Vector(scaled_offset, 0, -scaled_offset); // Right side
-		
-		return Vector(-scaled_offset, 0, -scaled_offset); // Left Side
+		return m_Target.GetFormation().LocalFormPos(member_no);
 	}
 
     private vector FormToWorld(vector formationOffset)

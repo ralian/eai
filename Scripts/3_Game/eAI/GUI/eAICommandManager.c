@@ -22,6 +22,13 @@ class eAICommandManagerClient : eAICommandManager {
 				GetRPCManager().SendRPC("eAI", "SpawnZombie", new Param1<DayZPlayer>(GetGame().GetPlayer()));
 				return true;
 			
+			case eAICommands.FOR_VEE:
+			case eAICommands.FOR_FILE:
+			case eAICommands.FOR_WALL:
+			case eAICommands.FOR_COL:
+				GetRPCManager().SendRPC("eAI", "ReqFormationChange", new Param2<DayZPlayer, int>(GetGame().GetPlayer(), cmd));
+				return true;
+
 		} return false;
 	}
 };
