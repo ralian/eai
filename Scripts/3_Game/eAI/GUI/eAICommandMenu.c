@@ -117,8 +117,29 @@ class eAICommandMenu extends UIScriptedMenu
 	{
 		super.OnShow();
 
-		SetFocus(layoutRoot);
+		if (GetGame().GetUIManager())
+	        GetGame().GetUIManager().ShowCursor(true);
+	
+	    if (GetGame().GetMission())// thanks Wardog
+	        GetGame().GetMission().PlayerControlDisable(INPUT_EXCLUDE_MOUSE_RADIAL);
+		
 		m_IsMenuClosing = false;
+	}
+	
+	override void OnHide()
+	{
+	    super.OnHide();
+	
+	    if (GetParentMenu()) // check if we're a child menu, we shouldn't give control back yet
+	        return;
+	
+	    if (GetGame().GetUIManager())
+	        GetGame().GetUIManager().ShowCursor(false);
+	
+	    if (GetGame().GetMission())
+	        GetGame().GetMission().PlayerControlEnable(true);
+		
+		m_IsMenuClosing = true;
 	}
 
 	override bool OnController(Widget w, int control, int value)
