@@ -10,8 +10,14 @@ class HumanLoadout {
 	
 	ref TStringArray WeaponMelee = {"Pickaxe", "WoodAxe", "FirefighterAxe", "Shovel"}; 	
 	ref TStringArray WeaponRifle = {"M4A1", "AKM", "SVD", "M4A1"}; 	
-	ref TStringArray Loot = {"Rope", "Screwdriver"};  
+	ref TIntArray	 WeaponRifleMagCount = {1,3}; 	
+	ref TStringArray Loot = {"SodaCan_Cola"};  								//These are added always
+	ref TStringArray LootRandom = {"Rope", "Screwdriver"};  				//Added with a LootRandomChance%
+//	ref TIntSet	 	 LootRandomChance = 30;									//Add item from Loot array
 	ref TStringArray WeaponHandgun = {""}; 		
+	ref TIntArray	 WeaponHandgunMagCount = {1,3}; 	
+	
+	static string LoadoutSaveDir = "$profile:";
 	
 	static void Apply(PlayerBase h) {}
 
@@ -34,12 +40,18 @@ class HumanLoadout {
 		Print("HumanLoadout: Add weapon: " + weapon);
 	}
 	
-	static void AddMagazine(PlayerBase h, string weapon, int count) {
+	static void AddMagazine(PlayerBase h, string weapon, int mincount, int maxcount = 0) {
         TStringArray magazines = {};
         GetGame().ConfigGetTextArray("CfgWeapons " + weapon + " magazines", magazines);		
 		string mag = magazines.GetRandomElement();
 
 		int i;
+		int count = mincount;
+		if (maxcount > 0)
+		{
+			//TBD: count = random value between mincount and maxcount
+		}
+	
 		for( i = 0; i < count; i++)
 		{
 			h.GetHumanInventory().CreateInInventory(mag);
@@ -50,6 +62,7 @@ class HumanLoadout {
 	
     static HumanLoadout LoadData(string FileName)
     {
+		FileName = LoadoutSaveDir + FileName;
         ref HumanLoadout data = new ref HumanLoadout;
         Print("HumanLoadout: LoadData: Looking for " + FileName);
 
@@ -76,7 +89,7 @@ class HumanLoadout {
 };
 
 class SoldierLoadout : HumanLoadout {
-	static string SoldierLoadoutSave = "$profile:SoldierLoadout.json";
+	static string SoldierLoadoutSave = "SoldierLoadout.json";
 
 /*	ref TStringArray Shirts = {"GorkaEJacket_Autumn", "GorkaEJacket_Flat", "GorkaEJacket_PautRev", "GorkaEJacket_Summer"};
 	ref TStringArray Pants = {"GorkaPants_Autumn", "GorkaPants_Flat", "GorkaPants_PautRev", "GorkaPants_Summer"}; 							
@@ -99,12 +112,12 @@ class SoldierLoadout : HumanLoadout {
 
 		string weapon = Loadout.WeaponRifle.GetRandomElement();
 		HumanLoadout.AddWeapon(h, weapon);
-		HumanLoadout.AddMagazine(h, weapon, 2);
+		HumanLoadout.AddMagazine(h, weapon, Loadout.WeaponRifleMagCount[0], Loadout.WeaponRifleMagCount[1]);
 	}
 }	
 
 class PoliceLoadout : HumanLoadout {
-	static string PoliceLoadoutSave = "$profile:PoliceLoadout.json";
+	static string PoliceLoadoutSave = "PoliceLoadout.json";
 
 /*	ref TStringArray PoliceLoadoutShirts = {"PoliceJacket", "PoliceJacketOrel"};
 	ref TStringArray PoliceLoadoutPants = {"PolicePants", "PolicePantsOrel"}; 							
