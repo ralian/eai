@@ -1,6 +1,19 @@
 class HumanLoadout {
 	static void Apply(PlayerBase h) {}
-	
+
+	static void AddClothes(PlayerBase h, SoldierLoadout Loadout) {
+		h.GetInventory().CreateInInventory(Loadout.Pants.GetRandomElement());
+		h.GetInventory().CreateInInventory(Loadout.Shirts.GetRandomElement());
+		h.GetInventory().CreateInInventory(Loadout.Shoes.GetRandomElement());
+		h.GetInventory().CreateInInventory(Loadout.Headgear.GetRandomElement());
+		h.GetInventory().CreateInInventory(Loadout.Gloves.GetRandomElement());			
+		h.GetInventory().CreateInInventory(Loadout.BackPacks.GetRandomElement());
+		h.GetInventory().CreateInInventory(Loadout.Vests.GetRandomElement());
+		h.GetInventory().CreateInInventory(Loadout.Misc.GetRandomElement());
+
+		Print("HumanLoadout: Added clothes");
+	}
+		
 	static void AddWeapon(PlayerBase h, string weapon) {
 		EntityAI gun = h.GetHumanInventory().CreateInHands(weapon);
 		
@@ -23,37 +36,57 @@ class HumanLoadout {
 };
 
 class SoldierLoadout : HumanLoadout {
+	static string SoldierLoadoutSave = "$profile:SoldierLoadout.json";
+
+	ref TStringArray Shirts = {"GorkaEJacket_Autumn", "GorkaEJacket_Flat", "GorkaEJacket_PautRev", "GorkaEJacket_Summer"};
+	ref TStringArray Pants = {"GorkaPants_Autumn", "GorkaPants_Flat", "GorkaPants_PautRev", "GorkaPants_Summer"}; 							
+	ref TStringArray Shoes = {"TTSKOBoots", "CombatBoots_Black", "CombatBoots_Brown"};			
+	ref TStringArray BackPacks = {"", "", "CoyoteBag_Brown", "CoyoteBag_Green"};					
+	ref TStringArray Vests = {"HighCapacityVest_Black", "PlateCarrierVest", "UKAssVest_Camo"};		
+	ref TStringArray Headgear = {"GorkaHelmet", "Mich2001Helmet", "MotoHelmet_Black", "SkateHelmet_Black", "DirtBikeHelmet_Black"};
+	ref TStringArray Gloves = {"WorkingGloves_Beige", "WorkingGloves_Black", "NBCGlovesGray", "OMNOGloves_Gray", "OMNOGloves_Brown"};	
+	ref TStringArray Misc = {"", "CivilianBelt", "MilitaryBelt"};																			
+	
+	ref TStringArray WeaponMelee = {"Pickaxe", "WoodAxe", "FirefighterAxe", "Shovel"}; 	
+	ref TStringArray WeaponRifle = {"M4A1", "AKM", "SVD"}; 	
+	ref static TStringArray WeaponHandgun = {""}; 	
+	ref static TStringArray Loot = {"SodaCan_Cola"};  
+
 	static void Apply(PlayerBase h)
 	{
-		TStringArray SoldierLoadoutShirts = {"GorkaEJacket_Autumn", "GorkaEJacket_Flat", "GorkaEJacket_PautRev", "GorkaEJacket_Summer"};
-		ref TStringArray SoldierLoadoutPants = {"GorkaPants_Autumn", "GorkaPants_Flat", "GorkaPants_PautRev", "GorkaPants_Summer"}; 							
-		ref TStringArray SoldierLoadoutShoes = {"TTSKOBoots", "CombatBoots_Black", "CombatBoots_Brown"};			
-		ref TStringArray SoldierLoadoutBackPacks = {"", "", "CoyoteBag_Brown", "CoyoteBag_Green"};					
-		ref TStringArray SoldierLoadoutVests = {"HighCapacityVest_Black", "PlateCarrierVest", "UKAssVest_Camo"};		
-		ref TStringArray SoldierLoadoutHeadgear = {"GorkaHelmet", "Mich2001Helmet", "MotoHelmet_Black", "SkateHelmet_Black", "DirtBikeHelmet_Black"};
-		ref TStringArray SoldierLoadoutGloves = {"WorkingGloves_Beige", "WorkingGloves_Black", "NBCGlovesGray", "OMNOGloves_Gray", "OMNOGloves_Brown"};	
-		ref TStringArray SoldierLoadoutMisc = {"", "CivilianBelt", "MilitaryBelt"};																			
-		
-		ref TStringArray SoldierLoadoutWeaponMelee = {"Pickaxe", "WoodAxe", "FirefighterAxe", "Shovel"}; 	
-		ref TStringArray SoldierLoadoutWeaponRifle = {"M4A1", "AKM", "SVD", "M4A1"}; 	
-	//	ref TStringArray Loot = {"SodaCan_Cola"};  
-	//	ref TStringArray SoldierLoadoutWeaponHandgun = {""}; 	
+		SoldierLoadout Loadout = LoadData();
+		HumanLoadout.AddClothes(h, Loadout);
 
-		h.GetInventory().CreateInInventory(SoldierLoadoutPants.GetRandomElement());
-		h.GetInventory().CreateInInventory(SoldierLoadoutShirts.GetRandomElement());
-		h.GetInventory().CreateInInventory(SoldierLoadoutShoes.GetRandomElement());
-		h.GetInventory().CreateInInventory(SoldierLoadoutHeadgear.GetRandomElement());
-		h.GetInventory().CreateInInventory(SoldierLoadoutGloves.GetRandomElement());			
-		h.GetInventory().CreateInInventory(SoldierLoadoutBackPacks.GetRandomElement());
-		h.GetInventory().CreateInInventory(SoldierLoadoutVests.GetRandomElement());
-		h.GetInventory().CreateInInventory(SoldierLoadoutMisc.GetRandomElement());
-
-		string weapon = SoldierLoadoutWeaponRifle.GetRandomElement();
+		string weapon = Loadout.WeaponRifle.GetRandomElement();
 		HumanLoadout.AddWeapon(h, weapon);
 		HumanLoadout.AddMagazine(h, weapon, 2);
 	}
+	
+    static SoldierLoadout LoadData()
+    {
+        ref SoldierLoadout data = new ref SoldierLoadout;
+
+        if(FileExist(SoldierLoadout.SoldierLoadoutSave))
+        {
+            Print("HumanLoadout:" + SoldierLoadoutSave + " exists, loading!");
+            JsonFileLoader<SoldierLoadout>.JsonLoadFile(SoldierLoadoutSave, data);
+        }
+        else
+        {
+            Print("HumanLoadout:" + SoldierLoadoutSave + " doesn't exist, creating file!");
+            SaveData(data);
+        }
+
+        return data;
+    }
+
+    static void SaveData(ref SoldierLoadout data)
+    {
+        JsonFileLoader<SoldierLoadout>.JsonSaveFile(SoldierLoadoutSave, data);
+    }
 }	
 
+/*
 class PoliceLoadout : HumanLoadout {
 	static void Apply(PlayerBase h)
 	{
@@ -79,5 +112,5 @@ class PoliceLoadout : HumanLoadout {
 		h.GetInventory().CreateInInventory(PoliceLoadoutBackPacks.GetRandomElement());
 		h.GetInventory().CreateInInventory(PoliceLoadoutVests.GetRandomElement());
 		h.GetInventory().CreateInInventory(PoliceLoadoutMisc.GetRandomElement());
-	}	
-}
+	}
+}*/
