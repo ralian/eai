@@ -13,7 +13,7 @@ class HumanLoadout {
 	ref TIntArray	 WeaponRifleMagCount = {1,3}; 	
 	ref TStringArray Loot = {"SodaCan_Cola"};  								//These are added always
 	ref TStringArray LootRandom = {"Rope", "Screwdriver"};  				//Added with a LootRandomChance%
-//	ref TIntSet	 	 LootRandomChance = 30;									//Add item from Loot array
+//	ref TIntSet	 	 LootRandomChance = {30};									//Add item from Loot array
 	ref TStringArray WeaponHandgun = {""}; 		
 	ref TIntArray	 WeaponHandgunMagCount = {1,3}; 	
 	
