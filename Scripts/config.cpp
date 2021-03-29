@@ -17,10 +17,10 @@ class CfgMods
 	class eAI
 	{
 		dir = "eAI";
-		picture = "";
+		picture = "eAI/gfx/eAI_logo_ver1_03_512.edds";
 		action = "";
 		hideName = 0;
-		hidePicture = 1;
+		hidePicture = 0;
 		name = "Enfusion AI System";
 		credits = "Ralian";
 		creditsJson = "eAI/Scripts/Data/Credits.json";
@@ -29,6 +29,7 @@ class CfgMods
 		version = "0.1"; 
 		extra = 0;
 		type = "mod";
+		inputs = "eAI/Scripts/inputs.xml";
 		
 		dependencies[] = { "Game", "World", "Mission" };
 		

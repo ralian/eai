@@ -23,7 +23,7 @@ class HumanLoadout {
 };
 
 class SoldierLoadout : HumanLoadout {
-	static void Apply(PlayerBase h)
+	override static void Apply(PlayerBase h)
 	{
 		TStringArray SoldierLoadoutShirts = {"GorkaEJacket_Autumn", "GorkaEJacket_Flat", "GorkaEJacket_PautRev", "GorkaEJacket_Summer"};
 		ref TStringArray SoldierLoadoutPants = {"GorkaPants_Autumn", "GorkaPants_Flat", "GorkaPants_PautRev", "GorkaPants_Summer"}; 							
@@ -55,7 +55,7 @@ class SoldierLoadout : HumanLoadout {
 }	
 
 class PoliceLoadout : HumanLoadout {
-	static void Apply(PlayerBase h)
+	override static void Apply(PlayerBase h)
 	{
 		ref TStringArray PoliceLoadoutShirts = {"PoliceJacket", "PoliceJacketOrel"};
 		ref TStringArray PoliceLoadoutPants = {"PolicePants", "PolicePantsOrel"}; 							
