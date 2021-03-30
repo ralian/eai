@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<modded_inputs>
+	<inputs>
+		<actions>
+			<input name="eAICommandMenu" loc="eAI Command Menu"/>
+		</actions>
+	</inputs>
+	<preset>
+		<input name="eAICommandMenu">
+			<btn name="kT"/>
+		</input>
+	</preset>
+</modded_inputs>

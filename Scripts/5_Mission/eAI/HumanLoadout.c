@@ -90,22 +90,8 @@ class HumanLoadout {
 
 class SoldierLoadout : HumanLoadout {
 	static string SoldierLoadoutSave = "SoldierLoadout.json";
-
-/*	ref TStringArray Shirts = {"GorkaEJacket_Autumn", "GorkaEJacket_Flat", "GorkaEJacket_PautRev", "GorkaEJacket_Summer"};
-	ref TStringArray Pants = {"GorkaPants_Autumn", "GorkaPants_Flat", "GorkaPants_PautRev", "GorkaPants_Summer"}; 							
-	ref TStringArray Shoes = {"TTSKOBoots", "CombatBoots_Black", "CombatBoots_Brown"};			
-	ref TStringArray BackPacks = {"", "", "CoyoteBag_Brown", "CoyoteBag_Green"};					
-	ref TStringArray Vests = {"HighCapacityVest_Black", "PlateCarrierVest", "UKAssVest_Camo"};		
-	ref TStringArray Headgear = {"GorkaHelmet", "Mich2001Helmet", "MotoHelmet_Black", "SkateHelmet_Black", "DirtBikeHelmet_Black"};
-	ref TStringArray Gloves = {"WorkingGloves_Beige", "WorkingGloves_Black", "NBCGlovesGray", "OMNOGloves_Gray", "OMNOGloves_Brown"};	
-	ref TStringArray Misc = {"", "CivilianBelt", "MilitaryBelt"};																			
 	
-	ref TStringArray WeaponMelee = {"Pickaxe", "WoodAxe", "FirefighterAxe", "Shovel"}; 	
-	ref TStringArray WeaponRifle = {"M4A1", "AKM", "SVD"}; 	
-	ref static TStringArray WeaponHandgun = {""}; 	
-	ref static TStringArray Loot = {"SodaCan_Cola"};  */
-
-	static void Apply(PlayerBase h)
+	override static void Apply(PlayerBase h)	
 	{
 		HumanLoadout Loadout = LoadData(SoldierLoadoutSave);
 		HumanLoadout.AddClothes(h, Loadout);
@@ -117,23 +103,9 @@ class SoldierLoadout : HumanLoadout {
 }	
 
 class PoliceLoadout : HumanLoadout {
-	static string PoliceLoadoutSave = "PoliceLoadout.json";
-
-/*	ref TStringArray PoliceLoadoutShirts = {"PoliceJacket", "PoliceJacketOrel"};
-	ref TStringArray PoliceLoadoutPants = {"PolicePants", "PolicePantsOrel"}; 							
-	ref TStringArray PoliceLoadoutShoes = {"CombatBoots_Black"};			
-	ref TStringArray PoliceLoadoutBackPacks = {""};					
-	ref TStringArray PoliceLoadoutVests = {"PoliceVest"};		
-	ref TStringArray PoliceLoadoutHeadgear = {"", "DirtBikeHelmet_Police", "PoliceCap", "OfficerHat"};
-	ref TStringArray PoliceLoadoutGloves = {"LeatherGloves_Black", "TacticalGloves_Black", "WorkingGloves_Black"};	
-	ref TStringArray PoliceLoadoutMisc = {"", "MilitaryBelt"};																			
+	static string PoliceLoadoutSave = "SoldierLoadout.json";
 	
-	ref TStringArray PoliceLoadoutWeaponMelee = {"Pickaxe", "WoodAxe", "FirefighterAxe", "Shovel"}; 	
-	ref TStringArray PoliceLoadoutWeaponRifle = {"M4A1", "AKM", "SVD", "M4A1"}; 	
-	ref TStringArray Loot = {"Rope", "Screwdriver"};  
-	ref TStringArray PoliceLoadoutWeaponHandgun = {""};	*/
-
-	static void Apply(PlayerBase h)
+	override static void Apply(PlayerBase h)
 	{
 		HumanLoadout Loadout = LoadData(PoliceLoadoutSave);
 		HumanLoadout.AddClothes(h, Loadout);
