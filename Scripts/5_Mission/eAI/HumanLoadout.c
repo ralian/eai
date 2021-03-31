@@ -18,6 +18,7 @@ class HumanLoadout {
 	ref TIntArray	 WeaponHandgunMagCount = {1,3}; 	
 	
 	static string LoadoutSaveDir = "$profile:";
+	static string LoadoutDataDir = "eAI/Scripts/Data/Loadout/";
 	
 	static void Apply(PlayerBase h) {}
 
@@ -62,20 +63,26 @@ class HumanLoadout {
 	
     static HumanLoadout LoadData(string FileName)
     {
-		FileName = LoadoutSaveDir + FileName;
+		string FileNameProfile = LoadoutSaveDir + FileName;
         ref HumanLoadout data = new ref HumanLoadout;
         Print("HumanLoadout: LoadData: Looking for " + FileName);
 
-        if(FileExist(FileName))
+        if(!FileExist(FileNameProfile))
         {
-            Print("HumanLoadout:" + FileName + " exists, loading!");
+            Print("HumanLoadout: " + FileNameProfile + " doesn't exist, creating file!");
+			CopyFile(LoadoutDataDir + FileName, FileNameProfile);
+            //SaveData(FileName, data);
+		}
+
+		if(FileExist(FileNameProfile))
+        {
+            Print("HumanLoadout: " + FileNameProfile + " exists, loading!");
             JsonFileLoader<HumanLoadout>.JsonLoadFile(FileName, data);
         }
         else
         {
-            Print("HumanLoadout:" + FileName + " doesn't exist, creating file!");
-            SaveData(FileName, data);
-        }
+            Print("HumanLoadout: ERROR : Coult not find " + FileNameProfile);
+		}
 
         return data;
     }
