@@ -110,7 +110,7 @@ class SoldierLoadout : HumanLoadout {
 }	
 
 class PoliceLoadout : HumanLoadout {
-	static string PoliceLoadoutSave = "SoldierLoadout.json";
+	static string PoliceLoadoutSave = "PoliceLoadout.json";
 	
 	override static void Apply(PlayerBase h)
 	{
