@@ -44,11 +44,15 @@ class eAIHFSMType
 
 class eAIHFSM
 {
+    static const int EXIT = 0;
+    static const int CONTINUE = 1;
+
     private autoptr array<ref eAIState> m_States;
     private autoptr array<ref eAITransition> m_Transitions;
 
     private eAIState m_CurrentState;
     private eAIState m_ParentState;
+    private bool m_Running;
 
     protected string m_Name;
     protected string m_DefaultState;
@@ -107,10 +111,10 @@ class eAIHFSM
 	{
         Print("eAIFSM::StartDefault");
 
-        if (m_CurrentState)
+        if (m_Running && m_CurrentState)
         {
             Print("Exiting state: " + m_CurrentState);
-            m_CurrentState.OnExit();
+            m_CurrentState.OnExit("", true);
         }
 	
 		m_CurrentState = GetState(m_DefaultState);
@@ -118,7 +122,7 @@ class eAIHFSM
         if (m_CurrentState)
         {
             Print("Starting state: " + m_CurrentState);
-            m_CurrentState.OnEntry();
+            m_CurrentState.OnEntry("");
             return true;
         }
 		
@@ -131,18 +135,18 @@ class eAIHFSM
     {
         Print("eAIFSM::Start e=" + e);
 
-        if (m_CurrentState)
+        if (m_Running && m_CurrentState)
         {
             Print("Exiting state: " + m_CurrentState);
-            m_CurrentState.OnExit();
+            m_CurrentState.OnExit(e, true);
         }
 
-        m_CurrentState = FindSuitableTransition(m_CurrentState, e);
+        m_CurrentState = FindSuitableTransition(m_CurrentState, e).param1;
 
         if (m_CurrentState)
         {
             Print("Starting state: " + m_CurrentState);
-            m_CurrentState.OnEntry();
+            m_CurrentState.OnEntry(e);
             return true;
         }
 
@@ -151,52 +155,51 @@ class eAIHFSM
         return false;
     }
 
-    bool Reevaluate(string e = "")
+    bool Abort(string e = "")
     {
-        Print("eAIFSM::Reevaluate e=" + e);
+        Print("eAIFSM::Start e=" + e);
 
-        eAIState new_state = FindSuitableTransition(m_CurrentState, e);
-        if (m_CurrentState == new_state || new_state == null) return false;
-
-        if (m_CurrentState)
+        if (m_Running && m_CurrentState)
         {
             Print("Exiting state: " + m_CurrentState);
-            m_CurrentState.OnExit();
-        }
-
-        if (new_state)
-        {
-            m_CurrentState = new_state;
-            Print("Starting state: " + m_CurrentState);
-            m_CurrentState.OnEntry();
+            m_CurrentState.OnExit(e, true);
             return true;
         }
-
-        Print("No valid state found.");
 
         return false;
     }
 
-    void Update(float pDt)
+    /**
+     * @return true Tell the parent FSM that the child FSM is complete
+     * @return false Tell the parent FSM that the child FSM is still running
+     */
+    int Update(float pDt, int pSimulationPrecision)
     {
-        if (m_CurrentState)
+        if (m_CurrentState && m_CurrentState.OnUpdate(pDt, pSimulationPrecision) == CONTINUE) return CONTINUE;
+
+        Param2<eAIState, bool> new_state = FindSuitableTransition(m_CurrentState, "");
+        if (!new_state.param2 || (new_state.param2 && m_CurrentState == new_state.param1))
         {
-            switch (m_CurrentState.OnUpdate(pDt))
-            {
-            case eAIState.EXIT:
-                Start();
-                break;
-            case eAIState.CONTINUE:
-                break;
-            case eAIState.REEVALUTATE:
-                Reevaluate();
-                break;
-            }
+            if (!m_CurrentState) return EXIT;
+
+            return CONTINUE;
         }
+
+        if (m_CurrentState) m_CurrentState.OnExit("", false);
+
+        m_CurrentState = new_state.param1;
+
+        if (new_state.param1 == null) return EXIT;
+
+        m_CurrentState.OnEntry("");
+
+        return CONTINUE;
     }
 	
-	eAIState FindSuitableTransition(eAIState s, string e = "")
+	Param2<eAIState, bool> FindSuitableTransition(eAIState s, string e = "")
 	{
+        // returns tuple as a valid destination can still be null
+
 		eAIState curr_state = s;
 
 		int count = m_Transitions.Count();
@@ -209,25 +212,38 @@ class eAIHFSM
                 switch (guard)
                 {
                 case eAITransition.SUCCESS:
-				    return t.GetDestination();
+				    return new Param2<eAIState, bool>(t.GetDestination(), true);
                 case eAITransition.FAIL:
 				    break;
                 }
 			}
 		}
 
-		return null;
+		return new Param2<eAIState, bool>(null, false);
 	}
 
-    static eAIHFSMType LoadXML(string path)
+    static eAIHFSMType LoadXML(string path, string fileName)
     {
+        string actualFilePath = path + "/" + fileName + ".xml";
+        if (!FileExist(actualFilePath)) return null;
+        
         CF_XML_Document document;
-        CF_XML.ReadDocument(path, document);
+        CF_XML.ReadDocument(actualFilePath, document);
 		
         string name = document.Get("hfsm")[0].GetAttribute("name").ValueAsString();
         string class_name = "eAI_" + name + "_HFSM";
 
         if (eAIHFSMType.Contains(class_name)) return eAIHFSMType.Get(class_name);
+
+        auto subs = document.Get("hfsm");
+        subs = subs[0].GetTag("subs");
+        subs = subs[0].GetTag("file");
+
+	    foreach (auto sub : subs)
+        {
+            string subPath = sub.GetAttribute("path").ValueAsString();
+            eAIHFSM.LoadXML(path, subPath);
+        }
 
         eAIHFSMType new_type = new eAIHFSMType();
 		new_type.m_ClassName = class_name;

@@ -49,10 +49,11 @@ class eAIGroupTargetInformation extends eAITargetInformation
 
     void Update(float pDt)
     {
+		if (!GetEntity()) return;
+		
 		vector newPos = GetEntity().GetPosition();
 
-		if (vector.DistanceSq(newPos, m_LeaderPosOld) < m_DirRecalcDistSq)
-			return;
+		if (vector.DistanceSq(newPos, m_LeaderPosOld) < m_DirRecalcDistSq) return;
 		
 		// Update the direction and perpend vectors
 		m_LeaderDir = newPos - m_LeaderPosOld;

@@ -95,9 +95,8 @@ modded class PlayerBase
 		m_PathFilter.SetCost( PGAreaType.JUMP, 0.0 );
 		m_PathFilter.SetCost( PGAreaType.FENCE_WALL, 0.0 );
 		m_PathFilter.SetCost( PGAreaType.WATER, 1.0 );
-		
-		string stateMachine = "eAI/scripts/Targetting_StateMachine.xml";
-		eAIHFSMType type = eAIHFSM.LoadXML(stateMachine);
+
+		eAIHFSMType type = eAIHFSM.LoadXML("eAI/scripts/FSM", "Master");
 		if (type)
 		{
 			m_FSM = type.Spawn(this, null);
@@ -306,7 +305,7 @@ modded class PlayerBase
 
 		if (m_WeaponManager) m_WeaponManager.Update(pDt);
 		if (m_EmoteManager) m_EmoteManager.Update(pDt);
-		if (m_FSM) m_FSM.Update(pDt);
+		if (m_FSM) m_FSM.Update(pDt, 0);
 		
 		GetPlayerSoundManagerServer().Update();
 		GetHumanInventory().Update(pDt);

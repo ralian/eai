@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <hfsm name="Targetting">
+	<subs>
+		<!-- <file path="Weapon.xml"/> -->
+	</subs>
 	<states default="Idle">
 		<state name="Idle">
 			<variables>
@@ -11,12 +14,8 @@
 			</editor_data>
 			<event_entry></event_entry>
 			<event_exit></event_exit>
-			<event_update>                
-                time += DeltaTime;
-                if (time &lt; 1.0) return CONTINUE;
-
-                time = 0;
-                return REEVALUTATE;
+			<event_update>
+                return EXIT;
             </event_update>
 		</state>
 		<state name="Follow">
@@ -32,12 +31,13 @@
 			<event_exit></event_exit>
 			<event_update>
                 time += DeltaTime;
-                if (time &lt; 0.25) return CONTINUE;
+                if (time &gt; 0.25)
+				{
+					target.Update(unit.GetGroup());
+					time = 0;
+				}
 
-				target.Update(unit.GetGroup());
-				
-				time = 0;
-                return REEVALUTATE;
+                return EXIT;
             </event_update>
 		</state>
 		<state name="Reload">
