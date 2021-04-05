@@ -28,6 +28,14 @@ class eAICommandManagerClient : eAICommandManager {
 			case eAICommands.FOR_COL:
 				GetRPCManager().SendRPC("eAI", "ReqFormationChange", new Param2<DayZPlayer, int>(GetGame().GetPlayer(), cmd));
 				return true;
+			
+			case eAICommands.MOV_STOP:
+				GetRPCManager().SendRPC("eAI", "ReqFormStop", new Param1<DayZPlayer>(GetGame().GetPlayer()));
+				return true;
+			
+			case eAICommands.MOV_RTF:
+				GetRPCManager().SendRPC("eAI", "ReqFormRejoin", new Param1<DayZPlayer>(GetGame().GetPlayer()));
+				return true;
 
 		} return false;
 	}

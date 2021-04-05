@@ -274,7 +274,8 @@ modded class PlayerBase
 
 		//Print(m_eAI_Targets.Count());
 
-		if (m_PathFilter && m_eAI_Targets.Count() > 0)
+		// The last check is in case the "leader" of the group no longer exists
+		if (m_PathFilter && m_eAI_Targets.Count() > 0 && m_eAI_Targets[0].param5.GetEntity())
 		{
 			//Print(m_eAI_Targets[0]);
 

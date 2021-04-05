@@ -45,6 +45,8 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "ClearAllAI", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "ProcessReload", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "ReqFormationChange", this, SingeplayerExecutionType.Server);
+		GetRPCManager().AddRPC("eAI", "ReqFormRejoin", this, SingeplayerExecutionType.Server);
+		GetRPCManager().AddRPC("eAI", "ReqFormStop", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", this, SingeplayerExecutionType.Server);
     }
 	
@@ -195,6 +197,34 @@ class eAIGame {
 		else {Error("ClientWeaponDataWithCallback called wrongfully");}
 	}
 	
+	void ReqFormRejoin(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+		Param1<DayZPlayer> data;
+        if (!ctx.Read(data)) return;
+		if(type == CallType.Server ) {
+			Print("eAI: ReqFormRejoin called.");
+			eAIGroup g = GetGroupByLeader(data.param1);
+			for (int i = 0; i < g.Count(); i++) {
+				eAIBase ai = g.GetMember(i);
+				if (ai && ai.IsAI() && ai.IsAlive())
+					ai.GetFSM().Start("ReqFormRejoin");
+			}
+		}
+	}
+	
+	void ReqFormStop(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+		Param1<DayZPlayer> data;
+        if (!ctx.Read(data)) return;
+		if(type == CallType.Server ) {
+			Print("eAI: ReqFormStop called.");
+			eAIGroup g = GetGroupByLeader(data.param1);
+			for (int i = 0; i < g.Count(); i++) {
+				eAIBase ai = g.GetMember(i);
+				if (ai && ai.IsAI() && ai.IsAlive())
+					ai.GetFSM().Start("ReqFormStop");
+			}
+		}
+	}
+	
 	void ReqFormationChange(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param2<DayZPlayer, int> data;
         if (!ctx.Read(data)) return;
@@ -240,10 +270,13 @@ modded class MissionGameplay
 {
     autoptr eAIGame m_eaiGame;
 	UAInput m_eAIRadialKey;
+	autoptr eAIKeybinds m_keybinds;
 
     void MissionGameplay()
     {
         m_eaiGame = new eAIGame();
+		m_keybinds = new eAIKeybinds();
+		m_keybinds.load("$profile:eAIKeybinds.json");
 		m_eAIRadialKey = GetUApi().GetInputByName("eAICommandMenu");
 
 		GetDayZGame().eAICreateManager();
@@ -264,6 +297,7 @@ modded class MissionGameplay
 		if (m_eAIRadialKey.LocalRelease() && GetGame().GetUIManager().GetMenu() == eAICommandMenu.instance) {
 			eAICommandMenu.instance.OnMenuRelease();
 			GetUIManager().Back();
+			m_keybinds.save("$profile:eAIKeybinds.json"); // bad place to do this
 		}
 	}
 };

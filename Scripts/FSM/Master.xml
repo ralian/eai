@@ -78,14 +78,11 @@
 				dst.target = group.GetTargetInformation();
                 if (!dst.target) return FAIL;
 
-                vector pos = dst.target.GetPosition(unit);
-                if (vector.Distance(pos, unit.GetPosition()) &gt; 50.0) return FAIL;
-
 				dst.target.AddAI(unit);
 
                 return SUCCESS;
             </guard>
-			<event name="" />
+			<event name="ReqFormRejoin" />
 			<from_state name="Idle" />
 			<to_state name="Follow" />
 		</transition>
@@ -113,7 +110,29 @@
 
                 return FAIL;
             </guard>
-			<event name="" />
+			<event name="NothingToFollow" />
+			<from_state name="Follow" />
+			<to_state name="Idle" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+                auto group = unit.GetGroup();
+                if (!group) return FAIL;
+
+                auto leader = group.GetLeader();
+                if (!leader) return SUCCESS;
+
+				auto target = group.GetTargetInformation();
+                if (!target) return SUCCESS;
+
+				target.RemoveAI(unit);
+				return SUCCESS;
+            </guard>
+			<event name="ReqFormStop" />
 			<from_state name="Follow" />
 			<to_state name="Idle" />
 		</transition>
