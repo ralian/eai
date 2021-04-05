@@ -71,11 +71,11 @@ class eAIGame {
 		eAIGroup ownerGrp = GetGroupByLeader(pb_Human);
 
 		eAIBase pb_AI;
-		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, "SurvivorF_Linda", pb_Human.GetPosition(), 0, "NONE"))) return;
+		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pb_Human.GetPosition(), 0, "NONE"))) return;
 		
 		pb_AI.SetAI(ownerGrp);
 			
-		SoldierLoadout.Apply(pb_AI);
+		SoldierLoadout.Apply(pb_AI);	//or PoliceLoadout.Apply(pb_AI);
 	}
 	
 	// Server Side: This RPC spawns a helper AI next to the player, and tells them to join the player's formation.
