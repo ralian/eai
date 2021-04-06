@@ -121,13 +121,20 @@ modded class PlayerBase
 	// Request that a transition with the given event name be forcibly undergone.
 	// Does not preserve order in which transitions were forced.
 	void RequestTransition(string s) {
+		m_Transitions.Clear();
+		m_Transitions.Insert(s);
+	}
+	
+	// Warning: this should only be called when you don't want to clear the prior requests, which is usually only 
+	// if there are two possible transitions that do the same effect.
+	void RequestAdditionalTransition(string s) {
 		m_Transitions.Insert(s);
 	}
 	
 	bool GetRequestedTransition(string s) {
 		int i = m_Transitions.Find(s);
 		if (i > -1) {
-			m_Transitions.Remove(i);
+			m_Transitions.Clear();
 			return true;
 		}
 		return false;
