@@ -22,6 +22,8 @@ modded class PlayerBase
     private autoptr eAIGroup m_eAI_Group;
 
 	private autoptr array<eAITargetGroup> m_eAI_Targets;
+	
+	private autoptr array<string> m_Transitions = {};
 
     // Command handling
 	private autoptr eAIAnimationST m_eAI_AnimationST;
@@ -114,6 +116,21 @@ modded class PlayerBase
 	eAIHFSM GetFSM()
 	{
 		return m_FSM;
+	}
+	
+	// Request that a transition with the given event name be forcibly undergone.
+	// Does not preserve order in which transitions were forced.
+	void RequestTransition(string s) {
+		m_Transitions.Insert(s);
+	}
+	
+	bool GetRequestedTransition(string s) {
+		int i = m_Transitions.Find(s);
+		if (i > -1) {
+			m_Transitions.Remove(i);
+			return true;
+		}
+		return false;
 	}
 
 	array<eAITargetGroup> GetTargets()

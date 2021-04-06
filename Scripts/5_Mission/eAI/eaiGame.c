@@ -206,7 +206,7 @@ class eAIGame {
 			for (int i = 0; i < g.Count(); i++) {
 				eAIBase ai = g.GetMember(i);
 				if (ai && ai.IsAI() && ai.IsAlive())
-					ai.GetFSM().Start("ReqFormRejoin");
+					ai.RequestTransition("Rejoin");
 			}
 		}
 	}
@@ -220,7 +220,7 @@ class eAIGame {
 			for (int i = 0; i < g.Count(); i++) {
 				eAIBase ai = g.GetMember(i);
 				if (ai && ai.IsAI() && ai.IsAlive())
-					ai.GetFSM().Start("ReqFormStop");
+					ai.RequestTransition("Stop");
 			}
 		}
 	}
