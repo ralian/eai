@@ -47,7 +47,7 @@ class eAIState
     protected string m_Name;
     protected string m_ClassName;
 
-    protected ref eAIHFSM m_FSM;
+    protected eAIHFSM m_FSM;
 
     /* STATE VARIABLES */
     protected eAIBase unit;
@@ -173,6 +173,10 @@ class eAIState
 		
 		return new_type;
     }
+	
+	string GetName() {
+		return m_Name;
+	}
 
     /* IMPLEMENTED IN XML */
     void OnEntry(string Event)

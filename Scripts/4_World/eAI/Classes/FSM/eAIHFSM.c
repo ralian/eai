@@ -56,6 +56,7 @@ class eAIHFSM
 
     protected string m_Name;
     protected string m_DefaultState;
+	protected string m_LastState = "";
     protected eAIBase m_Unit;
 
     void eAIHFSM(eAIBase unit, eAIState parentState)
@@ -71,6 +72,10 @@ class eAIHFSM
     {
         return m_Name;
     }
+	
+	string GetLastState() {
+		return m_LastState;
+	}
 
     eAIBase GetUnit()
     {
@@ -115,6 +120,7 @@ class eAIHFSM
         {
             Print("Exiting state: " + m_CurrentState);
             m_CurrentState.OnExit("", true);
+			m_LastState = m_CurrentState.GetName();
         }
 	
 		m_CurrentState = GetState(m_DefaultState);
@@ -139,6 +145,7 @@ class eAIHFSM
         {
             Print("Exiting state: " + m_CurrentState);
             m_CurrentState.OnExit(e, true);
+			m_LastState = m_CurrentState.GetName();
         }
 
         m_CurrentState = FindSuitableTransition(m_CurrentState, e).param1;
@@ -157,7 +164,7 @@ class eAIHFSM
 
     bool Abort(string e = "")
     {
-        Print("eAIFSM::Start e=" + e);
+        Print("eAIFSM::Abort e=" + e);
 
         if (m_Running && m_CurrentState)
         {

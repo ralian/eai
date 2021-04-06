@@ -149,11 +149,43 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
+				Weapon weapon_in_hands;
+				if (!Class.CastTo(weapon_in_hands, unit.GetItemInHands())) return FAIL;
+
+				int mi = weapon_in_hands.GetCurrentMuzzle();
+				Magazine mag = weapon_in_hands.GetMagazine(mi);
+				if (mag &amp;&amp; mag.GetAmmoCount() &gt; 0) return FAIL;
+
+				dst.magazine = unit.GetMagazineToReload(weapon_in_hands);
+				dst.weapon = weapon_in_hands;
+				if (!dst.magazine || !dst.weapon) return FAIL;
+
+				// don't move to the state if the action manager can't be initiated.
+				if (!unit.GetActionManager() || unit.GetActionManager().GetRunningAction()) return FAIL;
+				
+				return SUCCESS;
+            </guard>
+			<event name="" />
+			<from_state name="Idle" />
+			<to_state name="Reload" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
                 auto group = unit.GetGroup();
                 if (!group) return FAIL;
 
                 auto leader = group.GetLeader();
-                if (leader) return SUCCESS;
+                if (!leader) return FAIL;
+
+				auto target = group.GetTargetInformation();
+                if (!target) return FAIL;
+
+				if (m_FSM.GetLastState() == "Follow")
+					return SUCCESS;
 
                 return FAIL;
             </guard>
