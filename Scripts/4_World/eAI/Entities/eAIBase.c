@@ -89,6 +89,7 @@ modded class PlayerBase
 			return false;
 		}
 		m_AimArbitration = true;
+		Print("Starting aim arbitration for " + this + " with client " + m_CurrentArbiter);
 		GetRPCManager().SendRPC("eAI", "eAIAimArbiterStart", new Param2<Weapon_Base, int>(weap, 100), false, m_CurrentArbiter);
 		return true;
 	}
@@ -101,6 +102,7 @@ modded class PlayerBase
 			return false;
 		}
 		m_AimArbitration = false;
+		Print("Stopping aim arbitration for " + this + " with client " + m_CurrentArbiter);
 		GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter);
 		return true;
 	}
@@ -116,6 +118,7 @@ modded class PlayerBase
 			return false;
 		}
 		Man nearest = GetNearestPlayer();
+		Print("Refreshing aim arbitration for " + this + " current: " + m_CurrentArbiter + " closest: " + nearest.GetIdentity());
 		if (!m_CurrentArbiter) {
 			m_CurrentArbiter = nearest.GetIdentity();
 			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter);
@@ -130,6 +133,14 @@ modded class PlayerBase
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.StartAimArbitration, 50, false);
 			return true;
 		}
+		
+		// In this case, we already have an appropriate arbiter set up, just need to restart it
+		if (m_CurrentArbiter == nearest.GetIdentity() && !m_AimArbitration) {
+			StartAimArbitration();
+			return true;
+		}
+		
+		Print("Aim arbitration was refreshed, but is already running with the best client.");
 		
 		return false;
 	}
@@ -659,7 +670,7 @@ modded class PlayerBase
 				X = GetOrientation()[0] + 9.0; // 9.0 is a fudge factor
 			float deltaX = Math.DiffAngle(m_eAI_LookDirection_WorldSpace[0], X);
 			float deltaY = -((GetAimingModel().getAimY()-m_eAI_LookDirection_WorldSpace[1])*Math.DEG2RAD);
-			Print("Aim Debugging - X: " + X + " deltaX: " + deltaX + " Y: " + GetAimingModel().getAimY() + " deltaY: " + deltaY);
+			//Print("Aim Debugging - X: " + X + " deltaX: " + deltaX + " Y: " + GetAimingModel().getAimY() + " deltaY: " + deltaY);
 			pInputs.OverrideAimChangeX(true, deltaX * (1/500.0));
 			//pInputs.OverrideAimChangeY(true, -deltaY * (1/8.0));
 			//GetAimingModel().SetDummyRecoil(Weapon_Base.Cast(pInHands));
