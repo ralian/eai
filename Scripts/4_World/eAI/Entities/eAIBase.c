@@ -24,7 +24,7 @@ modded class PlayerBase
 
 	// Targeting data 
 	private autoptr array<eAITargetGroup> m_eAI_Targets;
-	private autoptr array<Object> threats = {}; // temporary
+	autoptr array<Object> threats = {}; // temporary
 	
 	// Aiming and aim arbitration
 	bool m_AimArbitration = false;
@@ -495,11 +495,6 @@ modded class PlayerBase
 		
 		m_eAI_Command = eAICommandBase.Cast(GetCommand_Script());
 		
-		if (m_WeaponRaised) {
-			//if (m_eAI_Command)
-			//	m_eAI_Command.SetFlagFinished(true);
-		}
-		
 		if (pCurrentCommandFinished) {
 			if (PhysicsIsFalling(true))
 			{
@@ -667,6 +662,7 @@ modded class PlayerBase
 			if (weapon && weapon.aim && weapon.aim.GetAge() < 150)
 				X = weapon.aim.Azmuith;
 			else 
+				// Todo: this fails because we can't set the direction of the player in the command script.
 				X = GetOrientation()[0] + 9.0; // 9.0 is a fudge factor
 			float deltaX = Math.DiffAngle(m_eAI_LookDirection_WorldSpace[0], X);
 			float deltaY = -((GetAimingModel().getAimY()-m_eAI_LookDirection_WorldSpace[1])*Math.DEG2RAD);
