@@ -135,7 +135,8 @@ class eAICommandMove extends eAICommandBase
 		m_TargetMovementDirection = Math.NormalizeAngle(m_Direction.VectorToAngles()[0]);
 		if (m_TargetMovementDirection > 180.0) m_TargetMovementDirection = m_TargetMovementDirection - 360.0;
 
-		m_ST.SetMovementDirection(this, m_MovementDirection);
+		if (!m_Raised)
+			m_ST.SetMovementDirection(this, m_MovementDirection);
 		
 		m_ST.SetRaised(this, m_Raised);
 		

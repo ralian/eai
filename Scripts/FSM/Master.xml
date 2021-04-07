@@ -61,6 +61,31 @@
                 return EXIT;
             </event_update>
 		</state>
+		<state name="Combat">
+			<variables>
+			</variables>
+			<editor_data>
+				<position x="333" y="374" />
+				<size width="150" height="40" />
+			</editor_data>
+			<event_entry>
+				// we assume the targets have been cleaned and sorted in the transition
+				unit.RaiseWeapon(true);
+				unit.RefreshAimArbitration();
+			</event_entry>
+			<event_exit>
+				unit.StopAimArbitration();
+				unit.RaiseWeapon(false);
+			</event_exit>
+			<event_update>
+				if (unit.CleanThreats() &lt; 1) return EXIT;
+
+				if (unit.CombatUpdateAim())
+					unit.FireHeldWeapon();
+
+				return CONTINUE;
+            </event_update>
+		</state>
 	</states>
 	<transitions>
 		<transition>
@@ -204,6 +229,31 @@
             </guard>
 			<event name="" />
 			<from_state name="Reload" />
+			<to_state name="Idle" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+				if (unit.CleanThreats() &gt; 0) return SUCCESS;
+                return FAIL;
+            </guard>
+			<event name="" />
+			<from_state name="Idle" />
+			<to_state name="Combat" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+				return SUCCESS;
+            </guard>
+			<event name="" />
+			<from_state name="Combat" />
 			<to_state name="Idle" />
 		</transition>
 	</transitions>

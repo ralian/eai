@@ -23,6 +23,7 @@ class AimProfile {
 		out_back = out_b;
 		lastUpdated = GetGame().GetTime();
 	}
+	int GetAge() {return (GetGame().GetTime() - lastUpdated);}
 };
 
 // Class managing the list of weapon world space data
