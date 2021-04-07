@@ -656,12 +656,12 @@ modded class PlayerBase
 			if (weapon && weapon.aim && weapon.aim.GetAge() < 150)
 				X = weapon.aim.Azmuith;
 			else 
-				X = GetOrientation()[0] - 9.0; // 9.0 is a fudge factor
+				X = GetOrientation()[0] + 9.0; // 9.0 is a fudge factor
 			float deltaX = Math.DiffAngle(m_eAI_LookDirection_WorldSpace[0], X);
-			float deltaY = -((GetAimingModel().getAimY()-targetAngle)*Math.DEG2RAD);
+			float deltaY = -((GetAimingModel().getAimY()-m_eAI_LookDirection_WorldSpace[1])*Math.DEG2RAD);
 			Print("Aim Debugging - X: " + X + " deltaX: " + deltaX + " Y: " + GetAimingModel().getAimY() + " deltaY: " + deltaY);
-			pInputs.OverrideAimChangeX(true, deltaX / 500.0);
-			//pInputs.OverrideAimChangeY(true, 90.0);
+			pInputs.OverrideAimChangeX(true, deltaX * (1/500.0));
+			//pInputs.OverrideAimChangeY(true, -deltaY * (1/8.0));
 			//GetAimingModel().SetDummyRecoil(Weapon_Base.Cast(pInHands));
 		}
 

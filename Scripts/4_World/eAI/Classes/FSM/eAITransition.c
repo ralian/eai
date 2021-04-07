@@ -43,6 +43,8 @@ class eAITransition
     static const int SUCCESS = 1; 
 
     protected string m_ClassName;
+	
+	protected eAIHFSM m_FSM;
 
     /* STATE VARIABLES */
     protected eAIBase unit;
@@ -50,6 +52,7 @@ class eAITransition
     void eAITransition(eAIBase _unit, eAIHFSM _fsm)
     {
         unit = _unit;
+		m_FSM = _fsm;
     }
 
     eAIState GetSource()
