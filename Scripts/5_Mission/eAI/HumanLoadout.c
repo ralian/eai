@@ -47,7 +47,7 @@ class HumanLoadout {
 		string mag = magazines.GetRandomElement();
 
 		int i;
-		int count = mincount;
+		int count = 3;
 		if (maxcount > 0)
 		{
 			//TBD: count = random value between mincount and maxcount

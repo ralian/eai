@@ -46,6 +46,8 @@ modded class PlayerBase
 	private bool m_WeaponRaised;
 	
 	private float m_AimDeltaY, m_AimDeltaX; // in deg
+	
+	bool ReloadingInADS = false; // specifically true if we are currently reloading while in combat mode
     
     // Path Finding
 	private autoptr PGFilter m_PathFilter;
@@ -652,6 +654,23 @@ modded class PlayerBase
 
 		ReloadWeaponAI(weapon, GetMagazineToReload(weapon));
 	}
+	
+	// Returns true only if there is a weapon in hands, and the weapon has no rounds ready, 
+	// and the inventory does have magazines to reload to.
+	bool ShouldReload(out EntityAI magazine, out EntityAI weapon) {
+		Weapon weapon_in_hands;
+		if (!Class.CastTo(weapon_in_hands, GetItemInHands())) return false;
+
+		int mi = weapon_in_hands.GetCurrentMuzzle();
+		Magazine mag = weapon_in_hands.GetMagazine(mi);
+		if (mag && mag.GetAmmoCount() > 0) return false;
+
+		magazine = GetMagazineToReload(weapon_in_hands);
+		weapon = weapon_in_hands;
+		if (!magazine || !weapon) return false;
+		
+		return true;
+	}
 
 	int correctionFlag = 0;
 	int correctionCounter = 0;
@@ -671,7 +690,8 @@ modded class PlayerBase
 		Weapon_Base weapon;
 		Class.CastTo(weapon, pInHands);
 		
-		if (m_WeaponRaised && threats.Count() > 0 && threats[0]) {
+		// Start of ADS code
+		if (m_WeaponRaised && threats.Count() > 0 && threats[0] && !ReloadingInADS) {
 			SetAimDir(threats[0].GetPosition());
 			
 			float targetAngle, targetHeight, gunHeight;
@@ -719,7 +739,7 @@ modded class PlayerBase
 			}
 			correctionCounter++;
 			if (correctionCounter > 5) correctionCounter = 0;
-			GetAimingModel().SetDummyRecoil(Weapon_Base.Cast(pInHands));
+			//GetAimingModel().SetDummyRecoil(Weapon_Base.Cast(pInHands));
 		}
 
 		return;

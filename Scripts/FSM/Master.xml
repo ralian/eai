@@ -68,6 +68,7 @@
 		</state>
 		<state name="Combat">
 			<variables>
+				<variable name="time" type="float" />
 			</variables>
 			<editor_data>
 				<position x="333" y="374" />
@@ -75,15 +76,30 @@
 			</editor_data>
 			<event_entry>
 				// we assume the targets have been cleaned and sorted in the transition
-				unit.RaiseWeapon(true);
-				unit.RefreshAimArbitration();
-				unit.DelayFiring(1000, 2000);
+				if (!unit.ReloadingInADS) {
+					unit.RaiseWeapon(true);
+					unit.RefreshAimArbitration();
+					unit.DelayFiring(1000, 2000);
+				} else unit.ReloadingInADS = false; // if we just came from an ADS reload
 			</event_entry>
 			<event_exit>
-				unit.StopAimArbitration();
-				unit.RaiseWeapon(false);
+				if (!unit.ReloadingInADS) {
+					unit.StopAimArbitration();
+					unit.RaiseWeapon(false);
+				}
 			</event_exit>
 			<event_update>
+				time += DeltaTime;
+				if (time &lt; 0.08) {
+					return CONTINUE;
+				} time = 0;
+				
+				EntityAI mag, weap; // these are unused here
+				if (unit.ShouldReload(mag, weap)) {
+					unit.ReloadingInADS = true;
+					return EXIT;
+				}
+
 				if (unit.CleanThreats() &lt; 1) return EXIT;
 
 				if (unit.ShouldFire())
@@ -154,16 +170,7 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-				Weapon weapon_in_hands;
-				if (!Class.CastTo(weapon_in_hands, unit.GetItemInHands())) return FAIL;
-
-				int mi = weapon_in_hands.GetCurrentMuzzle();
-				Magazine mag = weapon_in_hands.GetMagazine(mi);
-				if (mag &amp;&amp; mag.GetAmmoCount() &gt; 0) return FAIL;
-
-				dst.magazine = unit.GetMagazineToReload(weapon_in_hands);
-				dst.weapon = weapon_in_hands;
-				if (!dst.magazine || !dst.weapon) return FAIL;
+				if (!unit.ShouldReload(dst.magazine, dst.weapon)) return FAIL;
 
 				// don't move to the state if the action manager can't be initiated.
 				if (!unit.GetActionManager() || unit.GetActionManager().GetRunningAction()) return FAIL;
@@ -180,16 +187,7 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-				Weapon weapon_in_hands;
-				if (!Class.CastTo(weapon_in_hands, unit.GetItemInHands())) return FAIL;
-
-				int mi = weapon_in_hands.GetCurrentMuzzle();
-				Magazine mag = weapon_in_hands.GetMagazine(mi);
-				if (mag &amp;&amp; mag.GetAmmoCount() &gt; 0) return FAIL;
-
-				dst.magazine = unit.GetMagazineToReload(weapon_in_hands);
-				dst.weapon = weapon_in_hands;
-				if (!dst.magazine || !dst.weapon) return FAIL;
+				if (!unit.ShouldReload(dst.magazine, dst.weapon)) return FAIL;
 
 				// don't move to the state if the action manager can't be initiated.
 				if (!unit.GetActionManager() || unit.GetActionManager().GetRunningAction()) return FAIL;
@@ -199,6 +197,21 @@
 			<event name="" />
 			<from_state name="Idle" />
 			<to_state name="Reload" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+				if (m_FSM.GetLastState() == "Combat")
+					return SUCCESS;
+
+                return FAIL;
+            </guard>
+			<event name="" />
+			<from_state name="Reload" />
+			<to_state name="Combat" />
 		</transition>
 		<transition>
 			<editor_data>
@@ -271,6 +284,20 @@
 			<event name="" />
 			<from_state name="Follow" />
 			<to_state name="Combat" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+				if (unit.ShouldReload(dst.magazine, dst.weapon)) return SUCCESS;
+
+                return FAIL;
+            </guard>
+			<event name="" />
+			<from_state name="Combat" />
+			<to_state name="Reload" />
 		</transition>
 		<transition>
 			<editor_data>
