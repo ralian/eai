@@ -18,6 +18,10 @@ class AimProfile {
 	int lastUpdated = -1;
 	vector out_front, out_back;
 	float Azmuith;
+	float Inclination;
+	bool InterpolationStarted = false;
+	float InterpolationAzmuith;
+	float InterpolationInclination;
 	void AimProfile(vector out_f, vector out_b) {
 		out_front = out_f;
 		out_back = out_b;
@@ -49,7 +53,10 @@ class eAIServerAimProfileManager {
 			data.param1.aim.out_front = data.param2;
 			data.param1.aim.out_back = data.param3;
 			data.param1.aim.lastUpdated = GetGame().GetTime();
-			data.param1.aim.Azmuith = (data.param2 - data.param3).VectorToAngles().GetRelAngles()[0];
+			vector angles = (data.param2 - data.param3).VectorToAngles().GetRelAngles();
+			data.param1.aim.Azmuith = angles[0];
+			data.param1.aim.Inclination = angles[1];
+			data.param1.aim.InterpolationStarted = false;
 		} else {
 			Print("eAIAimDetails updated, but no weapon exists! At: " + data.param2.ToString());
 		}

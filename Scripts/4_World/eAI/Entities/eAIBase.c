@@ -655,6 +655,8 @@ modded class PlayerBase
 
 	int correctionFlag = 0;
 	int correctionCounter = 0;
+	float lastdX = 0;
+	float lastdY = 0;
 	override void HandleWeapons(float pDt, Entity pInHands, HumanInputController pInputs, out bool pExitIronSights)
 	{
 		if (!IsAI())
@@ -679,9 +681,24 @@ modded class PlayerBase
 				targetAngle = Math.Atan2(targetHeight - gunHeight, vector.Distance(GetPosition(), threats[0].GetPosition()))*Math.RAD2DEG; // needs to be in deg
 			} else targetAngle = 0;
 			float X, Y;
-			if (weapon && weapon.aim && weapon.aim.GetAge() < 150) {
-				X = weapon.aim.Azmuith;
-				Y = Math.Asin((weapon.aim.out_front - weapon.aim.out_back).Normalized()[1])*Math.RAD2DEG;
+			if (weapon && weapon.aim && weapon.aim.GetAge() < 250) {
+				if (!weapon.aim.InterpolationStarted) {
+					// begin the interpolation
+					// todo we could improve the amount of interpolation that is given on a packet reception
+					X = weapon.aim.Azmuith;
+					Y = weapon.aim.Inclination;
+					weapon.aim.InterpolationAzmuith = X;
+					weapon.aim.InterpolationInclination = Y;
+					weapon.aim.InterpolationStarted = true;
+				} else {
+					weapon.aim.InterpolationAzmuith += lastdX * pDt * 5.0; // 5.0 is a fudge factor
+					weapon.aim.InterpolationInclination += lastdY * pDt * 10.0;
+					Math.NormalizeAngle(weapon.aim.InterpolationAzmuith);
+					Math.NormalizeAngle(weapon.aim.InterpolationInclination);
+					X = weapon.aim.InterpolationAzmuith;
+					Y = weapon.aim.InterpolationInclination;
+				}
+				//Print("data: " + weapon.aim.Inclination.ToString() + " " + weapon.aim.InterpolationInclination.ToString());
 			} else { 
 				// Todo: this fails because we can't set the direction of the player in the command script.
 				X = Math.NormalizeAngle( GetOrientation()[0] + 9.0 ); // 9.0 is a fudge factor
@@ -689,14 +706,16 @@ modded class PlayerBase
 			}
 			m_AimDeltaX = Math.DiffAngle(m_eAI_LookDirection_WorldSpace[0], X);
 			m_AimDeltaY = (targetAngle-Y);
-			Print("Aim Debugging - X: " + X + " deltaX: " + m_AimDeltaX + " Y: " + Y + " deltaY: " + m_AimDeltaY);
+			//Print("Aim Debugging - X: " + X + " deltaX: " + m_AimDeltaX + " Y: " + Y + " deltaY: " + m_AimDeltaY);
 			if (correctionCounter < 1) {
-				pInputs.OverrideAimChangeX(true, 0.002*m_AimDeltaY);
+				pInputs.OverrideAimChangeX(true, 0.001*m_AimDeltaY);
 				pInputs.OverrideAimChangeY(true, 1.0);
+				lastdY = m_AimDeltaY;
 			} else { // Aim along the x axis normally
 				// could save time on like 2/10 updates by moving calculations in here
 				pInputs.OverrideAimChangeX(true, m_AimDeltaX * (1/500.0));
 				pInputs.OverrideAimChangeY(false, 0);
+				lastdX = m_AimDeltaX;
 			}
 			correctionCounter++;
 			if (correctionCounter > 5) correctionCounter = 0;
