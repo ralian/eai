@@ -140,7 +140,8 @@ class eAICommandMove extends eAICommandBase
 		m_ST.SetRaised(this, m_Raised);
 		
 		//m_ST.SetAimX(this, false);
-		//m_ST.SetAimY(this, false);
+		//if (m_Raised)
+		//	m_ST.SetAimY(this, -15.0);
 	}
 
 	override void PrePhysUpdate(float pDt)
@@ -179,11 +180,6 @@ class eAICommandMove extends eAICommandBase
 			
 			return;
 		}
-		
-		
-		
-		
-
 		float wayPointDistance;
 		int wayPointIndex = m_Unit.FindNext(expectedPosition, wayPointDistance);
 		vector wayPoint = m_Unit.PathGet(wayPointIndex);

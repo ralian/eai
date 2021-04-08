@@ -642,6 +642,8 @@ modded class PlayerBase
 		ReloadWeaponAI(weapon, GetMagazineToReload(weapon));
 	}
 
+	int correctionFlag = 0;
+	int correctionCounter = 0;
 	override void HandleWeapons(float pDt, Entity pInHands, HumanInputController pInputs, out bool pExitIronSights)
 	{
 		if (!IsAI())
@@ -657,19 +659,50 @@ modded class PlayerBase
 		Class.CastTo(weapon, pInHands);
 		
 		if (m_WeaponRaised) {
-			float targetAngle = -15.0;
-			float X;
-			if (weapon && weapon.aim && weapon.aim.GetAge() < 150)
+			float targetAngle, targetHeight, gunHeight;
+			if (threats.Count() > 0 && threats[0]) {
+				gunHeight = 1.5 + GetPosition()[1]; 			// Todo get the actual world gun height.
+				targetHeight = 1.0 + threats[0].GetPosition()[1]; 	// Todo get actual threat height, but this should shoot center of mass in most cases
+				targetAngle = Math.Atan2(targetHeight - gunHeight, vector.Distance(GetPosition(), threats[0].GetPosition()))*Math.RAD2DEG; // needs to be in deg
+			} else targetAngle = 0;
+			float X, Y;
+			if (weapon && weapon.aim && weapon.aim.GetAge() < 150) {
 				X = weapon.aim.Azmuith;
-			else 
+				Y = Math.Asin((weapon.aim.out_front - weapon.aim.out_back).Normalized()[1])*Math.RAD2DEG;
+			} else { 
 				// Todo: this fails because we can't set the direction of the player in the command script.
-				X = GetOrientation()[0] + 9.0; // 9.0 is a fudge factor
+				X = Math.NormalizeAngle( GetOrientation()[0] + 9.0 ); // 9.0 is a fudge factor
+				Y = hcw.GetBaseAimingAngleUD();
+			}
 			float deltaX = Math.DiffAngle(m_eAI_LookDirection_WorldSpace[0], X);
-			float deltaY = -((GetAimingModel().getAimY()-m_eAI_LookDirection_WorldSpace[1])*Math.DEG2RAD);
-			//Print("Aim Debugging - X: " + X + " deltaX: " + deltaX + " Y: " + GetAimingModel().getAimY() + " deltaY: " + deltaY);
-			pInputs.OverrideAimChangeX(true, deltaX * (1/500.0));
-			//pInputs.OverrideAimChangeY(true, -deltaY * (1/8.0));
-			//GetAimingModel().SetDummyRecoil(Weapon_Base.Cast(pInHands));
+			float deltaY = (targetAngle-Y);
+			Print("Aim Debugging - X: " + X + " deltaX: " + deltaX + " Y: " + Y + " deltaY: " + deltaY);
+			if (correctionCounter < 1) {
+				/*if (correctionCounter == 0) { // Use the x direction to hack the y aim
+					if (deltaY > 0) {
+						pInputs.OverrideAimChangeX(true, 0.005);
+						correctionFlag = -1;
+					} else {
+						pInputs.OverrideAimChangeX(true, -0.005);
+						correctionFlag = 1;
+					} 
+					pInputs.OverrideAimChangeY(true, 1.0);
+				} else {			// Correct the aim from moving in the x direction
+					pInputs.OverrideAimChangeX(true, correctionFlag * 0.01);
+					pInputs.OverrideAimChangeY(false, 0);
+					correctionFlag = 0;
+				}*/
+				// easier way of doing the same thing?
+				pInputs.OverrideAimChangeX(true, 0.002*deltaY);
+				pInputs.OverrideAimChangeY(true, 1.0);
+			} else { // Aim along the x axis normally
+				// could save time on like 2/10 updates by moving calculations in here
+				pInputs.OverrideAimChangeX(true, deltaX * (1/500.0));
+				pInputs.OverrideAimChangeY(false, 0);
+			}
+			correctionCounter++;
+			if (correctionCounter > 5) correctionCounter = 0;
+			GetAimingModel().SetDummyRecoil(Weapon_Base.Cast(pInHands));
 		}
 
 		return;
