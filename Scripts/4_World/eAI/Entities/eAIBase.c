@@ -147,6 +147,31 @@ modded class PlayerBase
 		return false;
 	}
 	
+		// Update the aim during combat, return true if we are within parameters to fire.
+	int m_AllowedFireTime = 0;
+	bool ShouldFire() {
+		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
+		
+		if (GetGame().GetTime() < m_AllowedFireTime) return false;
+		
+		// for now we just check the raw aim errors
+		if (m_AimDeltaX < 1.0 && m_AimDeltaY < 1.0) {
+			DelayFiring(500, 300);
+			return true;
+		}
+		
+		// pseudocode: if weapon raycast passes within 3 meters of enemy and we have waited long enough since m_TimeLastFired, then return true
+		
+		return false;
+	
+	}
+	
+	// Keep the unit from firing until time_ms from now.
+	void DelayFiring(int time_ms, int randomAdditionalTime) {
+		m_AllowedFireTime = GetGame().GetTime() + time_ms;
+		if (randomAdditionalTime > 0) m_AllowedFireTime += Math.RandomInt(0, randomAdditionalTime);
+	}
+	
 	void FireHeldWeapon() {
 		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
 		if (weap && weap.CanFire()) {
@@ -195,25 +220,6 @@ modded class PlayerBase
 			i++;
 		}
 		return threats.Count();
-	}
-	
-	// Update the aim during combat, return true if we are within parameters to fire.
-	int m_TimeLastFired = 0;
-	bool ShouldFire() {
-		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
-		
-		if (GetGame().GetTime() - m_TimeLastFired < 1000) return false;
-		
-		// for now we just check the raw aim errors
-		if (m_AimDeltaX < 1.0 && m_AimDeltaY < 1.0) {
-			m_TimeLastFired = GetGame().GetTime();
-			return true;
-		}
-		
-		// pseudocode: if weapon raycast passes within 3 meters of enemy and we have waited long enough since m_TimeLastFired, then return true
-		
-		return false;
-	
 	}
 	
 	override bool IsAI()
