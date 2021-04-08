@@ -270,13 +270,10 @@ modded class MissionGameplay
 {
     autoptr eAIGame m_eaiGame;
 	UAInput m_eAIRadialKey;
-	autoptr eAIKeybinds m_keybinds;
 
     void MissionGameplay()
     {
         m_eaiGame = new eAIGame();
-		m_keybinds = new eAIKeybinds();
-		m_keybinds.load("$profile:eAIKeybinds.json");
 		m_eAIRadialKey = GetUApi().GetInputByName("eAICommandMenu");
 
 		GetDayZGame().eAICreateManager();
@@ -297,7 +294,19 @@ modded class MissionGameplay
 		if (m_eAIRadialKey.LocalRelease() && GetGame().GetUIManager().GetMenu() == eAICommandMenu.instance) {
 			eAICommandMenu.instance.OnMenuRelease();
 			GetUIManager().Back();
-			m_keybinds.save("$profile:eAIKeybinds.json"); // bad place to do this
 		}
+	}
+	
+	override void OnMissionStart() {
+		// todo this can be dmoved to the constructor of DayZGame
+		super.OnMissionStart();
+		MakeDirectory("$profile:CF");
+		DayZGame.Cast(GetGame()).CFPopulateKeybinds();
+		DayZGame.Cast(GetGame()).CFLoadKeybinds("$profile:CF/PersistentKeybinds.json");
+	}
+	
+	override void OnMissionFinish() {
+		super.OnMissionFinish();
+		DayZGame.Cast(GetGame()).CFSaveKeybinds("$profile:CF/PersistentKeybinds.json");
 	}
 };

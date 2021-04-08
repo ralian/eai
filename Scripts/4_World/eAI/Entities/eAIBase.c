@@ -739,7 +739,6 @@ modded class PlayerBase
 			}
 			correctionCounter++;
 			if (correctionCounter > 5) correctionCounter = 0;
-			//GetAimingModel().SetDummyRecoil(Weapon_Base.Cast(pInHands));
 		}
 
 		return;
