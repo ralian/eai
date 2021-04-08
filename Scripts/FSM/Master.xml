@@ -15,7 +15,12 @@
 			<event_entry></event_entry>
 			<event_exit></event_exit>
 			<event_update>
-                return EXIT;
+				time += DeltaTime;
+                if (time &gt; 0.25) {
+					time = 0;
+					return EXIT;
+				}
+                return CONTINUE; // We don't want to eval the transitions every frame, it takes time for some
             </event_update>
 		</state>
 		<state name="Follow">
@@ -243,6 +248,43 @@
 			<event name="" />
 			<from_state name="Idle" />
 			<to_state name="Combat" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+				if (unit.CleanThreats() &gt; 0) return SUCCESS;
+                return FAIL;
+            </guard>
+			<event name="" />
+			<from_state name="Follow" />
+			<to_state name="Combat" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+				auto group = unit.GetGroup();
+                if (!group) return FAIL;
+
+                auto leader = group.GetLeader();
+                if (!leader) return FAIL;
+
+				auto target = group.GetTargetInformation();
+                if (!target) return FAIL;
+
+				if (m_FSM.GetLastState() == "Follow")
+					return SUCCESS;
+
+                return FAIL;
+            </guard>
+			<event name="" />
+			<from_state name="Combat" />
+			<to_state name="Follow" />
 		</transition>
 		<transition>
 			<editor_data>
