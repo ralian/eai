@@ -44,6 +44,8 @@ modded class PlayerBase
 	private vector m_eAI_AimDirection_ModelSpace;
 	
 	private bool m_WeaponRaised;
+	
+	private float m_AimDeltaY, m_AimDeltaX; // in deg
     
     // Path Finding
 	private autoptr PGFilter m_PathFilter;
@@ -197,13 +199,16 @@ modded class PlayerBase
 	
 	// Update the aim during combat, return true if we are within parameters to fire.
 	int m_TimeLastFired = 0;
-	bool CombatUpdateAim() {
+	bool ShouldFire() {
 		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
 		
-		// Now, do the logic for aiming along the y axis.
-		vector myPos = GetPosition();
-		vector threatPos = threats[0].GetPosition();
-		SetAimDir(threatPos);
+		if (GetGame().GetTime() - m_TimeLastFired < 1000) return false;
+		
+		// for now we just check the raw aim errors
+		if (m_AimDeltaX < 1.0 && m_AimDeltaY < 1.0) {
+			m_TimeLastFired = GetGame().GetTime();
+			return true;
+		}
 		
 		// pseudocode: if weapon raycast passes within 3 meters of enemy and we have waited long enough since m_TimeLastFired, then return true
 		
@@ -658,7 +663,9 @@ modded class PlayerBase
 		Weapon_Base weapon;
 		Class.CastTo(weapon, pInHands);
 		
-		if (m_WeaponRaised) {
+		if (m_WeaponRaised && threats.Count() > 0 && threats[0]) {
+			SetAimDir(threats[0].GetPosition());
+			
 			float targetAngle, targetHeight, gunHeight;
 			if (threats.Count() > 0 && threats[0]) {
 				gunHeight = 1.5 + GetPosition()[1]; 			// Todo get the actual world gun height.
@@ -674,30 +681,15 @@ modded class PlayerBase
 				X = Math.NormalizeAngle( GetOrientation()[0] + 9.0 ); // 9.0 is a fudge factor
 				Y = hcw.GetBaseAimingAngleUD();
 			}
-			float deltaX = Math.DiffAngle(m_eAI_LookDirection_WorldSpace[0], X);
-			float deltaY = (targetAngle-Y);
-			Print("Aim Debugging - X: " + X + " deltaX: " + deltaX + " Y: " + Y + " deltaY: " + deltaY);
+			m_AimDeltaX = Math.DiffAngle(m_eAI_LookDirection_WorldSpace[0], X);
+			m_AimDeltaY = (targetAngle-Y);
+			Print("Aim Debugging - X: " + X + " deltaX: " + m_AimDeltaX + " Y: " + Y + " deltaY: " + m_AimDeltaY);
 			if (correctionCounter < 1) {
-				/*if (correctionCounter == 0) { // Use the x direction to hack the y aim
-					if (deltaY > 0) {
-						pInputs.OverrideAimChangeX(true, 0.005);
-						correctionFlag = -1;
-					} else {
-						pInputs.OverrideAimChangeX(true, -0.005);
-						correctionFlag = 1;
-					} 
-					pInputs.OverrideAimChangeY(true, 1.0);
-				} else {			// Correct the aim from moving in the x direction
-					pInputs.OverrideAimChangeX(true, correctionFlag * 0.01);
-					pInputs.OverrideAimChangeY(false, 0);
-					correctionFlag = 0;
-				}*/
-				// easier way of doing the same thing?
-				pInputs.OverrideAimChangeX(true, 0.002*deltaY);
+				pInputs.OverrideAimChangeX(true, 0.002*m_AimDeltaY);
 				pInputs.OverrideAimChangeY(true, 1.0);
 			} else { // Aim along the x axis normally
 				// could save time on like 2/10 updates by moving calculations in here
-				pInputs.OverrideAimChangeX(true, deltaX * (1/500.0));
+				pInputs.OverrideAimChangeX(true, m_AimDeltaX * (1/500.0));
 				pInputs.OverrideAimChangeY(false, 0);
 			}
 			correctionCounter++;

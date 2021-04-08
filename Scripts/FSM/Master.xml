@@ -80,7 +80,7 @@
 			<event_update>
 				if (unit.CleanThreats() &lt; 1) return EXIT;
 
-				if (unit.CombatUpdateAim())
+				if (unit.ShouldFire())
 					unit.FireHeldWeapon();
 
 				return CONTINUE;
