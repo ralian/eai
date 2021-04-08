@@ -256,7 +256,16 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-				if (unit.CleanThreats() &gt; 0) return SUCCESS;
+				if (unit.CleanThreats() &gt; 0) {
+					auto group = unit.GetGroup();
+	                if (group) {
+						auto target = group.GetTargetInformation();
+		                if (target) {
+							target.RemoveAI(unit);
+							return SUCCESS;
+						}
+					}
+				}
                 return FAIL;
             </guard>
 			<event name="" />
@@ -278,9 +287,11 @@
 				auto target = group.GetTargetInformation();
                 if (!target) return FAIL;
 
-				if (m_FSM.GetLastState() == "Follow")
+				if (m_FSM.GetLastState() == "Follow") {
+					target.AddAI(unit);
 					return SUCCESS;
-
+				}
+	
                 return FAIL;
             </guard>
 			<event name="" />
