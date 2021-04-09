@@ -41,6 +41,10 @@ class eAIGroup
 	eAIFaction GetFaction() {
 		return m_Faction;
 	}
+	
+	void SetFaction(eAIFaction f) {
+		m_Faction = f;
+	}
 
 	int GetID()
 	{

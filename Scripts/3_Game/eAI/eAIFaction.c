@@ -1,12 +1,16 @@
 class eAIFaction {
 	protected string name;
 	string getName() {return name;}
-	bool isFriendly(eAIFaction other) {}
+	bool isFriendly(eAIFaction other) {
+		return true;
+	}
 };
 
 class eAIFactionRaiders : eAIFaction { // this is the faction that seeks the Lost Ark
 	void eAIFactionRaiders() {name = "Raiders";}
-	override bool isFriendly(eAIFaction other) {return false;}
+	override bool isFriendly(eAIFaction other) {
+		return false;
+	}
 };
 
 class eAIFactionWest : eAIFaction {

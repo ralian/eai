@@ -54,13 +54,16 @@ class eAIGame {
 	autoptr array<autoptr eAIGroup> m_groups = {};
 	
 	// return the group owned by leader, otherwise create a new one.
-	eAIGroup GetGroupByLeader(PlayerBase leader) {
+	eAIGroup GetGroupByLeader(PlayerBase leader, bool createIfNoneExists = true) {
 		for (int i = 0; i < m_groups.Count(); i++)
 			if (m_groups[i].GetLeader() == leader)
 				return m_groups[i];
 		
+		if (!createIfNoneExists) return null;
+		
 		eAIGroup newGroup = m_groups.Get(m_groups.Insert(new eAIGroup()));
 		newGroup.SetLeader(leader);
+		leader.SetGroup(newGroup);
 		return newGroup;
 	}
 	

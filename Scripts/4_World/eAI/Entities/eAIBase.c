@@ -154,15 +154,25 @@ modded class PlayerBase
 	bool ShouldFire() {
 		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
 		
+		if (!weap) return false;
+		
 		if (GetGame().GetTime() < m_AllowedFireTime) return false;
+		
+		// This check is to see if a friendly happens to be in the line of fire
+		vector hitPos;
+		PlayerBase hitPlayer = PlayerBase.Cast(weap.HitCast(hitPos));
+		if (hitPlayer && hitPlayer.GetGroup() && GetGroup()) {
+			if (hitPlayer.GetGroup() == GetGroup())
+				return false;
+			if (hitPlayer.GetGroup().GetFaction().isFriendly(GetGroup().GetFaction()))
+				return false;
+		}
 		
 		// for now we just check the raw aim errors
 		if (m_AimDeltaX < 1.0 && m_AimDeltaY < 1.0) {
 			DelayFiring(500, 300);
 			return true;
 		}
-		
-		// pseudocode: if weapon raycast passes within 3 meters of enemy and we have waited long enough since m_TimeLastFired, then return true
 		
 		return false;
 	
@@ -270,6 +280,11 @@ modded class PlayerBase
 		}
 
 		return m_eAI_Group;
+	}
+	
+	// This can be used by humans too
+	void SetGroup(eAIGroup g) {
+		m_eAI_Group = g;
 	}
 
 	eAIGroup GetGroup()
