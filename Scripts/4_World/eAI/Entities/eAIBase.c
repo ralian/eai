@@ -149,6 +149,19 @@ modded class PlayerBase
 		return false;
 	}
 	
+	bool PlayerIsEnemy(PlayerBase other) {
+		if (other.GetGroup() && GetGroup()) {
+			if (other.GetGroup() == GetGroup())
+				return false;
+			if (other.GetGroup().GetFaction().isFriendly(GetGroup().GetFaction()))
+				return false;
+			
+			// at this point we know both we and they have groups, and the groups aren't friendly towards each other
+			return true;
+		}
+		return false;
+	}
+	
 		// Update the aim during combat, return true if we are within parameters to fire.
 	int m_AllowedFireTime = 0;
 	bool ShouldFire() {
@@ -161,11 +174,8 @@ modded class PlayerBase
 		// This check is to see if a friendly happens to be in the line of fire
 		vector hitPos;
 		PlayerBase hitPlayer = PlayerBase.Cast(weap.HitCast(hitPos));
-		if (hitPlayer && hitPlayer.GetGroup() && GetGroup()) {
-			if (hitPlayer.GetGroup() == GetGroup())
-				return false;
-			if (hitPlayer.GetGroup().GetFaction().isFriendly(GetGroup().GetFaction()))
-				return false;
+		if (hitPlayer && !PlayerIsEnemy(hitPlayer)) {
+			return false;
 		}
 		
 		// for now we just check the raw aim errors
@@ -220,15 +230,14 @@ modded class PlayerBase
 					minDistance = temp;
 				} else threats.Insert(infected);
 				
-			} // this would make them shoot at all AI
-			 /*else if (player && player != m_FollowOrders && (!player.parent || (player.parent.m_FollowOrders != m_FollowOrders)) && player.IsAlive() && !IsViewOccluded(player.GetPosition() + "0 1.5 0")) {
+			} else if (player && PlayerIsEnemy(player) && player.IsAlive() && !IsViewOccluded(player.GetPosition() + "0 1.5 0")) {
 				// If it's an enemy player
 				temp = vector.Distance(newThreats[i].GetPosition(), GetPosition());
 				if (temp < minDistance) {
 					threats.InsertAt(player, 0);
 					minDistance = temp;
 				} else threats.Insert(player);
-			}*/
+			}
 			i++;
 		}
 		return threats.Count();
