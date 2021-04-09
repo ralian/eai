@@ -202,6 +202,47 @@ modded class PlayerBase
 		}
 	}
 	
+	override void EEHitBy(TotalDamageResult damageResult, int damageType, EntityAI source, int component, string dmgZone, string ammo, vector modelPos, float speedCoef)
+	{
+		super.EEHitBy(damageResult, damageType, source, component, dmgZone, ammo, modelPos, speedCoef);
+		
+		Print("eAI: Damage registered from " + source);
+		Weapon_Base player_weapon = Weapon_Base.Cast(source);
+		if (player_weapon) {
+			array<Object> objects = new array<Object>();
+			autoptr array<CargoBase> proxyCargos = new array<CargoBase>();
+			Object closest = null;
+			float dist = 1000000.0;
+			float testDist;
+		
+			GetGame().GetObjectsAtPosition3D(player_weapon.GetPosition(), 1.5, objects, proxyCargos);
+		
+			for (int j = 0; j < objects.Count(); j++) {
+				if (PlayerBase.Cast(objects[j])) {
+					testDist = vector.DistanceSq(objects[j].GetPosition(), player_weapon.GetPosition());
+					if (testDist < dist) {
+						closest = objects[j];
+						dist = testDist;
+					}
+				}
+			}
+			
+			// In theory this line could be removed, and the CanFIre check altered, to turn against group members that shoot them
+			if (closest && PlayerIsEnemy(PlayerBase.Cast(closest)))
+				AddToThreatList(closest, true);
+		}
+	}
+	
+	// Adds a threat to the threat list, if it isn't already there.
+	bool AddToThreatList(EntityAI threat, bool prioritize = false) {
+		if (!threat || threats.Find(threat) > -1)
+			return false;
+		if (prioritize)
+			threats.InsertAt(threat, 0);
+		else threats.Insert(threat);
+		return true;
+	}
+	
 	// Cleans out any invalid or dead targets
 	// Returns the number of threats in the array
 	ref array<CargoBase> proxyCargos = {};
@@ -210,7 +251,7 @@ modded class PlayerBase
 		
 		// Leave threats in that don't need cleaning
 		for (int j = 0; j < threats.Count(); j++)
-			if (!threats[j] || !threats[j].IsAlive() || vector.Distance(GetPosition(), threats[j].GetPosition()) < 30.0)
+			if (!threats[j] || !threats[j].IsAlive())
 				threats.Remove(j);
 		
 		autoptr array<Object> newThreats = new array<Object>();
@@ -226,17 +267,15 @@ modded class PlayerBase
 				// It's an infected, add it to teh threates array
 				temp = vector.Distance(newThreats[i].GetPosition(), GetPosition());
 				if (temp < minDistance) {
-					threats.InsertAt(infected, 0);
-					minDistance = temp;
-				} else threats.Insert(infected);
+					AddToThreatList(infected, true);
+				} else AddToThreatList(infected);
 				
 			} else if (player && PlayerIsEnemy(player) && player.IsAlive() && !IsViewOccluded(player.GetPosition() + "0 1.5 0")) {
 				// If it's an enemy player
 				temp = vector.Distance(newThreats[i].GetPosition(), GetPosition());
 				if (temp < minDistance) {
-					threats.InsertAt(player, 0);
-					minDistance = temp;
-				} else threats.Insert(player);
+					AddToThreatList(player, true);
+				} else AddToThreatList(player);
 			}
 			i++;
 		}

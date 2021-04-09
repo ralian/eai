@@ -115,7 +115,7 @@ modded class Weapon_Base {
 		if (hitFraction > 0.00001) {	
 												
 			array<Object> objects = new array<Object>();
-			ref array<CargoBase> proxyCargos = new array<CargoBase>();
+			autoptr array<CargoBase> proxyCargos = new array<CargoBase>();
 			Object closest = null;
 			float dist = 1000000.0;
 			float testDist;
@@ -203,7 +203,7 @@ modded class Weapon_Base {
 				vector hitPos;
 				EntityAI hitObject = HitCast(hitPos, true);
 				if (hitObject)
-					hitObject.ProcessDirectDamage(DT_FIRE_ARM, e.m_player, "Torso", ammoTypeName, hitObject.WorldToModel(hitPos), 1.0);
+					hitObject.ProcessDirectDamage(DT_FIRE_ARM, this, "Torso", ammoTypeName, hitObject.WorldToModel(hitPos), 1.0);
 			}
 			
 			if (m_fsm.ProcessEvent(e) == ProcessEventResult.FSM_OK)
