@@ -743,6 +743,12 @@ modded class PlayerBase
 					Y = weapon.aim.InterpolationInclination;
 				}
 				//Print("data: " + weapon.aim.Inclination.ToString() + " " + weapon.aim.InterpolationInclination.ToString());
+			} else if (weapon && weapon.aim) {
+				// This is a note for future me. This may cause a server side performance hit from the time
+				// a new arbiter is picked to the time it is started and data is received, since this will keep getting called.
+				// We'll worry about that later.
+				Print("Weapon aim data has gone out of sync for " + this);
+				RefreshAimArbitration();
 			} else { 
 				// Todo: this fails because we can't set the direction of the player in the command script.
 				X = Math.NormalizeAngle( GetOrientation()[0] + 9.0 ); // 9.0 is a fudge factor

@@ -73,22 +73,27 @@ modded class Weapon_Base {
 	// For raycasting bullets in the navmesh
 	autoptr PGFilter pgFilter = new PGFilter();
 	
-	EntityAI HitCast(out vector hitPosition) {
+	EntityAI HitCast(out vector hitPosition, bool debugParticle = false) {
 		// Get geometry info
 		
 		if (GetGame().GetTime() - aim.lastUpdated > 250)
 			Print("Warning! Using old data for ballistics for weapon " + this.ToString());
 		
 		vector begin_point = aim.out_front;
-		vector back = aim.out_back;
+		/*vector back = aim.out_back;
 		
-		vector aim_point = begin_point - back;
+		vector aim_point = begin_point - back;*/
+		vector dir = Vector(aim.InterpolationAzmuith, aim.InterpolationInclination, 0).AnglesToVector();
 
-		vector end_point = (500*aim_point) + begin_point;
+		vector end_point = (500*dir) + begin_point;
 		
 		// Use these to get  an idea of the direction for the raycast
-		GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(back, vector.Zero));
-		GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point, vector.Zero));
+		if (debugParticle) {
+			GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point + dir, vector.Zero));
+			GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point, vector.Zero));
+		}
+		
+		// TODO: If we use Azumith and Inclination , we will get the benefits from server side interpolation.
 		
 		Print("Muzzle pos: " + begin_point.ToString() + " dir-pos: " + (end_point-begin_point).ToString());
 		
@@ -100,7 +105,8 @@ modded class Weapon_Base {
 		DayZPhysics.RayCastBullet(begin_point, end_point, hit_mask, this, hitObject, hitPosition, hitNormal, hitFraction);
 		//DayZPhysics.RaycastRV(begin_point, aim_point, hitPosition, hitNormal, contact_component, null, null, null, false, false, ObjIntersectFire);
 		
-		GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(hitPosition, vector.Zero));
+		if (debugParticle)
+			GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(hitPosition, vector.Zero));
 		
 		Print("Raycast hitObject: " + hitObject.ToString() + " hitPosition-pos: " + (hitPosition-begin_point).ToString() + " hitNormal: " + hitNormal.ToString() + " hitFraction " + hitFraction.ToString());
 		
@@ -195,7 +201,7 @@ modded class Weapon_Base {
 				PlayerBase p = PlayerBase.Cast(e.m_player);
 				
 				vector hitPos;
-				EntityAI hitObject = HitCast(hitPos);
+				EntityAI hitObject = HitCast(hitPos, true);
 				if (hitObject)
 					hitObject.ProcessDirectDamage(DT_FIRE_ARM, e.m_player, "Torso", ammoTypeName, hitObject.WorldToModel(hitPos), 1.0);
 			}
