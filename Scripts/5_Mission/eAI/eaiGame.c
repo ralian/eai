@@ -45,6 +45,8 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "ClearAllAI", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "ProcessReload", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "ReqFormationChange", this, SingeplayerExecutionType.Server);
+		GetRPCManager().AddRPC("eAI", "ReqFormRejoin", this, SingeplayerExecutionType.Server);
+		GetRPCManager().AddRPC("eAI", "ReqFormStop", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", this, SingeplayerExecutionType.Server);
     }
 	
@@ -195,6 +197,34 @@ class eAIGame {
 		else {Error("ClientWeaponDataWithCallback called wrongfully");}
 	}
 	
+	void ReqFormRejoin(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+		Param1<DayZPlayer> data;
+        if (!ctx.Read(data)) return;
+		if(type == CallType.Server ) {
+			Print("eAI: ReqFormRejoin called.");
+			eAIGroup g = GetGroupByLeader(data.param1);
+			for (int i = 0; i < g.Count(); i++) {
+				eAIBase ai = g.GetMember(i);
+				if (ai && ai.IsAI() && ai.IsAlive())
+					ai.RequestTransition("Rejoin");
+			}
+		}
+	}
+	
+	void ReqFormStop(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+		Param1<DayZPlayer> data;
+        if (!ctx.Read(data)) return;
+		if(type == CallType.Server ) {
+			Print("eAI: ReqFormStop called.");
+			eAIGroup g = GetGroupByLeader(data.param1);
+			for (int i = 0; i < g.Count(); i++) {
+				eAIBase ai = g.GetMember(i);
+				if (ai && ai.IsAI() && ai.IsAlive())
+					ai.RequestTransition("Stop");
+			}
+		}
+	}
+	
 	void ReqFormationChange(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param2<DayZPlayer, int> data;
         if (!ctx.Read(data)) return;
@@ -265,5 +295,18 @@ modded class MissionGameplay
 			eAICommandMenu.instance.OnMenuRelease();
 			GetUIManager().Back();
 		}
+	}
+	
+	override void OnMissionStart() {
+		// todo this can be dmoved to the constructor of DayZGame
+		super.OnMissionStart();
+		MakeDirectory("$profile:CF");
+		DayZGame.Cast(GetGame()).CFPopulateKeybinds();
+		DayZGame.Cast(GetGame()).CFLoadKeybinds("$profile:CF/PersistentKeybinds.json");
+	}
+	
+	override void OnMissionFinish() {
+		super.OnMissionFinish();
+		DayZGame.Cast(GetGame()).CFSaveKeybinds("$profile:CF/PersistentKeybinds.json");
 	}
 };

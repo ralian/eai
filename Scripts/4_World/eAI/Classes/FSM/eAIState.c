@@ -43,12 +43,11 @@ class eAIState
 {
     static const int EXIT = 0;
     static const int CONTINUE = 1;
-    static const int REEVALUTATE = 2;
 
     protected string m_Name;
     protected string m_ClassName;
 
-    protected ref eAIHFSM m_FSM;
+    protected eAIHFSM m_FSM;
 
     /* STATE VARIABLES */
     protected eAIBase unit;
@@ -61,7 +60,11 @@ class eAIState
     static eAIStateType LoadXML(string fsm, CF_XML_Tag xml_root_tag, ScriptModule module)
     {
         string name = xml_root_tag.GetAttribute("name").ValueAsString();
+        string child_fsm;
+        if (xml_root_tag.GetAttribute("fsm")) child_fsm = xml_root_tag.GetAttribute("fsm").ValueAsString();
         string class_name = "eAI_" + fsm + "_" + name + "_State";
+        
+        if (child_fsm != "") class_name = "eAI_FSM_" + child_fsm + "_State";
 
         if (eAIStateType.Contains(class_name)) return eAIStateType.Get(class_name);
 
@@ -97,32 +100,58 @@ class eAIState
 		}
 
         FPrintln(file, "void " + class_name + "(eAIBase _unit) {");
-        FPrintln(file, "m_Name = \"" + name + "\";");
-        FPrintln(file, "m_ClassName = \"" + class_name + "\";");
+        if (child_fsm != "")
+        {
+            FPrintln(file, "m_Name = \"" + child_fsm + "\";");
+            FPrintln(file, "m_ClassName = \"" + class_name + "\";");
+            FPrintln(file, "m_FSM = eAIHFSMType.Get(\"eAI_\" + child_fsm + \"_HFSM\");");
+        }
+        else
+        {
+            FPrintln(file, "m_Name = \"" + name + "\";");
+            FPrintln(file, "m_ClassName = \"" + class_name + "\";");
+        }
         FPrintln(file, "}");
 
-        auto event_entry = xml_root_tag.GetTag("event_entry");
-        if (event_entry.Count() > 0)
+        if (child_fsm != "")
         {
-            FPrintln(file, "override void OnEntry() {");
-            FPrintln(file, event_entry[0].GetContent().GetContent());
+            FPrintln(file, "override void OnEntry(string Event) {");
+            FPrintln(file, "m_FSM.Start(Event);");
+            FPrintln(file, "}");
+
+            FPrintln(file, "override void OnExit(string Event, bool Aborted) {");
+            FPrintln(file, "if (wasAbort) m_FSM.Abort(Event);");
+            FPrintln(file, "}");
+
+            FPrintln(file, "override int OnUpdate(float DeltaTime, int SimulationPrecision) {");
+            FPrintln(file, "return m_FSM.Update(Event, SimulationPrecision);");
             FPrintln(file, "}");
         }
-
-        auto event_exit = xml_root_tag.GetTag("event_exit");
-        if (event_exit.Count() > 0)
+        else
         {
-            FPrintln(file, "override void OnExit() {");
-            FPrintln(file, event_exit[0].GetContent().GetContent());
-            FPrintln(file, "}");
-        }
+            auto event_entry = xml_root_tag.GetTag("event_entry");
+            if (event_entry.Count() > 0)
+            {
+                FPrintln(file, "override void OnEntry(string Event) {");
+                FPrintln(file, event_entry[0].GetContent().GetContent());
+                FPrintln(file, "}");
+            }
 
-        auto event_update = xml_root_tag.GetTag("event_update");
-        if (event_update.Count() > 0)
-        {
-            FPrintln(file, "override int OnUpdate(float DeltaTime) {");
-            FPrintln(file, event_update[0].GetContent().GetContent());
-            FPrintln(file, "}");
+            auto event_exit = xml_root_tag.GetTag("event_exit");
+            if (event_exit.Count() > 0)
+            {
+                FPrintln(file, "override void OnExit(string Event, bool Aborted) {");
+                FPrintln(file, event_exit[0].GetContent().GetContent());
+                FPrintln(file, "}");
+            }
+
+            auto event_update = xml_root_tag.GetTag("event_update");
+            if (event_update.Count() > 0)
+            {
+                FPrintln(file, "override int OnUpdate(float DeltaTime, int SimulationPrecision) {");
+                FPrintln(file, event_update[0].GetContent().GetContent());
+                FPrintln(file, "}");
+            }
         }
 
         FPrintln(file, "}");
@@ -144,20 +173,24 @@ class eAIState
 		
 		return new_type;
     }
+	
+	string GetName() {
+		return m_Name;
+	}
 
     /* IMPLEMENTED IN XML */
-    void OnEntry()
+    void OnEntry(string Event)
     {
 
     }
 
-    void OnExit()
+    void OnExit(string Event, bool Aborted)
     {
 
     }
 
-    int OnUpdate(float DeltaTime)
+    int OnUpdate(float DeltaTime, int SimulationPrecision)
     {
-        return REEVALUTATE;
+        return CONTINUE;
     }
 };

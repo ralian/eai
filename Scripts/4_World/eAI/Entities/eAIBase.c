@@ -20,8 +20,15 @@ modded class PlayerBase
 
 	private autoptr eAIHFSM m_FSM;
     private autoptr eAIGroup m_eAI_Group;
+	private autoptr array<string> m_Transitions = {};
 
+	// Targeting data 
 	private autoptr array<eAITargetGroup> m_eAI_Targets;
+	autoptr array<Object> threats = {}; // temporary
+	
+	// Aiming and aim arbitration
+	bool m_AimArbitration = false;
+	private PlayerIdentity m_CurrentArbiter = null;
 
     // Command handling
 	private autoptr eAIAnimationST m_eAI_AnimationST;
@@ -37,6 +44,10 @@ modded class PlayerBase
 	private vector m_eAI_AimDirection_ModelSpace;
 	
 	private bool m_WeaponRaised;
+	
+	private float m_AimDeltaY, m_AimDeltaX; // in deg
+	
+	bool ReloadingInADS = false; // specifically true if we are currently reloading while in combat mode
     
     // Path Finding
 	private autoptr PGFilter m_PathFilter;
@@ -56,6 +67,161 @@ modded class PlayerBase
 		{
 			m_eAI_Group.RemoveMember(m_eAI_Group.GetIndex(this));
 		}
+	}
+	
+	Man GetNearestPlayer() {
+		autoptr array<Man> players = {};
+		GetGame().GetPlayers(players);
+		float min = 999999.0;
+		float temp;
+		Man closest = null;
+		foreach (Man p : players) {
+			temp = vector.DistanceSq(GetPosition(), p.GetPosition());
+			if (temp < min) {
+				min = temp;
+				closest = p;
+			}
+		}
+		return closest;
+	}
+	
+	// returns true if able
+	bool StartAimArbitration() {
+		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
+		if (/*m_AimArbitration || */!weap || !m_CurrentArbiter) {
+			m_AimArbitration = false;
+			return false;
+		}
+		m_AimArbitration = true;
+		Print("Starting aim arbitration for " + this + " with client " + m_CurrentArbiter);
+		GetRPCManager().SendRPC("eAI", "eAIAimArbiterStart", new Param2<Weapon_Base, int>(weap, 100), false, m_CurrentArbiter);
+		return true;
+	}
+	
+	// returns true if able to stop cleanly
+	bool StopAimArbitration() {
+		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
+		if (/*m_AimArbitration || */!weap || !m_CurrentArbiter) {
+			m_AimArbitration = false;
+			return false;
+		}
+		m_AimArbitration = false;
+		Print("Stopping aim arbitration for " + this + " with client " + m_CurrentArbiter);
+		GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter);
+		return true;
+	}
+	
+	// returns true if we were able to get a new arbiter
+	bool RefreshAimArbitration() {
+		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
+		if (!weap) {
+			// todo how to clean this up?
+			//if (m_CurrentArbiter)
+			//	GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap));
+			m_AimArbitration = false;
+			return false;
+		}
+		Man nearest = GetNearestPlayer();
+		Print("Refreshing aim arbitration for " + this + " current: " + m_CurrentArbiter + " closest: " + nearest.GetIdentity());
+		if (!m_CurrentArbiter) {
+			m_CurrentArbiter = nearest.GetIdentity();
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter);
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.StartAimArbitration, 50, false);
+			return true;
+		}
+		
+		if (m_CurrentArbiter != nearest.GetIdentity()) {
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter);
+			m_CurrentArbiter = nearest.GetIdentity();
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter);
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.StartAimArbitration, 50, false);
+			return true;
+		}
+		
+		// In this case, we already have an appropriate arbiter set up, just need to restart it
+		if (m_CurrentArbiter == nearest.GetIdentity() && !m_AimArbitration) {
+			StartAimArbitration();
+			return true;
+		}
+		
+		Print("Aim arbitration was refreshed, but is already running with the best client.");
+		
+		return false;
+	}
+	
+		// Update the aim during combat, return true if we are within parameters to fire.
+	int m_AllowedFireTime = 0;
+	bool ShouldFire() {
+		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
+		
+		if (GetGame().GetTime() < m_AllowedFireTime) return false;
+		
+		// for now we just check the raw aim errors
+		if (m_AimDeltaX < 1.0 && m_AimDeltaY < 1.0) {
+			DelayFiring(500, 300);
+			return true;
+		}
+		
+		// pseudocode: if weapon raycast passes within 3 meters of enemy and we have waited long enough since m_TimeLastFired, then return true
+		
+		return false;
+	
+	}
+	
+	// Keep the unit from firing until time_ms from now.
+	void DelayFiring(int time_ms, int randomAdditionalTime) {
+		m_AllowedFireTime = GetGame().GetTime() + time_ms;
+		if (randomAdditionalTime > 0) m_AllowedFireTime += Math.RandomInt(0, randomAdditionalTime);
+	}
+	
+	void FireHeldWeapon() {
+		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
+		if (weap && weap.CanFire()) {
+			GetWeaponManager().Fire(weap);
+			GetInputController().OverrideAimChangeY(true, 0.0);
+		}
+	}
+	
+	// Cleans out any invalid or dead targets
+	// Returns the number of threats in the array
+	ref array<CargoBase> proxyCargos = {};
+	int CleanThreats() {
+		vector center = GetPosition();
+		
+		// Leave threats in that don't need cleaning
+		for (int j = 0; j < threats.Count(); j++)
+			if (!threats[j] || !threats[j].IsAlive() || vector.Distance(GetPosition(), threats[j].GetPosition()) < 30.0)
+				threats.Remove(j);
+		
+		autoptr array<Object> newThreats = new array<Object>();
+		GetGame().GetObjectsAtPosition(center, 30.0, newThreats, proxyCargos);
+		
+		// Todo find a faster way to do this... like a linked list?
+		int i = 0;
+		float minDistance = 1000000.0, temp;
+		while (i < newThreats.Count()) {
+			DayZInfected infected = DayZInfected.Cast(newThreats[i]);
+			PlayerBase player = PlayerBase.Cast(newThreats[i]);
+			if (infected && infected.IsAlive() && !IsViewOccluded(infected.GetPosition() + "0 1.5 0")) {
+				// It's an infected, add it to teh threates array
+				temp = vector.Distance(newThreats[i].GetPosition(), GetPosition());
+				if (temp < minDistance) {
+					threats.InsertAt(infected, 0);
+					minDistance = temp;
+				} else threats.Insert(infected);
+				
+			} // this would make them shoot at all AI
+			 /*else if (player && player != m_FollowOrders && (!player.parent || (player.parent.m_FollowOrders != m_FollowOrders)) && player.IsAlive() && !IsViewOccluded(player.GetPosition() + "0 1.5 0")) {
+				// If it's an enemy player
+				temp = vector.Distance(newThreats[i].GetPosition(), GetPosition());
+				if (temp < minDistance) {
+					threats.InsertAt(player, 0);
+					minDistance = temp;
+				} else threats.Insert(player);
+			}*/
+			i++;
+		}
+		return threats.Count();
 	}
 	
 	override bool IsAI()
@@ -95,9 +261,8 @@ modded class PlayerBase
 		m_PathFilter.SetCost( PGAreaType.JUMP, 0.0 );
 		m_PathFilter.SetCost( PGAreaType.FENCE_WALL, 0.0 );
 		m_PathFilter.SetCost( PGAreaType.WATER, 1.0 );
-		
-		string stateMachine = "eAI/scripts/Targetting_StateMachine.xml";
-		eAIHFSMType type = eAIHFSM.LoadXML(stateMachine);
+
+		eAIHFSMType type = eAIHFSM.LoadXML("eAI/scripts/FSM", "Master");
 		if (type)
 		{
 			m_FSM = type.Spawn(this, null);
@@ -115,6 +280,28 @@ modded class PlayerBase
 	eAIHFSM GetFSM()
 	{
 		return m_FSM;
+	}
+	
+	// Request that a transition with the given event name be forcibly undergone.
+	// Does not preserve order in which transitions were forced.
+	void RequestTransition(string s) {
+		m_Transitions.Clear();
+		m_Transitions.Insert(s);
+	}
+	
+	// Warning: this should only be called when you don't want to clear the prior requests, which is usually only 
+	// if there are two possible transitions that do the same effect.
+	void RequestAdditionalTransition(string s) {
+		m_Transitions.Insert(s);
+	}
+	
+	bool GetRequestedTransition(string s) {
+		int i = m_Transitions.Find(s);
+		if (i > -1) {
+			m_Transitions.Clear();
+			return true;
+		}
+		return false;
 	}
 
 	array<eAITargetGroup> GetTargets()
@@ -201,6 +388,12 @@ modded class PlayerBase
 		return blocked;
 	}
 	
+	bool IsViewOccluded(vector end) {
+		vector start = GetPosition() + "0 1.5 0";
+		vector hitPos, hitNormal;
+		return PathBlocked(start, end, hitPos, hitNormal);
+	}
+	
 	// Checks to see if the path between the start and end is blocked
 	bool PathBlocked(vector start, vector end, out vector hitPos, out vector hitNormal)
 	{
@@ -275,7 +468,8 @@ modded class PlayerBase
 
 		//Print(m_eAI_Targets.Count());
 
-		if (m_PathFilter && m_eAI_Targets.Count() > 0)
+		// The last check is in case the "leader" of the group no longer exists
+		if (m_PathFilter && m_eAI_Targets.Count() > 0 && m_eAI_Targets[0].param5.GetEntity())
 		{
 			//Print(m_eAI_Targets[0]);
 
@@ -306,18 +500,13 @@ modded class PlayerBase
 
 		if (m_WeaponManager) m_WeaponManager.Update(pDt);
 		if (m_EmoteManager) m_EmoteManager.Update(pDt);
-		if (m_FSM) m_FSM.Update(pDt);
+		if (m_FSM) m_FSM.Update(pDt, 0);
 		
 		GetPlayerSoundManagerServer().Update();
 		GetHumanInventory().Update(pDt);
 		UpdateDelete();
 		
 		m_eAI_Command = eAICommandBase.Cast(GetCommand_Script());
-		
-		if (m_WeaponRaised) {
-			//if (m_eAI_Command)
-			//	m_eAI_Command.SetFlagFinished(true);
-		}
 		
 		if (pCurrentCommandFinished) {
 			if (PhysicsIsFalling(true))
@@ -465,7 +654,28 @@ modded class PlayerBase
 
 		ReloadWeaponAI(weapon, GetMagazineToReload(weapon));
 	}
+	
+	// Returns true only if there is a weapon in hands, and the weapon has no rounds ready, 
+	// and the inventory does have magazines to reload to.
+	bool ShouldReload(out EntityAI magazine, out EntityAI weapon) {
+		Weapon weapon_in_hands;
+		if (!Class.CastTo(weapon_in_hands, GetItemInHands())) return false;
 
+		int mi = weapon_in_hands.GetCurrentMuzzle();
+		Magazine mag = weapon_in_hands.GetMagazine(mi);
+		if (mag && mag.GetAmmoCount() > 0) return false;
+
+		magazine = GetMagazineToReload(weapon_in_hands);
+		weapon = weapon_in_hands;
+		if (!magazine || !weapon) return false;
+		
+		return true;
+	}
+
+	int correctionFlag = 0;
+	int correctionCounter = 0;
+	float lastdX = 0;
+	float lastdY = 0;
 	override void HandleWeapons(float pDt, Entity pInHands, HumanInputController pInputs, out bool pExitIronSights)
 	{
 		if (!IsAI())
@@ -477,19 +687,61 @@ modded class PlayerBase
 		HumanCommandWeapons		hcw = GetCommandModifier_Weapons();
     	GetDayZPlayerInventory().HandleWeaponEvents(pDt, pExitIronSights);
 		
-		if (m_WeaponRaised) {
-			float targetAngle = -15.0;
-			float delta = -((GetAimingModel().getAimY()-targetAngle)*Math.DEG2RAD);
-			Print("Aim Debugging - X: " + GetAimingModel().getAimX() + " Y: " + GetAimingModel().getAimY() + " deltaY: " + delta);
-			pInputs.OverrideAimChangeX(true, 90.0);
-			pInputs.OverrideAimChangeY(true, 90.0);
-			GetAimingModel().SetDummyRecoil(Weapon_Base.Cast(pInHands));
+		Weapon_Base weapon;
+		Class.CastTo(weapon, pInHands);
+		
+		// Start of ADS code
+		if (m_WeaponRaised && threats.Count() > 0 && threats[0] && !ReloadingInADS) {
+			SetAimDir(threats[0].GetPosition());
+			
+			float targetAngle, targetHeight, gunHeight;
+			if (threats.Count() > 0 && threats[0]) {
+				gunHeight = 1.5 + GetPosition()[1]; 			// Todo get the actual world gun height.
+				targetHeight = 1.0 + threats[0].GetPosition()[1]; 	// Todo get actual threat height, but this should shoot center of mass in most cases
+				targetAngle = Math.Atan2(targetHeight - gunHeight, vector.Distance(GetPosition(), threats[0].GetPosition()))*Math.RAD2DEG; // needs to be in deg
+			} else targetAngle = 0;
+			float X, Y;
+			if (weapon && weapon.aim && weapon.aim.GetAge() < 250) {
+				if (!weapon.aim.InterpolationStarted) {
+					// begin the interpolation
+					// todo we could improve the amount of interpolation that is given on a packet reception
+					X = weapon.aim.Azmuith;
+					Y = weapon.aim.Inclination;
+					weapon.aim.InterpolationAzmuith = X;
+					weapon.aim.InterpolationInclination = Y;
+					weapon.aim.InterpolationStarted = true;
+				} else {
+					weapon.aim.InterpolationAzmuith += lastdX * pDt * 5.0; // 5.0 is a fudge factor
+					weapon.aim.InterpolationInclination += lastdY * pDt * 10.0;
+					Math.NormalizeAngle(weapon.aim.InterpolationAzmuith);
+					Math.NormalizeAngle(weapon.aim.InterpolationInclination);
+					X = weapon.aim.InterpolationAzmuith;
+					Y = weapon.aim.InterpolationInclination;
+				}
+				//Print("data: " + weapon.aim.Inclination.ToString() + " " + weapon.aim.InterpolationInclination.ToString());
+			} else { 
+				// Todo: this fails because we can't set the direction of the player in the command script.
+				X = Math.NormalizeAngle( GetOrientation()[0] + 9.0 ); // 9.0 is a fudge factor
+				Y = hcw.GetBaseAimingAngleUD();
+			}
+			m_AimDeltaX = Math.DiffAngle(m_eAI_LookDirection_WorldSpace[0], X);
+			m_AimDeltaY = (targetAngle-Y);
+			//Print("Aim Debugging - X: " + X + " deltaX: " + m_AimDeltaX + " Y: " + Y + " deltaY: " + m_AimDeltaY);
+			if (correctionCounter < 1) {
+				pInputs.OverrideAimChangeX(true, 0.001*m_AimDeltaY);
+				pInputs.OverrideAimChangeY(true, 1.0);
+				lastdY = m_AimDeltaY;
+			} else { // Aim along the x axis normally
+				// could save time on like 2/10 updates by moving calculations in here
+				pInputs.OverrideAimChangeX(true, m_AimDeltaX * (1/500.0));
+				pInputs.OverrideAimChangeY(false, 0);
+				lastdX = m_AimDeltaX;
+			}
+			correctionCounter++;
+			if (correctionCounter > 5) correctionCounter = 0;
 		}
 
 		return;
-
-		Weapon_Base weapon;
-		Class.CastTo(weapon, pInHands);
 		
 		CheckLiftWeapon();
 		ProcessLiftWeapon();
@@ -613,12 +865,12 @@ modded class PlayerBase
 		m_WeaponRaised = up;
 		//GetInputController().OverrideRaise(true, up);
 		eAICommandMove.Cast(m_eAI_Command).SetRaised(up);
-		HumanCommandMove cm = GetCommand_Move();
+		/*HumanCommandMove cm = GetCommand_Move();
 		if (m_WeaponRaised) {
 			cm.ForceStance(DayZPlayerConstants.STANCEIDX_RAISEDERECT);
 		} else {
 			cm.ForceStance(DayZPlayerConstants.STANCEIDX_ERECT);
-		}
+		}*/
 	}
 	
 	bool IsWeaponRaised() {

@@ -21,6 +21,7 @@ class eAIGroupTargetInformation extends eAITargetInformation
 
     override vector GetPosition(eAIBase ai = null)
     {
+		// If the target is in the given group (not necessarily the leader)
         if (ai.GetGroup() == m_Target)
         {
             int index = m_Target.GetIndex(ai);
@@ -29,10 +30,10 @@ class eAIGroupTargetInformation extends eAITargetInformation
             return worldPos;
         }
 
+		// Otherwise
         return GetEntity().GetPosition();
     }
 
-	// Todo: build a class called FormationBase and do polymorphism for different types of forms
 	// First number is horizontal offset, sec number is forwards in the formation
 	vector LocalFormPos(int member_no)
     {
@@ -49,10 +50,11 @@ class eAIGroupTargetInformation extends eAITargetInformation
 
     void Update(float pDt)
     {
+		if (!GetEntity()) return;
+		
 		vector newPos = GetEntity().GetPosition();
 
-		if (vector.DistanceSq(newPos, m_LeaderPosOld) < m_DirRecalcDistSq)
-			return;
+		if (vector.DistanceSq(newPos, m_LeaderPosOld) < m_DirRecalcDistSq) return;
 		
 		// Update the direction and perpend vectors
 		m_LeaderDir = newPos - m_LeaderPosOld;

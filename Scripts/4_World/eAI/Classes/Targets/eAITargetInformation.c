@@ -1,5 +1,13 @@
 //typedef Param5<eAIGroup, int, int, ref set<eAIBase>, eAITargetInformation> eAITargetGroup;
 
+
+/*
+First one is the group the target was found in
+Second is the time the target was found in the group
+Third is the max time the target will be in the group for before auto removal
+Fourth is the AI in the group that found the target. Usually 1, can sometimes be more than 1
+5th is a reference to the actual target info for a look up optimization
+*/
 class eAITargetGroup
 {
     eAIGroup param1;
