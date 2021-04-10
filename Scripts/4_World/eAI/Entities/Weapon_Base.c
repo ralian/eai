@@ -91,11 +91,12 @@ modded class Weapon_Base {
 		if (debugParticle) {
 			GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point + dir, vector.Zero));
 			GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point, vector.Zero));
-		}
+		
 		
 		// TODO: If we use Azumith and Inclination , we will get the benefits from server side interpolation.
 		
 		Print("Muzzle pos: " + begin_point.ToString() + " dir-pos: " + (end_point-begin_point).ToString());
+		}
 		
 		// Prep Raycast
 		Object hitObject;
@@ -108,7 +109,8 @@ modded class Weapon_Base {
 		if (debugParticle)
 			GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(hitPosition, vector.Zero));
 		
-		Print("Raycast hitObject: " + hitObject.ToString() + " hitPosition-pos: " + (hitPosition-begin_point).ToString() + " hitNormal: " + hitNormal.ToString() + " hitFraction " + hitFraction.ToString());
+		if (debugParticle)
+			Print("Raycast hitObject: " + hitObject.ToString() + " hitPosition-pos: " + (hitPosition-begin_point).ToString() + " hitNormal: " + hitNormal.ToString() + " hitFraction " + hitFraction.ToString());
 		
 		// So here is an interesting bug... hitObject is always still null even if the raycast succeeded
 		// If it succeded then hitPosition, hitNormal, and hitFraction will be accurate
@@ -122,7 +124,8 @@ modded class Weapon_Base {
 		
 			GetGame().GetObjectsAtPosition3D(hitPosition, 1.5, objects, proxyCargos);
 			
-			Print(objects);
+			if (debugParticle)
+				Print(objects);
 		
 			// not necessary since the ai aren't shooting themselves anymore?
 			/*for (int i = 0; i < objects.Count(); i++)
@@ -158,8 +161,10 @@ modded class Weapon_Base {
 			//DayZPhysics.RaycastRV(hitPosition, groundCheckDelta, groundCheckContactPos, groundCheckContactDir, contactComponent, null, null, closest);
 			//bool hitGround = (vector.Distance(groundCheckDelta, groundCheckContactPos) > 0.01);
 			
-			Print("hitEnemy = " + closest.ToString());
-			Print("Did we hit an inanimate object? = " + hitAnObject.ToString());
+			if (debugParticle) {
+				Print("hitEnemy = " + closest.ToString());
+				Print("Did we hit an inanimate object? = " + hitAnObject.ToString());
+			}
 			//Print("hitGround = " + hitGround.ToString());
 			
 			if (closest && !hitAnObject)// && !hitGround)

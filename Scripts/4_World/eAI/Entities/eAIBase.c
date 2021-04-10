@@ -28,7 +28,7 @@ modded class PlayerBase
 	
 	// Aiming and aim arbitration
 	bool m_AimArbitration = false;
-	private PlayerIdentity m_CurrentArbiter = null;
+	private Man m_CurrentArbiter = null;
 
     // Command handling
 	private autoptr eAIAnimationST m_eAI_AnimationST;
@@ -94,8 +94,8 @@ modded class PlayerBase
 			return false;
 		}
 		m_AimArbitration = true;
-		Print("Starting aim arbitration for " + this + " with client " + m_CurrentArbiter);
-		GetRPCManager().SendRPC("eAI", "eAIAimArbiterStart", new Param2<Weapon_Base, int>(weap, 100), false, m_CurrentArbiter);
+		Print("Starting aim arbitration for " + this + " with client " + m_CurrentArbiter.GetIdentity());
+		GetRPCManager().SendRPC("eAI", "eAIAimArbiterStart", new Param2<Weapon_Base, int>(weap, 100), false, m_CurrentArbiter.GetIdentity());
 		return true;
 	}
 	
@@ -107,8 +107,8 @@ modded class PlayerBase
 			return false;
 		}
 		m_AimArbitration = false;
-		Print("Stopping aim arbitration for " + this + " with client " + m_CurrentArbiter);
-		GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter);
+		Print("Stopping aim arbitration for " + this + " with client " + m_CurrentArbiter.GetIdentity());
+		GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter.GetIdentity());
 		return true;
 	}
 	
@@ -123,24 +123,24 @@ modded class PlayerBase
 			return false;
 		}
 		Man nearest = GetNearestPlayer();
-		Print("Refreshing aim arbitration for " + this + " current: " + m_CurrentArbiter + " closest: " + nearest.GetIdentity());
-		if (!m_CurrentArbiter) {
-			m_CurrentArbiter = nearest.GetIdentity();
-			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter);
+		Print("Refreshing aim arbitration for " + this + " current: " + m_CurrentArbiter.GetIdentity() + " closest: " + nearest.GetIdentity());
+		if (!m_CurrentArbiter || !m_CurrentArbiter.GetIdentity() || !m_CurrentArbiter.IsAlive()) {
+			m_CurrentArbiter = nearest;
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter.GetIdentity());
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.StartAimArbitration, 50, false);
 			return true;
 		}
 		
-		if (m_CurrentArbiter != nearest.GetIdentity()) {
-			GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter);
-			m_CurrentArbiter = nearest.GetIdentity();
-			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter);
+		if (m_CurrentArbiter != nearest) {
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter.GetIdentity());
+			m_CurrentArbiter = nearest;
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter.GetIdentity());
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.StartAimArbitration, 50, false);
 			return true;
 		}
 		
 		// In this case, we already have an appropriate arbiter set up, just need to restart it
-		if (m_CurrentArbiter == nearest.GetIdentity() && !m_AimArbitration) {
+		if (m_CurrentArbiter == nearest && !m_AimArbitration) {
 			StartAimArbitration();
 			return true;
 		}
