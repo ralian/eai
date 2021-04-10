@@ -69,6 +69,7 @@ modded class PlayerBase
 		}
 	}
 	
+	// Used for deciding the best aim arbiter for the AI.
 	Man GetNearestPlayer() {
 		autoptr array<Man> players = {};
 		GetGame().GetPlayers(players);
@@ -243,6 +244,21 @@ modded class PlayerBase
 		return true;
 	}
 	
+	void ScanForDistantPlayers(out array<Object> seenPlayers) {
+		autoptr array<Man> players = {};
+		GetGame().GetPlayers(players);
+		vector LookDir = MiscGameplayFunctions.GetHeadingVector(this);
+		foreach (Man p : players) {
+			float distSq = vector.DistanceSq(GetPosition(), p.GetPosition());
+			// This checks that the distance is less than 500, and that the AI is at least facing in the half plane of the right way.
+			// If we wanted to, we could normalize the direction vector, then do something like vector.Dot(v1, v2) > 0.5
+			if (distSq < (500*500) && vector.Dot(LookDir, p.GetPosition() - GetPosition()) > 0) {
+				if (!IsViewOccluded(p.GetPosition() + "0 1.5 0"))
+					seenPlayers.Insert(p);
+			}
+		}
+	}
+	
 	// Cleans out any invalid or dead targets
 	// Returns the number of threats in the array
 	ref array<CargoBase> proxyCargos = {};
@@ -256,6 +272,9 @@ modded class PlayerBase
 		
 		autoptr array<Object> newThreats = new array<Object>();
 		GetGame().GetObjectsAtPosition(center, 30.0, newThreats, proxyCargos);
+		
+		// Add more distant things in the dir we're looking
+		ScanForDistantPlayers(newThreats);
 		
 		// Todo find a faster way to do this... like a linked list?
 		int i = 0;
