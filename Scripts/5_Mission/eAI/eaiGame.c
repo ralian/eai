@@ -83,6 +83,17 @@ class eAIGame {
 		SoldierLoadout.Apply(pb_AI);	//or PoliceLoadout.Apply(pb_AI);
 	}
 	
+	void SpawnAI_Sentry(vector pos) {
+		eAIBase pb_AI;
+		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pos, 0, "NONE"))) return;
+		
+		eAIGroup ownerGrp = GetGroupByLeader(pb_AI);
+		
+		pb_AI.SetAI(ownerGrp);
+			
+		SoldierLoadout.Apply(pb_AI);
+	}
+	
 	// Server Side: This RPC spawns a helper AI next to the player, and tells them to join the player's formation.
 	void SpawnEntity(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param1<DayZPlayer> data(null);
@@ -258,6 +269,10 @@ class eAIGame {
 modded class MissionServer
 {
     autoptr eAIGame m_eaiGame;
+	
+	eAIGame GetEAIGame() {
+		return m_eaiGame;
+	}
 
     void MissionServer()
     {

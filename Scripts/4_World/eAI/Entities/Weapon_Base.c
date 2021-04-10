@@ -206,7 +206,7 @@ modded class Weapon_Base {
 				PlayerBase p = PlayerBase.Cast(e.m_player);
 				
 				vector hitPos;
-				EntityAI hitObject = HitCast(hitPos, true);
+				EntityAI hitObject = HitCast(hitPos, false);
 				if (hitObject)
 					hitObject.ProcessDirectDamage(DT_FIRE_ARM, this, "Torso", ammoTypeName, hitObject.WorldToModel(hitPos), 1.0);
 			}
