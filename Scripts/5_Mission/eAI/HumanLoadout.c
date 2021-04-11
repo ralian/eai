@@ -1,12 +1,12 @@
 class HumanLoadout {	
-	ref TStringArray Shirts = {"PoliceJacket", "PoliceJacketOrel"};
-	ref TStringArray Pants = {"PolicePants", "PolicePantsOrel"}; 							
-	ref TStringArray Shoes = {"CombatBoots_Black"};			
-	ref TStringArray BackPacks = {""};					
-	ref TStringArray Vests = {"PoliceVest"};		
-	ref TStringArray Headgear = {"", "DirtBikeHelmet_Police", "PoliceCap", "OfficerHat"};
-	ref TStringArray Gloves = {"LeatherGloves_Black", "TacticalGloves_Black", "WorkingGloves_Black"};	
-	ref TStringArray Misc = {"", "MilitaryBelt"};																			
+	ref TStringArray Shirts = {"HikingJacket_Blue "};
+	ref TStringArray Pants = {"SlacksPants_Blue"}; 							
+	ref TStringArray Shoes = {"HikingBootsLow_Blue"};			
+	ref TStringArray BackPacks = {"TaloonBag_Blue"};					
+	ref TStringArray Vests = {"PressVest_Blue"};		
+	ref TStringArray Headgear = {"BaseballCap_Blue "};
+	ref TStringArray Gloves = {"SurgicalGloves_Blue"};	
+	ref TStringArray Misc = {"CivilianBelt"};																			
 	
 	ref TStringArray WeaponMelee = {"Pickaxe", "WoodAxe", "FirefighterAxe", "Shovel"}; 	
 	ref TStringArray WeaponRifle = {"M4A1", "AKM", "SVD", "M4A1"}; 	
@@ -37,7 +37,11 @@ class HumanLoadout {
 		
 	static void AddWeapon(PlayerBase h, string weapon) {
 		EntityAI gun = h.GetHumanInventory().CreateInHands(weapon);
-		
+//		ItemBase itemBs;
+//		itemBs = ItemBase.Cast(gun);
+//        SetHealth(itemBs, 20);		
+//		gun.SetHealth("","",100);
+		gun.SetHealth(gun.GetMaxHealth()*0.5);
 		Print("HumanLoadout: Add weapon: " + weapon);
 	}
 	
@@ -63,25 +67,37 @@ class HumanLoadout {
 	
     static HumanLoadout LoadData(string FileName)
     {
-		string FileNameProfile = LoadoutSaveDir + FileName;
+		string LoadoutFileName = LoadoutSaveDir + FileName;
+		string LoadoutDefaultFileName = LoadoutDataDir + FileName;
+		
         ref HumanLoadout data = new ref HumanLoadout;
         Print("HumanLoadout: LoadData: Looking for " + FileName);
 
-        if(!FileExist(FileNameProfile))
+        if(!FileExist(LoadoutFileName))
         {
-            Print("HumanLoadout: " + FileNameProfile + " doesn't exist, creating file!");
-			CopyFile(LoadoutDataDir + FileName, FileNameProfile);
-            //SaveData(FileName, data);
+			if(FileExist(LoadoutDefaultFileName))
+			{
+				//Profile does not have the loadouts. Copy them from mod. 
+	            Print("HumanLoadout: " + LoadoutFileName + " doesn't exist, copying default file!");
+				CopyFile(LoadoutDefaultFileName, LoadoutFileName);
+			}
+			else
+			{
+				//If the files under Data\Loadout in mod does not exist, create a default from the class. 
+				//This is an error situation but useful if you need to create a clean and working json
+	            Print("HumanLoadout: " + LoadoutDefaultFileName + " doesn't exist, creating a default file: " + LoadoutFileName);
+	            SaveData(LoadoutFileName, data);
+			}
 		}
 
-		if(FileExist(FileNameProfile))
+		if(FileExist(LoadoutFileName))
         {
-            Print("HumanLoadout: " + FileNameProfile + " exists, loading!");
+            Print("HumanLoadout: " + LoadoutFileName + " exists, loading!");
             JsonFileLoader<HumanLoadout>.JsonLoadFile(FileName, data);
         }
         else
         {
-            Print("HumanLoadout: ERROR : Coult not find " + FileNameProfile);
+            Print("HumanLoadout: ERROR : Coult not find " + LoadoutFileName);
 		}
 
         return data;
