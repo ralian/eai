@@ -77,7 +77,8 @@ class eAIGame {
 		
 		pb_AI.SetAI(ownerGrp);
 			
-		SoldierLoadout.Apply(pb_AI);	//or PoliceLoadout.Apply(pb_AI);
+//		SoldierLoadout.Apply(pb_AI);	//or 
+		PoliceLoadout.Apply(pb_AI);
 	}
 	
 	// Server Side: This RPC spawns a helper AI next to the player, and tells them to join the player's formation.
