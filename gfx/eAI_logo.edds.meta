@@ -1,7 +1,7 @@
 MetaFileClass {
  Name "{F6B9C9F5799B02F6}eai/gfx/eAI_logo.edds"
  Author "darc"
- ChangeDate 530410123
+ ChangeDate 1888791180
  Configurations {
   PNGResourceClass PC {
    SourceFile "eAI_logo.png"
