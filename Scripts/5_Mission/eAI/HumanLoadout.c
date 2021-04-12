@@ -27,6 +27,17 @@ class HumanLoadout {
 	static string LoadoutDataDir = "eAI/Scripts/Data/Loadout/";
 	//---------------------
 	
+	//----------------------------------------------------------------
+	//	HumanLoadout.Apply
+	//
+	//	Usage: HumanLoadout.Apply(pb_AI, "LoadOut.json");
+	//
+	//	The order of searching for loadouts:
+	//	1) (TBD) From full path under profile. You can define the path to you mod's loadout files "\mymod\loadout.json"
+	//	2) From default eAI config dir "eAI\loadout\*"
+	//	3) Copied from the mod to the config dir. Two default loadouts exists: "SoldierLoadout.json" , "PoliceLoadout.json".
+	//	4) Create a dummy loadout (blue clothes) with the given LoadoutFile filename.  
+	
 	static void Apply(PlayerBase h, string LoadoutFile) 
 	{
 //		static string LoadoutSave = "SoldierLoadout.json";
@@ -40,6 +51,11 @@ class HumanLoadout {
 		HumanLoadout.AddMagazine(h, weapon, Loadout.WeaponRifleMagCount[0], Loadout.WeaponRifleMagCount[1]);
 	}
 
+	//----------------------------------------------------------------
+	//	HumanLoadout.AddClothes
+	//
+	//	Adds a clothes to.
+	
 	static void AddClothes(PlayerBase h, HumanLoadout Loadout) {
 		EntityAI item;
 		int minhealth = Loadout.ClothesHealth[0];
@@ -74,7 +90,15 @@ class HumanLoadout {
 
 		Print("HumanLoadout: Added clothes");
 	}
-		
+
+	//----------------------------------------------------------------
+	//	HumanLoadout.AddWeapon
+	//
+	//	Adds a weapon to AI hands.
+	//
+	//	Usage: HumanLoadout.AddWeapon(pb_AI, "AKM");			//A pristine AKM is added
+	//	       HumanLoadout.AddWeapon(pb_AI, "AKM", 10, 80);	//An AKM with 10%-80% health
+
 	static void AddWeapon(PlayerBase h, string weapon, int minhealth = 100, int maxhealth = 100) {
 		EntityAI gun = h.GetHumanInventory().CreateInHands(weapon);
 		float HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
@@ -82,6 +106,14 @@ class HumanLoadout {
 		Print("HumanLoadout: Add weapon: " + weapon + " (" + HealthModifier + ")" );
 	}
 	
+	//----------------------------------------------------------------
+	//	HumanLoadout.AddMagazine
+	//
+	//	Adds magazines to AI inventory.
+	//
+	//	Usage: HumanLoadout.AddMagazine(pb_AI, "AKM", 3);		//Three random AKM magazines are added
+	//	       HumanLoadout.AddMagazine(pb_AI, "AKM", 1, 4);	//1 to 4 random AKM magazines are added
+
 	static void AddMagazine(PlayerBase h, string weapon, int mincount = 1, int maxcount = 0) {
         TStringArray magazines = {};
         GetGame().ConfigGetTextArray("CfgWeapons " + weapon + " magazines", magazines);		
@@ -111,7 +143,10 @@ class HumanLoadout {
 		Print("HumanLoadout: Add " + count + " of " + mag + " magazines for weapon " + weapon);
 	}
 	
-    static HumanLoadout LoadData(string FileName)
+	//----------------------------------------------------------------
+	//	HumanLoadout.LoadData
+
+	static HumanLoadout LoadData(string FileName)
     {
 		string LoadoutFileName = LoadoutSaveDir + FileName;
 		string LoadoutDefaultFileName = LoadoutDataDir + FileName;
@@ -149,6 +184,9 @@ class HumanLoadout {
         return data;
     }
 
+	//----------------------------------------------------------------
+	//	HumanLoadout.SaveData
+	
     static void SaveData(string FileName, ref HumanLoadout data)
     {
 		Print("HumanLoadout: Saving loadout to " + FileName);
