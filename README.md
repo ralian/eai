@@ -24,6 +24,7 @@ https://discord.gg/hxY7a4CA7t
 - Possible server crash if unit tries to fire a jammed weapon
 - Script crash if reload is triggered during a weapon raise animation
 - Unit can enter an indefinite turn/walk state under certain circumstances
+- Loadouts do not yet support attachments, melee weapons nor handguns
 
 #### Wishlist Features
 
