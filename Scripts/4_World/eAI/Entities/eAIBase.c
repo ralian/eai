@@ -28,7 +28,7 @@ modded class PlayerBase
 	
 	// Aiming and aim arbitration
 	bool m_AimArbitration = false;
-	private PlayerIdentity m_CurrentArbiter = null;
+	private Man m_CurrentArbiter = null;
 
     // Command handling
 	private autoptr eAIAnimationST m_eAI_AnimationST;
@@ -69,6 +69,7 @@ modded class PlayerBase
 		}
 	}
 	
+	// Used for deciding the best aim arbiter for the AI.
 	Man GetNearestPlayer() {
 		autoptr array<Man> players = {};
 		GetGame().GetPlayers(players);
@@ -93,8 +94,8 @@ modded class PlayerBase
 			return false;
 		}
 		m_AimArbitration = true;
-		Print("Starting aim arbitration for " + this + " with client " + m_CurrentArbiter);
-		GetRPCManager().SendRPC("eAI", "eAIAimArbiterStart", new Param2<Weapon_Base, int>(weap, 100), false, m_CurrentArbiter);
+		Print("Starting aim arbitration for " + this + " with client " + m_CurrentArbiter.GetIdentity());
+		GetRPCManager().SendRPC("eAI", "eAIAimArbiterStart", new Param2<Weapon_Base, int>(weap, 100), false, m_CurrentArbiter.GetIdentity());
 		return true;
 	}
 	
@@ -106,8 +107,8 @@ modded class PlayerBase
 			return false;
 		}
 		m_AimArbitration = false;
-		Print("Stopping aim arbitration for " + this + " with client " + m_CurrentArbiter);
-		GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter);
+		Print("Stopping aim arbitration for " + this + " with client " + m_CurrentArbiter.GetIdentity());
+		GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter.GetIdentity());
 		return true;
 	}
 	
@@ -122,24 +123,24 @@ modded class PlayerBase
 			return false;
 		}
 		Man nearest = GetNearestPlayer();
-		Print("Refreshing aim arbitration for " + this + " current: " + m_CurrentArbiter + " closest: " + nearest.GetIdentity());
-		if (!m_CurrentArbiter) {
-			m_CurrentArbiter = nearest.GetIdentity();
-			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter);
+		Print("Refreshing aim arbitration for " + this + " current: " + m_CurrentArbiter.GetIdentity() + " closest: " + nearest.GetIdentity());
+		if (!m_CurrentArbiter || !m_CurrentArbiter.GetIdentity() || !m_CurrentArbiter.IsAlive()) {
+			m_CurrentArbiter = nearest;
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter.GetIdentity());
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.StartAimArbitration, 50, false);
 			return true;
 		}
 		
-		if (m_CurrentArbiter != nearest.GetIdentity()) {
-			GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter);
-			m_CurrentArbiter = nearest.GetIdentity();
-			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter);
+		if (m_CurrentArbiter != nearest) {
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter.GetIdentity());
+			m_CurrentArbiter = nearest;
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter.GetIdentity());
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.StartAimArbitration, 50, false);
 			return true;
 		}
 		
 		// In this case, we already have an appropriate arbiter set up, just need to restart it
-		if (m_CurrentArbiter == nearest.GetIdentity() && !m_AimArbitration) {
+		if (m_CurrentArbiter == nearest && !m_AimArbitration) {
 			StartAimArbitration();
 			return true;
 		}
@@ -149,20 +150,40 @@ modded class PlayerBase
 		return false;
 	}
 	
+	bool PlayerIsEnemy(PlayerBase other) {
+		if (other.GetGroup() && GetGroup()) {
+			if (other.GetGroup() == GetGroup())
+				return false;
+			if (other.GetGroup().GetFaction().isFriendly(GetGroup().GetFaction()))
+				return false;
+			
+			// at this point we know both we and they have groups, and the groups aren't friendly towards each other
+			return true;
+		}
+		return false;
+	}
+	
 		// Update the aim during combat, return true if we are within parameters to fire.
 	int m_AllowedFireTime = 0;
 	bool ShouldFire() {
 		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
 		
+		if (!weap) return false;
+		
 		if (GetGame().GetTime() < m_AllowedFireTime) return false;
+		
+		// This check is to see if a friendly happens to be in the line of fire
+		vector hitPos;
+		PlayerBase hitPlayer = PlayerBase.Cast(weap.HitCast(hitPos));
+		if (hitPlayer && !PlayerIsEnemy(hitPlayer)) {
+			return false;
+		}
 		
 		// for now we just check the raw aim errors
 		if (m_AimDeltaX < 1.0 && m_AimDeltaY < 1.0) {
 			DelayFiring(500, 300);
 			return true;
 		}
-		
-		// pseudocode: if weapon raycast passes within 3 meters of enemy and we have waited long enough since m_TimeLastFired, then return true
 		
 		return false;
 	
@@ -182,6 +203,62 @@ modded class PlayerBase
 		}
 	}
 	
+	override void EEHitBy(TotalDamageResult damageResult, int damageType, EntityAI source, int component, string dmgZone, string ammo, vector modelPos, float speedCoef)
+	{
+		super.EEHitBy(damageResult, damageType, source, component, dmgZone, ammo, modelPos, speedCoef);
+		
+		Print("eAI: Damage registered from " + source);
+		Weapon_Base player_weapon = Weapon_Base.Cast(source);
+		if (player_weapon) {
+			array<Object> objects = new array<Object>();
+			autoptr array<CargoBase> proxyCargos = new array<CargoBase>();
+			Object closest = null;
+			float dist = 1000000.0;
+			float testDist;
+		
+			GetGame().GetObjectsAtPosition3D(player_weapon.GetPosition(), 1.5, objects, proxyCargos);
+		
+			for (int j = 0; j < objects.Count(); j++) {
+				if (PlayerBase.Cast(objects[j])) {
+					testDist = vector.DistanceSq(objects[j].GetPosition(), player_weapon.GetPosition());
+					if (testDist < dist) {
+						closest = objects[j];
+						dist = testDist;
+					}
+				}
+			}
+			
+			// In theory this line could be removed, and the CanFIre check altered, to turn against group members that shoot them
+			if (closest && PlayerIsEnemy(PlayerBase.Cast(closest)))
+				AddToThreatList(closest, true);
+		}
+	}
+	
+	// Adds a threat to the threat list, if it isn't already there.
+	bool AddToThreatList(EntityAI threat, bool prioritize = false) {
+		if (!threat || threats.Find(threat) > -1)
+			return false;
+		if (prioritize)
+			threats.InsertAt(threat, 0);
+		else threats.Insert(threat);
+		return true;
+	}
+	
+	void ScanForDistantPlayers(out array<Object> seenPlayers) {
+		autoptr array<Man> players = {};
+		GetGame().GetPlayers(players);
+		vector LookDir = MiscGameplayFunctions.GetHeadingVector(this);
+		foreach (Man p : players) {
+			float distSq = vector.DistanceSq(GetPosition(), p.GetPosition());
+			// This checks that the distance is less than 500, and that the AI is at least facing in the half plane of the right way.
+			// If we wanted to, we could normalize the direction vector, then do something like vector.Dot(v1, v2) > 0.5
+			if (distSq < (500*500) && vector.Dot(LookDir, p.GetPosition() - GetPosition()) > 0) {
+				if (!IsViewOccluded(p.GetPosition() + "0 1.5 0"))
+					seenPlayers.Insert(p);
+			}
+		}
+	}
+	
 	// Cleans out any invalid or dead targets
 	// Returns the number of threats in the array
 	ref array<CargoBase> proxyCargos = {};
@@ -190,11 +267,14 @@ modded class PlayerBase
 		
 		// Leave threats in that don't need cleaning
 		for (int j = 0; j < threats.Count(); j++)
-			if (!threats[j] || !threats[j].IsAlive() || vector.Distance(GetPosition(), threats[j].GetPosition()) < 30.0)
+			if (!threats[j] || !threats[j].IsAlive())
 				threats.Remove(j);
 		
 		autoptr array<Object> newThreats = new array<Object>();
 		GetGame().GetObjectsAtPosition(center, 30.0, newThreats, proxyCargos);
+		
+		// Add more distant things in the dir we're looking
+		ScanForDistantPlayers(newThreats);
 		
 		// Todo find a faster way to do this... like a linked list?
 		int i = 0;
@@ -206,19 +286,16 @@ modded class PlayerBase
 				// It's an infected, add it to teh threates array
 				temp = vector.Distance(newThreats[i].GetPosition(), GetPosition());
 				if (temp < minDistance) {
-					threats.InsertAt(infected, 0);
-					minDistance = temp;
-				} else threats.Insert(infected);
+					AddToThreatList(infected, true);
+				} else AddToThreatList(infected);
 				
-			} // this would make them shoot at all AI
-			 /*else if (player && player != m_FollowOrders && (!player.parent || (player.parent.m_FollowOrders != m_FollowOrders)) && player.IsAlive() && !IsViewOccluded(player.GetPosition() + "0 1.5 0")) {
+			} else if (player && PlayerIsEnemy(player) && player.IsAlive() && !IsViewOccluded(player.GetPosition() + "0 1.5 0")) {
 				// If it's an enemy player
 				temp = vector.Distance(newThreats[i].GetPosition(), GetPosition());
 				if (temp < minDistance) {
-					threats.InsertAt(player, 0);
-					minDistance = temp;
-				} else threats.Insert(player);
-			}*/
+					AddToThreatList(player, true);
+				} else AddToThreatList(player);
+			}
 			i++;
 		}
 		return threats.Count();
@@ -270,6 +347,11 @@ modded class PlayerBase
 		}
 
 		return m_eAI_Group;
+	}
+	
+	// This can be used by humans too
+	void SetGroup(eAIGroup g) {
+		m_eAI_Group = g;
 	}
 
 	eAIGroup GetGroup()
@@ -719,6 +801,12 @@ modded class PlayerBase
 					Y = weapon.aim.InterpolationInclination;
 				}
 				//Print("data: " + weapon.aim.Inclination.ToString() + " " + weapon.aim.InterpolationInclination.ToString());
+			} else if (weapon && weapon.aim) {
+				// This is a note for future me. This may cause a server side performance hit from the time
+				// a new arbiter is picked to the time it is started and data is received, since this will keep getting called.
+				// We'll worry about that later.
+				Print("Weapon aim data has gone out of sync for " + this);
+				RefreshAimArbitration();
 			} else { 
 				// Todo: this fails because we can't set the direction of the player in the command script.
 				X = Math.NormalizeAngle( GetOrientation()[0] + 9.0 ); // 9.0 is a fudge factor

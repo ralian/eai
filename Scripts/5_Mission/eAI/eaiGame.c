@@ -54,13 +54,16 @@ class eAIGame {
 	autoptr array<autoptr eAIGroup> m_groups = {};
 	
 	// return the group owned by leader, otherwise create a new one.
-	eAIGroup GetGroupByLeader(PlayerBase leader) {
+	eAIGroup GetGroupByLeader(PlayerBase leader, bool createIfNoneExists = true) {
 		for (int i = 0; i < m_groups.Count(); i++)
 			if (m_groups[i].GetLeader() == leader)
 				return m_groups[i];
 		
+		if (!createIfNoneExists) return null;
+		
 		eAIGroup newGroup = m_groups.Get(m_groups.Insert(new eAIGroup()));
 		newGroup.SetLeader(leader);
+		leader.SetGroup(newGroup);
 		return newGroup;
 	}
 	
@@ -80,6 +83,17 @@ class eAIGame {
 //		SoldierLoadout.Apply(pb_AI);	//or PoliceLoadout.Apply(pb_AI);
 		HumanLoadout.Apply(pb_AI, "SoldierLoadout.json");
 //		HumanLoadout.Apply(pb_AI, "PoliceLoadout.json");
+	}
+	
+	void SpawnAI_Sentry(vector pos) {
+		eAIBase pb_AI;
+		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pos, 0, "NONE"))) return;
+		
+		eAIGroup ownerGrp = GetGroupByLeader(pb_AI);
+		
+		pb_AI.SetAI(ownerGrp);
+			
+		SoldierLoadout.Apply(pb_AI);
 	}
 	
 	// Server Side: This RPC spawns a helper AI next to the player, and tells them to join the player's formation.
@@ -257,6 +271,10 @@ class eAIGame {
 modded class MissionServer
 {
     autoptr eAIGame m_eaiGame;
+	
+	eAIGame GetEAIGame() {
+		return m_eaiGame;
+	}
 
     void MissionServer()
     {

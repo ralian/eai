@@ -15,6 +15,9 @@ class eAIGroup
 	
 	// What formation the group should keep
 	private autoptr eAIFormation m_Form = new eAIFormationVee();
+	
+	// Group identity 
+	private autoptr eAIFaction m_Faction = new eAIFactionRaiders();
 
 	void eAIGroup()
 	{
@@ -33,6 +36,14 @@ class eAIGroup
 	{
 		int idx = GROUPS.Find(this);
 		if (idx != -1) GROUPS.RemoveOrdered(idx);
+	}
+	
+	eAIFaction GetFaction() {
+		return m_Faction;
+	}
+	
+	void SetFaction(eAIFaction f) {
+		m_Faction = f;
 	}
 
 	int GetID()
