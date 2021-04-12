@@ -31,6 +31,10 @@
         "",
         "MilitaryBelt"
     ],
+    "ClothesHealth": [
+        10,
+        100
+    ],	
     "WeaponMelee": [
         "Pickaxe",
         "WoodAxe",
@@ -45,8 +49,19 @@
     ],
     "WeaponRifleMagCount": [
         1,
-        3
+        2
     ],
+    "WeaponHandgun": [
+        ""
+    ],
+    "WeaponHandgunMagCount": [
+        1,
+        2
+    ],	
+    "WeaponHealth": [
+        10,
+        100
+    ],	
     "Loot": [
         "SodaCan_Cola"
     ],
@@ -54,11 +69,8 @@
         "Rope",
         "Screwdriver"
     ],
-    "WeaponHandgun": [
-        ""
-    ],
-    "WeaponHandgunMagCount": [
-        1,
-        3
+    "LootHealth": [
+        10,
+        100
     ]
 }
