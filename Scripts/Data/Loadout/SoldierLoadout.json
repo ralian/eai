@@ -66,14 +66,16 @@
         3
     ],
     "WeaponHandgun": [
-        ""
+		"", "", "", "", "", "", 
+        "Colt1911",
+		"MakarovIJ70"
     ],
     "WeaponHandgunMagCount": [
         1,
         2
     ],	
     "WeaponHealth": [
-        10,
+        30,
         100
     ],
     "Loot": [

@@ -38,17 +38,19 @@ class HumanLoadout {
 	//	3) Copied from the mod to the config dir. Two default loadouts exists: "SoldierLoadout.json" , "PoliceLoadout.json".
 	//	4) Create a dummy loadout (blue clothes) with the given LoadoutFile filename.  
 	
-	static void Apply(PlayerBase h, string LoadoutFile) 
-	{
-//		static string LoadoutSave = "SoldierLoadout.json";
-	
+	static void Apply(PlayerBase h, string LoadoutFile) {
 		HumanLoadout Loadout = LoadData(LoadoutFile);
 		HumanLoadout.AddClothes(h, Loadout);
 
-		string weapon = Loadout.WeaponRifle.GetRandomElement();
+		string weapon;
+		
+		weapon = Loadout.WeaponRifle.GetRandomElement();
 //		HumanLoadout.AddWeapon(h, weapon);
 		HumanLoadout.AddWeapon(h, weapon, Loadout.WeaponHealth[0], Loadout.WeaponHealth[1]);
 		HumanLoadout.AddMagazine(h, weapon, Loadout.WeaponRifleMagCount[0], Loadout.WeaponRifleMagCount[1]);
+		weapon = Loadout.WeaponHandgun.GetRandomElement();
+		HumanLoadout.AddWeapon(h, weapon, Loadout.WeaponHealth[0], Loadout.WeaponHealth[1]);
+		HumanLoadout.AddMagazine(h, weapon, Loadout.WeaponHandgunMagCount[0], Loadout.WeaponHandgunMagCount[1]);
 	}
 
 	//----------------------------------------------------------------
@@ -94,13 +96,24 @@ class HumanLoadout {
 	//----------------------------------------------------------------
 	//	HumanLoadout.AddWeapon
 	//
-	//	Adds a weapon to AI hands.
+	//	Adds a weapon to AI. First weapon is put to hands. The rest go to inventory.
 	//
 	//	Usage: HumanLoadout.AddWeapon(pb_AI, "AKM");			//A pristine AKM is added
 	//	       HumanLoadout.AddWeapon(pb_AI, "AKM", 10, 80);	//An AKM with 10%-80% health
 
 	static void AddWeapon(PlayerBase h, string weapon, int minhealth = 100, int maxhealth = 100) {
-		EntityAI gun = h.GetHumanInventory().CreateInHands(weapon);
+		EntityAI gun;
+//		Print("Holding " + h.GetHumanInventory().GetEntityInHands() + " in hands");
+		
+		if (h.GetHumanInventory().GetEntityInHands() == null) 
+		{
+			gun = h.GetHumanInventory().CreateInHands(weapon);
+		}
+		else
+		{
+			gun = h.GetHumanInventory().CreateInInventory(weapon);
+		}
+		
 		float HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
 		gun.SetHealth(gun.GetMaxHealth() * HealthModifier);
 		Print("HumanLoadout: Add weapon: " + weapon + " (" + HealthModifier + ")" );
@@ -146,8 +159,7 @@ class HumanLoadout {
 	//----------------------------------------------------------------
 	//	HumanLoadout.LoadData
 
-	static HumanLoadout LoadData(string FileName)
-    {
+	static HumanLoadout LoadData(string FileName) {
 		string LoadoutFileName = LoadoutSaveDir + FileName;
 		string LoadoutDefaultFileName = LoadoutDataDir + FileName;
 		
@@ -187,8 +199,7 @@ class HumanLoadout {
 	//----------------------------------------------------------------
 	//	HumanLoadout.SaveData
 	
-    static void SaveData(string FileName, ref HumanLoadout data)
-    {
+    static void SaveData(string FileName, ref HumanLoadout data) {
 		Print("HumanLoadout: Saving loadout to " + FileName);
         JsonFileLoader<HumanLoadout>.JsonSaveFile(FileName, data);
     }	

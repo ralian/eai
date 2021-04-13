@@ -92,8 +92,9 @@ class eAIGame {
 		eAIGroup ownerGrp = GetGroupByLeader(pb_AI);
 		
 		pb_AI.SetAI(ownerGrp);
-			
-		SoldierLoadout.Apply(pb_AI);
+		
+		HumanLoadout.Apply(pb_AI, "SoldierLoadout.json");
+//		SoldierLoadout.Apply(pb_AI);
 	}
 	
 	// Server Side: This RPC spawns a helper AI next to the player, and tells them to join the player's formation.

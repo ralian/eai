@@ -52,7 +52,9 @@
         2
     ],
     "WeaponHandgun": [
-        ""
+		"", "", "", 
+        "FNX45",
+		"MakarovIJ70"
     ],
     "WeaponHandgunMagCount": [
         1,
