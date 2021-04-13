@@ -9,6 +9,7 @@ class eAIGroup
 
 	// other groups can also reference this
     private autoptr eAIGroupTargetInformation m_TargetInformation;
+	private autoptr eAIWaypointTargetInformation m_WaypointTargetInformation;
 
 	// Ordered array of group members. 0 is the leader.
 	private autoptr array<PlayerBase> m_Members;
@@ -22,6 +23,7 @@ class eAIGroup
 	void eAIGroup()
 	{
 		m_TargetInformation = new eAIGroupTargetInformation(this);
+		m_WaypointTargetInformation = new eAIWaypointTargetInformation(this);
 		m_Targets = new array<eAITargetInformation>();
 
 		m_IDCounter++;
@@ -36,6 +38,22 @@ class eAIGroup
 	{
 		int idx = GROUPS.Find(this);
 		if (idx != -1) GROUPS.RemoveOrdered(idx);
+	}
+	
+	int AddWaypoint(vector pos) {
+		return m_WaypointTargetInformation.AddWaypoint(pos);
+	}
+	
+	void ClearWaypoints() {
+		m_WaypointTargetInformation.ClearWaypoints();
+	}
+	
+	int SkipWaypoint() {
+		return m_WaypointTargetInformation.SkipWaypoint();
+	}
+	
+	void SetLooping(bool loop) {
+		m_WaypointTargetInformation.SetLooping(loop);
 	}
 	
 	eAIFaction GetFaction() {
@@ -68,7 +86,12 @@ class eAIGroup
 
     eAITargetInformation GetTargetInformation()
     {
-        return m_TargetInformation;
+		return m_TargetInformation;
+    }
+	
+	eAITargetInformation GetWaypointTargetInformation()
+    {
+		return m_WaypointTargetInformation;
     }
 
 	void Update(float pDt)
@@ -76,6 +99,7 @@ class eAIGroup
 		ProcessTargets();
 
 		m_TargetInformation.Update(pDt);
+		m_WaypointTargetInformation.Update(pDt);
 	}
 
 	void SetLeader(PlayerBase leader)

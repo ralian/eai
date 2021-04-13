@@ -69,31 +69,50 @@ class eAIGame {
 	
 	//! @param owner Who is the manager of this AI
 	//! @param formOffset Where should this AI follow relative to the formation?
-	void SpawnAI_Helper(DayZPlayer owner) {
+	eAIBase SpawnAI_Helper(DayZPlayer owner) {
 		PlayerBase pb_Human;
-		if (!Class.CastTo(pb_Human, owner)) return;
+		if (!Class.CastTo(pb_Human, owner)) return null;
 		
 		eAIGroup ownerGrp = GetGroupByLeader(pb_Human);
 
 		eAIBase pb_AI;
-		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pb_Human.GetPosition(), 0, "NONE"))) return;
+		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pb_Human.GetPosition(), 0, "NONE"))) return null;
 		
 		pb_AI.SetAI(ownerGrp);
 			
 //		SoldierLoadout.Apply(pb_AI);	//or PoliceLoadout.Apply(pb_AI);
 		HumanLoadout.Apply(pb_AI, "SoldierLoadout.json");
 //		HumanLoadout.Apply(pb_AI, "PoliceLoadout.json");
+		
+		return pb_AI;
 	}
 	
-	void SpawnAI_Sentry(vector pos) {
+	eAIBase SpawnAI_Sentry(vector pos) {
 		eAIBase pb_AI;
-		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pos, 0, "NONE"))) return;
+		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pos, 0, "NONE"))) return null;
 		
 		eAIGroup ownerGrp = GetGroupByLeader(pb_AI);
 		
 		pb_AI.SetAI(ownerGrp);
 			
-		SoldierLoadout.Apply(pb_AI);
+		HumanLoadout.Apply(pb_AI, "SoldierLoadout.json");
+				
+		return pb_AI;
+	}
+	
+	eAIBase SpawnAI_Patrol(vector pos) {
+		eAIBase pb_AI;
+		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pos, 0, "NONE"))) return null;
+		
+		eAIGroup ownerGrp = GetGroupByLeader(pb_AI);
+		
+		pb_AI.SetAI(ownerGrp);
+			
+		HumanLoadout.Apply(pb_AI, "SoldierLoadout.json");
+		
+		pb_AI.RequestTransition("Rejoin");
+				
+		return pb_AI;
 	}
 	
 	// Server Side: This RPC spawns a helper AI next to the player, and tells them to join the player's formation.

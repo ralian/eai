@@ -551,11 +551,14 @@ modded class PlayerBase
 		//Print(m_eAI_Targets.Count());
 
 		// The last check is in case the "leader" of the group no longer exists
-		if (m_PathFilter && m_eAI_Targets.Count() > 0 && m_eAI_Targets[0].param5.GetEntity())
+		if (GetGroup() && GetGroup().GetLeader() == this) {
+			AIWorld world = GetGame().GetWorld().GetAIWorld();
+			world.FindPath(GetPosition(), GetGroup().GetWaypointTargetInformation().GetPosition(), m_PathFilter, m_Path);
+		} else if (m_PathFilter && m_eAI_Targets.Count() > 0 && m_eAI_Targets[0].param5.GetEntity())
 		{
 			//Print(m_eAI_Targets[0]);
 
-			AIWorld world = GetGame().GetWorld().GetAIWorld();
+			world = GetGame().GetWorld().GetAIWorld();
 			world.FindPath(GetPosition(), m_eAI_Targets[0].param5.GetPosition(this), m_PathFilter, m_Path);
 		}
 
@@ -607,7 +610,7 @@ modded class PlayerBase
 			int landType = 0;
 			HumanCommandFall fall = GetCommand_Fall();
 
-			if (fall.PhysicsLanded())
+			if (fall && fall.PhysicsLanded())
 			{
 				DayZPlayerType type = GetDayZPlayerType();
 				NoiseParams npar;
