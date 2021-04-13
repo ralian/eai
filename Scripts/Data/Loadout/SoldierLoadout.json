@@ -79,7 +79,8 @@
         100
     ],
     "Loot": [
-        "SodaCan_Cola"
+        "SodaCan_Cola",
+		"Apple"
     ],
     "LootRandom": [
         "Rope",

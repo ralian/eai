@@ -51,8 +51,33 @@ class HumanLoadout {
 		weapon = Loadout.WeaponHandgun.GetRandomElement();
 		HumanLoadout.AddWeapon(h, weapon, Loadout.WeaponHealth[0], Loadout.WeaponHealth[1]);
 		HumanLoadout.AddMagazine(h, weapon, Loadout.WeaponHandgunMagCount[0], Loadout.WeaponHandgunMagCount[1]);
+
+		HumanLoadout.AddLoot(h, Loadout);		
 	}
 
+	//----------------------------------------------------------------
+	//	HumanLoadout.AddLoot
+	//
+	//	Adds loot.
+	
+	static void AddLoot(PlayerBase h, HumanLoadout Loadout) {
+		EntityAI item;
+		int minhealth = Loadout.LootHealth[0];
+		int maxhealth = Loadout.LootHealth[1];		
+		float HealthModifier;
+		string loot;
+		int i;
+		
+		for( i = 0; i < Loadout.Loot.Count(); i++)
+		{
+			loot = Loadout.Loot[i];
+			item = h.GetHumanInventory().CreateInInventory(loot);
+			HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
+			item.SetHealth(item.GetMaxHealth() * HealthModifier);
+			Print("HumanLoadout: Add loot: " + loot + " (" + HealthModifier + ")" );
+		}
+	}	
+	
 	//----------------------------------------------------------------
 	//	HumanLoadout.AddClothes
 	//
