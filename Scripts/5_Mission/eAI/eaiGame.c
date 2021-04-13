@@ -110,7 +110,7 @@ class eAIGame {
 			
 		HumanLoadout.Apply(pb_AI, "SoldierLoadout.json");
 		
-		pb_AI.RequestTransition("Rejoin");
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(pb_AI.RequestTransition, 10000, false, "Rejoin");
 				
 		return pb_AI;
 	}

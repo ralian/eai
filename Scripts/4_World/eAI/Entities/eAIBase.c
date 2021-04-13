@@ -122,7 +122,10 @@ modded class PlayerBase
 			m_AimArbitration = false;
 			return false;
 		}
+		
 		Man nearest = GetNearestPlayer();
+		if (!nearest) return false;
+		
 		Print("Refreshing aim arbitration for " + this + " current: " + m_CurrentArbiter.GetIdentity() + " closest: " + nearest.GetIdentity());
 		if (!m_CurrentArbiter || !m_CurrentArbiter.GetIdentity() || !m_CurrentArbiter.IsAlive()) {
 			m_CurrentArbiter = nearest;
@@ -551,7 +554,7 @@ modded class PlayerBase
 		//Print(m_eAI_Targets.Count());
 
 		// The last check is in case the "leader" of the group no longer exists
-		if (GetGroup() && GetGroup().GetLeader() == this) {
+		if (GetGroup() && GetGroup().GetLeader() == this && GetFSM().GetState().GetName() == "Follow") {
 			AIWorld world = GetGame().GetWorld().GetAIWorld();
 			world.FindPath(GetPosition(), GetGroup().GetWaypointTargetInformation().GetPosition(), m_PathFilter, m_Path);
 		} else if (m_PathFilter && m_eAI_Targets.Count() > 0 && m_eAI_Targets[0].param5.GetEntity())

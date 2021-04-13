@@ -7,7 +7,7 @@ class eAIWaypointTargetInformation extends eAITargetInformation
 	
 	private eAIGroup m_Target; // here the target is actually the group we are in
 	
-	private float m_RadiusSq = 25.0;
+	private float m_RadiusSq = 150.0;
 
 
     void eAIWaypointTargetInformation(eAIGroup target)
@@ -60,8 +60,9 @@ class eAIWaypointTargetInformation extends eAITargetInformation
 		
 		vector newPos = GetEntity().GetPosition();
 
+		//Print("Distance: " + vector.DistanceSq(newPos, GetPosition()));
 		if (vector.DistanceSq(newPos, GetPosition()) < m_RadiusSq)
-			Print(SkipWaypoint());
+			Print("Going to WP " + SkipWaypoint());
 		
     }
 };

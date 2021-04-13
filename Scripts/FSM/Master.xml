@@ -232,7 +232,7 @@
 				dst.target = group.GetTargetInformation();
 				if (group.GetLeader() == unit)
 					dst.target = group.GetWaypointTargetInformation();
-                if (!dst.target ) return FAIL;
+                if (!dst.target) return FAIL;
 
 				if (m_FSM.GetLastState() == "Follow")
 					return SUCCESS;

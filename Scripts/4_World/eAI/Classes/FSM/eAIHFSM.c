@@ -97,6 +97,11 @@ class eAIHFSM
         //TODO: if the source transition is null, push to the back of the array
         //TODO: if the destination transition is null, remove from the array
     }
+	
+	eAIState GetState()
+    {
+        return m_CurrentState;
+    }
 
     eAIState GetState(string type)
     {
@@ -197,6 +202,8 @@ class eAIHFSM
         m_CurrentState = new_state.param1;
 
         if (new_state.param1 == null) return EXIT;
+		
+		Print("Starting State " + m_CurrentState.GetName());
 
         m_CurrentState.OnEntry("");
 
