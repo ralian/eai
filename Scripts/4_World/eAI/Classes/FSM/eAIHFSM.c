@@ -191,19 +191,20 @@ class eAIHFSM
 
         Param2<eAIState, bool> new_state = FindSuitableTransition(m_CurrentState, "");
         if (!new_state.param2 || (new_state.param2 && m_CurrentState == new_state.param1))
-        {
+        {	
             if (!m_CurrentState) return EXIT;
 
             return CONTINUE;
         }
 
         if (m_CurrentState) m_CurrentState.OnExit("", false);
+		m_LastState = m_CurrentState.GetName();
 
         m_CurrentState = new_state.param1;
 
         if (new_state.param1 == null) return EXIT;
 		
-		Print("Starting State " + m_CurrentState.GetName());
+		Print("State transition " + m_LastState + " -> " + m_CurrentState.GetName());
 
         m_CurrentState.OnEntry("");
 

@@ -61,7 +61,8 @@ class eAIWaypointTargetInformation extends eAITargetInformation
 		vector newPos = GetEntity().GetPosition();
 
 		//Print("Distance: " + vector.DistanceSq(newPos, GetPosition()));
-		if (vector.DistanceSq(newPos, GetPosition()) < m_RadiusSq)
+		float distToWP = vector.DistanceSq(newPos, GetPosition()); // This can be zero if there is no current WP
+		if (distToWP < m_RadiusSq && distToWP > 0.01)
 			Print("Going to WP " + SkipWaypoint());
 		
     }

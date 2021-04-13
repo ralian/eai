@@ -126,7 +126,7 @@ modded class PlayerBase
 		Man nearest = GetNearestPlayer();
 		if (!nearest) return false;
 		
-		Print("Refreshing aim arbitration for " + this + " current: " + m_CurrentArbiter.GetIdentity() + " closest: " + nearest.GetIdentity());
+		Print("Refreshing aim arbitration for " + this + " current: " + m_CurrentArbiter + " closest: " + nearest);
 		if (!m_CurrentArbiter || !m_CurrentArbiter.GetIdentity() || !m_CurrentArbiter.IsAlive()) {
 			m_CurrentArbiter = nearest;
 			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter.GetIdentity());
@@ -209,6 +209,8 @@ modded class PlayerBase
 	override void EEHitBy(TotalDamageResult damageResult, int damageType, EntityAI source, int component, string dmgZone, string ammo, vector modelPos, float speedCoef)
 	{
 		super.EEHitBy(damageResult, damageType, source, component, dmgZone, ammo, modelPos, speedCoef);
+		
+		Print("eAI: Damage registered from " + source + " type: " + damageType + " component: " + component + " datageResult: " + damageResult + " dmgZone: " + dmgZone + " modelPos: " + modelPos + " speedCoef: " + speedCoef);
 		
 		Print("eAI: Damage registered from " + source);
 		Weapon_Base player_weapon = Weapon_Base.Cast(source);

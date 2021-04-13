@@ -123,7 +123,7 @@
                 if (!leader) return FAIL;
 
 				dst.target = group.GetTargetInformation();
-				if (group.GetLeader() == unit)
+				if (leader == unit)
 					dst.target = group.GetWaypointTargetInformation();
                 if (!dst.target) return FAIL;
 
@@ -152,7 +152,7 @@
                 if (!leader) return SUCCESS;
 
 				auto target = group.GetTargetInformation();
-				if (group.GetLeader() == unit)
+				if (leader == unit)
 					target = group.GetWaypointTargetInformation();
                 if (!target) return SUCCESS;
 
@@ -230,7 +230,7 @@
                 if (!leader) return FAIL;
 
 				dst.target = group.GetTargetInformation();
-				if (group.GetLeader() == unit)
+				if (leader == unit)
 					dst.target = group.GetWaypointTargetInformation();
                 if (!dst.target) return FAIL;
 
@@ -318,6 +318,8 @@
                 if (!leader) return FAIL;
 
 				auto target = group.GetTargetInformation();
+				if (leader == unit)
+					target = group.GetWaypointTargetInformation();
                 if (!target) return FAIL;
 
 				if (m_FSM.GetLastState() == "Follow") {
