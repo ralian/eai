@@ -559,7 +559,7 @@ modded class PlayerBase
 		if (GetGroup() && GetGroup().GetLeader() == this && GetFSM().GetState().GetName() == "Follow") {
 			AIWorld world = GetGame().GetWorld().GetAIWorld();
 			world.FindPath(GetPosition(), GetGroup().GetWaypointTargetInformation().GetPosition(), m_PathFilter, m_Path);
-		} else if (m_PathFilter && m_eAI_Targets.Count() > 0 && m_eAI_Targets[0].param5.GetEntity())
+		} else if (m_PathFilter && m_eAI_Targets.Count() > 0 && m_eAI_Targets[0].param5 && m_eAI_Targets[0].param5.GetEntity())
 		{
 			//Print(m_eAI_Targets[0]);
 

@@ -303,6 +303,11 @@ modded class MissionServer
 
         Print( "eAI - Loaded Server Mission" );
     }
+	
+	override void InvokeOnConnect(PlayerBase player, PlayerIdentity identity) {
+		super.InvokeOnConnect(player, identity);
+		m_eaiGame.GetGroupByLeader(player);
+	}
 };
 
 modded class MissionGameplay
