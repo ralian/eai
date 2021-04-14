@@ -37,10 +37,10 @@ class HumanLoadout {
 	//
 	//	The order of searching for loadouts:
 	//	1) (TBD) From full path under profile. You can define the path to you mod's loadout files "\mymod\loadout.json"
-	//	2) From default eAI config dir "eAI\loadout\*" under profile
-	//	3) Copied from the mod (Scripts/Data/Loadout) to the config dir "eAI\loadout\*". 
+	//	2) From default eAI config dir under profile "profile\eAI\loadout\*".
+	//	3) Copied from the mod (Scripts/Data/Loadout) to "profile\eAI\loadout\*". 
 	//	   Two default loadouts exists: "SoldierLoadout.json" , "PoliceLoadout.json".
-	//	4) Create a dummy loadout (blue clothes) with the given LoadoutFile filename.
+	//	4) Create a dummy loadout (blue clothes) with the given LoadoutFile filename under "profile\eAI\loadout\".
 	
 	static void Apply(PlayerBase h, string LoadoutFile) {
 		HumanLoadout Loadout = LoadData(LoadoutFile);
