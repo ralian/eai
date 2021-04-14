@@ -191,27 +191,27 @@ class HumanLoadout {
         ref HumanLoadout data = new ref HumanLoadout;
         Print("HumanLoadout: LoadData: Looking for " + FileName);
 
-        if(!FileExist(LoadoutFileName))
+        if (!FileExist(LoadoutFileName))
         {
-			if(FileExist(LoadoutDefaultFileName))
+			/*if(FileExist(LoadoutDefaultFileName))
 			{
 				//Profile does not have the loadouts. Copy them from mod. 
 	            Print("HumanLoadout: " + LoadoutFileName + " doesn't exist, copying default file!");
 				CopyFile(LoadoutDefaultFileName, LoadoutFileName);
 			}
 			else
-			{
+			{*/
 				//If the files under Data\Loadout in mod does not exist, create a default from the class. 
 				//This is an error situation but useful if you need to create a clean and working json
 	            Print("HumanLoadout: " + LoadoutDefaultFileName + " doesn't exist. Creating a default file: " + LoadoutFileName);
 	            SaveData(LoadoutFileName, data);
-			}
+			//}
 		}
 
-		if(FileExist(LoadoutFileName))
+		if (FileExist(LoadoutFileName))
         {
             Print("HumanLoadout: " + LoadoutFileName + " exists, loading!");
-            JsonFileLoader<HumanLoadout>.JsonLoadFile(FileName, data);
+            JsonFileLoader<HumanLoadout>.JsonLoadFile(LoadoutFileName, data);
         }
         else
         {

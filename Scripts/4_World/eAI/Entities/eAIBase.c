@@ -122,8 +122,11 @@ modded class PlayerBase
 			m_AimArbitration = false;
 			return false;
 		}
+		
 		Man nearest = GetNearestPlayer();
-		Print("Refreshing aim arbitration for " + this + " current: " + m_CurrentArbiter.GetIdentity() + " closest: " + nearest.GetIdentity());
+		if (!nearest) return false;
+		
+		Print("Refreshing aim arbitration for " + this + " current: " + m_CurrentArbiter + " closest: " + nearest);
 		if (!m_CurrentArbiter || !m_CurrentArbiter.GetIdentity() || !m_CurrentArbiter.IsAlive()) {
 			m_CurrentArbiter = nearest;
 			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter.GetIdentity());
@@ -206,6 +209,8 @@ modded class PlayerBase
 	override void EEHitBy(TotalDamageResult damageResult, int damageType, EntityAI source, int component, string dmgZone, string ammo, vector modelPos, float speedCoef)
 	{
 		super.EEHitBy(damageResult, damageType, source, component, dmgZone, ammo, modelPos, speedCoef);
+		
+		Print("eAI: Damage registered from " + source + " type: " + damageType + " component: " + component + " datageResult: " + damageResult + " dmgZone: " + dmgZone + " modelPos: " + modelPos + " speedCoef: " + speedCoef);
 		
 		Print("eAI: Damage registered from " + source);
 		Weapon_Base player_weapon = Weapon_Base.Cast(source);
@@ -551,11 +556,14 @@ modded class PlayerBase
 		//Print(m_eAI_Targets.Count());
 
 		// The last check is in case the "leader" of the group no longer exists
-		if (m_PathFilter && m_eAI_Targets.Count() > 0 && m_eAI_Targets[0].param5.GetEntity())
+		if (GetGroup() && GetGroup().GetLeader() == this && GetFSM().GetState().GetName() == "Follow") {
+			AIWorld world = GetGame().GetWorld().GetAIWorld();
+			world.FindPath(GetPosition(), GetGroup().GetWaypointTargetInformation().GetPosition(), m_PathFilter, m_Path);
+		} else if (m_PathFilter && m_eAI_Targets.Count() > 0 && m_eAI_Targets[0].param5 && m_eAI_Targets[0].param5.GetEntity())
 		{
 			//Print(m_eAI_Targets[0]);
 
-			AIWorld world = GetGame().GetWorld().GetAIWorld();
+			world = GetGame().GetWorld().GetAIWorld();
 			world.FindPath(GetPosition(), m_eAI_Targets[0].param5.GetPosition(this), m_PathFilter, m_Path);
 		}
 
@@ -607,7 +615,7 @@ modded class PlayerBase
 			int landType = 0;
 			HumanCommandFall fall = GetCommand_Fall();
 
-			if (fall.PhysicsLanded())
+			if (fall && fall.PhysicsLanded())
 			{
 				DayZPlayerType type = GetDayZPlayerType();
 				NoiseParams npar;
