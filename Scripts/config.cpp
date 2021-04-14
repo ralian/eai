@@ -17,7 +17,7 @@ class CfgMods
 	class eAI
 	{
 		dir = "eAI";
-		picture = "eAI/gfx/eAI_logo_ver1_03_512.edds";
+		picture = "eAI/gfx/eAI_logo.edds";
 		action = "";
 		hideName = 0;
 		hidePicture = 0;
