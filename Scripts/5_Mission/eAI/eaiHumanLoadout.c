@@ -1,7 +1,7 @@
 class HumanLoadout {	
-	const int LOADOUT_VERSION = 001;
+	static int LOADOUT_VERSION = 001;
 	
-	ref TIntArray 	 Version = {LOADOUT_VERSION};						
+	ref TIntArray 	 Version = {000};								//!!DO NOT CHANGE!!				
 	ref TStringArray Shirts = {"HikingJacket_Blue"};
 	ref TStringArray Pants = {"SlacksPants_Blue"}; 							
 	ref TStringArray Shoes = {"HikingBootsLow_Blue"};			
@@ -230,6 +230,7 @@ class HumanLoadout {
 	
     static void SaveData(string FileName, ref HumanLoadout data) {
 		Print("HumanLoadout: Saving loadout to " + FileName);
+		data.Version[0] = LOADOUT_VERSION;
         JsonFileLoader<HumanLoadout>.JsonSaveFile(FileName, data);
     }	
 	
