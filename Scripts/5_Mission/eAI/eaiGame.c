@@ -340,17 +340,4 @@ modded class MissionGameplay
 			GetUIManager().Back();
 		}
 	}
-	
-	override void OnMissionStart() {
-		// todo this can be dmoved to the constructor of DayZGame
-		super.OnMissionStart();
-		MakeDirectory("$profile:CF");
-		DayZGame.Cast(GetGame()).CFPopulateKeybinds();
-		DayZGame.Cast(GetGame()).CFLoadKeybinds("$profile:CF/PersistentKeybinds.json");
-	}
-	
-	override void OnMissionFinish() {
-		super.OnMissionFinish();
-		DayZGame.Cast(GetGame()).CFSaveKeybinds("$profile:CF/PersistentKeybinds.json");
-	}
 };
