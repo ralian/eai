@@ -37,9 +37,10 @@ class HumanLoadout {
 	//
 	//	The order of searching for loadouts:
 	//	1) (TBD) From full path under profile. You can define the path to you mod's loadout files "\mymod\loadout.json"
-	//	2) From default eAI config dir "eAI\loadout\*"
-	//	3) Copied from the mod to the config dir. Two default loadouts exists: "SoldierLoadout.json" , "PoliceLoadout.json".
-	//	4) Create a dummy loadout (blue clothes) with the given LoadoutFile filename.  
+	//	2) From default eAI config dir "eAI\loadout\*" under profile
+	//	3) Copied from the mod (Scripts/Data/Loadout) to the config dir "eAI\loadout\*". 
+	//	   Two default loadouts exists: "SoldierLoadout.json" , "PoliceLoadout.json".
+	//	4) Create a dummy loadout (blue clothes) with the given LoadoutFile filename.
 	
 	static void Apply(PlayerBase h, string LoadoutFile) {
 		HumanLoadout Loadout = LoadData(LoadoutFile);
@@ -216,6 +217,12 @@ class HumanLoadout {
         {
             Print("HumanLoadout: " + LoadoutFileName + " exists, loading!");
             JsonFileLoader<HumanLoadout>.JsonLoadFile(LoadoutFileName, data);
+			
+			//If the version does not match, show an error. The JSON loader loads what it is able to load, but does not completely fail.
+			if (data.Version[0] != LOADOUT_VERSION)
+			{
+	            Print("HumanLoadout: ERROR : Incorrect version (" + data.Version[0] + ") in " + LoadoutFileName + ". Should be " + LOADOUT_VERSION);
+			}			
         }
         else
         {
@@ -233,7 +240,6 @@ class HumanLoadout {
 		data.Version[0] = LOADOUT_VERSION;
         JsonFileLoader<HumanLoadout>.JsonSaveFile(FileName, data);
     }	
-	
 };
 
 /*
