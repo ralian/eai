@@ -1,4 +1,7 @@
 {
+    "Version": [
+        1
+    ],
     "Shirts": [
         "PoliceJacket",
         "PoliceJacketOrel"
@@ -70,6 +73,9 @@
     "LootRandom": [
         "Rope",
         "Screwdriver"
+    ],
+    "LootRandomChance": [
+        30
     ],
     "LootHealth": [
         10,

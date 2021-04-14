@@ -1,4 +1,7 @@
 class HumanLoadout {	
+	const int LOADOUT_VERSION = 001;
+	
+	ref TIntArray 	 Version = {LOADOUT_VERSION};						
 	ref TStringArray Shirts = {"HikingJacket_Blue"};
 	ref TStringArray Pants = {"SlacksPants_Blue"}; 							
 	ref TStringArray Shoes = {"HikingBootsLow_Blue"};			
@@ -19,11 +22,11 @@ class HumanLoadout {
 
 	ref TStringArray Loot = {"SodaCan_Cola"};  						//These are added always
 	ref TStringArray LootRandom = {"Screwdriver"};  				//Added with a LootRandomChance%
-//	ref TIntSet	 	 LootRandomChance = {30};						//Add item from Loot array
+	ref TIntArray 	 LootRandomChance = {30};						//Add item from Loot array
 	ref TIntArray	 LootHealth = {10,100}; 						//Item health given. 10%->100%
 		
 	//---------------------
-	static string LoadoutSaveDir = "$profile:";
+	static string LoadoutSaveDir = "$profile:eAI/Loadout/";
 	static string LoadoutDataDir = "eAI/Scripts/Data/Loadout/";
 	//---------------------
 	
@@ -193,19 +196,20 @@ class HumanLoadout {
 
         if (!FileExist(LoadoutFileName))
         {
-			/*if(FileExist(LoadoutDefaultFileName))
+			//No Loadout file exists. Check if a default under Data\Loadout with same name exists.
+			if(FileExist(LoadoutDefaultFileName))
 			{
-				//Profile does not have the loadouts. Copy them from mod. 
+				//Profile does not have the loadouts. Copy them from Data\Loadout. 
 	            Print("HumanLoadout: " + LoadoutFileName + " doesn't exist, copying default file!");
 				CopyFile(LoadoutDefaultFileName, LoadoutFileName);
 			}
 			else
-			{*/
+			{
 				//If the files under Data\Loadout in mod does not exist, create a default from the class. 
 				//This is an error situation but useful if you need to create a clean and working json
 	            Print("HumanLoadout: " + LoadoutDefaultFileName + " doesn't exist. Creating a default file: " + LoadoutFileName);
 	            SaveData(LoadoutFileName, data);
-			//}
+			}
 		}
 
 		if (FileExist(LoadoutFileName))

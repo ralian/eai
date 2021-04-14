@@ -297,7 +297,10 @@ modded class MissionServer
 
     void MissionServer()
     {
-        m_eaiGame = new eAIGame();
+        MakeDirectory("$profile:eAI/");
+        MakeDirectory("$profile:eAI/Loadout/");
+
+		m_eaiGame = new eAIGame();
 
 		GetDayZGame().eAICreateManager();
 

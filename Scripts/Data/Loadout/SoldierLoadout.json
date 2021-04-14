@@ -1,4 +1,7 @@
 {
+    "Version": [
+        1
+    ],
     "Shirts": [
         "GorkaEJacket_Autumn",
         "GorkaEJacket_Flat",
@@ -85,6 +88,9 @@
     "LootRandom": [
         "Rope",
         "Screwdriver"
+    ],
+    "LootRandomChance": [
+        30
     ],
     "LootHealth": [
         10,
