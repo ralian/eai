@@ -45,12 +45,11 @@ modded class PlayerBase
 
 	private bool m_eAI_UnconsciousVehicle;
 
-    // Look/Aiming
-	private vector m_TargetLocation;
-
+	// Position for aiming/looking in the world
 	private vector m_eAI_LookPosition_WorldSpace;
 	private vector m_eAI_AimPosition_WorldSpace;
 
+	// A direction vector (not YPR) in Model Space, not World Space
 	private vector m_eAI_LookDirection_ModelSpace;
 	private bool m_eAI_LookDirection_Recalculate;
 	private vector m_eAI_AimDirection_ModelSpace;
@@ -924,9 +923,11 @@ modded class PlayerBase
 		Weapon_Base weapon;
 		Class.CastTo(weapon, pInHands);
 		
+		//TODO, properly use m_eAI_LookDirection_ModelSpace
+
 		// Start of ADS code
 		if (m_WeaponRaised && threats.Count() > 0 && threats[0] && !ReloadingInADS) {
-			SetAimDir(threats[0].GetPosition());
+			AimAtPosition(threats[0].GetPosition());
 			
 			float targetAngle, targetHeight, gunHeight;
 			if (threats.Count() > 0 && threats[0]) {
@@ -964,7 +965,8 @@ modded class PlayerBase
 				X = Math.NormalizeAngle( GetOrientation()[0] + 9.0 ); // 9.0 is a fudge factor
 				Y = hcw.GetBaseAimingAngleUD();
 			}
-			m_AimDeltaX = Math.DiffAngle(m_eAI_LookDirection_WorldSpace[0], X);
+
+			m_AimDeltaX = Math.DiffAngle(m_eAI_LookDirection_ModelSpace[0], X);
 			m_AimDeltaY = (targetAngle-Y);
 			//Print("Aim Debugging - X: " + X + " deltaX: " + m_AimDeltaX + " Y: " + Y + " deltaY: " + m_AimDeltaY);
 			if (correctionCounter < 1) {

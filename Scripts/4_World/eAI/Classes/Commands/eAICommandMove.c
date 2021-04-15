@@ -120,13 +120,17 @@ class eAICommandMove extends eAICommandBase
 
 	override void PrePhysUpdate(float pDt)
 	{
-		vector expectedPosition = m_Unit.GetPosition() + (m_Direction * GetSpeedMS(m_Speed) * pDt);
+		m_LastSpeedChangeTime += pDt;
+
 		m_MaxTurnSpeed = 25.0;
 		m_MaxTurnAcceleration = 10.0;
 		
+		vector expectedPosition = m_Unit.ModelToWorld(m_Direction * m_PhysicsSpeed * pDt);
+		
 		// First, if we are in combat, just do turn
 		float currentYaw, pathAngleDiff;
-		if (m_Raised && m_Unit.threats.Count() > 0 && m_Unit.threats[0]) {
+		if (m_Raised && m_Unit.threats.Count() > 0 && m_Unit.threats[0])
+		{
 			m_PathAngle = Math.NormalizeAngle(m_Unit.AngleBetweenPoints(expectedPosition, m_Unit.threats[0].GetPosition()));
 			
 			currentYaw = Math.NormalizeAngle(m_Unit.GetOrientation()[0]);
@@ -154,13 +158,6 @@ class eAICommandMove extends eAICommandBase
 			
 			return;
 		}
-		
-		m_LastSpeedChangeTime += pDt;
-		
-		m_MaxTurnSpeed = 25.0;
-		m_MaxTurnAcceleration = 10.0;
-		
-		vector expectedPosition = m_Unit.ModelToWorld(m_Direction * m_PhysicsSpeed * pDt);
 
 		float wayPointDistance;
 		int wayPointIndex = m_Unit.FindNext(expectedPosition, wayPointDistance);
@@ -172,7 +169,7 @@ class eAICommandMove extends eAICommandBase
 		if (!isFinal || (isFinal && wayPointDistance > 0.5))
 		{			
 			vector pathDir = m_Unit.WorldToModel(wayPoint).Normalized();
-			float pathAngleDiff = pathDir.VectorToAngles()[0];
+			pathAngleDiff = pathDir.VectorToAngles()[0];
 			if (pathAngleDiff > 180.0) pathAngleDiff = pathAngleDiff - 360.0;
 			
 			m_TurnSpeed = Math.Clamp(pathAngleDiff, -m_MaxTurnSpeed, m_MaxTurnSpeed);
