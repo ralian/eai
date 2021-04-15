@@ -15,12 +15,7 @@
 			<event_entry></event_entry>
 			<event_exit></event_exit>
 			<event_update>
-				time += DeltaTime;
-                if (time &gt; 0.25) {
-					time = 0;
-					return EXIT;
-				}
-                return CONTINUE; // We don't want to eval the transitions every frame, it takes time for some
+                return EXIT;
             </event_update>
 		</state>
 		<state name="Follow">
@@ -66,48 +61,6 @@
                 return EXIT;
             </event_update>
 		</state>
-		<state name="Combat">
-			<variables>
-				<variable name="time" type="float" />
-			</variables>
-			<editor_data>
-				<position x="333" y="374" />
-				<size width="150" height="40" />
-			</editor_data>
-			<event_entry>
-				// we assume the targets have been cleaned and sorted in the transition
-				if (!unit.ReloadingInADS) {
-					unit.RaiseWeapon(true);
-					unit.RefreshAimArbitration();
-					unit.DelayFiring(1000, 2000);
-				} else unit.ReloadingInADS = false; // if we just came from an ADS reload
-			</event_entry>
-			<event_exit>
-				if (!unit.ReloadingInADS) {
-					unit.StopAimArbitration();
-					unit.RaiseWeapon(false);
-				}
-			</event_exit>
-			<event_update>
-				time += DeltaTime;
-				if (time &lt; 0.08) {
-					return CONTINUE;
-				} time = 0;
-
-				if (unit.CleanThreats() &lt; 1) return EXIT;
-				
-				EntityAI mag, weap; // these are unused here
-				if (unit.ShouldReload(mag, weap)) {
-					unit.ReloadingInADS = true;
-					return EXIT;
-				}
-
-				if (unit.ShouldFire())
-					unit.FireHeldWeapon();
-
-				return CONTINUE;
-            </event_update>
-		</state>
 	</states>
 	<transitions>
 		<transition>
@@ -123,19 +76,16 @@
                 if (!leader) return FAIL;
 
 				dst.target = group.GetTargetInformation();
-				if (leader == unit)
-					dst.target = group.GetWaypointTargetInformation();
                 if (!dst.target) return FAIL;
 
-				if (unit.GetRequestedTransition("Rejoin"))
-				{
-					dst.target.AddAI(unit);
-					return SUCCESS;
-				}
+                vector pos = dst.target.GetPosition(unit);
+                if (vector.Distance(pos, unit.GetPosition()) &gt; 50.0) return FAIL;
 
-				return FAIL;
+				dst.target.AddAI(unit);
+
+                return SUCCESS;
             </guard>
-			<event name="Rejoin" />
+			<event name="" />
 			<from_state name="Idle" />
 			<to_state name="Follow" />
 		</transition>
@@ -152,19 +102,18 @@
                 if (!leader) return SUCCESS;
 
 				auto target = group.GetTargetInformation();
-				if (leader == unit)
-					target = group.GetWaypointTargetInformation();
                 if (!target) return SUCCESS;
 
-				if (unit.GetRequestedTransition("Stop"))
+                vector pos = target.GetPosition(unit);
+                if (vector.Distance(pos, unit.GetPosition()) &gt; 50.0)
 				{
 					target.RemoveAI(unit);
 					return SUCCESS;
 				}
 
-				return FAIL;
+                return FAIL;
             </guard>
-			<event name="Stop" />
+			<event name="" />
 			<from_state name="Follow" />
 			<to_state name="Idle" />
 		</transition>
@@ -174,7 +123,16 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-				if (!unit.ShouldReload(dst.magazine, dst.weapon)) return FAIL;
+				Weapon weapon_in_hands;
+				if (!Class.CastTo(weapon_in_hands, unit.GetItemInHands())) return FAIL;
+
+				int mi = weapon_in_hands.GetCurrentMuzzle();
+				Magazine mag = weapon_in_hands.GetMagazine(mi);
+				if (mag &amp;&amp; mag.GetAmmoCount() &gt; 0) return FAIL;
+
+				dst.magazine = unit.GetMagazineToReload(weapon_in_hands);
+				dst.weapon = weapon_in_hands;
+				if (!dst.magazine || !dst.weapon) return FAIL;
 
 				// don't move to the state if the action manager can't be initiated.
 				if (!unit.GetActionManager() || unit.GetActionManager().GetRunningAction()) return FAIL;
@@ -184,38 +142,6 @@
 			<event name="" />
 			<from_state name="Follow" />
 			<to_state name="Reload" />
-		</transition>
-		<transition>
-			<editor_data>
-				<position_source x="0" y="0.7" />
-				<position_destination x="1" y="0.7" />
-			</editor_data>
-			<guard>
-				if (!unit.ShouldReload(dst.magazine, dst.weapon)) return FAIL;
-
-				// don't move to the state if the action manager can't be initiated.
-				if (!unit.GetActionManager() || unit.GetActionManager().GetRunningAction()) return FAIL;
-				
-				return SUCCESS;
-            </guard>
-			<event name="" />
-			<from_state name="Idle" />
-			<to_state name="Reload" />
-		</transition>
-		<transition>
-			<editor_data>
-				<position_source x="0" y="0.7" />
-				<position_destination x="1" y="0.7" />
-			</editor_data>
-			<guard>
-				if (m_FSM.GetLastState() == "Combat")
-					return SUCCESS;
-
-                return FAIL;
-            </guard>
-			<event name="" />
-			<from_state name="Reload" />
-			<to_state name="Combat" />
 		</transition>
 		<transition>
 			<editor_data>
@@ -227,15 +153,7 @@
                 if (!group) return FAIL;
 
                 auto leader = group.GetLeader();
-                if (!leader) return FAIL;
-
-				dst.target = group.GetTargetInformation();
-				if (leader == unit)
-					dst.target = group.GetWaypointTargetInformation();
-                if (!dst.target) return FAIL;
-
-				if (m_FSM.GetLastState() == "Follow")
-					return SUCCESS;
+                if (leader) return SUCCESS;
 
                 return FAIL;
             </guard>
@@ -254,95 +172,6 @@
             </guard>
 			<event name="" />
 			<from_state name="Reload" />
-			<to_state name="Idle" />
-		</transition>
-		<transition>
-			<editor_data>
-				<position_source x="0" y="0.7" />
-				<position_destination x="1" y="0.7" />
-			</editor_data>
-			<guard>
-				if (unit.CleanThreats() &gt; 0) return SUCCESS;
-                return FAIL;
-            </guard>
-			<event name="" />
-			<from_state name="Idle" />
-			<to_state name="Combat" />
-		</transition>
-		<transition>
-			<editor_data>
-				<position_source x="0" y="0.7" />
-				<position_destination x="1" y="0.7" />
-			</editor_data>
-			<guard>
-				if (unit.CleanThreats() &gt; 0) {
-					auto group = unit.GetGroup();
-	                if (group) {
-						auto target = group.GetTargetInformation();
-		                if (target) {
-							target.RemoveAI(unit);
-							return SUCCESS;
-						}
-					}
-				}
-                return FAIL;
-            </guard>
-			<event name="" />
-			<from_state name="Follow" />
-			<to_state name="Combat" />
-		</transition>
-		<transition>
-			<editor_data>
-				<position_source x="0" y="0.7" />
-				<position_destination x="1" y="0.7" />
-			</editor_data>
-			<guard>
-				if (unit.ShouldReload(dst.magazine, dst.weapon)) return SUCCESS;
-
-                return FAIL;
-            </guard>
-			<event name="" />
-			<from_state name="Combat" />
-			<to_state name="Reload" />
-		</transition>
-		<transition>
-			<editor_data>
-				<position_source x="0" y="0.7" />
-				<position_destination x="1" y="0.7" />
-			</editor_data>
-			<guard>
-				auto group = unit.GetGroup();
-                if (!group) return FAIL;
-
-                auto leader = group.GetLeader();
-                if (!leader) return FAIL;
-
-				auto target = group.GetTargetInformation();
-				if (leader == unit)
-					target = group.GetWaypointTargetInformation();
-                if (!target) return FAIL;
-
-				if (m_FSM.GetLastState() == "Follow") {
-					target.AddAI(unit);
-					return SUCCESS;
-				}
-	
-                return FAIL;
-            </guard>
-			<event name="" />
-			<from_state name="Combat" />
-			<to_state name="Follow" />
-		</transition>
-		<transition>
-			<editor_data>
-				<position_source x="0" y="0.7" />
-				<position_destination x="1" y="0.7" />
-			</editor_data>
-			<guard>
-				return SUCCESS;
-            </guard>
-			<event name="" />
-			<from_state name="Combat" />
 			<to_state name="Idle" />
 		</transition>
 	</transitions>

@@ -12,10 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+enum eAITargetOverriding
+{
+	NONE,
+	POSITION,
+	PATH
+};
+
 /* TODO: class eAIBase extends PlayerBase // needs config entries */
 typedef PlayerBase eAIBase;
 modded class PlayerBase
 {
+	static autoptr array<eAIBase> m_eAI = new array<eAIBase>();
+
 	private bool m_eAI_Is = false;
 
 	private autoptr eAIHFSM m_FSM;
@@ -23,7 +32,7 @@ modded class PlayerBase
 	private autoptr array<string> m_Transitions = {};
 
 	// Targeting data 
-	private autoptr array<eAITargetGroup> m_eAI_Targets;
+	private autoptr array<eAITarget> m_eAI_Targets;
 	autoptr array<Object> threats = {}; // temporary
 	
 	// Aiming and aim arbitration
@@ -34,14 +43,17 @@ modded class PlayerBase
 	private autoptr eAIAnimationST m_eAI_AnimationST;
 	private eAICommandBase m_eAI_Command;
 
-    // Look/Aiming
-	private vector m_TargetLocation;
+	private bool m_eAI_UnconsciousVehicle;
 
-	private vector m_eAI_LookDirection_WorldSpace;
-	private vector m_eAI_AimDirection_WorldSpace;
+	// Position for aiming/looking in the world
+	private vector m_eAI_LookPosition_WorldSpace;
+	private vector m_eAI_AimPosition_WorldSpace;
 
+	// A direction vector (not YPR) in Model Space, not World Space
 	private vector m_eAI_LookDirection_ModelSpace;
+	private bool m_eAI_LookDirection_Recalculate;
 	private vector m_eAI_AimDirection_ModelSpace;
+	private bool m_eAI_AimDirection_Recalculate;
 	
 	private bool m_WeaponRaised;
 	
@@ -52,20 +64,24 @@ modded class PlayerBase
     // Path Finding
 	private autoptr PGFilter m_PathFilter;
 	private autoptr array<vector> m_Path = new array<vector>();
+	private vector m_TargetPosition;
+	private eAITargetOverriding m_eAI_TargetOverriding = eAITargetOverriding.NONE;
 
 #ifndef SERVER
 	private autoptr array<Shape> m_DebugShapes = new array<Shape>();
 #endif
 
-	void PlayerBase()
+	void PlayerBase() /*eAIBase*/
 	{
 	}
 
-	void ~PlayerBase()
+	void ~PlayerBase() /*~eAIBase*/
 	{
 		if (IsAI())
 		{
 			m_eAI_Group.RemoveMember(m_eAI_Group.GetIndex(this));
+
+			m_eAI.RemoveItem(this);
 		}
 	}
 	
@@ -89,11 +105,16 @@ modded class PlayerBase
 	// returns true if able
 	bool StartAimArbitration() {
 		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
-		if (/*m_AimArbitration || */!weap || !m_CurrentArbiter) {
+		if (/*m_AimArbitration || */!weap || (!m_CurrentArbiter && !eAIGlobal_HeadlessClient)) {
 			m_AimArbitration = false;
 			return false;
 		}
 		m_AimArbitration = true;
+		if (eAIGlobal_HeadlessClient) {
+			Print("Starting aim arbitration for " + this + " with HC");
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterStart", new Param1<Weapon_Base>(weap), false, eAIGlobal_HeadlessClient);
+			return true;
+		}
 		Print("Starting aim arbitration for " + this + " with client " + m_CurrentArbiter.GetIdentity());
 		GetRPCManager().SendRPC("eAI", "eAIAimArbiterStart", new Param2<Weapon_Base, int>(weap, 100), false, m_CurrentArbiter.GetIdentity());
 		return true;
@@ -102,11 +123,16 @@ modded class PlayerBase
 	// returns true if able to stop cleanly
 	bool StopAimArbitration() {
 		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
-		if (/*m_AimArbitration || */!weap || !m_CurrentArbiter) {
+		if (/*m_AimArbitration || */!weap || (!m_CurrentArbiter && !eAIGlobal_HeadlessClient)) {
 			m_AimArbitration = false;
 			return false;
 		}
 		m_AimArbitration = false;
+		if (eAIGlobal_HeadlessClient) {
+			Print("Stopping aim arbitration for " + this + " with HC");
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap), false, eAIGlobal_HeadlessClient);
+			return true;
+		}
 		Print("Stopping aim arbitration for " + this + " with client " + m_CurrentArbiter.GetIdentity());
 		GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter.GetIdentity());
 		return true;
@@ -121,6 +147,11 @@ modded class PlayerBase
 			//	GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap));
 			m_AimArbitration = false;
 			return false;
+		}
+		
+		if (eAIGlobal_HeadlessClient) {
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(weap), false, eAIGlobal_HeadlessClient);
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.StartAimArbitration, 50, false);
 		}
 		
 		Man nearest = GetNearestPlayer();
@@ -316,7 +347,7 @@ modded class PlayerBase
 		m_eAI_Is = true;
         m_eAI_Group = group;
 
-		m_eAI_Targets = new array<eAITargetGroup>();
+		m_eAI_Targets = new array<eAITarget>();
 		
         if (m_eAI_Group)
 		{
@@ -329,6 +360,9 @@ modded class PlayerBase
 			m_eAI_Group.SetLeader(this);
 		}
 
+		m_eAI.Insert(this);
+
+		m_AimingModel = new eAIImplementAiming(this);
 		m_ActionManager = new eAIActionManager(this);
 		m_WeaponManager = new eAIWeaponManager(this);
 		
@@ -337,7 +371,7 @@ modded class PlayerBase
 		m_PathFilter = new PGFilter();
 
 		int inFlags = PGPolyFlags.WALK | PGPolyFlags.DOOR | PGPolyFlags.INSIDE | PGPolyFlags.JUMP_OVER;
-		int exFlags = PGPolyFlags.DISABLED | PGPolyFlags.SWIM | PGPolyFlags.SWIM_SEA | PGPolyFlags.JUMP | PGPolyFlags.CLIMB | PGPolyFlags.CRAWL | PGPolyFlags.CROUCH;
+		int exFlags = PGPolyFlags.DISABLED | PGPolyFlags.SWIM | PGPolyFlags.SWIM_SEA | PGPolyFlags.SPECIAL | PGPolyFlags.JUMP | PGPolyFlags.CLIMB | PGPolyFlags.CRAWL | PGPolyFlags.CROUCH;
 
 		m_PathFilter.SetFlags( inFlags, exFlags, PGPolyFlags.NONE );
 		m_PathFilter.SetCost( PGAreaType.JUMP, 0.0 );
@@ -350,6 +384,9 @@ modded class PlayerBase
 			m_FSM = type.Spawn(this, null);
 			m_FSM.StartDefault();
 		}
+
+		LookAtDirection("0 0 1");
+		AimAtDirection("0 0 1");
 
 		return m_eAI_Group;
 	}
@@ -391,17 +428,17 @@ modded class PlayerBase
 		return false;
 	}
 
-	array<eAITargetGroup> GetTargets()
+	array<eAITarget> GetTargets()
 	{
 		return m_eAI_Targets;
 	}
 
-	void OnAddTarget(eAITargetGroup target)
+	void OnAddTarget(eAITarget target)
 	{
 		m_eAI_Targets.Insert(target);
 	}
 
-	void OnRemoveTarget(eAITargetGroup target)
+	void OnRemoveTarget(eAITarget target)
 	{
 		m_eAI_Targets.RemoveItem(target);
 	}
@@ -530,9 +567,35 @@ modded class PlayerBase
 		return vector.Direction(pos1, pos2).Normalized().VectorToAngles()[0];
 	}
 
-	eAICommandMove GetCommand_AIMove()
+	vector GetTargetPosition()
+	{
+		return m_TargetPosition;
+	}
+
+	eAICommandMove GetCommand_MoveAI()
 	{
 		return eAICommandMove.Cast(GetCommand_Script());
+	}
+
+	eAICommandMove StartCommand_MoveAI()
+	{
+		eAICommandMove cmd = new eAICommandMove(this, m_eAI_AnimationST);
+		StartCommand_Script(cmd);
+		m_eAI_Command = cmd;
+		return cmd;
+	}
+
+	eAICommandVehicle GetCommand_VehicleAI()
+	{
+		return eAICommandVehicle.Cast(GetCommand_Script());
+	}
+
+	eAICommandVehicle StartCommand_VehicleAI(Transport vehicle, int seatIdx, int seat_anim, bool fromUnconscious = false)
+	{
+		eAICommandVehicle cmd = new eAICommandVehicle(this, m_eAI_AnimationST, vehicle, seatIdx, seat_anim, fromUnconscious);
+		StartCommand_Script(cmd);
+		m_eAI_Command = cmd;
+		return cmd;
 	}
 
 	override void CommandHandler(float pDt, int pCurrentCommandID, bool pCurrentCommandFinished) 
@@ -548,24 +611,46 @@ modded class PlayerBase
 			m_DebugShapes[i].Destroy();
 		m_DebugShapes.Clear();
 #endif
-
+		
 		if (!GetGame().IsServer()) return;
 
-		m_Path.Clear();
 
-		//Print(m_eAI_Targets.Count());
+		AIWorld world = GetGame().GetWorld().GetAIWorld();
+		
+		m_eAI_TargetOverriding = eAITargetOverriding.NONE;
 
-		// The last check is in case the "leader" of the group no longer exists
-		if (GetGroup() && GetGroup().GetLeader() == this && GetFSM().GetState().GetName() == "Follow") {
-			AIWorld world = GetGame().GetWorld().GetAIWorld();
-			world.FindPath(GetPosition(), GetGroup().GetWaypointTargetInformation().GetPosition(), m_PathFilter, m_Path);
-		} else if (m_PathFilter && m_eAI_Targets.Count() > 0 && m_eAI_Targets[0].param5 && m_eAI_Targets[0].param5.GetEntity())
+		if (m_eAI_TargetOverriding != eAITargetOverriding.PATH)
 		{
-			//Print(m_eAI_Targets[0]);
-
-			world = GetGame().GetWorld().GetAIWorld();
-			world.FindPath(GetPosition(), m_eAI_Targets[0].param5.GetPosition(this), m_PathFilter, m_Path);
+			m_Path.Clear();
+			
+			if (m_PathFilter)
+			{
+				if (m_eAI_TargetOverriding != eAITargetOverriding.POSITION && m_eAI_Targets.Count() > 0)
+				{
+					eAITarget target = m_eAI_Targets[0];
+					if (target.HasInfo()) 
+						m_TargetPosition = target.GetPosition(this);
+				}
+				
+				world.FindPath(GetPosition(), m_TargetPosition, m_PathFilter, m_Path);
+			}
 		}
+		
+
+		
+		//! handle death with high priority
+		if (HandleDeath(pCurrentCommandID))
+		{
+			return;
+		}
+
+		vector transform[4];
+		GetTransform(transform);
+		
+		AimAtPosition(GetGame().GetPlayer().GetPosition());
+
+		if (m_eAI_LookDirection_Recalculate) m_eAI_LookDirection_ModelSpace = (m_eAI_LookPosition_WorldSpace - transform[3]).Normalized().Multiply3(transform);
+		if (m_eAI_AimDirection_Recalculate) m_eAI_AimDirection_ModelSpace = (m_eAI_AimPosition_WorldSpace - transform[3]).Normalized().InvMultiply3(transform);
 
 		HumanInputController hic = GetInputController();
 		EntityAI entityInHands = GetHumanInventory().GetEntityInHands();
@@ -574,18 +659,12 @@ modded class PlayerBase
 		// handle weapons
 		if(hic)
 		{
-			if( isWeapon && (!hic.IsImmediateAction() || !m_ProcessFirearmMeleeHit || !m_ContinueFirearmMelee) )
+			if (isWeapon && (!hic.IsImmediateAction() || !m_ProcessFirearmMeleeHit || !m_ContinueFirearmMelee))
 			{
 				m_ProcessFirearmMeleeHit = false;
 				bool exitIronSights = false;
 				HandleWeapons(pDt, entityInHands, hic, exitIronSights);
 			}	
-		}
-		
-		//! handle death with high priority
-		if (HandleDeath(pCurrentCommandID))
-		{
-			return;
 		}
 
 		if (m_WeaponManager) m_WeaponManager.Update(pDt);
@@ -595,10 +674,73 @@ modded class PlayerBase
 		GetPlayerSoundManagerServer().Update();
 		GetHumanInventory().Update(pDt);
 		UpdateDelete();
+
+		if (m_ActionManager)
+		{
+			m_ActionManager.Update(DayZPlayerConstants.COMMANDID_MOVE);
+
+			if (pCurrentCommandID == DayZPlayerConstants.COMMANDID_UNCONSCIOUS)
+			{
+				OnUnconsciousUpdate(pDt, m_LastCommandBeforeUnconscious);
+				if (!m_IsUnconscious) 
+				{
+					m_IsUnconscious = true;
+					OnUnconsciousStart();
+				}
+
+				if (!m_ShouldBeUnconscious)
+				{
+					HumanCommandUnconscious	hcu = GetCommand_Unconscious();
+					if (hcu) hcu.WakeUp();
+				}
+			}
+			else
+			{
+				if (m_ShouldBeUnconscious)
+				{
+					m_LastCommandBeforeUnconscious = pCurrentCommandID;
+					m_eAI_UnconsciousVehicle = false;
+
+					eAICommandVehicle vehCmd = GetCommand_VehicleAI();
+					if (vehCmd)
+					{
+						m_eAI_UnconsciousVehicle = true;
+
+						// not going to bother supporting knocking players out at this current moment
+						m_TransportCache = vehCmd.GetTransport();
+
+						vehCmd.KeepInVehicleSpaceAfterLeave(true);
+					}
+
+					StartCommand_Unconscious(0);
+				}
+
+				if (m_IsUnconscious)
+				{
+					m_IsUnconscious = false;
+					OnUnconsciousStop(pCurrentCommandID);
+				}
+			}
+		}
+		
+		OnCommandHandlerTick(pDt, pCurrentCommandID);
 		
 		m_eAI_Command = eAICommandBase.Cast(GetCommand_Script());
-		
-		if (pCurrentCommandFinished) {
+				
+		if (pCurrentCommandFinished)
+		{
+			if (pCurrentCommandID == DayZPlayerConstants.COMMANDID_UNCONSCIOUS)
+			{
+				if (m_eAI_UnconsciousVehicle && (m_TransportCache != null))
+				{
+					int crew_index = m_TransportCache.CrewMemberIndex(this);
+					int seat = m_TransportCache.GetSeatAnimationType(crew_index);
+					StartCommand_VehicleAI(m_TransportCache, crew_index, seat, true);
+					m_TransportCache = null;
+					return;
+				}
+			}
+
 			if (PhysicsIsFalling(true))
 			{
 				StartCommand_Fall(0);
@@ -606,7 +748,7 @@ modded class PlayerBase
 				return;
 			}
 
-			StartCommand_Script(new eAICommandMove(this, m_eAI_AnimationST));
+			StartCommand_MoveAI();
 		}
 
 		// taken from vanilla DayZPlayerImplement
@@ -675,23 +817,26 @@ modded class PlayerBase
 		{
 			return;
 		}
-
-		if (m_ActionManager)
-		{
-			m_ActionManager.Update(DayZPlayerConstants.COMMANDID_MOVE);
-		}
 		
 		if (pCurrentCommandID == DayZPlayerConstants.COMMANDID_MOVE)
 		{
-			StartCommand_Script(new eAICommandMove(this, m_eAI_AnimationST));
+			StartCommand_MoveAI();
 			return;
 		}
 		
-		if (pCurrentCommandID == DayZPlayerConstants.COMMANDID_SCRIPT)
+		if (pCurrentCommandID == DayZPlayerConstants.COMMANDID_SCRIPT && m_eAI_Command)
 		{
+			m_eAI_Command.SetLookDirection(m_eAI_LookDirection_ModelSpace);
+			
+			eAICommandMove hcm;
+			if (Class.CastTo(hcm, m_eAI_Command))
+			{
+				hcm.SetRaised(m_WeaponRaised);
+				hcm.SetFighting(threats.Count() > 0 && threats[0]);
+
+				return;
+			}
 		}
-		
-		OnCommandHandlerTick(pDt, pCurrentCommandID);
 	}
 		
 	// We should integrate this into ReloadWeapon
@@ -774,15 +919,17 @@ modded class PlayerBase
 			return;
 		}
 
-		HumanCommandWeapons		hcw = GetCommandModifier_Weapons();
+		HumanCommandWeapons hcw = GetCommandModifier_Weapons();
     	GetDayZPlayerInventory().HandleWeaponEvents(pDt, pExitIronSights);
 		
 		Weapon_Base weapon;
 		Class.CastTo(weapon, pInHands);
 		
+		//TODO, properly use m_eAI_LookDirection_ModelSpace
+
 		// Start of ADS code
 		if (m_WeaponRaised && threats.Count() > 0 && threats[0] && !ReloadingInADS) {
-			SetAimDir(threats[0].GetPosition());
+			AimAtPosition(threats[0].GetPosition());
 			
 			float targetAngle, targetHeight, gunHeight;
 			if (threats.Count() > 0 && threats[0]) {
@@ -820,7 +967,8 @@ modded class PlayerBase
 				X = Math.NormalizeAngle( GetOrientation()[0] + 9.0 ); // 9.0 is a fudge factor
 				Y = hcw.GetBaseAimingAngleUD();
 			}
-			m_AimDeltaX = Math.DiffAngle(m_eAI_LookDirection_WorldSpace[0], X);
+
+			m_AimDeltaX = Math.DiffAngle(m_eAI_LookDirection_ModelSpace[0], X);
 			m_AimDeltaY = (targetAngle-Y);
 			//Print("Aim Debugging - X: " + X + " deltaX: " + m_AimDeltaX + " Y: " + Y + " deltaY: " + m_AimDeltaY);
 			if (correctionCounter < 1) {
@@ -957,41 +1105,45 @@ modded class PlayerBase
 	}
 	
 	// @param true to put weapon up, false to lower
-	void RaiseWeapon(bool up) {
+	void RaiseWeapon(bool up)
+	{
 		m_WeaponRaised = up;
-		//GetInputController().OverrideRaise(true, up);
-		eAICommandMove.Cast(m_eAI_Command).SetRaised(up);
-		/*HumanCommandMove cm = GetCommand_Move();
-		if (m_WeaponRaised) {
-			cm.ForceStance(DayZPlayerConstants.STANCEIDX_RAISEDERECT);
-		} else {
-			cm.ForceStance(DayZPlayerConstants.STANCEIDX_ERECT);
-		}*/
 	}
 	
-	bool IsWeaponRaised() {
+	bool IsWeaponRaised()
+	{
 		return m_WeaponRaised;
 	}
 	
 	// @param LookWS a position in WorldSpace to look at
-	void SetLookDir(vector LookWS) {
-		LookWS[1] = LookWS[1] - 1.5; // Compensate for the height of the unit (from where they are looking)
-		m_eAI_LookDirection_WorldSpace = (LookWS - GetPosition()).VectorToAngles();
-		LookWS = WorldToModel(LookWS);
-		m_eAI_LookDirection_ModelSpace = LookWS.VectorToAngles();
+	void LookAtPosition(vector pPositionWS)
+	{
+		m_eAI_LookPosition_WorldSpace = pPositionWS;
+		m_eAI_LookDirection_Recalculate = true;
 	}
 	
 	// @param AimWS a position in WorldSpace to Aim at
-	void SetAimDir(vector AimWS) {
-		AimWS[1] = AimWS[1] - 1.5; // Compensate for the height of the unit (from where they are looking)
-		m_eAI_LookDirection_WorldSpace = (AimWS - GetPosition()).VectorToAngles();
-		AimWS = WorldToModel(AimWS);
-		m_eAI_LookDirection_ModelSpace = AimWS.VectorToAngles();
+	void AimAtPosition(vector pPositionWS)
+	{
+		m_eAI_AimPosition_WorldSpace = pPositionWS;
+		m_eAI_AimDirection_Recalculate = true;
+	}
+
+	void LookAtDirection(vector pDirectionMS)
+	{
+		m_eAI_LookDirection_ModelSpace = pDirectionMS;
+		m_eAI_LookDirection_Recalculate = false;
+	}
+
+	void AimAtDirection(vector pDirectionMS)
+	{
+		m_eAI_AimDirection_ModelSpace = pDirectionMS;
+		m_eAI_AimDirection_Recalculate = false;
 	}
 		
 	override bool AimingModel(float pDt, SDayZPlayerAimingModel pModel)
 	{
-		if (IsAI() && !m_WeaponRaised)
+		if (IsAI())
 		{
 			return false;
 		}
@@ -1001,7 +1153,7 @@ modded class PlayerBase
 		
 	override bool HeadingModel(float pDt, SDayZPlayerHeadingModel pModel)
 	{
-		if (IsAI() && !m_WeaponRaised)
+		if (IsAI())
 		{
 			return false;
 		}
@@ -1012,5 +1164,67 @@ modded class PlayerBase
 	override void OnCommandDeathStart()
 	{
 		super.OnCommandDeathStart();
+	}
+
+	void OnCommandVehicleAIStart()
+	{
+		m_AnimCommandStarting = HumanMoveCommandID.CommandVehicle;
+		
+		if ( GetInventory() )
+			GetInventory().LockInventory(LOCK_FROM_SCRIPT);
+		
+		ItemBase itemInHand = GetItemInHands();
+		EntityAI itemOnHead = FindAttachmentBySlotName("Headgear");
+
+		if ( itemInHand && itemInHand.GetCompEM() )
+			itemInHand.GetCompEM().SwitchOff();
+
+		TryHideItemInHands(true);
+
+		if ( itemOnHead && itemOnHead.GetCompEM() )
+			itemOnHead.GetCompEM().SwitchOff();
+		
+		eAICommandVehicle hcv = GetCommand_VehicleAI();
+		if ( hcv && hcv.GetVehicleSeat() == DayZPlayerConstants.VEHICLESEAT_DRIVER )
+			OnVehicleSeatDriverEnter();
+	}
+	
+	void OnCommandVehicleAIFinish()
+	{
+		if ( GetInventory() )
+			GetInventory().UnlockInventory(LOCK_FROM_SCRIPT);
+		
+		TryHideItemInHands(false, true);
+		
+		if ( m_IsVehicleSeatDriver )
+			OnVehicleSeatDriverLeft();
+	}
+
+	override void OnUnconsciousUpdate(float pDt, int last_command)
+	{
+		if (IsAI() && !GetGame().IsMultiplayer() && GetGame().IsServer())
+		{
+			m_UnconsciousTime += pDt;
+
+			int shock_simplified = SimplifyShock();
+			
+			if( m_ShockSimplified != shock_simplified )
+			{
+				m_ShockSimplified = shock_simplified;
+				SetSynchDirty();
+			}
+			
+			//PrintString(last_command.ToString());
+			//PrintString(DayZPlayerConstants.COMMANDID_SWIM.ToString());
+			
+			if( m_UnconsciousTime > PlayerConstants.UNCONSCIOUS_IN_WATER_TIME_LIMIT_TO_DEATH && last_command == DayZPlayerConstants.COMMANDID_SWIM )
+			{
+				SetHealth("","",-100);
+			}
+
+			return;
+		}
+
+		super.OnUnconsciousUpdate(pDt, last_command);
 	}
 };

@@ -7,8 +7,10 @@ class eAIGroup
 	private autoptr array<eAITargetInformation> m_Targets;
 	private int m_ID;
 
-	// other groups can also reference this
+	//! Refer to eAIGroup::GetTargetInformation
     private autoptr eAIGroupTargetInformation m_TargetInformation;
+
+	//TODO: remove from eAIGroup
 	private autoptr eAIWaypointTargetInformation m_WaypointTargetInformation;
 
 	// Ordered array of group members. 0 is the leader.
@@ -64,26 +66,53 @@ class eAIGroup
 		m_Faction = f;
 	}
 
+	/**
+	 * @brief The unique ID for this group
+	 *
+	 * @return int
+	 */
 	int GetID()
 	{
 		return m_ID;
 	}
 
+	/**
+	 * @brief Internal event fired when this group needs to know that is now targetting something
+	 *
+	 * @param target The target being added
+	 */
 	void OnTargetAdded(eAITargetInformation target)
 	{
 		m_Targets.Insert(target);
 	}
 
+	/**
+	 * @brief Internal event fired when this group needs to know that is no longer targetting something
+	 *
+	 * @param target The target being removed
+	 */
 	void OnTargetRemoved(eAITargetInformation target)
 	{
 		m_Targets.RemoveItem(target);
 	}
 
+	/**
+	 * @brief Processes all the targets so they can be removed when the time has been exceeded
+	 */
 	void ProcessTargets()
 	{
 		for (int i = m_Targets.Count() - 1; i >= 0; i--) m_Targets[i].Process(m_ID);
 	}
 
+	/**
+	 * @brief This target is both used by the owned AI's and enemy groups.
+	 * The owned AI's will use this to get the position they should move to
+	 * The enemy AI's will use this similar to a normal entity if they are 
+	 * targetting the group as a whole and not a singular AI. If they are 
+	 * targetting a singular AI then they would use GetTargetInformation.
+	 *
+	 * @return the target
+	 */
     eAITargetInformation GetTargetInformation()
     {
 		return m_TargetInformation;
