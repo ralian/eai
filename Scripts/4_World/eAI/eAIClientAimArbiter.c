@@ -39,7 +39,7 @@ class eAIClientAimArbiter {
 		if (new_delay_ms > 0)
 			delay_ms = new_delay_ms;
 		if (delay_ms > 0) {
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.Activate, delay_ms, false);
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.Activate, delay_ms, false, null, -1);
 			return true;
 		}
 		return false;
@@ -67,6 +67,7 @@ class eAIClientAimArbiterManager {
 	void eAIAimArbiterSetup(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param1<Weapon_Base> data;
 		if (!ctx.Read(data)) return;
+		Print("Client: Arbiter setup request for client " + data.param1);
 		if (!AimArbiterMap.Get(data.param1))
 			AimArbiterMap.Insert(data.param1, new eAIClientAimArbiter());
 	}

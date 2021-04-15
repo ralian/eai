@@ -95,8 +95,8 @@ modded class PlayerBase
 		}
 		m_AimArbitration = true;
 		if (eAIGlobal_HeadlessClient) {
-			Print("Starting aim arbitration for " + this + " with HC");
-			GetRPCManager().SendRPC("eAI", "eAIAimArbiterStart", new Param1<Weapon_Base>(weap), false, eAIGlobal_HeadlessClient);
+			Print("Starting aim arbitration for " + this + " with HC " + eAIGlobal_HeadlessClient.GetIdentity());
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterStart", new Param2<Weapon_Base, int>(weap, 50), false, eAIGlobal_HeadlessClient.GetIdentity());
 			return true;
 		}
 		Print("Starting aim arbitration for " + this + " with client " + m_CurrentArbiter.GetIdentity());
@@ -114,7 +114,7 @@ modded class PlayerBase
 		m_AimArbitration = false;
 		if (eAIGlobal_HeadlessClient) {
 			Print("Stopping aim arbitration for " + this + " with HC");
-			GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap), false, eAIGlobal_HeadlessClient);
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap), false, eAIGlobal_HeadlessClient.GetIdentity());
 			return true;
 		}
 		Print("Stopping aim arbitration for " + this + " with client " + m_CurrentArbiter.GetIdentity());
@@ -134,8 +134,9 @@ modded class PlayerBase
 		}
 		
 		if (eAIGlobal_HeadlessClient) {
-			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(weap), false, eAIGlobal_HeadlessClient);
+			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(weap), false, eAIGlobal_HeadlessClient.GetIdentity());
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.StartAimArbitration, 50, false);
+			return true;
 		}
 		
 		Man nearest = GetNearestPlayer();

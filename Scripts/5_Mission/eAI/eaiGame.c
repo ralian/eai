@@ -31,14 +31,16 @@ class eAIGame {
 			GetRPCManager().AddRPC("eAI", "eAIAimArbiterSetup", m_ClientAimMngr, SingeplayerExecutionType.Client);
 			GetRPCManager().AddRPC("eAI", "eAIAimArbiterStart", m_ClientAimMngr, SingeplayerExecutionType.Client);
 			GetRPCManager().AddRPC("eAI", "eAIAimArbiterStop", m_ClientAimMngr, SingeplayerExecutionType.Client);
-			GetRPCManager().AddRPC("eAI", "HCLinkObject", m_ClientAimMngr, SingeplayerExecutionType.Client);
-			GetRPCManager().AddRPC("eAI", "HCUnlinkObject", m_ClientAimMngr, SingeplayerExecutionType.Client);
+			GetRPCManager().AddRPC("eAI", "HCLinkObject", this, SingeplayerExecutionType.Client);
+			GetRPCManager().AddRPC("eAI", "HCUnlinkObject", this, SingeplayerExecutionType.Client);
 		}
 		
 		if (GetGame().IsServer()) {
 			m_ServerAimMngr = new eAIServerAimProfileManager();
 			GetRPCManager().AddRPC("eAI", "eAIAimDetails", m_ServerAimMngr, SingeplayerExecutionType.Server);
 		}
+		
+		
 		
 		GetRPCManager().AddRPC("eAI", "SpawnEntity", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "DebugFire", this, SingeplayerExecutionType.Server);
@@ -79,7 +81,7 @@ class eAIGame {
 
 		eAIBase pb_AI;
 		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pb_Human.GetPosition(), 0, "NONE"))) return null;
-		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient);
+		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
 		
 		pb_AI.SetAI(ownerGrp);
 			
@@ -93,7 +95,7 @@ class eAIGame {
 	eAIBase SpawnAI_Sentry(vector pos) {
 		eAIBase pb_AI;
 		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pos, 0, "NONE"))) return null;
-		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient);
+		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
 		
 		eAIGroup ownerGrp = GetGroupByLeader(pb_AI);
 		
@@ -107,7 +109,7 @@ class eAIGame {
 	eAIBase SpawnAI_Patrol(vector pos) {
 		eAIBase pb_AI;
 		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pos, 0, "NONE"))) return null;
-		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient);
+		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
 		
 		eAIGroup ownerGrp = GetGroupByLeader(pb_AI);
 		
@@ -136,19 +138,20 @@ class eAIGame {
 	
 	// Client Side: Link the given AI
 	void HCLinkObject(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<PlayerBase> data;
+		Param1<Man> data;
         if ( !ctx.Read( data ) ) return;
-		if(type == CallType.Server) {
+		if(type == CallType.Client) {
             Print("HC: Linking object " + data.param1);
 			eAIObjectManager.Register(data.param1);
+			eAIObjectManager.Register(PlayerBase.Cast(data.param1).GetItemInHands());
         }
 	}
 	
 	// Client Side: Link the given AI
 	void HCUnlinkObject(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<PlayerBase> data;
+		Param1<Man> data;
         if ( !ctx.Read( data ) ) return;
-		if(type == CallType.Server) {
+		if(type == CallType.Client) {
             Print("HC: Unlinking object " + data.param1);
 			eAIObjectManager.Unregister(data.param1);
         }
@@ -160,7 +163,7 @@ class eAIGame {
 		Param1<PlayerBase> data;
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server) {
-            Print("eAI: SpawnZombie RPC called.");
+            Print("eAI: SpawnZombie RPC called."); 
 			GetGame().CreateObject("ZmbF_JournalistNormal_Blue", data.param1.GetPosition() + debug_offset_2, false, true, true);
         }
 	}
@@ -315,16 +318,11 @@ class eAIGame {
 modded class MissionServer
 {
     autoptr eAIGame m_eaiGame;
-	PlayerIdentity m_HeadlessClient;
 	
-	static string HeadlessClientSteamID = "REDACTED (PUT STEAMID HERE)";
+	static string HeadlessClientSteamID = "76561198035721222";
 	
 	eAIGame GetEAIGame() {
 		return m_eaiGame;
-	}
-	
-	PlayerIdentity GetHeadlessClient() {
-		return m_HeadlessClient;
 	}
 
     void MissionServer()
@@ -338,13 +336,15 @@ modded class MissionServer
 	
 	override void InvokeOnConnect(PlayerBase player, PlayerIdentity identity) {
 		super.InvokeOnConnect(player, identity);
-		if (identity && identity.GetId() == HeadlessClientSteamID) {
-			eAIGlobal_HeadlessClient = identity;
+		Print("Checking SteamID " + identity.GetPlainId() + " for HC match");
+		if (identity && identity.GetPlainId() == HeadlessClientSteamID) {
+			Print("Starting HC!!");
+			eAIGlobal_HeadlessClient = player;
 			foreach (eAIGroup g : m_eaiGame.m_groups) {
 				for (int i = 0; i < g.Count(); i++) {
 					eAIBase ai = g.GetMember(i);
 					if (ai && ai.IsAI() && ai.IsAlive())
-						GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(ai), false, identity);
+						GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<Man>(ai), false, player.GetIdentity());
 				}
 			}
 				
