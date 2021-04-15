@@ -4,6 +4,9 @@ class eAIAnimationST
 	private int m_CMD_Jump;
 	private int m_CMD_Land;
 
+	private int m_CMD_Turn;
+	private int m_CMD_StopTurn;
+
 	private int m_CMD_Vehicle_GetIn;
 	private int m_CMD_Vehicle_SwitchSeat;
 	private int m_CMD_Vehicle_GetOut;
@@ -13,6 +16,8 @@ class eAIAnimationST
 
 	private int m_VAR_MovementSpeed;
 	private int m_VAR_MovementDirection;
+
+	private int m_VAR_TurnAmount;
 
 	private int m_EVT_LandEarlyExit;
 
@@ -44,6 +49,9 @@ class eAIAnimationST
 		m_CMD_Jump = hai.BindCommand( "CMD_Jump" );
 		m_CMD_Land = hai.BindCommand( "CMD_Land" );
 
+		m_CMD_Turn = hai.BindCommand( "CMD_Turn" );
+		m_CMD_StopTurn = hai.BindCommand( "CMD_StopTurn" );
+
 		m_CMD_Vehicle_GetIn = hai.BindCommand( "CMD_Vehicle_GetIn" );
 		m_CMD_Vehicle_SwitchSeat = hai.BindCommand( "CMD_Vehicle_SwitchSeat" );
 		m_CMD_Vehicle_GetOut = hai.BindCommand( "CMD_Vehicle_GetOut" );
@@ -53,6 +61,8 @@ class eAIAnimationST
 
 		m_VAR_MovementSpeed = hai.BindVariableFloat( "MovementSpeed" );
 		m_VAR_MovementDirection = hai.BindVariableFloat( "MovementDirection" );
+
+		m_VAR_TurnAmount = hai.BindVariableFloat( "TurnAmount" );
 
 		m_EVT_LandEarlyExit = hai.BindEvent( "LandEarlyExit" );
 
@@ -90,6 +100,16 @@ class eAIAnimationST
 	void CallLand( HumanCommandScript script, int pParamInt = 0, float pParamFloat = 0 )
 	{
 		script.PreAnim_CallCommand( m_CMD_Land, pParamInt, pParamFloat );
+	}
+
+	void CallTurn( HumanCommandScript script, int pParamInt = 0, float pParamFloat = 0 )
+	{
+		script.PreAnim_CallCommand( m_CMD_Turn, pParamInt, pParamFloat );
+	}
+
+	void CallStopTurn( HumanCommandScript script, int pParamInt = 0, float pParamFloat = 0 )
+	{
+		script.PreAnim_CallCommand( m_CMD_StopTurn, pParamInt, pParamFloat );
 	}
 
 	void CallVehicleGetIn( HumanCommandScript script, int pParamInt = 0, float pParamFloat = 0 )
@@ -130,6 +150,11 @@ class eAIAnimationST
 	void SetMovementDirection( HumanCommandScript script, float param )
 	{
 		script.PreAnim_SetFloat( m_VAR_MovementDirection, param );
+	}
+
+	void SetTurnAmount( HumanCommandScript script, float param )
+	{
+		script.PreAnim_SetFloat( m_VAR_TurnAmount, param );
 	}
 
 	bool IsLandEarlyExit( HumanCommandScript script )

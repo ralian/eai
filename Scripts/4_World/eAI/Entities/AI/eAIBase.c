@@ -371,7 +371,7 @@ modded class PlayerBase
 		m_PathFilter = new PGFilter();
 
 		int inFlags = PGPolyFlags.WALK | PGPolyFlags.DOOR | PGPolyFlags.INSIDE | PGPolyFlags.JUMP_OVER;
-		int exFlags = PGPolyFlags.DISABLED | PGPolyFlags.SWIM | PGPolyFlags.SWIM_SEA | PGPolyFlags.JUMP | PGPolyFlags.CLIMB | PGPolyFlags.CRAWL | PGPolyFlags.CROUCH;
+		int exFlags = PGPolyFlags.DISABLED | PGPolyFlags.SWIM | PGPolyFlags.SWIM_SEA | PGPolyFlags.SPECIAL | PGPolyFlags.JUMP | PGPolyFlags.CLIMB | PGPolyFlags.CRAWL | PGPolyFlags.CROUCH;
 
 		m_PathFilter.SetFlags( inFlags, exFlags, PGPolyFlags.NONE );
 		m_PathFilter.SetCost( PGAreaType.JUMP, 0.0 );
@@ -611,30 +611,31 @@ modded class PlayerBase
 			m_DebugShapes[i].Destroy();
 		m_DebugShapes.Clear();
 #endif
-
+		
 		if (!GetGame().IsServer()) return;
 
+
 		AIWorld world = GetGame().GetWorld().GetAIWorld();
+		
+		m_eAI_TargetOverriding = eAITargetOverriding.NONE;
 
 		if (m_eAI_TargetOverriding != eAITargetOverriding.PATH)
 		{
 			m_Path.Clear();
-
-			//todo: remove and use targetting system within the FSM instead
-			if (GetGroup() && GetGroup().GetLeader() == this && GetFSM().GetState().GetName() == "Follow")
+			
+			if (m_PathFilter)
 			{
-				world.FindPath(GetPosition(), GetGroup().GetWaypointTargetInformation().GetPosition(), m_PathFilter, m_Path);
-			} else
-
-			if (m_PathFilter && m_eAI_Targets.Count() > 0 && m_eAI_Targets[0].HasInfo())
-			{
-				eAITarget target = m_eAI_Targets[0];
-
-				if (m_eAI_TargetOverriding != eAITargetOverriding.POSITION) m_TargetPosition = target.GetPosition(this);
-
+				if (m_eAI_TargetOverriding != eAITargetOverriding.POSITION && m_eAI_Targets.Count() > 0)
+				{
+					eAITarget target = m_eAI_Targets[0];
+					if (target.HasInfo()) 
+						m_TargetPosition = target.GetPosition(this);
+				}
+				
 				world.FindPath(GetPosition(), m_TargetPosition, m_PathFilter, m_Path);
 			}
 		}
+		
 
 		
 		//! handle death with high priority
@@ -831,6 +832,7 @@ modded class PlayerBase
 			if (Class.CastTo(hcm, m_eAI_Command))
 			{
 				hcm.SetRaised(m_WeaponRaised);
+				hcm.SetFighting(threats.Count() > 0 && threats[0]);
 
 				return;
 			}
