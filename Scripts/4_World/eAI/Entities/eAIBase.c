@@ -23,7 +23,7 @@ modded class PlayerBase
 	private autoptr array<string> m_Transitions = {};
 
 	// Targeting data 
-	private autoptr array<eAITargetGroup> m_eAI_Targets;
+	private autoptr array<eAITarget> m_eAI_Targets;
 	autoptr array<Object> threats = {}; // temporary
 	
 	// Aiming and aim arbitration
@@ -331,7 +331,7 @@ modded class PlayerBase
 		m_eAI_Is = true;
         m_eAI_Group = group;
 
-		m_eAI_Targets = new array<eAITargetGroup>();
+		m_eAI_Targets = new array<eAITarget>();
 		
         if (m_eAI_Group)
 		{
@@ -406,17 +406,17 @@ modded class PlayerBase
 		return false;
 	}
 
-	array<eAITargetGroup> GetTargets()
+	array<eAITarget> GetTargets()
 	{
 		return m_eAI_Targets;
 	}
 
-	void OnAddTarget(eAITargetGroup target)
+	void OnAddTarget(eAITarget target)
 	{
 		m_eAI_Targets.Insert(target);
 	}
 
-	void OnRemoveTarget(eAITargetGroup target)
+	void OnRemoveTarget(eAITarget target)
 	{
 		m_eAI_Targets.RemoveItem(target);
 	}
@@ -569,17 +569,17 @@ modded class PlayerBase
 		m_Path.Clear();
 
 		//Print(m_eAI_Targets.Count());
+		
+		AIWorld world = GetGame().GetWorld().GetAIWorld();
 
-		// The last check is in case the "leader" of the group no longer exists
-		if (GetGroup() && GetGroup().GetLeader() == this && GetFSM().GetState().GetName() == "Follow") {
-			AIWorld world = GetGame().GetWorld().GetAIWorld();
-			world.FindPath(GetPosition(), GetGroup().GetWaypointTargetInformation().GetPosition(), m_PathFilter, m_Path);
-		} else if (m_PathFilter && m_eAI_Targets.Count() > 0 && m_eAI_Targets[0].param5 && m_eAI_Targets[0].param5.GetEntity())
+		if (GetGroup() && GetGroup().GetLeader() == this && GetFSM().GetState().GetName() == "Follow")
 		{
-			//Print(m_eAI_Targets[0]);
-
-			world = GetGame().GetWorld().GetAIWorld();
-			world.FindPath(GetPosition(), m_eAI_Targets[0].param5.GetPosition(this), m_PathFilter, m_Path);
+			//todo: remove and use targetting system within the FSM instead
+			world.FindPath(GetPosition(), GetGroup().GetWaypointTargetInformation().GetPosition(), m_PathFilter, m_Path);
+		} 
+		else if (m_PathFilter && m_eAI_Targets.Count() > 0 && m_eAI_Targets[0].HasInfo())
+		{
+			world.FindPath(GetPosition(), m_eAI_Targets[0].GetPosition(this), m_PathFilter, m_Path);
 		}
 
 		HumanInputController hic = GetInputController();
