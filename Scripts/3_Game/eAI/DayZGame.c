@@ -24,8 +24,8 @@ modded class DayZGame
     {
         super.OnUpdate(doSim, timeslice);
 		
-		if (m_eAI_Manager)
-			m_eAI_Manager.OnUpdate(doSim, timeslice);
+		// no need to do a null check here
+		m_eAI_Manager.OnUpdate(doSim, timeslice);
     }
 	
 	eAICommandManager GetEAICommandManager() {
