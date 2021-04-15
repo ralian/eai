@@ -12,8 +12,67 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+class eAILinkDetail
+{
+	ref Link<Human> HumanLink;
+	ref Link<Weapon_Base> WeaponLink;
+
+	void eAILinkDetail(Human human, Weapon_Base weapon)
+	{
+		HumanLink = new Link<Human>(human);
+		WeaponLink = new Link<Weapon_Base>(weapon);
+	}
+
+	void ~eAILinkDetail()
+	{
+		HumanLink.Release();
+		WeaponLink.Release();
+	}
+
+	void UpdateWeapon(Weapon_Base weapon)
+	{
+		WeaponLink.Release();
+		WeaponLink = new Link<Weapon_Base>(weapon);
+	}
+
+	Human GetHuman()
+	{
+		return HumanLink.Ptr()
+	}
+
+	Weapon_Base GetWeapon()
+	{
+		return WeaponLink.Ptr()
+	}
+};
+
+class eAILinks
+{
+	ref map<Human, ref eAILinkDetail> links = new map<Human, ref eAILinkDetail>();
+
+	void AddLink(Human human)
+	{
+		eAILinkDetail detail;
+		if (links.Find(human, detail))
+		{
+			detail.UpdateWeapon(human.GetHumanInventory().GetEntityInHands());
+			return;
+		}
+
+		detail = new eAILinkDetail(human, human.GetHumanInventory().GetEntityInHands());
+		links.Insert(human, detail);
+	}
+
+	void RemoveLink(Human human)
+	{
+		links.Remove(human);
+	}
+};
+
 class eAIGame {
 	
+	ref eAILinks m_Links = new eAILinks();
+
 	// On client, list of weapons we are asked to provide a feed of
 	autoptr eAIClientAimArbiterManager m_ClientAimMngr;
 	
@@ -81,8 +140,7 @@ class eAIGame {
 
 		eAIBase pb_AI;
 		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pb_Human.GetPosition(), 0, "NONE"))) return null;
-		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
-		
+		CallHCLinkObject(pb_AI);
 		pb_AI.SetAI(ownerGrp);
 			
 //		SoldierLoadout.Apply(pb_AI);	//or PoliceLoadout.Apply(pb_AI);
@@ -95,8 +153,8 @@ class eAIGame {
 	eAIBase SpawnAI_Sentry(vector pos) {
 		eAIBase pb_AI;
 		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pos, 0, "NONE"))) return null;
-		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
-		
+		CallHCLinkObject(pb_AI);
+
 		eAIGroup ownerGrp = GetGroupByLeader(pb_AI);
 		
 		pb_AI.SetAI(ownerGrp);
@@ -109,7 +167,7 @@ class eAIGame {
 	eAIBase SpawnAI_Patrol(vector pos) {
 		eAIBase pb_AI;
 		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pos, 0, "NONE"))) return null;
-		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
+		CallHCLinkObject(pb_AI);
 		
 		eAIGroup ownerGrp = GetGroupByLeader(pb_AI);
 		
@@ -136,24 +194,39 @@ class eAIGame {
 		}
 	}
 	
+	void CallHCLinkObject(Human ai)
+	{
+		m_Links.AddLink(ai);
+
+		if (eAIGlobal_HeadlessClient)
+		{
+			GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<eAIBase>(ai), false, eAIGlobal_HeadlessClient.GetIdentity());
+		}
+		
+	}
+
+	void CallHCUnlinkObject(Human ai)
+	{
+
+	}
+
 	// Client Side: Link the given AI
 	void HCLinkObject(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<Man> data;
+		Param1<eAIBase> data;
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Client) {
             Print("HC: Linking object " + data.param1);
-			eAIObjectManager.Register(data.param1);
-			eAIObjectManager.Register(PlayerBase.Cast(data.param1).GetItemInHands());
+			m_Links.AddLink(data.param1);
         }
 	}
 	
 	// Client Side: Link the given AI
 	void HCUnlinkObject(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<Man> data;
+		Param1<eAIBase> data;
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Client) {
             Print("HC: Unlinking object " + data.param1);
-			eAIObjectManager.Unregister(data.param1);
+			m_Links.RemoveLink(data.param1);
         }
 	}
 	
@@ -344,12 +417,14 @@ modded class MissionServer
 				for (int i = 0; i < g.Count(); i++) {
 					eAIBase ai = g.GetMember(i);
 					if (ai && ai.IsAI() && ai.IsAlive())
-						GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<Man>(ai), false, player.GetIdentity());
+					{
+						m_eaiGame.CallHCLinkObject(ai);
+					}
 				}
 			}
 				
 		} else
-		m_eaiGame.GetGroupByLeader(player);
+			m_eaiGame.GetGroupByLeader(player);
 	}
 };
 
