@@ -23,7 +23,7 @@ class HumanLoadout {
 	ref TIntArray	 LootHealth = {10,100}; 						//Item health given. 10%->100%
 		
 	//---------------------
-	static string LoadoutSaveDir = "$profile:";
+	static string LoadoutSaveDir = "$profile:eAI/";
 	static string LoadoutDataDir = "eAI/Scripts/Data/Loadout/";
 	//---------------------
 	
@@ -151,8 +151,8 @@ class HumanLoadout {
 		string LoadoutFileName = LoadoutSaveDir + FileName;
 		string LoadoutDefaultFileName = LoadoutDataDir + FileName;
 		
-        ref HumanLoadout data = new ref HumanLoadout;
-        Print("HumanLoadout: LoadData: Looking for " + FileName);
+        ref HumanLoadout data = new HumanLoadout();
+        Print("HumanLoadout: LoadData: Looking for " + LoadoutFileName);
 
         if (!FileExist(LoadoutFileName))
         {
