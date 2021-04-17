@@ -992,7 +992,11 @@ modded class PlayerBase
 	void RaiseWeapon(bool up) {
 		m_WeaponRaised = up;
 		//GetInputController().OverrideRaise(true, up);
+		//m_ResetADS = up;
+		m_LiftWeapon_player = up;
 		eAICommandMove.Cast(m_eAI_Command).SetRaised(up);
+		HumanCommandWeapons hcw = GetCommandModifier_Weapons();
+		if (hcw) hcw.SetADS(up);//hcw.LiftWeapon(up);
 		/*HumanCommandMove cm = GetCommand_Move();
 		if (m_WeaponRaised) {
 			cm.ForceStance(DayZPlayerConstants.STANCEIDX_RAISEDERECT);
