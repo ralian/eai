@@ -200,7 +200,7 @@ class eAIGame {
 
 		if (eAIGlobal_HeadlessClient)
 		{
-			GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<eAIBase>(ai), false, eAIGlobal_HeadlessClient.GetIdentity());
+			GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<eAIBase>(ai), false, eAIGlobal_HeadlessClient);
 		}
 		
 	}
@@ -412,7 +412,10 @@ modded class MissionServer
 		Print("Checking SteamID " + identity.GetPlainId() + " for HC match");
 		if (identity && identity.GetPlainId() == HeadlessClientSteamID) {
 			Print("Starting HC!!");
-			eAIGlobal_HeadlessClient = player;
+			//GetGame().SelectSpectator(identity, "JMSpectatorCamera", player.GetPosition());
+			//GetGame().SelectPlayer(identity, NULL);
+			//GetGame().ObjectDelete(player);
+			eAIGlobal_HeadlessClient = identity;
 			foreach (eAIGroup g : m_eaiGame.m_groups) {
 				for (int i = 0; i < g.Count(); i++) {
 					eAIBase ai = g.GetMember(i);
