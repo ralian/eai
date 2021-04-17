@@ -3,11 +3,20 @@ Copyright © 2021 Will Bowers
 
 All code herein is licensed under the Apache 2.0 License (see the LICENSE file).
 
+THIS MOD IS NOT AUTHORISED FOR REPACKING ON THE STEAM WORKSHOP IN ANY FORM WITHOUT EXPRESS PERMISSION,
+AS UPLOADING TO WORKSHOP REQUIRES COPYRIGHT OWNERSHIP AS PER STEAM ToS.
+REPACKING IS NOT THE SAME AS REDISTRIBUTION, WHICH IS AUTHORISED AS PER THE LICENSE.
+
 ANY DERIVED WORKS, COMMERCIAL OR OPEN, MUST RETAIN A COPY OF THIS COPYRIGHT AND NOTICE FILE, AS
 WELL AS A 'CHANGES' FILE DESCRIBING CHANGES MADE BY THE DERIVED WORK.
 
 Contributors to the work include:
-ralian <0xBA5E16@gmail.com>
-darc   <mokdevel@hotmail.com>
+ralian                <0xBA5E16@gmail.com>
+Jacob Mango
+darc                  <mokdevel@hotmail.com>
 
 Special Thanks:
+MarioE
+Wardog
+Sovran
+Nanotrasen
