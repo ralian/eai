@@ -76,8 +76,11 @@ modded class Weapon_Base {
 	EntityAI HitCast(out vector hitPosition, bool debugParticle = false) {
 		// Get geometry info
 		
-		if (GetGame().GetTime() - aim.lastUpdated > 250)
-			Print("Warning! Using old data for ballistics for weapon " + this.ToString());
+		// we do this in the aiming logic instead
+		/*if (aim.GetAge() > 250 && !aim.WarnedOld) {
+			aim.WarnedOld = true;
+			Print("Warning! Aim profile has gone out of date for " + this.ToString());
+		}*/
 		
 		vector begin_point = aim.out_front;
 		/*vector back = aim.out_back;

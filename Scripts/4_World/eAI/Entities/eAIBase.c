@@ -123,6 +123,7 @@ modded class PlayerBase
 	}
 	
 	// returns true if we were able to get a new arbiter
+	int ArbitrationRefreshInterval = 0;
 	bool RefreshAimArbitration() {
 		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
 		if (!weap) {
@@ -132,6 +133,11 @@ modded class PlayerBase
 			m_AimArbitration = false;
 			return false;
 		}
+		
+		// check that we aren't doing this too often; 
+		if (GetGame().GetTime() - ArbitrationRefreshInterval < 120)
+			return false;
+		ArbitrationRefreshInterval = (GetGame().GetTime() + 5000);
 		
 		if (eAIGlobal_HeadlessClient) {
 			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(weap), false, eAIGlobal_HeadlessClient);
@@ -574,7 +580,7 @@ modded class PlayerBase
 		if (GetGroup() && GetGroup().GetLeader() == this && GetFSM().GetState().GetName() == "Follow") {
 			AIWorld world = GetGame().GetWorld().GetAIWorld();
 			world.FindPath(GetPosition(), GetGroup().GetWaypointTargetInformation().GetPosition(), m_PathFilter, m_Path);
-		} else if (m_PathFilter && m_eAI_Targets.Count() > 0 && m_eAI_Targets[0].param5 && m_eAI_Targets[0].param5.GetEntity())
+		} else if (m_PathFilter && m_eAI_Targets.Count() > 0 && m_eAI_Targets[0] && m_eAI_Targets[0].param5 && m_eAI_Targets[0].param5.GetEntity())
 		{
 			//Print(m_eAI_Targets[0]);
 
@@ -828,7 +834,11 @@ modded class PlayerBase
 				// This is a note for future me. This may cause a server side performance hit from the time
 				// a new arbiter is picked to the time it is started and data is received, since this will keep getting called.
 				// We'll worry about that later.
-				Print("Weapon aim data has gone out of sync for " + this);
+				if (!weapon.aim.WarnedOld) {
+					weapon.aim.WarnedOld = true;
+					Print("Warning! Aim profile has gone out of date for " + weapon.ToString());
+				}
+				
 				RefreshAimArbitration();
 			} else { 
 				// Todo: this fails because we can't set the direction of the player in the command script.

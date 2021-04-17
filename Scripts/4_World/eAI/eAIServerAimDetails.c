@@ -22,6 +22,7 @@ class AimProfile {
 	bool InterpolationStarted = false;
 	float InterpolationAzmuith;
 	float InterpolationInclination;
+	bool WarnedOld; // If the data goes out of date, we spit a warning and set this to true
 	void AimProfile(vector out_f, vector out_b) {
 		out_front = out_f;
 		out_back = out_b;
@@ -57,6 +58,7 @@ class eAIServerAimProfileManager {
 			data.param1.aim.Azmuith = angles[0];
 			data.param1.aim.Inclination = angles[1];
 			data.param1.aim.InterpolationStarted = false;
+			data.param1.aim.WarnedOld = false;
 		} else {
 			Print("eAIAimDetails updated, but no weapon exists! At: " + data.param2.ToString());
 		}
