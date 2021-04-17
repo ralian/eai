@@ -219,7 +219,7 @@ class eAICommandMove extends eAICommandBase
 		else if (wayPointDistance < 8.0)
 			m_TargetSpeed = 1.0;
 		else
-			m_TargetSpeed = 3.0;
+			m_TargetSpeed = 2.0; // use 3.0 for sprint
 		
 		if (isFinal && wayPointDistance < 1.0)
 			m_TargetSpeed = 0.0;
