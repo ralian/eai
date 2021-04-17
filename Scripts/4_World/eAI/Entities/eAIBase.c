@@ -293,7 +293,7 @@ modded class PlayerBase
 		
 		// Leave threats in that don't need cleaning
 		for (int j = 0; j < threats.Count(); j++)
-			if (!threats[j] || !threats[j].IsAlive())
+			if (!threats[j] || !threats[j].IsAlive() || IsViewOccluded(threats[j].GetPosition() + "0 1.5 0"))
 				threats.Remove(j);
 		
 		autoptr array<Object> newThreats = new array<Object>();
@@ -308,13 +308,20 @@ modded class PlayerBase
 		while (i < newThreats.Count()) {
 			DayZInfected infected = DayZInfected.Cast(newThreats[i]);
 			PlayerBase player = PlayerBase.Cast(newThreats[i]);
+			AnimalBase animal = AnimalBase.Cast(newThreats[i]);
+			// this is the part of the code where we get to play 20 questions
 			if (infected && infected.IsAlive() && !IsViewOccluded(infected.GetPosition() + "0 1.5 0")) {
 				// It's an infected, add it to teh threates array
 				temp = vector.Distance(newThreats[i].GetPosition(), GetPosition());
 				if (temp < minDistance) {
 					AddToThreatList(infected, true);
 				} else AddToThreatList(infected);
-				
+			} else if (animal && animal.IsAlive() && !IsViewOccluded(animal.GetPosition() + "0 1.5 0")) {
+				// It's an infected, add it to teh threates array
+				temp = vector.Distance(newThreats[i].GetPosition(), GetPosition());
+				if (temp < minDistance) {
+					AddToThreatList(animal, true);
+				} else AddToThreatList(animal);
 			} else if (player && PlayerIsEnemy(player) && player.IsAlive() && !IsViewOccluded(player.GetPosition() + "0 1.5 0")) {
 				// If it's an enemy player
 				temp = vector.Distance(newThreats[i].GetPosition(), GetPosition());
