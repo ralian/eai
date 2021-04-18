@@ -288,6 +288,7 @@ modded class PlayerBase
 	// Cleans out any invalid or dead targets
 	// Returns the number of threats in the array
 	ref array<CargoBase> proxyCargos = {};
+	int fsmctr = 0;
 	int CleanThreats() {
 		vector center = GetPosition();
 		
@@ -619,6 +620,11 @@ modded class PlayerBase
 		if (m_WeaponManager) m_WeaponManager.Update(pDt);
 		if (m_EmoteManager) m_EmoteManager.Update(pDt);
 		if (m_FSM) m_FSM.Update(pDt, 0);
+		
+		if (fsmctr == 0) CleanThreats();
+		fsmctr += 1;
+		if (fsmctr > 99) fsmctr = 0;
+		
 		
 		GetPlayerSoundManagerServer().Update();
 		GetHumanInventory().Update(pDt);

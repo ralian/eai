@@ -62,8 +62,8 @@ class eAIWaypointTargetInformation extends eAITargetInformation
 
 		//Print("Distance: " + vector.DistanceSq(newPos, GetPosition()));
 		float distToWP = vector.DistanceSq(newPos, GetPosition()); // This can be zero if there is no current WP
-		if (distToWP < m_RadiusSq && distToWP > 0.01)
-			Print("Going to WP " + SkipWaypoint());
+		if (distToWP < m_RadiusSq && waypoint > -1)
+			Print("eAI " + m_Target + " Going to WP " + SkipWaypoint());
 		
     }
 };
