@@ -181,7 +181,7 @@ class eAIActionManager: ActionManagerBase
 		{
 			Debug.ActionLog("(O) Inventory unlock", action_data.m_Action.ToString() , "n/a", "UnlockInventory", action_data.m_Player.ToString() );
 		}
-		#ifdef DAYZ_111
+		#ifdef DAYZ_1_11
 		if (action_data.m_Action)
 			action_data.m_Action.ClearInventoryReservation(action_data);
 		#else

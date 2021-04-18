@@ -647,7 +647,8 @@ modded class PlayerBase
 		vector transform[4];
 		GetTransform(transform);
 		
-		AimAtPosition(GetGame().GetPlayer().GetPosition());
+		if (threats.Count() > 0 && threats[0]);
+			AimAtPosition(threats[0].GetPosition());
 
 		if (m_eAI_LookDirection_Recalculate) m_eAI_LookDirection_ModelSpace = (m_eAI_LookPosition_WorldSpace - transform[3]).Normalized().Multiply3(transform);
 		if (m_eAI_AimDirection_Recalculate) m_eAI_AimDirection_ModelSpace = (m_eAI_AimPosition_WorldSpace - transform[3]).Normalized().InvMultiply3(transform);
