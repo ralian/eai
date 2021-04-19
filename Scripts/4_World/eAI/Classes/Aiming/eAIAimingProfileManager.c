@@ -2,6 +2,8 @@ class eAIAimingProfileManager
 {
 	private autoptr array<eAIBase> m_AIs = new array<eAIBase>(); 
 
+	private float m_Time;
+
 	void eAIAimingProfileManager()
 	{
 		GetRPCManager().AddRPC("eAIAimingProfileManager", "OnStart", this, SingeplayerExecutionType.Client);
@@ -12,22 +14,35 @@ class eAIAimingProfileManager
 
 	void AddAI(eAIBase ai)
 	{
+		if (GetGame().IsServer()) return;
+
 		int idx = m_AIs.Find(ai);
 		if (idx == -1) m_AIs.Insert(ai);
+
+		//Print("Started arbitrating for " + ai);
 
 		ai.CreateAimingProfile();
 	}
 
 	void RemoveAI(eAIBase ai)
 	{
+		if (GetGame().IsServer()) return;
+
 		int idx = m_AIs.Find(ai);
 		if (idx != -1) m_AIs.RemoveOrdered(idx);
+
+		//Print("Stopped arbitrating for " + ai);
 
 		ai.DestroyAimingProfile();
 	}
 
-	void Update()
+	void Update(float pDt)
 	{
+		m_Time += pDt;
+		//if (m_Time < 0.5) return;
+
+		m_Time = 0;
+
 		for (int i = m_AIs.Count() - 1; i >= 0; i--)
 		{
 			if (!m_AIs[i]) // if the AI is null, prematurely remove it
@@ -36,7 +51,10 @@ class eAIAimingProfileManager
 				continue;
 			}
 
-			m_AIs[i].GetAimingProfile().Update();
+			eAIAimingProfile profile = m_AIs[i].GetAimingProfile();
+
+			profile.Update();
+			profile.Sync();
 		}
 	}
 
@@ -65,7 +83,11 @@ class eAIAimingProfileManager
 		eAIBase ai;
 		if (!Class.CastTo(ai, target)) return;
 
-		if (!GetGame().IsServer()) return;
+		if (GetGame().IsClient()) return;
+
+		Man arbiter = ai.GetAimingProfile().m_Arbiter;
+		//TODO: figure out why 'sender' and 'arbiter' differ when there should only be 1 PlayerIdentity on the server...
+		//if (!arbiter || arbiter && arbiter.GetIdentity() != sender) return;
 
 		ai.GetAimingProfile().Deserialize_Params(ctx);
 	}

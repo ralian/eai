@@ -1,3 +1,5 @@
+typedef Param6<int, bool, int, int, vector, vector> eAIAimingProfile_SyncParams;
+
 class eAIAimingProfile
 {
 	Man m_Arbiter;
@@ -50,7 +52,7 @@ class eAIAimingProfile
 
 		if (!verify) Update();
 
-		if (verify && GetGame().GetTime() - m_LastUpdated > 1000.0) return false;
+		//if (verify && GetGame().GetTime() - m_LastUpdated > 1000.0) return false;
 
 		if (verify && m_Player.GetHumanInventory().GetEntityInHands() != m_Hands) return false;
 
@@ -69,24 +71,24 @@ class eAIAimingProfile
 		{
 			if (m_Arbiter)
 			{
-				SendRPC("OnEnd", new Param, false);
+				SendRPC("OnEnd", null, false);
 			}
 
 			m_Arbiter = arbiter;
 
 			if (m_Arbiter)
 			{
-				SendRPC("OnStart", new Param, false);
+				SendRPC("OnStart", null, false);
 			}
 		}
 	}
 
 	private void SendRPC(string function, Param param, bool g)
 	{
-		GetRPCManager().SendRPC("eAIAimingProfileManager", function, param, g, m_Arbiter.GetIdentity());	
+		GetRPCManager().SendRPC("eAIAimingProfileManager", function, param, g, m_Arbiter.GetIdentity(), m_Player);	
 	}
 
-	void Serialize_Params(out Param param)
+	void Sync()
 	{
 		int low, high;
 		bool hasHands = m_Hands != null;
@@ -95,12 +97,14 @@ class eAIAimingProfile
 			m_Hands.GetNetworkID(low, high);
 		}
 
-		param = new Param6<int, bool, int, int, vector, vector>(m_LastUpdated, hasHands, low, high, m_Position, m_Direction);
+		eAIAimingProfile_SyncParams param = new eAIAimingProfile_SyncParams(m_LastUpdated, hasHands, low, high, m_Position, m_Direction);
+
+		GetRPCManager().SendRPC("eAIAimingProfileManager", "OnSync", param, false, null, m_Player);
 	}
 
 	void Deserialize_Params(ParamsReadContext ctx)
 	{
-		Param6<int, bool, int, int, vector, vector> param;
+		eAIAimingProfile_SyncParams param;
 		if (!ctx.Read(param)) return;
 
 		m_LastUpdated = param.param1;

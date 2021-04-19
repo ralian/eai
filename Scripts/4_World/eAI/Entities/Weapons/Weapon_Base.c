@@ -67,16 +67,20 @@ bool DayZPlayerInventory_OnEventForRemoteWeaponAI(int packedType, DayZPlayer pla
 }
 
 modded class Weapon_Base
-{	
-	EntityAI HitCast(out vector hitPosition)
+{
+	bool HitCast(out EntityAI entity, out vector hitPosition, out int contactComponent)
 	{
 		eAIBase ai;
-		if (!Class.CastTo(ai, GetHierarchyRootPlayer())) return null;
+		if (!Class.CastTo(ai, GetHierarchyRootPlayer())) return false;
 		
 		vector position;
 		vector direction;
 		
-		if (!ai.GetAimingProfile().Get(position, direction)) return null;
+		if (!ai.GetAimingProfile().Get(position, direction))
+		{
+			Print("Data invalid.");
+			return false;
+		}
 
 		vector begin_point = position;
 		vector end_point = position + (direction * 500.0);
@@ -84,15 +88,34 @@ modded class Weapon_Base
 		// Prep Raycast
 		set<Object> results = new set<Object>();
 		vector hitNormal;
-		int contactComponent = 0;
 		bool hit = DayZPhysics.RaycastRV(begin_point, end_point, hitPosition, hitNormal, contactComponent, results, null, ai, false, false, ObjIntersectIFire, 0.01);
 		
 		if (hit && results.Count() > 0)
 		{
-			return results[0];
+			return Class.CastTo(entity, results[0]);
 		}
 
-		return null;
+		return false;
+	}
+
+	override void EEFired(int muzzleType, int mode, string ammoType)
+	{
+		super.EEFired(muzzleType, mode, ammoType);
+
+		eAIBase ai;
+		if (GetGame().IsClient() || !Class.CastTo(ai, GetHierarchyRootPlayer())) return;
+
+		EntityAI entity;
+		vector hitPosition;
+		int contactComponent;
+		if (HitCast(entity, hitPosition, contactComponent))
+		{
+			string componentName = entity.GetActionComponentName(contactComponent, "fire");
+			string damageZone = "";
+			DamageSystem.GetDamageZoneFromComponentName(entity, componentName, damageZone);
+
+			entity.ProcessDirectDamage(DT_FIRE_ARM, this, damageZone, ammoType, entity.WorldToModel(hitPosition), 1.0);
+		}
 	}
 	
 	/**@fn	ProcessWeaponEvent

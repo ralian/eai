@@ -37,6 +37,12 @@ class eAIGame
 		GetRPCManager().AddRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", this, SingeplayerExecutionType.Server);
     }
 	
+	void OnUpdate(float pDt)
+	{
+		//!no need to call on server
+		if (GetGame().IsClient()) m_AimingManager.Update(pDt);
+	}
+	
 	// Todo we may want to make a "group manager" class
 	autoptr array<autoptr eAIGroup> m_groups = {};
 	
@@ -321,20 +327,27 @@ modded class MissionServer
 
         Print( "eAI - Loaded Server Mission" );
     }
+
+	override void OnUpdate(float timeslice)
+	{
+		super.OnUpdate(timeslice);
+
+		m_eaiGame.OnUpdate(timeslice);
+	}
 	
 	override void InvokeOnConnect(PlayerBase player, PlayerIdentity identity) {
 		super.InvokeOnConnect(player, identity);
-		if (identity && identity.GetId() == HeadlessClientSteamID) {
-			eAIGlobal_HeadlessClient = player;
-			foreach (eAIGroup g : m_eaiGame.m_groups) {
-				for (int i = 0; i < g.Count(); i++) {
-					eAIBase ai = g.GetMember(i);
-					if (ai && ai.IsAI() && ai.IsAlive())
-						GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(ai), false, identity);
-				}
-			}
-				
-		} else
+		//if (identity && identity.GetId() == HeadlessClientSteamID) {
+		//	eAIGlobal_HeadlessClient = player;
+		//	foreach (eAIGroup g : m_eaiGame.m_groups) {
+		//		for (int i = 0; i < g.Count(); i++) {
+		//			eAIBase ai = g.GetMember(i);
+		//			if (ai && ai.IsAI() && ai.IsAlive())
+		//				GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(ai), false, identity);
+		//		}
+		//	}
+		//		
+		//} else
 		m_eaiGame.GetGroupByLeader(player);
 	}
 };
@@ -356,6 +369,8 @@ modded class MissionGameplay
 	
 	override void OnUpdate(float timeslice) {
 		super.OnUpdate(timeslice);
+
+		m_eaiGame.OnUpdate(timeslice);
 
 		// If we want to open the command menu, and nothing else is open
 		if (m_eAIRadialKey.LocalPress() && !GetGame().GetUIManager().GetMenu()) {
