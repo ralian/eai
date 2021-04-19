@@ -1,13 +1,20 @@
+enum eAIWaypointBehavior {
+	HALT,
+	LOOP,
+	REVERSE
+}
+
 class eAIWaypointTargetInformation extends eAITargetInformation
 {
     private autoptr array<vector> waypoints = {};
 	private int waypoint = -1;
 	
-	private bool looping = true;
+	private eAIWaypointBehavior loopingBehavior = eAIWaypointBehavior.REVERSE;
+	private bool backtrack = false;
 	
 	private eAIGroup m_Target; // here the target is actually the group we are in
 	
-	private float m_RadiusSq = 150.0;
+	private float m_RadiusSq = 4.0;
 
 
     void eAIWaypointTargetInformation(eAIGroup target)
@@ -41,17 +48,29 @@ class eAIWaypointTargetInformation extends eAITargetInformation
 	
 	int SkipWaypoint() {
 		if (waypoint > -1) {
-			if (waypoints.Count() > (++waypoint))
-				return waypoint;
-			if (looping) waypoint = 0;
-			else waypoint = -1;
-			return waypoint;
+			if (backtrack) waypoint--;
+			else waypoint++;
+			if (waypoint == waypoints.Count()) {
+				// If we have gone through all the waypoints forwards
+				if (loopingBehavior == eAIWaypointBehavior.LOOP) {
+					waypoint = 0;
+				} else if (loopingBehavior == eAIWaypointBehavior.REVERSE) {
+					waypoint -= 2;
+					backtrack = true;
+				} else waypoint = -1;
+			} else if (waypoint == -1) {
+				// If we have gone through all the waypoints backwards
+				if (loopingBehavior == eAIWaypointBehavior.REVERSE) {
+					waypoint = 1;
+					backtrack = false;
+				} else waypoint = -1;
+			}
 		}
-		return -1;
+		return waypoint;
 	}
 	
-	void SetLooping(bool loop) {
-		looping = loop;
+	void SetLooping(eAIWaypointBehavior loop) {
+		loopingBehavior = loop;
 	}
 
     void Update(float pDt)
