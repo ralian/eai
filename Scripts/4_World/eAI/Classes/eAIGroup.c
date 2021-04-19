@@ -10,9 +10,6 @@ class eAIGroup
 	//! Refer to eAIGroup::GetTargetInformation
     private autoptr eAIGroupTargetInformation m_TargetInformation;
 
-	//TODO: remove from eAIGroup
-	private autoptr eAIWaypointTargetInformation m_WaypointTargetInformation;
-
 	// Ordered array of group members. 0 is the leader.
 	private autoptr array<PlayerBase> m_Members;
 	
@@ -22,16 +19,19 @@ class eAIGroup
 	// Group identity 
 	private autoptr eAIFaction m_Faction = new eAIFactionRaiders();
 
+	private autoptr array<vector> m_Waypoints;
+
 	void eAIGroup()
 	{
 		m_TargetInformation = new eAIGroupTargetInformation(this);
-		m_WaypointTargetInformation = new eAIWaypointTargetInformation(this);
 		m_Targets = new array<eAITargetInformation>();
 
 		m_IDCounter++;
 		m_ID = m_IDCounter;
 
 		m_Members = new array<PlayerBase>();
+		
+		m_Waypoints = new array<vector>();
 
 		GROUPS.Insert(this);
 	}
@@ -42,20 +42,19 @@ class eAIGroup
 		if (idx != -1) GROUPS.RemoveOrdered(idx);
 	}
 	
-	int AddWaypoint(vector pos) {
-		return m_WaypointTargetInformation.AddWaypoint(pos);
+	void AddWaypoint(vector pos)
+	{
+		m_Waypoints.Insert(pos);
+	}
+
+	array<vector> GetWaypoints()
+	{
+		return m_Waypoints;
 	}
 	
-	void ClearWaypoints() {
-		m_WaypointTargetInformation.ClearWaypoints();
-	}
-	
-	int SkipWaypoint() {
-		return m_WaypointTargetInformation.SkipWaypoint();
-	}
-	
-	void SetLooping(bool loop) {
-		m_WaypointTargetInformation.SetLooping(loop);
+	void ClearWaypoints()
+	{
+		m_Waypoints.Clear();
 	}
 	
 	eAIFaction GetFaction() {
@@ -117,18 +116,12 @@ class eAIGroup
     {
 		return m_TargetInformation;
     }
-	
-	eAITargetInformation GetWaypointTargetInformation()
-    {
-		return m_WaypointTargetInformation;
-    }
 
 	void Update(float pDt)
 	{
 		ProcessTargets();
 
 		m_TargetInformation.Update(pDt);
-		m_WaypointTargetInformation.Update(pDt);
 	}
 
 	void SetLeader(PlayerBase leader)

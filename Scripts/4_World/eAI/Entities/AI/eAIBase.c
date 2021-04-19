@@ -86,6 +86,7 @@ modded class PlayerBase
 	}
 	
 	// Used for deciding the best aim arbiter for the AI.
+	// TODO: particle system
 	Man GetNearestPlayer() {
 		autoptr array<Man> players = {};
 		GetGame().GetPlayers(players);
@@ -197,41 +198,36 @@ modded class PlayerBase
 		return false;
 	}
 	
-		// Update the aim during combat, return true if we are within parameters to fire.
-	int m_AllowedFireTime = 0;
-	bool ShouldFire() {
+	// Update the aim during combat, return true if we are within parameters to fire.
+	int m_AllowedFireTime = 0; //! temp parameter, should be handled in fsm instead
+	bool CanFire()
+	{
 		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
-		
 		if (!weap) return false;
 		
 		if (GetGame().GetTime() < m_AllowedFireTime) return false;
+		if (GetDayZPlayerInventory().IsProcessing()) return false;
+		if (!IsRaised()) return false;
 		
 		// This check is to see if a friendly happens to be in the line of fire
 		vector hitPos;
 		PlayerBase hitPlayer = PlayerBase.Cast(weap.HitCast(hitPos));
-		if (hitPlayer && !PlayerIsEnemy(hitPlayer)) {
-			return false;
-		}
+		if (hitPlayer && !PlayerIsEnemy(hitPlayer)) return false;
 		
 		// for now we just check the raw aim errors
-		if (m_AimDeltaX < 1.0 && m_AimDeltaY < 1.0) {
-			DelayFiring(500, 300);
-			return true;
-		}
+		if (m_AimDeltaX > 1.0 || m_AimDeltaY > 1.0) return false;
 		
-		return false;
-	
+		return true;
 	}
 	
-	// Keep the unit from firing until time_ms from now.
-	void DelayFiring(int time_ms, int randomAdditionalTime) {
-		m_AllowedFireTime = GetGame().GetTime() + time_ms;
-		if (randomAdditionalTime > 0) m_AllowedFireTime += Math.RandomInt(0, randomAdditionalTime);
-	}
-	
-	void FireHeldWeapon() {
+	void DryFire()
+	{
 		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
-		if (weap && weap.CanFire()) {
+		if (weap)
+		{
+			m_AllowedFireTime = GetGame().GetTime() + 500;
+			m_AllowedFireTime += Math.RandomInt(0, 300);
+
 			GetWeaponManager().Fire(weap);
 			GetInputController().OverrideAimChangeY(true, 0.0);
 		}
@@ -598,6 +594,23 @@ modded class PlayerBase
 		return cmd;
 	}
 
+	void UseTargetting()
+	{
+		m_eAI_TargetOverriding = eAITargetOverriding.NONE;
+	}
+
+	void OverridePath(array<vector> pPath)
+	{
+		m_eAI_TargetOverriding = eAITargetOverriding.PATH;
+		pPath.Copy(m_Path);
+	}
+
+	void OverridePosition(vector pPosition)
+	{
+		m_eAI_TargetOverriding = eAITargetOverriding.POSITION;
+		m_TargetPosition = pPosition;
+	}
+
 	override void CommandHandler(float pDt, int pCurrentCommandID, bool pCurrentCommandFinished) 
 	{
 		if (!IsAI())
@@ -614,11 +627,8 @@ modded class PlayerBase
 		
 		if (!GetGame().IsServer()) return;
 
-
 		AIWorld world = GetGame().GetWorld().GetAIWorld();
 		
-		m_eAI_TargetOverriding = eAITargetOverriding.NONE;
-
 		if (m_eAI_TargetOverriding != eAITargetOverriding.PATH)
 		{
 			m_Path.Clear();
@@ -635,8 +645,6 @@ modded class PlayerBase
 				world.FindPath(GetPosition(), m_TargetPosition, m_PathFilter, m_Path);
 			}
 		}
-		
-
 		
 		//! handle death with high priority
 		if (HandleDeath(pCurrentCommandID))
@@ -1111,7 +1119,7 @@ modded class PlayerBase
 		m_WeaponRaised = up;
 	}
 	
-	bool IsWeaponRaised()
+	override bool IsRaised()
 	{
 		return m_WeaponRaised;
 	}

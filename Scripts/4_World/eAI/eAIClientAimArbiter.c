@@ -39,7 +39,7 @@ class eAIClientAimArbiter {
 		if (new_delay_ms > 0)
 			delay_ms = new_delay_ms;
 		if (delay_ms > 0) {
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.Activate, delay_ms, false);
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.Activate, delay_ms, false, null, -1);
 			return true;
 		}
 		return false;
