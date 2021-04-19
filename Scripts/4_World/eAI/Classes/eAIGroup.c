@@ -18,7 +18,7 @@ class eAIGroup
     private autoptr eAIGroupTargetInformation m_TargetInformation;
 
 	// Ordered array of group members. 0 is the leader.
-	private autoptr array<PlayerBase> m_Members;
+	private autoptr array<DayZPlayerImplement> m_Members;
 	
 	// What formation the group should keep
 	private autoptr eAIFormation m_Form = new eAIFormationVee();
@@ -37,7 +37,7 @@ class eAIGroup
 		m_IDCounter++;
 		m_ID = m_IDCounter;
 
-		m_Members = new array<PlayerBase>();
+		m_Members = new array<DayZPlayerImplement>();
 		
 		m_Waypoints = new array<vector>();
 
@@ -143,11 +143,11 @@ class eAIGroup
 		m_TargetInformation.Update(pDt);
 	}
 
-	void SetLeader(PlayerBase leader)
+	void SetLeader(DayZPlayerImplement leader)
 	{
 		if (!IsMember(leader)) AddMember(leader);
 
-		PlayerBase temp = m_Members[0];
+		DayZPlayerImplement temp = m_Members[0];
 		if (temp == leader) return;
 		m_Members[0] = leader;
 
@@ -161,7 +161,7 @@ class eAIGroup
 		}
 	}
 
-	PlayerBase GetLeader()
+	DayZPlayerImplement GetLeader()
 	{
 		return m_Members[0];
 	}
@@ -176,12 +176,12 @@ class eAIGroup
 		m_Form = f;
 	}
 
-	bool IsMember(PlayerBase player)
+	bool IsMember(DayZPlayerImplement player)
 	{
 		return m_Members.Find(player) != -1;
  	}
 	
-	int AddMember(PlayerBase member)
+	int AddMember(DayZPlayerImplement member)
 	{
 		return m_Members.Insert(member);
 	}
@@ -194,12 +194,12 @@ class eAIGroup
 		return true;
 	}
 	
-	PlayerBase GetMember(int i)
+	DayZPlayerImplement GetMember(int i)
 	{
 		return m_Members[i];
 	}
 
-	int GetIndex(PlayerBase player)
+	int GetIndex(DayZPlayerImplement player)
 	{
 		return m_Members.Find(player);
 	}
