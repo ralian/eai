@@ -78,7 +78,7 @@ class eAIGame {
 		eAIGroup ownerGrp = GetGroupByLeader(pb_Human);
 
 		eAIBase pb_AI;
-		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pb_Human.GetPosition(), 0, "NONE"))) return null;
+		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, GetRandomAI(), pb_Human.GetPosition(), 0, "NONE"))) return null;
 		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient);
 		
 		pb_AI.SetAI(ownerGrp);
@@ -92,7 +92,7 @@ class eAIGame {
 	
 	eAIBase SpawnAI_Sentry(vector pos) {
 		eAIBase pb_AI;
-		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pos, 0, "NONE"))) return null;
+		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, GetRandomAI(), pos, 0, "NONE"))) return null;
 		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient);
 		
 		eAIGroup ownerGrp = GetGroupByLeader(pb_AI);
@@ -106,7 +106,7 @@ class eAIGame {
 	
 	eAIBase SpawnAI_Patrol(vector pos) {
 		eAIBase pb_AI;
-		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pos, 0, "NONE"))) return null;
+		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, GetRandomAI(), pos, 0, "NONE"))) return null;
 		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient);
 		
 		eAIGroup ownerGrp = GetGroupByLeader(pb_AI);

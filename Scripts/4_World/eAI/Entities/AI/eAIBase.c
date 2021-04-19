@@ -19,16 +19,13 @@ enum eAITargetOverriding
 	PATH
 };
 
-/* TODO: class eAIBase extends PlayerBase // needs config entries */
-typedef PlayerBase eAIBase;
-modded class PlayerBase
+class eAIBase extends PlayerBase
 {
 	static autoptr array<eAIBase> m_eAI = new array<eAIBase>();
 
 	private bool m_eAI_Is = false;
 
 	private autoptr eAIHFSM m_FSM;
-    private autoptr eAIGroup m_eAI_Group;
 	private autoptr array<string> m_Transitions = {};
 
 	// Targeting data 
@@ -70,11 +67,11 @@ modded class PlayerBase
 	private autoptr array<Shape> m_DebugShapes = new array<Shape>();
 #endif
 
-	void PlayerBase() /*eAIBase*/
+	void eAIBase()
 	{
 	}
 
-	void ~PlayerBase() /*~eAIBase*/
+	void ~eAIBase()
 	{
 		if (IsAI())
 		{
@@ -297,16 +294,6 @@ modded class PlayerBase
 		LookAtDirection("0 0 1");
 		AimAtDirection("0 0 1");
 
-		return m_eAI_Group;
-	}
-	
-	// This can be used by humans too
-	void SetGroup(eAIGroup g) {
-		m_eAI_Group = g;
-	}
-
-	eAIGroup GetGroup()
-	{
 		return m_eAI_Group;
 	}
 
