@@ -34,9 +34,10 @@ class HumanLoadout {
 	//	HumanLoadout.Apply
 	//
 	//	Usage: HumanLoadout.Apply(pb_AI, "LoadOut.json");
+	//	       HumanLoadout.Apply(pb_AI, "$profile:myloadouts/SoldierLoadout.json");
 	//
 	//	The order of searching for loadouts:
-	//	1) (TBD) From full path under profile. You can define the path to you mod's loadout files "\mymod\loadout.json"
+	//	1) From full path under profile. You can define the path to you mod's loadout files "\mymod\loadout.json"
 	//	2) From default eAI config dir under profile "profile\eAI\loadout\*".
 	//	3) Copied from the mod (Scripts/Data/Loadout) to "profile\eAI\loadout\*". 
 	//	   Two default loadouts exists: "SoldierLoadout.json" , "PoliceLoadout.json".
@@ -47,7 +48,7 @@ class HumanLoadout {
 		HumanLoadout.AddClothes(h, Loadout);
 
 		string weapon;
-		
+
 		weapon = Loadout.WeaponRifle.GetRandomElement();
 //		HumanLoadout.AddWeapon(h, weapon);
 		HumanLoadout.AddWeapon(h, weapon, Loadout.WeaponHealth[0], Loadout.WeaponHealth[1]);
@@ -189,10 +190,21 @@ class HumanLoadout {
 	//	HumanLoadout.LoadData
 
 	static HumanLoadout LoadData(string FileName) {
-		string LoadoutFileName = LoadoutSaveDir + FileName;
+		string LoadoutFileName = "";
 		string LoadoutDefaultFileName = LoadoutDataDir + FileName;
 		
         ref HumanLoadout data = new ref HumanLoadout;
+		
+		//Check if the given Filename is with full patch to existing file.
+        if (FileExist(FileName))
+		{
+			LoadoutFileName = FileName;
+		}
+		else //Nope, let's use LoadoutSaveDir
+		{
+			LoadoutFileName = LoadoutSaveDir + FileName;			
+		}
+		
         Print("HumanLoadout: LoadData: Looking for " + FileName);
 
         if (!FileExist(LoadoutFileName))
