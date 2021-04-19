@@ -68,7 +68,7 @@ bool DayZPlayerInventory_OnEventForRemoteWeaponAI(int packedType, DayZPlayer pla
 
 modded class Weapon_Base
 {
-	bool HitCast(out EntityAI entity, out vector hitPosition, out int contactComponent)
+	bool Hitscan(out EntityAI entity, out vector hitPosition, out int contactComponent)
 	{
 		eAIBase ai;
 		if (!Class.CastTo(ai, GetHierarchyRootPlayer())) return false;
@@ -108,7 +108,7 @@ modded class Weapon_Base
 		EntityAI entity;
 		vector hitPosition;
 		int contactComponent;
-		if (HitCast(entity, hitPosition, contactComponent))
+		if (Hitscan(entity, hitPosition, contactComponent))
 		{
 			string componentName = entity.GetActionComponentName(contactComponent, "fire");
 			string damageZone = "";

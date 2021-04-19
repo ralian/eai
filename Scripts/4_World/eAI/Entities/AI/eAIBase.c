@@ -146,7 +146,7 @@ class eAIBase extends PlayerBase
 		vector hitPos;
 		int contactComponent;
 		EntityAI hitPlayer;
-		if (weap.HitCast(hitPlayer, hitPos, contactComponent) && !PlayerIsEnemy(hitPlayer)) return false;
+		if (weap.Hitscan(hitPlayer, hitPos, contactComponent) && !PlayerIsEnemy(hitPlayer)) return false;
 		
 		return true;
 	}
