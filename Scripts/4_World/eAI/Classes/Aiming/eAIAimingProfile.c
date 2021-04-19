@@ -88,8 +88,10 @@ class eAIAimingProfile
 		GetRPCManager().SendRPC("eAIAimingProfileManager", function, param, g, m_Arbiter.GetIdentity(), m_Player);	
 	}
 
-	void Sync()
+	void SyncToServer()
 	{
+		if (GetGame().IsServer()) return;
+
 		int low, high;
 		bool hasHands = m_Hands != null;
 		if (hasHands)
@@ -97,21 +99,7 @@ class eAIAimingProfile
 			m_Hands.GetNetworkID(low, high);
 		}
 
-		eAIAimingProfile_SyncParams param = new eAIAimingProfile_SyncParams(m_LastUpdated, hasHands, low, high, m_Position, m_Direction);
-
-		GetRPCManager().SendRPC("eAIAimingProfileManager", "OnSync", param, false, null, m_Player);
-	}
-
-	void Deserialize_Params(ParamsReadContext ctx)
-	{
-		eAIAimingProfile_SyncParams param;
-		if (!ctx.Read(param)) return;
-
-		m_LastUpdated = param.param1;
-		if (param.param2) Class.CastTo(m_Hands, GetGame().GetObjectByNetworkId(param.param3, param.param4));
-
-		m_Position = param.param5;
-		m_Direction = param.param6;
+		GetRPCManager().SendRPC("eAIAimingProfileManager", "OnSync", new eAIAimingProfile_SyncParams(m_LastUpdated, hasHands, low, high, m_Position, m_Direction), false, null, m_Player);
 	}
 
 	void Serialize(ParamsWriteContext ctx)

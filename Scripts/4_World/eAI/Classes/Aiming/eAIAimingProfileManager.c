@@ -54,7 +54,7 @@ class eAIAimingProfileManager
 			eAIAimingProfile profile = m_AIs[i].GetAimingProfile();
 
 			profile.Update();
-			profile.Sync();
+			profile.SyncToServer();
 		}
 	}
 
@@ -85,10 +85,19 @@ class eAIAimingProfileManager
 
 		if (GetGame().IsClient()) return;
 
-		Man arbiter = ai.GetAimingProfile().m_Arbiter;
+		eAIAimingProfile profile = ai.GetAimingProfile();
+		Man arbiter = profile.m_Arbiter;
+
 		//TODO: figure out why 'sender' and 'arbiter' differ when there should only be 1 PlayerIdentity on the server...
 		//if (!arbiter || arbiter && arbiter.GetIdentity() != sender) return;
 
-		ai.GetAimingProfile().Deserialize_Params(ctx);
+		eAIAimingProfile_SyncParams param;
+		if (!ctx.Read(param)) return;
+
+		profile.m_LastUpdated = param.param1;
+		if (param.param2) Class.CastTo(profile.m_Hands, GetGame().GetObjectByNetworkId(param.param3, param.param4));
+
+		profile.m_Position = param.param5;
+		profile.m_Direction = param.param6;
 	}
 };
