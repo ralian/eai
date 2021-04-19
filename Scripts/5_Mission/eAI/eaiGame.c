@@ -82,10 +82,10 @@ class eAIGame {
 		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient);
 		
 		pb_AI.SetAI(ownerGrp);
-			
-//		SoldierLoadout.Apply(pb_AI);	//or PoliceLoadout.Apply(pb_AI);
+
 		HumanLoadout.Apply(pb_AI, "SoldierLoadout.json");
 //		HumanLoadout.Apply(pb_AI, "PoliceLoadout.json");
+//		HumanLoadout.Apply(pb_AI, "$profile:myloadouts/SoldierLoadout.json");					
 		
 		return pb_AI;
 	}
