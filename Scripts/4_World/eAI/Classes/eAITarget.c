@@ -56,4 +56,14 @@ class eAITarget
     {
         return info.GetPosition(ai);
     }
+
+    float GetThreat(eAIBase ai = null)
+    {
+        return info.GetThreat(ai);
+    }
+
+    float GetDistance(eAIBase ai)
+    {
+        return info.GetDistance(ai);
+    }
 };
