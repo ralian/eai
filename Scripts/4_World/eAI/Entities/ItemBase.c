@@ -1,6 +1,11 @@
 modded class ItemBase
 {
-    private autoptr eAITargetInformation m_TargetInformation = new eAIEntityTargetInformation(this);
+    private autoptr eAITargetInformation m_TargetInformation;
+
+    void ItemBase()
+    {
+        m_TargetInformation = new eAIEntityTargetInformation(this);
+    }
 
     eAITargetInformation GetTargetInformation()
     {

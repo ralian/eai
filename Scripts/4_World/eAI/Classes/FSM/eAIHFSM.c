@@ -56,7 +56,6 @@ class eAIHFSM
 
     protected string m_Name;
     protected string m_DefaultState;
-	protected string m_LastState = "";
     protected eAIBase m_Unit;
 
     void eAIHFSM(eAIBase unit, eAIState parentState)
@@ -72,10 +71,6 @@ class eAIHFSM
     {
         return m_Name;
     }
-	
-	string GetLastState() {
-		return m_LastState;
-	}
 
     eAIBase GetUnit()
     {
@@ -121,19 +116,21 @@ class eAIHFSM
 	{
         Print("eAIFSM::StartDefault");
 
-        if (m_Running && m_CurrentState)
+        eAIState src = m_CurrentState;
+        eAIState dst = GetState(m_DefaultState);
+
+        if (m_Running && src)
         {
-            Print("Exiting state: " + m_CurrentState);
-            m_CurrentState.OnExit("", true);
-			m_LastState = m_CurrentState.GetName();
+            Print("Exiting state: " + src);
+            src.OnExit("", true, dst);
         }
 	
-		m_CurrentState = GetState(m_DefaultState);
+		m_CurrentState = dst;
 		
         if (m_CurrentState)
         {
             Print("Starting state: " + m_CurrentState);
-            m_CurrentState.OnEntry("");
+            m_CurrentState.OnEntry("", src);
             return true;
         }
 		
@@ -146,19 +143,30 @@ class eAIHFSM
     {
         Print("eAIFSM::Start e=" + e);
 
-        if (m_Running && m_CurrentState)
+        Param2<eAIState, bool> new_state = FindSuitableTransition(m_CurrentState, "");
+
+        eAIState src = m_CurrentState;
+        eAIState dst = new_state.param1;
+
+        if (dst == null)
         {
-            Print("Exiting state: " + m_CurrentState);
-            m_CurrentState.OnExit(e, true);
-			m_LastState = m_CurrentState.GetName();
+            Print("No valid state found. Aborting.");
+
+            return false;
         }
 
-        m_CurrentState = FindSuitableTransition(m_CurrentState, e).param1;
+        if (m_Running && m_CurrentState && m_CurrentState != dst)
+        {
+            Print("Exiting state: " + m_CurrentState);
+            m_CurrentState.OnExit(e, true, dst);
+        }
 
-        if (m_CurrentState)
+        m_CurrentState = dst;
+
+        if (m_CurrentState && src != m_CurrentState)
         {
             Print("Starting state: " + m_CurrentState);
-            m_CurrentState.OnEntry(e);
+            m_CurrentState.OnEntry(e, src);
             return true;
         }
 
@@ -174,7 +182,7 @@ class eAIHFSM
         if (m_Running && m_CurrentState)
         {
             Print("Exiting state: " + m_CurrentState);
-            m_CurrentState.OnExit(e, true);
+            m_CurrentState.OnExit(e, true, null);
             return true;
         }
 
@@ -197,16 +205,17 @@ class eAIHFSM
             return CONTINUE;
         }
 
-        if (m_CurrentState) m_CurrentState.OnExit("", false);
-		m_LastState = m_CurrentState.GetName();
+        eAIState src = m_CurrentState;
+
+        if (m_CurrentState) m_CurrentState.OnExit("", false, new_state.param1);
 
         m_CurrentState = new_state.param1;
 
         if (new_state.param1 == null) return EXIT;
 		
-		Print("State transition " + m_LastState + " -> " + m_CurrentState.GetName());
+		Print("State transition " + src.GetName() + " -> " + m_CurrentState.GetName());
 
-        m_CurrentState.OnEntry("");
+        m_CurrentState.OnEntry("", src);
 
         return CONTINUE;
     }
@@ -214,6 +223,8 @@ class eAIHFSM
 	Param2<eAIState, bool> FindSuitableTransition(eAIState s, string e = "")
 	{
         // returns tuple as a valid destination can still be null
+
+        //TODO: store a reference to the transitions inside the state for that state
 
 		eAIState curr_state = s;
 

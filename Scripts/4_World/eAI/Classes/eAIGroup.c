@@ -1,3 +1,10 @@
+enum eAIWaypointBehavior
+{
+	HALT,
+	LOOP,
+	REVERSE
+};
+
 class eAIGroup
 {
 	static autoptr array<eAIGroup> GROUPS = new array<eAIGroup>();
@@ -10,11 +17,8 @@ class eAIGroup
 	//! Refer to eAIGroup::GetTargetInformation
     private autoptr eAIGroupTargetInformation m_TargetInformation;
 
-	//TODO: remove from eAIGroup
-	private autoptr eAIWaypointTargetInformation m_WaypointTargetInformation;
-
 	// Ordered array of group members. 0 is the leader.
-	private autoptr array<PlayerBase> m_Members;
+	private autoptr array<DayZPlayerImplement> m_Members;
 	
 	// What formation the group should keep
 	private autoptr eAIFormation m_Form = new eAIFormationVee();
@@ -22,16 +26,20 @@ class eAIGroup
 	// Group identity 
 	private autoptr eAIFaction m_Faction = new eAIFactionRaiders();
 
+	private autoptr array<vector> m_Waypoints;
+	private eAIWaypointBehavior m_WaypointBehaviour = eAIWaypointBehavior.REVERSE;
+
 	void eAIGroup()
 	{
 		m_TargetInformation = new eAIGroupTargetInformation(this);
-		m_WaypointTargetInformation = new eAIWaypointTargetInformation(this);
 		m_Targets = new array<eAITargetInformation>();
 
 		m_IDCounter++;
 		m_ID = m_IDCounter;
 
-		m_Members = new array<PlayerBase>();
+		m_Members = new array<DayZPlayerImplement>();
+		
+		m_Waypoints = new array<vector>();
 
 		GROUPS.Insert(this);
 	}
@@ -42,20 +50,30 @@ class eAIGroup
 		if (idx != -1) GROUPS.RemoveOrdered(idx);
 	}
 	
-	int AddWaypoint(vector pos) {
-		return m_WaypointTargetInformation.AddWaypoint(pos);
+	void AddWaypoint(vector pos)
+	{
+		m_Waypoints.Insert(pos);
+	}
+
+	array<vector> GetWaypoints()
+	{
+		return m_Waypoints;
 	}
 	
-	void ClearWaypoints() {
-		m_WaypointTargetInformation.ClearWaypoints();
+	void ClearWaypoints()
+	{
+		m_Waypoints.Clear();
 	}
-	
-	int SkipWaypoint() {
-		return m_WaypointTargetInformation.SkipWaypoint();
+
+	//TODO: rename to SetWaypointBehaviour
+	void SetLooping(eAIWaypointBehavior bhv)
+	{
+		m_WaypointBehaviour = bhv;
 	}
-	
-	void SetLooping(bool loop) {
-		m_WaypointTargetInformation.SetLooping(loop);
+
+	eAIWaypointBehavior GetWaypointBehaviour()
+	{
+		return m_WaypointBehaviour;
 	}
 	
 	eAIFaction GetFaction() {
@@ -117,25 +135,19 @@ class eAIGroup
     {
 		return m_TargetInformation;
     }
-	
-	eAITargetInformation GetWaypointTargetInformation()
-    {
-		return m_WaypointTargetInformation;
-    }
 
 	void Update(float pDt)
 	{
 		ProcessTargets();
 
 		m_TargetInformation.Update(pDt);
-		m_WaypointTargetInformation.Update(pDt);
 	}
 
-	void SetLeader(PlayerBase leader)
+	void SetLeader(DayZPlayerImplement leader)
 	{
 		if (!IsMember(leader)) AddMember(leader);
 
-		PlayerBase temp = m_Members[0];
+		DayZPlayerImplement temp = m_Members[0];
 		if (temp == leader) return;
 		m_Members[0] = leader;
 
@@ -149,7 +161,7 @@ class eAIGroup
 		}
 	}
 
-	PlayerBase GetLeader()
+	DayZPlayerImplement GetLeader()
 	{
 		return m_Members[0];
 	}
@@ -164,12 +176,12 @@ class eAIGroup
 		m_Form = f;
 	}
 
-	bool IsMember(PlayerBase player)
+	bool IsMember(DayZPlayerImplement player)
 	{
 		return m_Members.Find(player) != -1;
  	}
 	
-	int AddMember(PlayerBase member)
+	int AddMember(DayZPlayerImplement member)
 	{
 		return m_Members.Insert(member);
 	}
@@ -182,12 +194,12 @@ class eAIGroup
 		return true;
 	}
 	
-	PlayerBase GetMember(int i)
+	DayZPlayerImplement GetMember(int i)
 	{
 		return m_Members[i];
 	}
 
-	int GetIndex(PlayerBase player)
+	int GetIndex(DayZPlayerImplement player)
 	{
 		return m_Members.Find(player);
 	}

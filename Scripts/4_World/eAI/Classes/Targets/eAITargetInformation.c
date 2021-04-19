@@ -40,6 +40,28 @@ class eAITargetInformation
     }
 
 	/**
+	 * @brief Abstract function. Get the threat level for the AI within the target. Each AI could have their own threat level for the target. 
+	 *
+     * @param ai null default, gets the position for the AI if specified, otherwise returns a default value
+	 * @return int
+	 */
+    float GetThreat(eAIBase ai = null)
+    {
+        return 0;
+    }
+
+	/**
+	 * @brief Abstract function. Get the distance to the target.  
+	 *
+     * @param ai gets the position for the AI if specified
+	 * @return float
+	 */
+    float GetDistance(eAIBase ai)
+    {
+        return 0;
+    }
+
+	/**
 	 * @brief Processes the group
 	 *
      * @param group_id group id of an eAIGroup
@@ -244,12 +266,12 @@ class eAITargetInformation
         foreach (int id, eAITarget target : m_Groups) foreach (eAIBase ai : target.ai_list) ai.GetFSM().Start("TargetHit");
     }
 
-    // this is really bad but unfortunately we can't reasonably mod the EntityAI class
+    // this is really bad but unfortunately we can't reasonably mod the Object class
     // and for some circumstances using templates just won't work.
     //
     // wherever possible, please use 
     //    'eAIEntity<DayZPlayerImplement>.GetTargetInformation(GetGame().GetPlayer())`
-    static eAITargetInformation GetTargetInformation(EntityAI entity)
+    static eAITargetInformation GetTargetInformation(Object entity)
     {
         DayZPlayerImplement player;
         if (Class.CastTo(player, entity)) return player.GetTargetInformation();
