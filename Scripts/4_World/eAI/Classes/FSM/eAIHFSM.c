@@ -148,6 +148,13 @@ class eAIHFSM
         eAIState src = m_CurrentState;
         eAIState dst = new_state.param1;
 
+        if (dst == null)
+        {
+            Print("No valid state found. Aborting.");
+
+            return false;
+        }
+
         if (m_Running && m_CurrentState && m_CurrentState != dst)
         {
             Print("Exiting state: " + m_CurrentState);

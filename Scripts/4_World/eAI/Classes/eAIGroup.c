@@ -73,7 +73,7 @@ class eAIGroup
 
 	eAIWaypointBehavior GetWaypointBehaviour()
 	{
-		m_WaypointBehaviour;
+		return m_WaypointBehaviour;
 	}
 	
 	eAIFaction GetFaction() {

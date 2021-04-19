@@ -1,6 +1,11 @@
 modded class DayZPlayerImplement
 {
-    private autoptr eAITargetInformation m_TargetInformation = new eAIEntityTargetInformation(this);
+    private autoptr eAITargetInformation m_TargetInformation;
+
+    void DayZPlayerImplement()
+    {
+        m_TargetInformation = new eAIEntityTargetInformation(this);
+    }
 
     eAITargetInformation GetTargetInformation()
     {

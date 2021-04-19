@@ -107,15 +107,12 @@
 		</state>
 		<state name="Fire">
 			<variables>
-				<variable name="time" type="float" />
 			</variables>
 			<editor_data>
 				<position x="333" y="374" />
 				<size width="150" height="40" />
 			</editor_data>
 			<event_entry>
-				time = 0;
-
 				unit.RaiseWeapon(true);
 				unit.RefreshAimArbitration();
 			</event_entry>
@@ -124,14 +121,9 @@
 				unit.RaiseWeapon(false);
 			</event_exit>
 			<event_update>
-				time += DeltaTime;
-				if (time &lt; 0.08) return CONTINUE;
-
-				if (unit.CleanThreats() &lt; 1) return EXIT;
-
 				if (unit.CanFire()) unit.DryFire();
 
-				return CONTINUE;
+				return EXIT;
             </event_update>
 		</state>
 	</states>
@@ -254,7 +246,7 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-                if (unit.CleanThreats() &gt; 0) return SUCCESS;
+                if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
 
                 return FAIL;
             </guard>
@@ -268,7 +260,7 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-                if (unit.CleanThreats() &gt; 0) return SUCCESS;
+                if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
 
                 return FAIL;
             </guard>
@@ -282,7 +274,7 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-                if (unit.CleanThreats() &gt; 0) return SUCCESS;
+                if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
 
                 return FAIL;
             </guard>
@@ -296,13 +288,44 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
+                if (unit.GetThreatToSelf() &lt; 0.4) return SUCCESS;
+
+                return FAIL;
+            </guard>
+			<event name="" />
+			<from_state name="Fire" />
+			<to_state name="Traverse" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+                if (unit.GetThreatToSelf() &lt; 0.4) return SUCCESS;
+
+                return FAIL;
+            </guard>
+			<event name="" />
+			<from_state name="Fire" />
+			<to_state name="Follow" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
                 auto group = unit.GetGroup();
                 if (!group) return FAIL;
 
                 auto leader = group.GetLeader();
-                if (leader) return SUCCESS;
+                if (!leader) return FAIL;
 
-                return FAIL;
+				// we are the leader so we traverse the waypoints
+                if (leader == unit) return FAIL;
+
+                return SUCCESS;
             </guard>
 			<event name="" />
 			<from_state name="Reload" />
@@ -314,7 +337,6 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-				// previous state is assumed to have succeeded first, if it failed, then we must always assume this succeeds to perform a reset
                 return SUCCESS;
             </guard>
 			<event name="" />

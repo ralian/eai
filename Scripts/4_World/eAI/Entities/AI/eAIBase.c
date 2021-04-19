@@ -33,7 +33,6 @@ modded class PlayerBase
 
 	// Targeting data 
 	private autoptr array<eAITarget> m_eAI_Targets;
-	autoptr array<Object> threats = {}; // temporary
 	
 	// Aiming and aim arbitration
 	bool m_AimArbitration = false;
@@ -199,13 +198,14 @@ modded class PlayerBase
 	}
 	
 	// Update the aim during combat, return true if we are within parameters to fire.
-	int m_AllowedFireTime = 0; //! temp parameter, should be handled in fsm instead
+	int m_MinTimeTillNextFire = 0; //! temp parameter, should be handled in fsm instead
 	bool CanFire()
 	{
+		if (GetGame().GetTime() < m_MinTimeTillNextFire) return false;
+
 		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
 		if (!weap) return false;
 		
-		if (GetGame().GetTime() < m_AllowedFireTime) return false;
 		if (GetDayZPlayerInventory().IsProcessing()) return false;
 		if (!IsRaised()) return false;
 		
@@ -225,8 +225,8 @@ modded class PlayerBase
 		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
 		if (weap)
 		{
-			m_AllowedFireTime = GetGame().GetTime() + 500;
-			m_AllowedFireTime += Math.RandomInt(0, 300);
+			m_MinTimeTillNextFire = GetGame().GetTime() + 500;
+			m_MinTimeTillNextFire += Math.RandomInt(0, 300);
 
 			GetWeaponManager().Fire(weap);
 			GetInputController().OverrideAimChangeY(true, 0.0);
@@ -237,100 +237,13 @@ modded class PlayerBase
 	{
 		super.EEHitBy(damageResult, damageType, source, component, dmgZone, ammo, modelPos, speedCoef);
 		
-		Print("eAI: Damage registered from " + source + " type: " + damageType + " component: " + component + " datageResult: " + damageResult + " dmgZone: " + dmgZone + " modelPos: " + modelPos + " speedCoef: " + speedCoef);
-		
-		Print("eAI: Damage registered from " + source);
-		Weapon_Base player_weapon = Weapon_Base.Cast(source);
-		if (player_weapon) {
-			array<Object> objects = new array<Object>();
-			autoptr array<CargoBase> proxyCargos = new array<CargoBase>();
-			Object closest = null;
-			float dist = 1000000.0;
-			float testDist;
-		
-			GetGame().GetObjectsAtPosition3D(player_weapon.GetPosition(), 1.5, objects, proxyCargos);
-		
-			for (int j = 0; j < objects.Count(); j++) {
-				if (PlayerBase.Cast(objects[j])) {
-					testDist = vector.DistanceSq(objects[j].GetPosition(), player_weapon.GetPosition());
-					if (testDist < dist) {
-						closest = objects[j];
-						dist = testDist;
-					}
-				}
-			}
-			
-			// In theory this line could be removed, and the CanFIre check altered, to turn against group members that shoot them
-			if (closest && PlayerIsEnemy(PlayerBase.Cast(closest)))
-				AddToThreatList(closest, true);
-		}
-	}
-	
-	// Adds a threat to the threat list, if it isn't already there.
-	bool AddToThreatList(EntityAI threat, bool prioritize = false) {
-		if (!threat || threats.Find(threat) > -1)
-			return false;
-		if (prioritize)
-			threats.InsertAt(threat, 0);
-		else threats.Insert(threat);
-		return true;
-	}
-	
-	void ScanForDistantPlayers(out array<Object> seenPlayers) {
-		autoptr array<Man> players = {};
-		GetGame().GetPlayers(players);
-		vector LookDir = MiscGameplayFunctions.GetHeadingVector(this);
-		foreach (Man p : players) {
-			float distSq = vector.DistanceSq(GetPosition(), p.GetPosition());
-			// This checks that the distance is less than 500, and that the AI is at least facing in the half plane of the right way.
-			// If we wanted to, we could normalize the direction vector, then do something like vector.Dot(v1, v2) > 0.5
-			if (distSq < (500*500) && vector.Dot(LookDir, p.GetPosition() - GetPosition()) > 0) {
-				if (!IsViewOccluded(p.GetPosition() + "0 1.5 0"))
-					seenPlayers.Insert(p);
-			}
-		}
-	}
-	
-	// Cleans out any invalid or dead targets
-	// Returns the number of threats in the array
-	ref array<CargoBase> proxyCargos = {};
-	int CleanThreats() {
-		vector center = GetPosition();
-		
-		// Leave threats in that don't need cleaning
-		for (int j = 0; j < threats.Count(); j++)
-			if (!threats[j] || !threats[j].IsAlive())
-				threats.Remove(j);
-		
-		autoptr array<Object> newThreats = new array<Object>();
-		GetGame().GetObjectsAtPosition(center, 30.0, newThreats, proxyCargos);
-		
-		// Add more distant things in the dir we're looking
-		ScanForDistantPlayers(newThreats);
-		
-		// Todo find a faster way to do this... like a linked list?
-		int i = 0;
-		float minDistance = 1000000.0, temp;
-		while (i < newThreats.Count()) {
-			DayZInfected infected = DayZInfected.Cast(newThreats[i]);
-			PlayerBase player = PlayerBase.Cast(newThreats[i]);
-			if (infected && infected.IsAlive() && !IsViewOccluded(infected.GetPosition() + "0 1.5 0")) {
-				// It's an infected, add it to teh threates array
-				temp = vector.Distance(newThreats[i].GetPosition(), GetPosition());
-				if (temp < minDistance) {
-					AddToThreatList(infected, true);
-				} else AddToThreatList(infected);
-				
-			} else if (player && PlayerIsEnemy(player) && player.IsAlive() && !IsViewOccluded(player.GetPosition() + "0 1.5 0")) {
-				// If it's an enemy player
-				temp = vector.Distance(newThreats[i].GetPosition(), GetPosition());
-				if (temp < minDistance) {
-					AddToThreatList(player, true);
-				} else AddToThreatList(player);
-			}
-			i++;
-		}
-		return threats.Count();
+		if (!IsAI()) return;
+
+        ZombieBase zmb;
+        if (Class.CastTo(zmb, source) && !zmb.GetTargetInformation().IsTargetted(m_eAI_Group))
+        {
+            zmb.GetTargetInformation().AddAI(this);
+        }
 	}
 	
 	override bool IsAI()
@@ -568,6 +481,61 @@ modded class PlayerBase
 		return m_TargetPosition;
 	}
 
+	float GetThreatToSelf()
+	{
+		if (m_eAI_Targets.Count() == 0) return 0.0;
+
+		return m_eAI_Targets[0].GetThreat(this);
+	}
+
+	void UpdateTargets()
+	{
+		//TODO: use particle system instead
+
+		array<CargoBase> proxyCargos = new array<CargoBase>();
+		array<Object> newThreats = new array<Object>();
+		GetGame().GetObjectsAtPosition(GetPosition(), 30.0, newThreats, proxyCargos);
+
+		for (int i = 0; i < newThreats.Count(); i++)
+		{
+			PlayerBase playerThreat;
+			if (Class.CastTo(playerThreat, newThreats[i]) && m_eAI_Group.IsMember(playerThreat)) continue;
+
+			eAITargetInformation target = eAITargetInformation.GetTargetInformation(newThreats[i]);
+			if (!target) continue;
+
+			if (target.IsTargetted(m_eAI_Group)) continue;
+
+			target.AddAI(this);
+		}
+	}
+
+	void PriotizeTargets()
+	{
+		// sorting the targets so the highest the threat is indexed lowest
+
+		for (int i = 0; i < m_eAI_Targets.Count() - 1; i++) 
+		{
+			int min_idx = i; 
+			for (int j = i + 1; j < m_eAI_Targets.Count(); j++) 
+			{
+				if (m_eAI_Targets[j].GetThreat(this) < m_eAI_Targets[min_idx].GetThreat(this)) 
+				{
+					min_idx = j;	
+				}
+			}
+
+			m_eAI_Targets.SwapItems(min_idx, i);
+		}
+
+		m_eAI_Targets.Invert();
+
+		//for (i = 0; i < m_eAI_Targets.Count(); i++) 
+		//{
+		//	Print("m_eAI_Targets[" + i + "] entity = " + m_eAI_Targets[i].GetEntity() + " threat = " + m_eAI_Targets[i].GetThreat(this));
+		//}
+	}
+
 	eAICommandMove GetCommand_MoveAI()
 	{
 		return eAICommandMove.Cast(GetCommand_Script());
@@ -626,6 +594,10 @@ modded class PlayerBase
 #endif
 		
 		if (!GetGame().IsServer()) return;
+		int simulationPrecision = 0;
+
+		UpdateTargets();
+		PriotizeTargets();
 
 		AIWorld world = GetGame().GetWorld().GetAIWorld();
 		
@@ -654,19 +626,16 @@ modded class PlayerBase
 
 		vector transform[4];
 		GetTransform(transform);
-		
-		if (threats.Count() > 0 && threats[0]);
-			AimAtPosition(threats[0].GetPosition());
 
 		if (m_eAI_LookDirection_Recalculate) m_eAI_LookDirection_ModelSpace = (m_eAI_LookPosition_WorldSpace - transform[3]).Normalized().Multiply3(transform);
 		if (m_eAI_AimDirection_Recalculate) m_eAI_AimDirection_ModelSpace = (m_eAI_AimPosition_WorldSpace - transform[3]).Normalized().InvMultiply3(transform);
 
 		HumanInputController hic = GetInputController();
 		EntityAI entityInHands = GetHumanInventory().GetEntityInHands();
-		bool isWeapon		= entityInHands	&& entityInHands.IsInherited(Weapon);
+		bool isWeapon = entityInHands && entityInHands.IsInherited(Weapon);
 		
 		// handle weapons
-		if(hic)
+		if (hic)
 		{
 			if (isWeapon && (!hic.IsImmediateAction() || !m_ProcessFirearmMeleeHit || !m_ContinueFirearmMelee))
 			{
@@ -678,7 +647,7 @@ modded class PlayerBase
 
 		if (m_WeaponManager) m_WeaponManager.Update(pDt);
 		if (m_EmoteManager) m_EmoteManager.Update(pDt);
-		if (m_FSM) m_FSM.Update(pDt, 0);
+		if (m_FSM) m_FSM.Update(pDt, simulationPrecision);
 		
 		GetPlayerSoundManagerServer().Update();
 		GetHumanInventory().Update(pDt);
@@ -841,7 +810,7 @@ modded class PlayerBase
 			if (Class.CastTo(hcm, m_eAI_Command))
 			{
 				hcm.SetRaised(m_WeaponRaised);
-				hcm.SetFighting(threats.Count() > 0 && threats[0]);
+				hcm.SetFighting(GetThreatToSelf() >= 0.6);
 
 				return;
 			}
@@ -937,15 +906,19 @@ modded class PlayerBase
 		//TODO, properly use m_eAI_LookDirection_ModelSpace
 
 		// Start of ADS code
-		if (m_WeaponRaised && threats.Count() > 0 && threats[0] && !ReloadingInADS) {
-			AimAtPosition(threats[0].GetPosition());
+		if (m_WeaponRaised && !ReloadingInADS) {
 			
 			float targetAngle, targetHeight, gunHeight;
-			if (threats.Count() > 0 && threats[0]) {
+			if (m_eAI_Targets.Count() > 0) {
+				vector targetPosition = m_eAI_Targets[0].GetPosition(this);
+
+				AimAtPosition(targetPosition);
+
 				gunHeight = 1.5 + GetPosition()[1]; 			// Todo get the actual world gun height.
-				targetHeight = 1.0 + threats[0].GetPosition()[1]; 	// Todo get actual threat height, but this should shoot center of mass in most cases
-				targetAngle = Math.Atan2(targetHeight - gunHeight, vector.Distance(GetPosition(), threats[0].GetPosition()))*Math.RAD2DEG; // needs to be in deg
+				targetHeight = 1.0 + targetPosition[1]; 	// Todo get actual threat height, but this should shoot center of mass in most cases
+				targetAngle = Math.Atan2(targetHeight - gunHeight, vector.Distance(GetPosition(), targetPosition))*Math.RAD2DEG; // needs to be in deg
 			} else targetAngle = 0;
+
 			float X, Y;
 			if (weapon && weapon.aim && weapon.aim.GetAge() < 250) {
 				if (!weapon.aim.InterpolationStarted) {

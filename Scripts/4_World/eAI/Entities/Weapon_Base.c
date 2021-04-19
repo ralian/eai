@@ -168,7 +168,7 @@ modded class Weapon_Base {
 			//Print("hitGround = " + hitGround.ToString());
 			
 			if (closest && !hitAnObject)// && !hitGround)
-				return closest;
+				return EntityAI.Cast(closest);
 		}
 		return null;
 	}

@@ -1,4 +1,4 @@
-class eAIZombieTargetInformation extends eAITargetInformation
+class eAIZombieTargetInformation extends eAIEntityTargetInformation
 {
 	private const float DISTANCE_COEF = 0.1;
 
