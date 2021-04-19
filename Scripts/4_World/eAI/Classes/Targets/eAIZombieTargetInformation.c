@@ -1,6 +1,6 @@
 class eAIZombieTargetInformation extends eAITargetInformation
 {
-	private const float DISTANCE_COEF = 0.01;
+	private const float DISTANCE_COEF = 0.1;
 
     private ZombieBase m_Zombie;
 	private DayZInfectedInputController m_DIIP;
@@ -12,6 +12,7 @@ class eAIZombieTargetInformation extends eAITargetInformation
 		m_DIIP = m_Zombie.GetInputController();
     }
 
+	// https://www.desmos.com/calculator/r4mqu91qff
     override float GetThreat(eAIBase ai = null)
     {
 		float levelFactor = 0;
@@ -37,12 +38,16 @@ class eAIZombieTargetInformation extends eAITargetInformation
 				break;
 		}
 
+		levelFactor *= 0.75;
+		if (m_DIIP.GetTargetEntity() == ai) levelFactor *= 2.0;
+
 		if (ai)
 		{
+			// the further away the zombie, the less likely it will be a threat
 			float distance = GetDistance(ai) * DISTANCE_COEF;
 			if (distance > 1.0) levelFactor = levelFactor / distance;
 		}
 
-        return levelFactor;
+        return Math.Clamp(levelFactor, 0.0, 1.0);
     }
 };
