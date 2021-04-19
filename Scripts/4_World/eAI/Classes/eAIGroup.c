@@ -1,3 +1,10 @@
+enum eAIWaypointBehavior
+{
+	HALT,
+	LOOP,
+	REVERSE
+};
+
 class eAIGroup
 {
 	static autoptr array<eAIGroup> GROUPS = new array<eAIGroup>();
@@ -20,6 +27,7 @@ class eAIGroup
 	private autoptr eAIFaction m_Faction = new eAIFactionRaiders();
 
 	private autoptr array<vector> m_Waypoints;
+	private eAIWaypointBehavior m_WaypointBehaviour = eAIWaypointBehavior.REVERSE;
 
 	void eAIGroup()
 	{
@@ -55,6 +63,17 @@ class eAIGroup
 	void ClearWaypoints()
 	{
 		m_Waypoints.Clear();
+	}
+
+	//TODO: rename to SetWaypointBehaviour
+	void SetLooping(eAIWaypointBehavior bhv)
+	{
+		m_WaypointBehaviour = bhv;
+	}
+
+	eAIWaypointBehavior GetWaypointBehaviour()
+	{
+		m_WaypointBehaviour;
 	}
 	
 	eAIFaction GetFaction() {

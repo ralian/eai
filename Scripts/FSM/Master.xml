@@ -31,6 +31,8 @@
 		<state name="Traverse">
 			<variables>
 				<variable name="path" type="autoptr array<vector>" />
+				<variable name="behaviour" type="eAIWaypointBehavior" />
+				<variable name="backtracking" type="bool" />
 				<variable name="index" type="int" />
 			</variables>
 			<editor_data>
@@ -39,13 +41,41 @@
 			</editor_data>
 			<event_entry>
 				path = unit.GetGroup().GetWaypoints();
+				behaviour = unit.GetGroup().GetWaypointBehaviour();
 			</event_entry>
 			<event_exit></event_exit>
 			<event_update>
 				float distance = vector.DistanceSq(unit.GetPosition(), path[index]);
-				if (distance &lt; 10.0 &amp;&amp; distance &gt; 0.01) index++;
+				if (distance &lt; 10.0 &amp;&amp; distance &gt; 0.01)
+				{
+					if (backtracking) index--;
+					else index++;
+				}
 
-				if (index &gt; path.Count()) index = 0;
+				if (index &lt; 0) 
+				{
+					if (behaviour == eAIWaypointBehavior.REVERSE)
+					{
+						backtracking = false;
+						index = 1;
+					}
+				}
+				else if (index &gt; path.Count())
+				{
+					if (behaviour == eAIWaypointBehavior.REVERSE)
+					{
+						backtracking = true;
+						index = path.Count() - 2;
+					} 
+					else if (behaviour == eAIWaypointBehavior.LOOP)
+					{
+						backtracking = false;
+						index = 0;
+					}
+				}
+
+				index = Math.Clamp(index, 0, path.Count());
+
 				unit.OverridePosition(path[index]);
 
                 return EXIT;
