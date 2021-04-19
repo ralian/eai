@@ -1,5 +1,5 @@
 class HumanLoadout {	
-	static int LOADOUT_VERSION = 001;
+	static int LOADOUT_VERSION = 002;
 	
 	ref TIntArray 	 Version = {000};								//!!DO NOT CHANGE!!				
 	ref TStringArray Shirts = {"HikingJacket_Blue"};
@@ -15,6 +15,8 @@ class HumanLoadout {
 	ref TStringArray WeaponMelee = {"MeleeBat"}; 	
 	ref TStringArray WeaponRifle = {"Ruger1022"}; 	
 	ref TIntArray	 WeaponRifleMagCount = {1,3};
+	ref TStringArray WeaponAttachment = {"Ruger1022"}; 	
+	ref TIntArray    WeaponAttachmentChance = {50}; 	
 	
 	ref TStringArray WeaponHandgun = {"MakarovIJ70"}; 		
 	ref TIntArray	 WeaponHandgunMagCount = {1,3}; 	
@@ -234,11 +236,14 @@ class HumanLoadout {
 			if (data.Version[0] != LOADOUT_VERSION)
 			{
 	            Print("HumanLoadout: ERROR : Incorrect version (" + data.Version[0] + ") in " + LoadoutFileName + ". Should be " + LOADOUT_VERSION);
+	            Print("HumanLoadout: ERROR : A fixed version has been saved: " + LoadoutFileName + "_fixed");
+	            SaveData(LoadoutFileName + "_fixed", data);
 			}			
         }
         else
         {
-            Print("HumanLoadout: ERROR : Coult not find " + LoadoutFileName);
+			//We should never come here.
+            Print("HumanLoadout: ERROR : Could not find " + LoadoutFileName);
 		}
 
         return data;
