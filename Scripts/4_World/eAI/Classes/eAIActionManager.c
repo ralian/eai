@@ -17,7 +17,7 @@ class eAIActionManager: ActionManagerBase
 {	
 	protected bool								m_ActionPossible;
 	protected ref array<ref InventoryLocation>	m_ReservedInventoryLocations;
-	protected ref InventoryActionHandlerAI		m_InventoryActionHandler;
+	protected ref eAIInventoryActionHandler		m_InventoryActionHandler;
 	protected ref InventoryLocation				m_HandInventoryLocationTest;
 	protected ref TTypeNameActionInputMap		m_RegistredInputsMap;
 	
@@ -29,7 +29,7 @@ class eAIActionManager: ActionManagerBase
 	
 	void eAIActionManager(PlayerBase player)
 	{		
-		m_InventoryActionHandler = new InventoryActionHandlerAI(player);
+		m_InventoryActionHandler = new eAIInventoryActionHandler(player);
 	}
 	
 	//------------------------------------------

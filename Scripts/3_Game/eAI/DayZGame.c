@@ -1,4 +1,4 @@
-PlayerIdentity eAIGlobal_HeadlessClient = null;
+Man eAIGlobal_HeadlessClient = null;
 
 modded class DayZGame
 {

@@ -2,7 +2,7 @@ modded class ZombieBase
 {
     private autoptr eAITargetInformation m_TargetInformation;
 
-    void ItemBase()
+    void ZombieBase()
     {
         m_TargetInformation = new eAIZombieTargetInformation(this);
     }

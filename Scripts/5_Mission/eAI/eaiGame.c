@@ -12,33 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-class eAIGame {
-	
-	// On client, list of weapons we are asked to provide a feed of
-	autoptr eAIClientAimArbiterManager m_ClientAimMngr;
-	
-	// Server side list of weapon data 
-	autoptr eAIServerAimProfileManager m_ServerAimMngr;
+class eAIGame
+{
+	autoptr eAIAimingProfileManager m_AimingManager;
 	
 	vector debug_offset = "8 0 0"; // Offset from player to spawn a new AI entity at when debug called
 	vector debug_offset_2 = "20 0 0"; // Electric bugaloo
 	
 	float gametime = 0;
 	
-    void eAIGame() {
-		if (GetGame().IsClient()) {
-			m_ClientAimMngr = new eAIClientAimArbiterManager();
-			GetRPCManager().AddRPC("eAI", "eAIAimArbiterSetup", m_ClientAimMngr, SingeplayerExecutionType.Client);
-			GetRPCManager().AddRPC("eAI", "eAIAimArbiterStart", m_ClientAimMngr, SingeplayerExecutionType.Client);
-			GetRPCManager().AddRPC("eAI", "eAIAimArbiterStop", m_ClientAimMngr, SingeplayerExecutionType.Client);
-			GetRPCManager().AddRPC("eAI", "HCLinkObject", m_ClientAimMngr, SingeplayerExecutionType.Client);
-			GetRPCManager().AddRPC("eAI", "HCUnlinkObject", m_ClientAimMngr, SingeplayerExecutionType.Client);
-		}
-		
-		if (GetGame().IsServer()) {
-			m_ServerAimMngr = new eAIServerAimProfileManager();
-			GetRPCManager().AddRPC("eAI", "eAIAimDetails", m_ServerAimMngr, SingeplayerExecutionType.Server);
-		}
+    void eAIGame()
+	{
+		m_AimingManager = new eAIAimingProfileManager();
 		
 		GetRPCManager().AddRPC("eAI", "SpawnEntity", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "DebugFire", this, SingeplayerExecutionType.Server);
@@ -79,7 +64,7 @@ class eAIGame {
 
 		eAIBase pb_AI;
 		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, GetRandomAI(), pb_Human.GetPosition(), 0, "NONE"))) return null;
-		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient);
+		if (eAIGlobal_HeadlessClient && eAIGlobal_HeadlessClient.GetIdentity()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
 		
 		pb_AI.SetAI(ownerGrp);
 			
@@ -93,7 +78,7 @@ class eAIGame {
 	eAIBase SpawnAI_Sentry(vector pos) {
 		eAIBase pb_AI;
 		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, GetRandomAI(), pos, 0, "NONE"))) return null;
-		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient);
+		if (eAIGlobal_HeadlessClient && eAIGlobal_HeadlessClient.GetIdentity()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
 		
 		eAIGroup ownerGrp = GetGroupByLeader(pb_AI);
 		
@@ -107,7 +92,7 @@ class eAIGame {
 	eAIBase SpawnAI_Patrol(vector pos) {
 		eAIBase pb_AI;
 		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, GetRandomAI(), pos, 0, "NONE"))) return null;
-		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient);
+		if (eAIGlobal_HeadlessClient && eAIGlobal_HeadlessClient.GetIdentity()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
 		
 		eAIGroup ownerGrp = GetGroupByLeader(pb_AI);
 		
@@ -157,8 +142,9 @@ class eAIGame {
 	// Server Side: This RPC spawns a zombie. It's actually not the right way to do it. But it's only for testing.
 	// BUG: this has sometimes crashed us before. Not sure why yet.
 	void SpawnZombie(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<PlayerBase> data;
-        if ( !ctx.Read( data ) ) return;
+		Param1<DayZPlayer> data;
+        if (!ctx.Read(data)) return;
+		
 		if(type == CallType.Server) {
             Print("eAI: SpawnZombie RPC called.");
 			GetGame().CreateObject("ZmbF_JournalistNormal_Blue", data.param1.GetPosition() + debug_offset_2, false, true, true);
@@ -339,7 +325,7 @@ modded class MissionServer
 	override void InvokeOnConnect(PlayerBase player, PlayerIdentity identity) {
 		super.InvokeOnConnect(player, identity);
 		if (identity && identity.GetId() == HeadlessClientSteamID) {
-			eAIGlobal_HeadlessClient = identity;
+			eAIGlobal_HeadlessClient = player;
 			foreach (eAIGroup g : m_eaiGame.m_groups) {
 				for (int i = 0; i < g.Count(); i++) {
 					eAIBase ai = g.GetMember(i);

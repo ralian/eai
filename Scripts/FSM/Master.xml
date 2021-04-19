@@ -114,11 +114,15 @@
 			</editor_data>
 			<event_entry>
 				unit.RaiseWeapon(true);
-				unit.RefreshAimArbitration();
+				unit.UpdateAimArbitration();
+
+				unit.OverridePosition(unit.GetPosition());
 			</event_entry>
 			<event_exit>
 				unit.StopAimArbitration();
 				unit.RaiseWeapon(false);
+
+				unit.UseTargetting();
 			</event_exit>
 			<event_update>
 				if (unit.CanFire()) unit.DryFire();
@@ -294,7 +298,7 @@
             </guard>
 			<event name="" />
 			<from_state name="Fire" />
-			<to_state name="Traverse" />
+			<to_state name="Follow" />
 		</transition>
 		<transition>
 			<editor_data>
@@ -308,7 +312,7 @@
             </guard>
 			<event name="" />
 			<from_state name="Fire" />
-			<to_state name="Follow" />
+			<to_state name="Traverse" />
 		</transition>
 		<transition>
 			<editor_data>

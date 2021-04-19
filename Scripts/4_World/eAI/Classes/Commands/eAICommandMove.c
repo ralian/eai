@@ -4,7 +4,11 @@ class eAICommandMove extends eAICommandBase
 	static const int TURN_STATE_TURNING = 1;
 	
 	private int m_PreviousInteractionLayer;
-		
+
+	private bool m_UseAimPosition;
+	private vector m_AimPosition;
+
+	private float m_Turn;
 	private float m_TurnTarget;
 	private float m_TurnDifference;
 	private float m_TurnTime;
@@ -21,7 +25,6 @@ class eAICommandMove extends eAICommandBase
 	private float m_LookUD;
 	
 	private bool m_Raised;
-	private bool m_Fighting;
 	
 	private float m_MovementSpeed;
 	private float m_TargetSpeed;
@@ -56,6 +59,12 @@ class eAICommandMove extends eAICommandBase
 		m_Look = (Math.AbsFloat(m_LookLR) > 0.01) || (Math.AbsFloat(m_LookUD) > 0.01);
 	}
 
+	void SetAimPosition(bool use, vector position = "0 0 0")
+	{
+		m_UseAimPosition = use;
+		m_AimPosition = position;
+	}
+
 	void SetSpeedLimit(float speedIdx)
 	{
 		m_SpeedLimit = speedIdx;
@@ -76,11 +85,6 @@ class eAICommandMove extends eAICommandBase
 	void SetRaised(bool raised)
 	{
 		m_Raised = raised;
-	}
-	
-	void SetFighting(bool fighting)
-	{
-		m_Fighting = fighting;
 	}
 	
 	float ShortestAngle(float a, float b)
@@ -138,7 +142,7 @@ class eAICommandMove extends eAICommandBase
 				case TURN_STATE_TURNING:
 					m_TurnTime += pDt;
 
-					if (Math.AbsFloat(m_TurnDifferenceStart - m_TurnDifference) < 5.0)
+					if (Math.AbsFloat(m_TurnDifferenceStart - m_TurnDifference) < 0.1)
 					{
 						m_Table.CallStopTurn(this);
 						
@@ -154,49 +158,56 @@ class eAICommandMove extends eAICommandBase
 			}
 
 			m_Table.SetTurnAmount(this, m_TurnDifference / 90.0);
+		}
+		else
+		{
+			m_TurnState = TURN_STATE_NONE;
+		}
 
-		} else m_TurnState = TURN_STATE_NONE;
+		PreAnim_SetFilteredHeading(-m_TurnTarget * Math.DEG2RAD, 0.1, 30.0);
 	}
 
 	override void PrePhysUpdate(float pDt)
-	{				
-		if (m_Unit.PathCount() == 0)
-		{
-			SetTargetSpeed(0.0);
-			SetTargetDirection(0.0);
-
-			return;
-		}
+	{
+		float wayPointDistance = 0.0;
+		int wayPointIndex;
+		vector wayPoint;
+		bool isFinal = true;
 
 		vector translation;
 		PrePhys_GetTranslation(translation);
 		vector position = m_Unit.ModelToWorld(translation);
-		
-		float wayPointDistance;
-		int wayPointIndex = m_Unit.FindNext(position, wayPointDistance);
-		vector wayPoint = m_Unit.PathGet(wayPointIndex);
-		wayPointDistance = vector.DistanceSq(Vector(wayPoint[0], 0, wayPoint[2]), Vector(position[0], 0, position[2]));
 
-		bool isFinal = wayPointIndex == m_Unit.PathCount() - 1;
+		SetTargetSpeed(0.0);
+		SetTargetDirection(0.0);
+
+		if (m_Unit.PathCount() != 0)
+		{
+			wayPointIndex = m_Unit.FindNext(position, wayPointDistance);
+			wayPoint = m_Unit.PathGet(wayPointIndex);
+			wayPointDistance = vector.DistanceSq(Vector(wayPoint[0], 0, wayPoint[2]), Vector(position[0], 0, position[2]));
+
+			isFinal = wayPointIndex == m_Unit.PathCount() - 1;
+		}
+
+		if (!isFinal || !m_UseAimPosition) m_AimPosition = wayPoint;
 		
-		if (!isFinal || (isFinal && wayPointDistance > 0.5))
-		{			
-			vector pathDir = m_Unit.WorldToModel(wayPoint).Normalized();
-			m_TurnDifference = pathDir.VectorToAngles()[0];
-			if (m_TurnDifference > 180.0) m_TurnDifference = m_TurnDifference - 360.0;
-			
-			m_TurnTarget = m_Unit.GetOrientation()[0] + m_TurnDifference;
+		vector pathDir = vector.Direction(position, m_AimPosition).Normalized();
+		m_Turn = m_Unit.GetOrientation()[0];
+		m_TurnTarget = pathDir.VectorToAngles()[0];
+		if (m_TurnTarget > 180.0) m_TurnTarget = m_TurnTarget - 360.0;
+
+		if (m_TurnTarget < m_Turn)
+		{
+			m_TurnDifference = m_Turn - m_TurnTarget;
 		}
 		else
 		{
-			m_TurnTarget = m_Unit.GetOrientation()[0];
-			m_TurnDifference = 0;
+			m_TurnDifference = m_TurnTarget - m_Turn;
 		}
 		
-		SetTargetSpeed(3.0);
+		int color;
 
-		int color = 0xFF000000;
-		
 		if (isFinal && wayPointDistance < 2.0)
 		{
 			color = 0xFFFF0000;
@@ -212,18 +223,20 @@ class eAICommandMove extends eAICommandBase
 			color = 0xFF0000FF;
 			SetTargetSpeed(2.0);
 		}
+		else
+		{
+			color = 0xFF000000;
+			SetTargetSpeed(3.0);
+		}
 		
 #ifndef SERVER
 		m_Unit.AddShape(Shape.CreateSphere(color, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, wayPoint, 0.05));
 #endif
 		
-		if (m_Fighting) SetSpeedLimit(0.0);
-		else if (m_Raised) SetSpeedLimit(1.0);
+		if (m_Raised) SetSpeedLimit(1.0);
 		else SetSpeedLimit(-1.0);
 
 		SetTargetDirection(0.0);
-
-		if (m_MovementSpeed > 0.1) PrePhys_SetAngles(Vector(Math.Clamp(m_TurnDifference, -45.0, 45.0) * 10.0 * pDt, 0, 0));
 	}
 
 	override bool PostPhysUpdate(float pDt)
