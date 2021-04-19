@@ -86,25 +86,6 @@ class eAICommandMove extends eAICommandBase
 	{
 		m_Raised = raised;
 	}
-	
-	float ShortestAngle(float a, float b)
-	{
-		if (a - b > 0) return a - b;
-		return b - a;
-		
-		int aa = a;
-		int bb = b;
-		
-		int phi = Math.AbsInt(aa - bb) % 360; 
-		if (phi > 180) phi = 360 - phi;
-		
-		if ((a - b >= 0 && a - b <= 180) || (a - b <=-180 && a- b>= -360))
-		{
-			return phi;
-		}
-		
-		return -phi;
-	}
 
 	override void PreAnimUpdate(float pDt)
 	{		
@@ -132,7 +113,7 @@ class eAICommandMove extends eAICommandBase
 						m_TurnTime = 0;
 						m_TurnDifferenceStart = m_TurnDifference;
 
-						m_ReevaluateTurnTime = 0.5 * (m_TurnDifferenceStart / 90.0);
+						m_ReevaluateTurnTime = (m_TurnDifferenceStart / 90.0);
 
 						m_Table.CallTurn(this);
 
@@ -142,7 +123,7 @@ class eAICommandMove extends eAICommandBase
 				case TURN_STATE_TURNING:
 					m_TurnTime += pDt;
 
-					if (Math.AbsFloat(m_TurnDifferenceStart - m_TurnDifference) < 0.1)
+					if (Math.AbsFloat(m_TurnDifferenceStart - m_TurnDifference) / pDt < 0.1)
 					{
 						m_Table.CallStopTurn(this);
 						
