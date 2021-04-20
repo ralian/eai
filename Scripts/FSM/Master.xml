@@ -30,7 +30,7 @@
 		</state>
 		<state name="Traverse">
 			<variables>
-				<variable name="path" type="autoptr array<vector>" />
+				<variable name="path" type="array<vector>" />
 				<variable name="behaviour" type="eAIWaypointBehavior" />
 				<variable name="backtracking" type="bool" />
 				<variable name="index" type="int" />

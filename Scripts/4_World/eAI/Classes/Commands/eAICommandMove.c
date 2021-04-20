@@ -26,6 +26,7 @@ class eAICommandMove extends eAICommandBase
 	
 	private bool m_Raised;
 	
+	private float m_SpeedUpdateTime;
 	private float m_MovementSpeed;
 	private float m_TargetSpeed;
 	private float m_SpeedLimit;
@@ -74,6 +75,9 @@ class eAICommandMove extends eAICommandBase
 	
 	void SetTargetSpeed(float target)
 	{
+		if (m_TargetSpeed > target && m_SpeedUpdateTime < 1.0) return;
+
+		m_SpeedUpdateTime = 0;
 		m_TargetSpeed = target;
 	}
 
@@ -88,7 +92,8 @@ class eAICommandMove extends eAICommandBase
 	}
 
 	override void PreAnimUpdate(float pDt)
-	{		
+	{
+		m_SpeedUpdateTime += pDt;
 		m_MovementDirection += Math.Clamp((m_TargetMovementDirection - m_MovementDirection) * pDt, -180.0, 180.0);
 
 		m_MovementSpeed = m_TargetSpeed;
