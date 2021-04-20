@@ -54,6 +54,9 @@ class eAIBase extends PlayerBase
 	private bool m_eAI_AimDirection_Recalculate;
 	
 	private bool m_WeaponRaised;
+	private bool m_WeaponRaisedPrev;
+	private float m_WeaponRaisedTimer;
+
 	private bool m_AimChangeState;
     
     // Path Finding
@@ -143,15 +146,17 @@ class eAIBase extends PlayerBase
 		if (!IsRaised()) return false;
 		
 		// This check is to see if a friendly happens to be in the line of fire
+		/*
 		vector hitPos;
 		int contactComponent;
 		EntityAI hitPlayer;
 		if (weap.Hitscan(hitPlayer, hitPos, contactComponent) && !PlayerIsEnemy(hitPlayer)) return false;
-		
+		*/
+
 		return true;
 	}
 	
-	void DryFire()
+	void FireWeapon()
 	{
 		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
 		if (weap)
@@ -289,6 +294,11 @@ class eAIBase extends PlayerBase
 	array<eAITarget> GetTargets()
 	{
 		return m_eAI_Targets;
+	}
+
+	int TargetCount()
+	{
+		return m_eAI_Targets.Count();
 	}
 
 	eAITarget GetTarget(int index = 0)
@@ -768,7 +778,7 @@ class eAIBase extends PlayerBase
 			{
 				hcm.SetRaised(m_WeaponRaised);
 
-				hcm.SetAimPosition(true, m_eAI_AimPosition_WorldSpace);
+				hcm.SetAimPosition(m_WeaponRaised, m_eAI_AimPosition_WorldSpace);
 
 				return;
 			}
@@ -863,10 +873,23 @@ class eAIBase extends PlayerBase
 		float targetLR = 0.0;
 		float targetUD = 0.0;
 
-		if (m_WeaponRaised)
+		if (m_WeaponRaised && m_WeaponRaised != m_WeaponRaisedPrev)
+		{
+			m_WeaponRaisedTimer = 0.0;
+		}
+
+		m_WeaponRaisedPrev = m_WeaponRaised;
+		m_WeaponRaisedTimer += pDt;
+
+		if (IsRaised())
 		{
 			targetLR = m_eAI_AimDirection_ModelSpace.VectorToAngles()[0];
 			targetUD = m_eAI_AimDirection_ModelSpace.VectorToAngles()[1];
+
+			//TODO: perform a raycast and get the offset based on distance like vanilla dayz. Further away, the less the offset needs to be.
+			targetLR -= 9.0;
+			targetUD -= 0.0;
+
 			if (targetLR > 180.0) targetLR = targetLR - 360.0;
 			if (targetUD > 180.0) targetUD = targetUD - 360.0;
 		}
@@ -1017,7 +1040,7 @@ class eAIBase extends PlayerBase
 	
 	override bool IsRaised()
 	{
-		return m_WeaponRaised;
+		return m_WeaponRaised && m_WeaponRaisedTimer > 0.3;
 	}
 	
 	// @param LookWS a position in WorldSpace to look at

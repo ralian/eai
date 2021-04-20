@@ -207,6 +207,11 @@ class eAITargetInformation
         Remove(group_id);
     }
 
+    void RemoveFromAll()
+    {
+        foreach (int id, eAITarget target : m_Groups) Remove(id);
+    }
+
 	/**
 	 * @brief Checks to see if any group/ai is currently targetting this target
 	 *
@@ -256,14 +261,11 @@ class eAITargetInformation
     //! entity specific implementations for abstracted call in eAIEntityTargetInformation
     void OnDeath()
     {
-        // the target died, notify FSM to find a new branch and take new action
-        foreach (int id, eAITarget target : m_Groups) foreach (eAIBase ai : target.ai_list) ai.GetFSM().Start("TargetDeath");
+        RemoveFromAll();
     }
 
     void OnHit()
     {
-        // the target was hit, notify FSM to find a new branch and take new action
-        foreach (int id, eAITarget target : m_Groups) foreach (eAIBase ai : target.ai_list) ai.GetFSM().Start("TargetHit");
     }
 
     // this is really bad but unfortunately we can't reasonably mod the Object class

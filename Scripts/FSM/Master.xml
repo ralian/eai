@@ -19,7 +19,7 @@
                 return EXIT;
             </event_update>
 		</state>
-		<state name="GoingToTarget">
+		<state name="GoingToLeader">
 			<variables>
 				<variable name="time" type="float" />
 				<variable name="target" type="eAITargetInformation" />
@@ -29,10 +29,11 @@
 				<size width="150" height="40" />
 			</editor_data>
 			<event_entry>
-				unit.UseTargetting();
 			</event_entry>
 			<event_exit></event_exit>
 			<event_update>
+				unit.OverridePosition(target.GetPosition(unit));
+
 				target.Update(unit.GetGroup());
 
                 return EXIT;
@@ -126,22 +127,13 @@
 			</editor_data>
 			<event_entry>
 				time = 0;
+				
+				unit.OverridePosition(unit.GetPosition());
 
-				PGFilter filter = new PGFilter();
-
-				int inFlags = PGPolyFlags.WALK | PGPolyFlags.DOOR | PGPolyFlags.INSIDE | PGPolyFlags.JUMP_OVER;
-				int exFlags = PGPolyFlags.DISABLED | PGPolyFlags.SWIM | PGPolyFlags.SWIM_SEA | PGPolyFlags.SPECIAL | PGPolyFlags.JUMP | PGPolyFlags.CLIMB | PGPolyFlags.CRAWL | PGPolyFlags.CROUCH;
-
-				filter.SetFlags(inFlags, exFlags, PGPolyFlags.NONE);
-				filter.SetCost(PGAreaType.BUILDING, 0.0);
-				filter.SetCost(PGAreaType.TREE, 0.0);
-
-				position = unit.GetPosition();
-				GetGame().GetWorld().GetAIWorld().SampleNavmeshPosition(position, 10.0, filter, position)
-
-				unit.OverridePosition(position);
+				unit.RaiseWeapon(true);
 			</event_entry>
 			<event_exit>
+				unit.RaiseWeapon(false);
 			</event_exit>
 			<event_update>
 				time += DeltaTime;
@@ -163,11 +155,9 @@
 			<event_exit>
 				unit.StopAimArbitration();
 				unit.RaiseWeapon(false);
-
-				unit.UseTargetting();
 			</event_exit>
 			<event_update>
-				if (unit.CanFire()) unit.DryFire();
+				if (unit.CanFire()) unit.FireWeapon();
 
 				return EXIT;
             </event_update>
@@ -180,13 +170,15 @@
 				<position_destination x="0" y="0.3" />
 			</editor_data>
 			<guard>
+                if (unit.GetThreatToSelf() &gt; 0.4) return FAIL;
+
                 auto group = unit.GetGroup();
                 if (!group) return FAIL;
 
                 auto leader = group.GetLeader();
                 if (!leader) return FAIL;
 
-				// continue traversing the waypoints since we have no leader
+				// cant follow ourselves
                 if (leader == unit) return FAIL;
 
 				dst.target = group.GetTargetInformation();
@@ -201,7 +193,7 @@
             </guard>
 			<event name="" />
 			<from_state name="Idle" />
-			<to_state name="GoingToTarget" />
+			<to_state name="GoingToLeader" />
 		</transition>
 		<transition>
 			<editor_data>
@@ -209,6 +201,8 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
+                if (unit.GetThreatToSelf() &gt; 0.4) return FAIL;
+
                 auto group = unit.GetGroup();
                 if (!group) return FAIL;
 
@@ -254,29 +248,14 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-                auto group = unit.GetGroup();
-                if (group) return FAIL;
+                if (unit.TargetCount() == 0) return SUCCESS;
 
-                auto leader = group.GetLeader();
-                if (leader) return FAIL;
+                if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
 
-				auto target = group.GetTargetInformation();
-                if (target)
-				{
-					vector pos = target.GetPosition(unit);
-					if (vector.Distance(pos, unit.GetPosition()) &gt; 50.0)
-					{
-						target.RemoveAI(unit);
-						return SUCCESS;
-					}
-
-					return FAIL;
-				}
-
-                return SUCCESS;
+				return FAIL;
             </guard>
 			<event name="" />
-			<from_state name="GoingToTarget" />
+			<from_state name="GoingToLeader" />
 			<to_state name="Idle" />
 		</transition>
 		<transition>
@@ -330,7 +309,7 @@
                 return FAIL;
             </guard>
 			<event name="" />
-			<from_state name="GoingToTarget" />
+			<from_state name="Idle" />
 			<to_state name="Weapon_GoingToPosition" />
 		</transition>
 		<transition>
@@ -339,7 +318,8 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-				if (vector.Distance(unit.GetPosition(), src.position) &gt; 1.0) return FAIL;
+				//float dist = vector.Distance(unit.GetPosition(), src.position);
+				//if (dist &gt; 1.0) return FAIL;
 
 				return SUCCESS;
             </guard>
@@ -356,7 +336,7 @@
 				auto target = unit.GetTarget();
 				if (!target) return FAIL;
 
-				if (vector.Distance(unit.GetPosition(), target.GetPosition(unit)) &gt; 10.0) return SUCCESS;
+				//if (vector.Distance(unit.GetPosition(), target.GetPosition(unit)) &gt; 15.0) return SUCCESS;
 
 				return FAIL;
             </guard>

@@ -176,7 +176,12 @@ class eAICommandMove extends eAICommandBase
 			isFinal = wayPointIndex == m_Unit.PathCount() - 1;
 		}
 
-		if (!isFinal || !m_UseAimPosition) m_AimPosition = wayPoint;
+		float minFinal = 0.1;
+
+		if (!isFinal || !m_UseAimPosition || wayPointDistance > minFinal)
+		{
+			m_AimPosition = wayPoint;
+		}
 		
 		vector pathDir = vector.Direction(position, m_AimPosition).Normalized();
 		m_Turn = m_Unit.GetOrientation()[0];
@@ -194,7 +199,7 @@ class eAICommandMove extends eAICommandBase
 		
 		int color;
 
-		if (isFinal && wayPointDistance < 2.0)
+		if (isFinal && wayPointDistance < minFinal)
 		{
 			color = 0xFFFF0000;
 			SetTargetSpeed(0.0);

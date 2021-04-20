@@ -40,6 +40,11 @@ class eAIAimingProfile
 			m_Position = barrel_start;
 			m_Direction = vector.Direction(barrel_start, barrel_end).Normalized();
 
+			// fudging it back so we can shoot zombies at our face
+			//TODO: melee hit instead
+			float distance = vector.Distance(barrel_start, barrel_end) * 4.0;
+			m_Position = m_Position + (m_Direction * -distance);
+
 			return;
 		}
 
