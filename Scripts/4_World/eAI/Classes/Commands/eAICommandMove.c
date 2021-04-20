@@ -75,7 +75,7 @@ class eAICommandMove extends eAICommandBase
 	
 	void SetTargetSpeed(float target)
 	{
-		if (m_TargetSpeed > target && m_SpeedUpdateTime < 1.0) return;
+		if (m_TargetSpeed > target && target < 2.0 && m_SpeedUpdateTime < 0.1) return;
 
 		m_SpeedUpdateTime = 0;
 		m_TargetSpeed = target;
@@ -212,7 +212,7 @@ class eAICommandMove extends eAICommandBase
 		else
 		{
 			color = 0xFF000000;
-			SetTargetSpeed(3.0);
+			SetTargetSpeed(Math.Lerp(m_TargetSpeed, 3.0, pDt * 2.0));
 		}
 		
 #ifndef SERVER
