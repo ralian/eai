@@ -52,18 +52,18 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", this, SingeplayerExecutionType.Server);
     }
 	
-	// Todo we may want to make a "group manager" class
-	autoptr array<autoptr eAIGroup> m_groups = {};
-	
 	// return the group owned by leader, otherwise create a new one.
 	eAIGroup GetGroupByLeader(PlayerBase leader, bool createIfNoneExists = true) {
-		for (int i = 0; i < m_groups.Count(); i++)
-			if (m_groups[i].GetLeader() == leader)
-				return m_groups[i];
+		for (int i = 0; i < eAIGroup.GROUPS.Count(); i++) {
+			if (!eAIGroup.GROUPS[i]) continue;
+			eAIBase GrpLeader = eAIGroup.GROUPS[i].GetLeader();
+			if (GrpLeader && GrpLeader == leader)
+				return eAIGroup.GROUPS[i];
+		}
 		
 		if (!createIfNoneExists) return null;
 		
-		eAIGroup newGroup = m_groups.Get(m_groups.Insert(new eAIGroup()));
+		eAIGroup newGroup = new eAIGroup();
 		newGroup.SetLeader(leader);
 		leader.SetGroup(newGroup);
 		return newGroup;
@@ -71,7 +71,7 @@ class eAIGame {
 	
 	//! @param owner Who is the manager of this AI
 	//! @param formOffset Where should this AI follow relative to the formation?
-	eAIBase SpawnAI_Helper(DayZPlayer owner) {
+	eAIBase SpawnAI_Helper(DayZPlayer owner, string loadout = "SoldierLoadout.json") {
 		PlayerBase pb_Human;
 		if (!Class.CastTo(pb_Human, owner)) return null;
 		
@@ -83,14 +83,12 @@ class eAIGame {
 		
 		pb_AI.SetAI(ownerGrp);
 			
-//		SoldierLoadout.Apply(pb_AI);	//or PoliceLoadout.Apply(pb_AI);
-		HumanLoadout.Apply(pb_AI, "SoldierLoadout.json");
-//		HumanLoadout.Apply(pb_AI, "PoliceLoadout.json");
+		HumanLoadout.Apply(pb_AI, loadout);
 		
 		return pb_AI;
 	}
 	
-	eAIBase SpawnAI_Sentry(vector pos) {
+	eAIBase SpawnAI_Sentry(vector pos, string loadout = "SoldierLoadout.json") {
 		eAIBase pb_AI;
 		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pos, 0, "NONE"))) return null;
 		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient);
@@ -99,12 +97,12 @@ class eAIGame {
 		
 		pb_AI.SetAI(ownerGrp);
 			
-		HumanLoadout.Apply(pb_AI, "SoldierLoadout.json");
+		HumanLoadout.Apply(pb_AI, loadout);
 				
 		return pb_AI;
 	}
 	
-	eAIBase SpawnAI_Patrol(vector pos) {
+	eAIBase SpawnAI_Patrol(vector pos, string loadout = "SoldierLoadout.json") {
 		eAIBase pb_AI;
 		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pos, 0, "NONE"))) return null;
 		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient);
@@ -113,7 +111,7 @@ class eAIGame {
 		
 		pb_AI.SetAI(ownerGrp);
 			
-		HumanLoadout.Apply(pb_AI, "SoldierLoadout.json");
+		HumanLoadout.Apply(pb_AI, loadout);
 		
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(pb_AI.RequestTransition, 10000, false, "Rejoin");
 				
@@ -171,7 +169,7 @@ class eAIGame {
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
             Print("eAI: ClearAllAI called.");
-			foreach (eAIGroup g : m_groups) {
+			foreach (eAIGroup g : eAIGroup.GROUPS) {
 				for (int i = g.Count() - 1; i > -1; i--) {
 					PlayerBase p = g.GetMember(i);
 					if (p.IsAI()) {
@@ -340,7 +338,7 @@ modded class MissionServer
 		super.InvokeOnConnect(player, identity);
 		if (identity && identity.GetId() == HeadlessClientSteamID) {
 			eAIGlobal_HeadlessClient = identity;
-			foreach (eAIGroup g : m_eaiGame.m_groups) {
+			foreach (eAIGroup g : eAIGroup.GROUPS) {
 				for (int i = 0; i < g.Count(); i++) {
 					eAIBase ai = g.GetMember(i);
 					if (ai && ai.IsAI() && ai.IsAlive())

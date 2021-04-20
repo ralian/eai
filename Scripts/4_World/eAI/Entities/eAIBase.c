@@ -63,7 +63,7 @@ modded class PlayerBase
 
 	void ~PlayerBase()
 	{
-		if (IsAI())
+		if (IsAI() && m_eAI_Group)
 		{
 			m_eAI_Group.RemoveMember(m_eAI_Group.GetIndex(this));
 		}
@@ -340,7 +340,7 @@ modded class PlayerBase
 		return m_eAI_Is;
 	}
 
-	ref eAIGroup SetAI(eAIGroup group = null)
+	eAIGroup SetAI(eAIGroup group)
 	{
 		m_eAI_Is = true;
         m_eAI_Group = group;
@@ -350,12 +350,6 @@ modded class PlayerBase
         if (m_eAI_Group)
 		{
 			m_eAI_Group.AddMember(this);
-		}
-		else
-		{
-			// We will only be using this case with AI which don't already have a group leader.
-			m_eAI_Group = new eAIGroup();
-			m_eAI_Group.SetLeader(this);
 		}
 
 		m_ActionManager = new eAIActionManager(this);
@@ -623,7 +617,7 @@ modded class PlayerBase
 		
 		if (fsmctr == 0) CleanThreats();
 		fsmctr += 1;
-		if (fsmctr > 99) fsmctr = 0;
+		if (fsmctr > 19) fsmctr = 0; // 2 times per second
 		
 		
 		GetPlayerSoundManagerServer().Update();
