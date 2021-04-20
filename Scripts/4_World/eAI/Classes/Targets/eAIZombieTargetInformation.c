@@ -1,6 +1,6 @@
 class eAIZombieTargetInformation extends eAIEntityTargetInformation
 {
-	private const float DISTANCE_COEF = 0.1;
+	private const float DISTANCE_COEF = 0.02;
 
     private ZombieBase m_Zombie;
 	private DayZInfectedInputController m_DIIP;
