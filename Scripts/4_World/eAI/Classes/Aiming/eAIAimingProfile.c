@@ -52,15 +52,15 @@ class eAIAimingProfile
 
 		if (!verify) Update();
 
-		//if (verify && GetGame().GetTime() - m_LastUpdated > 1000.0) return false;
-
-		if (verify && m_Player.GetHumanInventory().GetEntityInHands() != m_Hands) return false;
-
 		vector transform[4];
 		m_Player.GetTransform(transform);
 
 		position = m_Position.Multiply4(transform);
 		direction = m_Direction.Multiply3(transform);
+
+		//if (verify && GetGame().GetTime() - m_LastUpdated > 1000.0) return false;
+
+		if (verify && m_Player.GetHumanInventory().GetEntityInHands() != m_Hands) return false;
 
 		return true;
 	}

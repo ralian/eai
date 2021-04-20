@@ -3,8 +3,23 @@
 	<subs>
 		<!-- <file path="Weapon.xml"/> -->
 	</subs>
-	<states default="Traverse">
-		<state name="Follow">
+	<states default="Idle">
+		<state name="Idle">
+			<variables>
+			</variables>
+			<editor_data>
+				<position x="551" y="94" />
+				<size width="150" height="40" />
+			</editor_data>
+			<event_entry>
+				unit.UseTargetting();
+			</event_entry>
+			<event_exit></event_exit>
+			<event_update>
+                return EXIT;
+            </event_update>
+		</state>
+		<state name="GoingToTarget">
 			<variables>
 				<variable name="time" type="float" />
 				<variable name="target" type="eAITargetInformation" />
@@ -18,17 +33,12 @@
 			</event_entry>
 			<event_exit></event_exit>
 			<event_update>
-                time += DeltaTime;
-                if (time &gt; 0.25)
-				{
-					target.Update(unit.GetGroup());
-					time = 0;
-				}
+				target.Update(unit.GetGroup());
 
                 return EXIT;
             </event_update>
 		</state>
-		<state name="Traverse">
+		<state name="TraversingWaypoints">
 			<variables>
 				<variable name="path" type="array<vector>" />
 				<variable name="behaviour" type="eAIWaypointBehavior" />
@@ -81,7 +91,7 @@
                 return EXIT;
             </event_update>
 		</state>
-		<state name="Reload">
+		<state name="Weapon_Reloading">
 			<variables>
 				<variable name="magazine" type="EntityAI" />
 				<variable name="weapon" type="EntityAI" />
@@ -105,7 +115,41 @@
                 return EXIT;
             </event_update>
 		</state>
-		<state name="Fire">
+		<state name="Weapon_GoingToPosition">
+			<variables>
+				<variable name="time" type="float" />
+				<variable name="position" type="vector" />
+			</variables>
+			<editor_data>
+				<position x="333" y="374" />
+				<size width="150" height="40" />
+			</editor_data>
+			<event_entry>
+				time = 0;
+
+				PGFilter filter = new PGFilter();
+
+				int inFlags = PGPolyFlags.WALK | PGPolyFlags.DOOR | PGPolyFlags.INSIDE | PGPolyFlags.JUMP_OVER;
+				int exFlags = PGPolyFlags.DISABLED | PGPolyFlags.SWIM | PGPolyFlags.SWIM_SEA | PGPolyFlags.SPECIAL | PGPolyFlags.JUMP | PGPolyFlags.CLIMB | PGPolyFlags.CRAWL | PGPolyFlags.CROUCH;
+
+				filter.SetFlags(inFlags, exFlags, PGPolyFlags.NONE);
+				filter.SetCost(PGAreaType.BUILDING, 0.0);
+				filter.SetCost(PGAreaType.TREE, 0.0);
+
+				position = unit.GetPosition();
+				GetGame().GetWorld().GetAIWorld().SampleNavmeshPosition(position, 10.0, filter, position)
+
+				unit.OverridePosition(position);
+			</event_entry>
+			<event_exit>
+			</event_exit>
+			<event_update>
+				time += DeltaTime;
+
+				return EXIT;
+            </event_update>
+		</state>
+		<state name="Weapon_Firing">
 			<variables>
 			</variables>
 			<editor_data>
@@ -115,8 +159,6 @@
 			<event_entry>
 				unit.RaiseWeapon(true);
 				unit.UpdateAimArbitration();
-
-				unit.OverridePosition(unit.GetPosition());
 			</event_entry>
 			<event_exit>
 				unit.StopAimArbitration();
@@ -158,8 +200,8 @@
                 return SUCCESS;
             </guard>
 			<event name="" />
-			<from_state name="Traverse" />
-			<to_state name="Follow" />
+			<from_state name="Idle" />
+			<to_state name="GoingToTarget" />
 		</transition>
 		<transition>
 			<editor_data>
@@ -179,140 +221,11 @@
 				auto target = group.GetTargetInformation();
                 if (!target) return SUCCESS;
 
-                vector pos = target.GetPosition(unit);
-                if (vector.Distance(pos, unit.GetPosition()) &gt; 50.0)
-				{
-					target.RemoveAI(unit);
-					return SUCCESS;
-				}
-
-                return FAIL;
+                return SUCCESS;
             </guard>
 			<event name="" />
-			<from_state name="Follow" />
-			<to_state name="Traverse" />
-		</transition>
-		<transition>
-			<editor_data>
-				<position_source x="0" y="0.7" />
-				<position_destination x="1" y="0.7" />
-			</editor_data>
-			<guard>
-				Weapon weapon_in_hands;
-				if (!Class.CastTo(weapon_in_hands, unit.GetItemInHands())) return FAIL;
-
-				int mi = weapon_in_hands.GetCurrentMuzzle();
-				Magazine mag = weapon_in_hands.GetMagazine(mi);
-				if (mag &amp;&amp; mag.GetAmmoCount() &gt; 0) return FAIL;
-
-				dst.magazine = unit.GetMagazineToReload(weapon_in_hands);
-				dst.weapon = weapon_in_hands;
-				if (!dst.magazine || !dst.weapon) return FAIL;
-
-				// don't move to the state if the action manager can't be initiated.
-				if (!unit.GetActionManager() || unit.GetActionManager().GetRunningAction()) return FAIL;
-				
-				return SUCCESS;
-            </guard>
-			<event name="" />
-			<from_state name="Follow" />
-			<to_state name="Reload" />
-		</transition>
-		<transition>
-			<editor_data>
-				<position_source x="0" y="0.7" />
-				<position_destination x="1" y="0.7" />
-			</editor_data>
-			<guard>
-				Weapon weapon_in_hands;
-				if (!Class.CastTo(weapon_in_hands, unit.GetItemInHands())) return FAIL;
-
-				int mi = weapon_in_hands.GetCurrentMuzzle();
-				Magazine mag = weapon_in_hands.GetMagazine(mi);
-				if (mag &amp;&amp; mag.GetAmmoCount() &gt; 0) return FAIL;
-
-				dst.magazine = unit.GetMagazineToReload(weapon_in_hands);
-				dst.weapon = weapon_in_hands;
-				if (!dst.magazine || !dst.weapon) return FAIL;
-
-				// don't move to the state if the action manager can't be initiated.
-				if (!unit.GetActionManager() || unit.GetActionManager().GetRunningAction()) return FAIL;
-				
-				return SUCCESS;
-            </guard>
-			<event name="" />
-			<from_state name="Fire" />
-			<to_state name="Reload" />
-		</transition>
-		<transition>
-			<editor_data>
-				<position_source x="0" y="0.7" />
-				<position_destination x="1" y="0.7" />
-			</editor_data>
-			<guard>
-                if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
-
-                return FAIL;
-            </guard>
-			<event name="" />
-			<from_state name="Traverse" />
-			<to_state name="Fire" />
-		</transition>
-		<transition>
-			<editor_data>
-				<position_source x="0" y="0.7" />
-				<position_destination x="1" y="0.7" />
-			</editor_data>
-			<guard>
-                if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
-
-                return FAIL;
-            </guard>
-			<event name="" />
-			<from_state name="Follow" />
-			<to_state name="Fire" />
-		</transition>
-		<transition>
-			<editor_data>
-				<position_source x="0" y="0.7" />
-				<position_destination x="1" y="0.7" />
-			</editor_data>
-			<guard>
-                if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
-
-                return FAIL;
-            </guard>
-			<event name="" />
-			<from_state name="Reload" />
-			<to_state name="Fire" />
-		</transition>
-		<transition>
-			<editor_data>
-				<position_source x="0" y="0.7" />
-				<position_destination x="1" y="0.7" />
-			</editor_data>
-			<guard>
-                if (unit.GetThreatToSelf() &lt; 0.4) return SUCCESS;
-
-                return FAIL;
-            </guard>
-			<event name="" />
-			<from_state name="Fire" />
-			<to_state name="Follow" />
-		</transition>
-		<transition>
-			<editor_data>
-				<position_source x="0" y="0.7" />
-				<position_destination x="1" y="0.7" />
-			</editor_data>
-			<guard>
-                if (unit.GetThreatToSelf() &lt; 0.4) return SUCCESS;
-
-                return FAIL;
-            </guard>
-			<event name="" />
-			<from_state name="Fire" />
-			<to_state name="Traverse" />
+			<from_state name="Idle" />
+			<to_state name="TraversingWaypoints" />
 		</transition>
 		<transition>
 			<editor_data>
@@ -321,19 +234,163 @@
 			</editor_data>
 			<guard>
                 auto group = unit.GetGroup();
-                if (!group) return FAIL;
+                if (group) return FAIL;
 
                 auto leader = group.GetLeader();
-                if (!leader) return FAIL;
+                if (leader) return FAIL;
 
-				// we are the leader so we traverse the waypoints
-                if (leader == unit) return FAIL;
+				auto target = group.GetTargetInformation();
+                if (target) return FAIL;
 
                 return SUCCESS;
             </guard>
 			<event name="" />
-			<from_state name="Reload" />
-			<to_state name="Follow" />
+			<from_state name="TraversingWaypoints" />
+			<to_state name="Idle" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+                auto group = unit.GetGroup();
+                if (group) return FAIL;
+
+                auto leader = group.GetLeader();
+                if (leader) return FAIL;
+
+				auto target = group.GetTargetInformation();
+                if (target)
+				{
+					vector pos = target.GetPosition(unit);
+					if (vector.Distance(pos, unit.GetPosition()) &gt; 50.0)
+					{
+						target.RemoveAI(unit);
+						return SUCCESS;
+					}
+
+					return FAIL;
+				}
+
+                return SUCCESS;
+            </guard>
+			<event name="" />
+			<from_state name="GoingToTarget" />
+			<to_state name="Idle" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+				Weapon weapon_in_hands;
+				if (!Class.CastTo(weapon_in_hands, unit.GetItemInHands())) return FAIL;
+
+				int mi = weapon_in_hands.GetCurrentMuzzle();
+				Magazine mag = weapon_in_hands.GetMagazine(mi);
+				if (mag &amp;&amp; mag.GetAmmoCount() &gt; 0) return FAIL;
+
+				dst.magazine = unit.GetMagazineToReload(weapon_in_hands);
+				dst.weapon = weapon_in_hands;
+				if (!dst.magazine || !dst.weapon) return FAIL;
+
+				// don't move to the state if the action manager can't be initiated.
+				if (!unit.GetActionManager() || unit.GetActionManager().GetRunningAction()) return FAIL;
+				
+				return SUCCESS;
+            </guard>
+			<event name="" />
+			<from_state name="" />
+			<to_state name="Weapon_Reloading" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+                if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
+
+                return FAIL;
+            </guard>
+			<event name="" />
+			<from_state name="TraversingWaypoints" />
+			<to_state name="Weapon_GoingToPosition" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+                if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
+
+                return FAIL;
+            </guard>
+			<event name="" />
+			<from_state name="GoingToTarget" />
+			<to_state name="Weapon_GoingToPosition" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+				if (vector.Distance(unit.GetPosition(), src.position) &gt; 1.0) return FAIL;
+
+				return SUCCESS;
+            </guard>
+			<event name="" />
+			<from_state name="Weapon_GoingToPosition" />
+			<to_state name="Weapon_Firing" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+				auto target = unit.GetTarget();
+				if (!target) return FAIL;
+
+				if (vector.Distance(unit.GetPosition(), target.GetPosition(unit)) &gt; 10.0) return SUCCESS;
+
+				return FAIL;
+            </guard>
+			<event name="" />
+			<from_state name="Weapon_Firing" />
+			<to_state name="Weapon_GoingToPosition" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+                if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
+
+                return FAIL;
+            </guard>
+			<event name="" />
+			<from_state name="Weapon_Reloading" />
+			<to_state name="Weapon_GoingToPosition" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+                if (unit.GetThreatToSelf() &lt; 0.4) return SUCCESS;
+
+                return FAIL;
+            </guard>
+			<event name="" />
+			<from_state name="Weapon_Firing" />
+			<to_state name="Idle" />
 		</transition>
 		<transition>
 			<editor_data>
@@ -344,8 +401,8 @@
                 return SUCCESS;
             </guard>
 			<event name="" />
-			<from_state name="Reload" />
-			<to_state name="Traverse" />
+			<from_state name="Weapon_Reloading" />
+			<to_state name="Idle" />
 		</transition>
 	</transitions>
 </hfsm>

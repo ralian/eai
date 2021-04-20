@@ -232,7 +232,7 @@ class eAIHFSM
 		for (int i = 0; i < count; ++i)
 		{
 			auto t = m_Transitions.Get(i);
-			if (t.GetSource() == curr_state && (e == "" || (e != "" && t.GetEvent() == e)))
+			if ((t.GetSource() == curr_state || t.GetSource() == null) && (e == "" || (e != "" && t.GetEvent() == e)))
 			{
 				int guard = t.Guard();
                 switch (guard)

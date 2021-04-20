@@ -79,6 +79,9 @@ modded class Weapon_Base
 		if (!ai.GetAimingProfile().Get(position, direction))
 		{
 			Print("Data invalid.");
+
+			hitPosition = position;
+
 			return false;
 		}
 
@@ -92,8 +95,10 @@ modded class Weapon_Base
 		
 		if (hit && results.Count() > 0)
 		{
-			return Class.CastTo(entity, results[0]);
+			if (Class.CastTo(entity, results[0])) return true;
 		}
+
+		hitPosition = begin_point;
 
 		return false;
 	}
@@ -108,7 +113,9 @@ modded class Weapon_Base
 		EntityAI entity;
 		vector hitPosition;
 		int contactComponent;
-		if (Hitscan(entity, hitPosition, contactComponent))
+		bool hit = Hitscan(entity, hitPosition, contactComponent);
+
+		if (hit)
 		{
 			string componentName = entity.GetActionComponentName(contactComponent, "fire");
 			string damageZone = "";

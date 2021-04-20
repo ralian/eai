@@ -291,6 +291,11 @@ class eAIBase extends PlayerBase
 		return m_eAI_Targets;
 	}
 
+	eAITarget GetTarget(int index = 0)
+	{
+		return m_eAI_Targets[index];
+	}
+
 	void OnAddTarget(eAITarget target)
 	{
 		m_eAI_Targets.Insert(target);
@@ -470,7 +475,7 @@ class eAIBase extends PlayerBase
 			int min_idx = i; 
 			for (int j = i + 1; j < m_eAI_Targets.Count(); j++) 
 			{
-				if (m_eAI_Targets[j].GetThreat(this) > m_eAI_Targets[min_idx].GetThreat(this)) 
+				if (m_eAI_Targets[j] && m_eAI_Targets[min_idx] && m_eAI_Targets[j].GetThreat(this) > m_eAI_Targets[min_idx].GetThreat(this)) 
 				{
 					min_idx = j;	
 				}
@@ -479,10 +484,11 @@ class eAIBase extends PlayerBase
 			m_eAI_Targets.SwapItems(min_idx, i);
 		}
 
-		//for (i = 0; i < m_eAI_Targets.Count(); i++) 
-		//{
-		//	Print("m_eAI_Targets[" + i + "] entity = " + m_eAI_Targets[i].GetEntity() + " threat = " + m_eAI_Targets[i].GetThreat(this));
-		//}
+		for (i = m_eAI_Targets.Count() - 1; i >= 0; i--) 
+		{
+			if (m_eAI_Targets[i] == null) m_eAI_Targets.Remove(i);
+			//Print("m_eAI_Targets[" + i + "] entity = " + m_eAI_Targets[i].GetEntity() + " threat = " + m_eAI_Targets[i].GetThreat(this));
+		}
 	}
 
 	eAICommandMove GetCommand_MoveAI()
