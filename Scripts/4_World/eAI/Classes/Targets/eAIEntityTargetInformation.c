@@ -16,11 +16,6 @@ class eAIEntityTargetInformation extends eAITargetInformation
     {
         return m_Target.GetPosition();
     }
-
-    override float GetDistance(eAIBase ai)
-    {
-        return vector.Distance(ai.GetPosition(), m_Target.GetPosition());
-    }
 };
 
 class eAIEntity<Class T>

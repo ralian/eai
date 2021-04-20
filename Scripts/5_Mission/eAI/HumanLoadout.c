@@ -7,23 +7,23 @@ class HumanLoadout {
 	ref TStringArray Headgear = {"BaseballCap_Blue"};
 	ref TStringArray Gloves = {"SurgicalGloves_Blue"};	
 	ref TStringArray Misc = {"CivilianBelt"};																			
-	ref TIntArray	 ClothesHealth = {10,100}; 						//Item health given. 10%->100%
+	ref TIntArray	 ClothesHealth = {75,100}; 						//Item health given. 75%->100%
 	
 	ref TStringArray WeaponMelee = {"MeleeBat"}; 	
-	ref TStringArray WeaponRifle = {"Ruger1022"}; 	
+	ref TStringArray WeaponRifle = {"M4A1", "SVD", "AKM"}; 	
 	ref TIntArray	 WeaponRifleMagCount = {1,3};
 	
 	ref TStringArray WeaponHandgun = {"MakarovIJ70"}; 		
 	ref TIntArray	 WeaponHandgunMagCount = {1,3}; 	
-	ref TIntArray	 WeaponHealth = {10,100}; 						//Weapon health given. 10%->100%
+	ref TIntArray	 WeaponHealth = {75,100}; 						//Weapon health given. 75%->100%
 
 	ref TStringArray Loot = {"SodaCan_Cola"};  						//These are added always
 	ref TStringArray LootRandom = {"Screwdriver"};  				//Added with a LootRandomChance%
 //	ref TIntSet	 	 LootRandomChance = {30};						//Add item from Loot array
-	ref TIntArray	 LootHealth = {10,100}; 						//Item health given. 10%->100%
+	ref TIntArray	 LootHealth = {75,100}; 						//Item health given. 75%->100%
 		
 	//---------------------
-	static string LoadoutSaveDir = "$profile:";
+	static string LoadoutSaveDir = "$profile:eAI/";
 	static string LoadoutDataDir = "eAI/Scripts/Data/Loadout/";
 	//---------------------
 	
@@ -151,8 +151,8 @@ class HumanLoadout {
 		string LoadoutFileName = LoadoutSaveDir + FileName;
 		string LoadoutDefaultFileName = LoadoutDataDir + FileName;
 		
-        ref HumanLoadout data = new ref HumanLoadout;
-        Print("HumanLoadout: LoadData: Looking for " + FileName);
+        ref HumanLoadout data = new HumanLoadout();
+        Print("HumanLoadout: LoadData: Looking for " + LoadoutFileName);
 
         if (!FileExist(LoadoutFileName))
         {
