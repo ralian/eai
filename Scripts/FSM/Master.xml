@@ -210,8 +210,6 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-				if (dst.group.GetFormationState() != eAIGroupFormationState.IN) return SUCCESS;
-
                 if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
 
 				return FAIL;
@@ -226,6 +224,9 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
+                auto group = unit.GetGroup();
+				if (group &amp;&amp; group.GetFormationState() != eAIGroupFormationState.IN) return SUCCESS;
+				
                 if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
 
 				return FAIL;
