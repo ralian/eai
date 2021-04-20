@@ -19,10 +19,9 @@
                 return EXIT;
             </event_update>
 		</state>
-		<state name="GoingToLeader">
+		<state name="FollowFormation">
 			<variables>
-				<variable name="time" type="float" />
-				<variable name="target" type="eAITargetInformation" />
+				<variable name="group" type="eAIGroup" />
 			</variables>
 			<editor_data>
 				<position x="551" y="94" />
@@ -32,9 +31,7 @@
 			</event_entry>
 			<event_exit></event_exit>
 			<event_update>
-				unit.OverridePosition(target.GetPosition(unit));
-
-				target.Update(unit.GetGroup());
+				unit.OverridePosition(group.GetFormationPosition(unit));
 
                 return EXIT;
             </event_update>
@@ -172,28 +169,19 @@
 			<guard>
                 if (unit.GetThreatToSelf() &gt; 0.4) return FAIL;
 
-                auto group = unit.GetGroup();
-                if (!group) return FAIL;
+                dst.group = unit.GetGroup();
+                if (!dst.group) return FAIL;
 
-                auto leader = group.GetLeader();
-                if (!leader) return FAIL;
+				if (dst.group.GetFormationState() != eAIGroupFormationState.IN) return FAIL;
 
-				// cant follow ourselves
-                if (leader == unit) return FAIL;
-
-				dst.target = group.GetTargetInformation();
-                if (!dst.target) return FAIL;
-
-                vector pos = dst.target.GetPosition(unit);
-                if (vector.Distance(pos, unit.GetPosition()) &gt; 50.0) return FAIL;
-
-				dst.target.AddAI(unit);
+                auto leader = dst.group.GetLeader();
+                if (!leader || leader == unit) return FAIL;
 
                 return SUCCESS;
             </guard>
 			<event name="" />
 			<from_state name="Idle" />
-			<to_state name="GoingToLeader" />
+			<to_state name="FollowFormation" />
 		</transition>
 		<transition>
 			<editor_data>
@@ -206,16 +194,11 @@
                 auto group = unit.GetGroup();
                 if (!group) return FAIL;
 
-                auto leader = group.GetLeader();
-                if (!leader) return SUCCESS;
-
 				// we are the leader so we traverse the waypoints
-                if (leader == unit) return SUCCESS;
+                auto leader = group.GetLeader();
+                if (leader &amp;&amp; leader != unit) return FAIL;
 
-				auto target = group.GetTargetInformation();
-                if (!target) return SUCCESS;
-
-                return SUCCESS;
+                return FAIL;
             </guard>
 			<event name="" />
 			<from_state name="Idle" />
@@ -227,16 +210,11 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-                auto group = unit.GetGroup();
-                if (group) return FAIL;
+				if (dst.group.GetFormationState() != eAIGroupFormationState.IN) return SUCCESS;
 
-                auto leader = group.GetLeader();
-                if (leader) return FAIL;
+                if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
 
-				auto target = group.GetTargetInformation();
-                if (target) return FAIL;
-
-                return SUCCESS;
+				return FAIL;
             </guard>
 			<event name="" />
 			<from_state name="TraversingWaypoints" />
@@ -248,14 +226,12 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-                if (unit.TargetCount() == 0) return SUCCESS;
-
                 if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
 
 				return FAIL;
             </guard>
 			<event name="" />
-			<from_state name="GoingToLeader" />
+			<from_state name="FollowFormation" />
 			<to_state name="Idle" />
 		</transition>
 		<transition>

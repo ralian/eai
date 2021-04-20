@@ -43,30 +43,13 @@ class eAIGame
 		if (GetGame().IsClient()) m_AimingManager.Update(pDt);
 	}
 	
-	// Todo we may want to make a "group manager" class
-	autoptr array<autoptr eAIGroup> m_groups = {};
-	
-	// return the group owned by leader, otherwise create a new one.
-	eAIGroup GetGroupByLeader(PlayerBase leader, bool createIfNoneExists = true) {
-		for (int i = 0; i < m_groups.Count(); i++)
-			if (m_groups[i].GetLeader() == leader)
-				return m_groups[i];
-		
-		if (!createIfNoneExists) return null;
-		
-		eAIGroup newGroup = m_groups.Get(m_groups.Insert(new eAIGroup()));
-		newGroup.SetLeader(leader);
-		leader.SetGroup(newGroup);
-		return newGroup;
-	}
-	
 	//! @param owner Who is the manager of this AI
 	//! @param formOffset Where should this AI follow relative to the formation?
 	eAIBase SpawnAI_Helper(DayZPlayer owner) {
 		PlayerBase pb_Human;
 		if (!Class.CastTo(pb_Human, owner)) return null;
 		
-		eAIGroup ownerGrp = GetGroupByLeader(pb_Human);
+		eAIGroup ownerGrp = eAIGroup.GetGroupByLeader(pb_Human);
 
 		eAIBase pb_AI;
 		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, GetRandomAI(), pb_Human.GetPosition(), 0, "NONE"))) return null;
@@ -86,7 +69,7 @@ class eAIGame
 		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, GetRandomAI(), pos, 0, "NONE"))) return null;
 		if (eAIGlobal_HeadlessClient && eAIGlobal_HeadlessClient.GetIdentity()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
 		
-		eAIGroup ownerGrp = GetGroupByLeader(pb_AI);
+		eAIGroup ownerGrp = eAIGroup.GetGroupByLeader(pb_AI);
 		
 		pb_AI.SetAI(ownerGrp);
 			
@@ -100,7 +83,7 @@ class eAIGame
 		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, GetRandomAI(), pos, 0, "NONE"))) return null;
 		if (eAIGlobal_HeadlessClient && eAIGlobal_HeadlessClient.GetIdentity()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
 		
-		eAIGroup ownerGrp = GetGroupByLeader(pb_AI);
+		eAIGroup ownerGrp = eAIGroup.GetGroupByLeader(pb_AI);
 		
 		pb_AI.SetAI(ownerGrp);
 			
@@ -115,8 +98,6 @@ class eAIGame
 	void SpawnEntity(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
 		Param1<DayZPlayer> data(null);
         if (!ctx.Read(data)) return;
-		
-		if (IsMissionOffline()) data.param1 = GetGame().GetPlayer();
 		
 		if(type == CallType.Server )
 		{
@@ -163,7 +144,7 @@ class eAIGame
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
             Print("eAI: ClearAllAI called.");
-			foreach (eAIGroup g : m_groups) {
+			foreach (eAIGroup g : eAIGroup.GROUPS) {
 				for (int i = g.Count() - 1; i > -1; i--) {
 					PlayerBase p = g.GetMember(i);
 					if (p.IsAI()) {
@@ -182,7 +163,7 @@ class eAIGame
 		if(type == CallType.Server ) {
             Print("eAI: ProcessReload called.");
 			
-			eAIGroup g = GetGroupByLeader(data.param1);
+			eAIGroup g = eAIGroup.GetGroupByLeader(data.param1);
 
 			for (int i = g.Count() - 1; i > -1; i--) {
 				PlayerBase p = g.GetMember(i);
@@ -254,12 +235,8 @@ class eAIGame
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
 			Print("eAI: ReqFormRejoin called.");
-			eAIGroup g = GetGroupByLeader(data.param1);
-			for (int i = 0; i < g.Count(); i++) {
-				eAIBase ai = g.GetMember(i);
-				if (ai && ai.IsAI() && ai.IsAlive())
-					ai.RequestTransition("Rejoin");
-			}
+			eAIGroup g = eAIGroup.GetGroupByLeader(data.param1, false);
+			g.SetFormationState(eAIGroupFormationState.IN);
 		}
 	}
 	
@@ -268,12 +245,8 @@ class eAIGame
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
 			Print("eAI: ReqFormStop called.");
-			eAIGroup g = GetGroupByLeader(data.param1);
-			for (int i = 0; i < g.Count(); i++) {
-				eAIBase ai = g.GetMember(i);
-				if (ai && ai.IsAI() && ai.IsAlive())
-					ai.RequestTransition("Stop");
-			}
+			eAIGroup g = eAIGroup.GetGroupByLeader(data.param1, false);
+			g.SetFormationState(eAIGroupFormationState.NONE);
 		}
 	}
 	
@@ -282,20 +255,20 @@ class eAIGame
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
 			Print("eAI: ReqFormationChange called.");
-			eAIGroup g = GetGroupByLeader(data.param1);
+			eAIGroup g = eAIGroup.GetGroupByLeader(data.param1, false);
 			eAIFormation newForm;
 			switch (data.param2) {
 				case eAICommands.FOR_VEE:
-					newForm = new eAIFormationVee();
+					newForm = new eAIFormationVee(g);
 					break;
 				case eAICommands.FOR_FILE:
-					newForm = new eAIFormationFile();
+					newForm = new eAIFormationFile(g);
 					break;
 				case eAICommands.FOR_WALL:
-					newForm = new eAIFormationWall();
+					newForm = new eAIFormationWall(g);
 					break;
 				case eAICommands.FOR_COL:
-					newForm = new eAIFormationColumn();
+					newForm = new eAIFormationColumn(g);
 					break;
 				// no default needed here
 			}
@@ -337,18 +310,19 @@ modded class MissionServer
 	
 	override void InvokeOnConnect(PlayerBase player, PlayerIdentity identity) {
 		super.InvokeOnConnect(player, identity);
-		//if (identity && identity.GetId() == HeadlessClientSteamID) {
-		//	eAIGlobal_HeadlessClient = player;
-		//	foreach (eAIGroup g : m_eaiGame.m_groups) {
-		//		for (int i = 0; i < g.Count(); i++) {
-		//			eAIBase ai = g.GetMember(i);
-		//			if (ai && ai.IsAI() && ai.IsAlive())
-		//				GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(ai), false, identity);
-		//		}
-		//	}
-		//		
-		//} else
-		m_eaiGame.GetGroupByLeader(player);
+		
+		if (identity && identity.GetId() == HeadlessClientSteamID) {
+			eAIGlobal_HeadlessClient = player;
+			foreach (eAIGroup g : eAIGroup.GROUPS) {
+				for (int i = 0; i < g.Count(); i++) {
+					eAIBase ai = g.GetMember(i);
+					if (ai && ai.IsAI() && ai.IsAlive())
+						GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(ai), false, identity);
+				}
+			}
+		}
+		
+		eAIGroup.GetGroupByLeader(player);
 	}
 };
 

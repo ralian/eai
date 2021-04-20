@@ -5,6 +5,12 @@ enum eAIWaypointBehavior
 	REVERSE
 };
 
+enum eAIGroupFormationState
+{
+	NONE,
+	IN
+};
+
 class eAIGroup
 {
 	static autoptr array<eAIGroup> GROUPS = new array<eAIGroup>();
@@ -21,13 +27,29 @@ class eAIGroup
 	private autoptr array<DayZPlayerImplement> m_Members;
 	
 	// What formation the group should keep
-	private autoptr eAIFormation m_Form = new eAIFormationVee();
+	private autoptr eAIFormation m_Form;
 	
 	// Group identity 
 	private autoptr eAIFaction m_Faction = new eAIFactionRaiders();
 
 	private autoptr array<vector> m_Waypoints;
 	private eAIWaypointBehavior m_WaypointBehaviour = eAIWaypointBehavior.REVERSE;
+
+	private eAIGroupFormationState m_FormationState;
+	
+	// return the group owned by leader, otherwise create a new one.
+	static eAIGroup GetGroupByLeader(PlayerBase leader, bool createIfNoneExists = true)
+	{
+		for (int i = 0; i < GROUPS.Count(); i++) if (GROUPS[i].GetLeader() == leader) return GROUPS[i];
+		
+		if (!createIfNoneExists) return null;
+		
+		eAIGroup group = new eAIGroup();
+		GROUPS.Insert(group);
+		group.SetLeader(leader);
+		leader.SetGroup(group);
+		return group;
+	}
 
 	void eAIGroup()
 	{
@@ -36,6 +58,8 @@ class eAIGroup
 
 		m_IDCounter++;
 		m_ID = m_IDCounter;
+		
+		m_Form = new eAIFormationVee(this);
 
 		m_Members = new array<DayZPlayerImplement>();
 		
@@ -74,6 +98,16 @@ class eAIGroup
 	eAIWaypointBehavior GetWaypointBehaviour()
 	{
 		return m_WaypointBehaviour;
+	}
+
+	void SetFormationState(eAIGroupFormationState state)
+	{
+		m_FormationState = state;
+	}
+
+	eAIGroupFormationState GetFormationState()
+	{
+		return m_FormationState;
 	}
 	
 	eAIFaction GetFaction() {
@@ -140,7 +174,12 @@ class eAIGroup
 	{
 		ProcessTargets();
 
-		m_TargetInformation.Update(pDt);
+		m_Form.Update(pDt);
+	}
+
+	vector GetFormationPosition(eAIBase ai)
+	{
+		return m_Form.GetPosition(m_Members.Find(ai));
 	}
 
 	void SetLeader(DayZPlayerImplement leader)
