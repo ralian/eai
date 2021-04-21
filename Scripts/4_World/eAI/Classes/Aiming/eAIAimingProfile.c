@@ -42,7 +42,7 @@ class eAIAimingProfile
 
 			// fudging it back so we can shoot zombies at our face
 			//TODO: melee hit instead
-			float distance = vector.Distance(barrel_start, barrel_end) * 4.0;
+			float distance = vector.Distance(barrel_start, barrel_end) * 2.0;
 			m_Position = m_Position + (m_Direction * -distance);
 
 			return;
@@ -65,7 +65,7 @@ class eAIAimingProfile
 
 		//if (verify && GetGame().GetTime() - m_LastUpdated > 1000.0) return false;
 
-		if (verify && m_Player.GetHumanInventory().GetEntityInHands() != m_Hands) return false;
+		//if (verify && m_Player.GetHumanInventory().GetEntityInHands() != m_Hands) return false;
 
 		return true;
 	}

@@ -887,7 +887,7 @@ class eAIBase extends PlayerBase
 			targetUD = m_eAI_AimDirection_ModelSpace.VectorToAngles()[1];
 
 			//TODO: perform a raycast and get the offset based on distance like vanilla dayz. Further away, the less the offset needs to be.
-			targetLR -= 9.0;
+			targetLR -= 0.0;
 			targetUD -= 0.0;
 
 			if (targetLR > 180.0) targetLR = targetLR - 360.0;
