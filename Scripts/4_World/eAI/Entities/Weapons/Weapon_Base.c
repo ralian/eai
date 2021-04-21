@@ -135,12 +135,12 @@ modded class Weapon_Base
 		if (Class.CastTo(ai, e.m_player))
 		{
 			/* THIS SHOULD WORK BUT IF IT DOESN'T, REMOVE THESE 4 LINES AND UNCOMMENT THE RPC */
-			//ScriptRemoteInputUserData ctx = new ScriptRemoteInputUserData;
-			//ctx.Write(INPUT_UDT_WEAPON_REMOTE_EVENT);
-			//e.WriteToContext(ctx);
-			//ai.StoreInputForRemotes(ctx);
+			ScriptRemoteInputUserData ctx = new ScriptRemoteInputUserData;
+			ctx.Write(INPUT_UDT_WEAPON_REMOTE_EVENT);
+			e.WriteToContext(ctx);
+			ai.StoreInputForRemotes(ctx);
 
-			GetRPCManager().SendRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", new Param3<int, DayZPlayer, Magazine>(e.GetPackedType(), e.m_player, e.m_magazine));
+			//GetRPCManager().SendRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", new Param3<int, DayZPlayer, Magazine>(e.GetPackedType(), e.m_player, e.m_magazine));
 			
 			// @NOTE: synchronous events not handled by fsm
 			if (e.GetEventID() == WeaponEventID.SET_NEXT_MUZZLE_MODE)
