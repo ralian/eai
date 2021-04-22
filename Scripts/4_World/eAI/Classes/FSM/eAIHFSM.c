@@ -119,11 +119,13 @@ class eAIHFSM
 	
 	bool StartDefault()
 	{
-        Print("eAIFSM::StartDefault");
+		if (g_eAISettings.eAIDebug > 1)
+        	Print("eAIFSM::StartDefault");
 
         if (m_Running && m_CurrentState)
         {
-            Print("Exiting state: " + m_CurrentState);
+			if (g_eAISettings.eAIDebug > 1)
+            	Print("Exiting state: " + m_CurrentState);
             m_CurrentState.OnExit("", true);
 			m_LastState = m_CurrentState.GetName();
         }
@@ -132,7 +134,7 @@ class eAIHFSM
 		
         if (m_CurrentState)
         {
-            Print("Starting state: " + m_CurrentState);
+            if (g_eAISettings.eAIDebug > 1) Print("Starting state: " + m_CurrentState);
             m_CurrentState.OnEntry("");
             return true;
         }
@@ -144,11 +146,11 @@ class eAIHFSM
 
     bool Start(string e = "")
     {
-        Print("eAIFSM::Start e=" + e);
+        if (g_eAISettings.eAIDebug > 1) Print("eAIFSM::Start e=" + e);
 
         if (m_Running && m_CurrentState)
         {
-            Print("Exiting state: " + m_CurrentState);
+            if (g_eAISettings.eAIDebug > 1) Print("Exiting state: " + m_CurrentState);
             m_CurrentState.OnExit(e, true);
 			m_LastState = m_CurrentState.GetName();
         }
@@ -157,23 +159,23 @@ class eAIHFSM
 
         if (m_CurrentState)
         {
-            Print("Starting state: " + m_CurrentState);
+            if (g_eAISettings.eAIDebug > 1) Print("Starting state: " + m_CurrentState);
             m_CurrentState.OnEntry(e);
             return true;
         }
 
-        Print("No valid state found.");
+        if (g_eAISettings.eAIDebug > 0) Print("No valid state found.");
 
         return false;
     }
 
     bool Abort(string e = "")
     {
-        Print("eAIFSM::Abort e=" + e);
+        if (g_eAISettings.eAIDebug > 0) Print("eAIFSM::Abort e=" + e);
 
         if (m_Running && m_CurrentState)
         {
-            Print("Exiting state: " + m_CurrentState);
+            if (g_eAISettings.eAIDebug > 0) Print("Exiting state: " + m_CurrentState);
             m_CurrentState.OnExit(e, true);
             return true;
         }
@@ -204,7 +206,8 @@ class eAIHFSM
 
         if (new_state.param1 == null) return EXIT;
 		
-		Print("State transition " + m_LastState + " -> " + m_CurrentState.GetName());
+		if (g_eAISettings.eAIDebug > 1)
+			Print("State transition " + m_LastState + " -> " + m_CurrentState.GetName());
 
         m_CurrentState.OnEntry("");
 

@@ -317,6 +317,11 @@ modded class MissionServer
 	
 	static string HeadlessClientSteamID = "REDACTED (PUT STEAMID HERE)";
 	
+	override void EquipCharacter(MenuDefaultCharacterData char_data) {
+		super.EquipCharacter(char_data);
+		m_eaiGame.GetGroupByLeader(m_player); // This forces respawning players into a new group
+	}
+	
 	eAIGame GetEAIGame() {
 		return m_eaiGame;
 	}
@@ -331,7 +336,17 @@ modded class MissionServer
 
 		GetDayZGame().eAICreateManager();
 
-        Print( "eAI - Loaded Server Mission" );
+        Print( "eAI - Loaded Mission, Reading $profile/eAI directory" );
+		
+		MakeDirectory("$profile:eAI/");
+		
+		// load the settings
+		g_eAISettings = new eAISettings();
+		if (!FileExist("$profile:eAI/eAISettings.json")) JsonFileLoader<eAISettings>.JsonSaveFile("$profile:eAI/eAISettings.json", g_eAISettings);
+		JsonFileLoader<eAISettings>.JsonLoadFile("$profile:eAI/eAISettings.json", g_eAISettings);
+		
+		// load a default loadout, just to save the default if not exist
+		HumanLoadout Loadout = HumanLoadout.LoadData("SoldierLoadout.json");
     }
 	
 	override void InvokeOnConnect(PlayerBase player, PlayerIdentity identity) {
@@ -347,7 +362,7 @@ modded class MissionServer
 			}
 				
 		} else
-		m_eaiGame.GetGroupByLeader(player);
+		m_eaiGame.GetGroupByLeader(player); // This forces returning players into a new group
 	}
 };
 
@@ -364,6 +379,13 @@ modded class MissionGameplay
 		GetDayZGame().eAICreateManager();
 
         Print( "eAI - Loaded Client Mission" );
+		
+		MakeDirectory("$profile:eAI/");
+		
+		// load the settings
+		g_eAISettings = new eAISettings();
+		if (!FileExist("$profile:eAI/eAISettings.json")) JsonFileLoader<eAISettings>.JsonSaveFile("$profile:eAI/eAISettings.json", g_eAISettings);
+		JsonFileLoader<eAISettings>.JsonLoadFile("$profile:eAI/eAISettings.json", g_eAISettings);
     }
 	
 	override void OnUpdate(float timeslice) {

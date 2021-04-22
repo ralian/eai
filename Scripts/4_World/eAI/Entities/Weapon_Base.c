@@ -96,9 +96,9 @@ modded class Weapon_Base {
 			GetRPCManager().SendRPC("eAI", "DebugParticle", new Param2<vector, vector>(begin_point, vector.Zero));
 		
 		
-		// TODO: If we use Azumith and Inclination , we will get the benefits from server side interpolation.
+			// TODO: If we use Azumith and Inclination , we will get the benefits from server side interpolation.
 		
-		Print("Muzzle pos: " + begin_point.ToString() + " dir-pos: " + (end_point-begin_point).ToString());
+			Print("Muzzle pos: " + begin_point.ToString() + " dir-pos: " + (end_point-begin_point).ToString());
 		}
 		
 		// Prep Raycast
@@ -188,14 +188,16 @@ modded class Weapon_Base {
 			
 			// also wait, I think everyone is meant to execute this
 			ScriptRemoteInputUserData ctx = new ScriptRemoteInputUserData;
-			Print("Sending weapon event for " + e.GetEventID().ToString() + " player:" + e.m_player.ToString() + " mag:" + e.m_magazine.ToString());
+			if (g_eAISettings.eAIDebug > 1)
+				Print("Sending weapon event for " + e.GetEventID().ToString() + " player:" + e.m_player.ToString() + " mag:" + e.m_magazine.ToString());
 			GetRPCManager().SendRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", new Param3<int, DayZPlayer, Magazine>(e.GetPackedType(), e.m_player, e.m_magazine));
 			
 			// Now that the RPC is sent to the clients, we need to compute the ballistics data and see about a hit.
 			// We miiight want to do this in another thread???
 			if (CanFire() && e.GetEventID() == WeaponEventID.TRIGGER) {
 				
-				Print("Round fired by AI: " + e.m_player);
+				if (g_eAISettings.eAIDebug > 1)
+					Print("Round fired by AI: " + e.m_player);
 				
 				// Get ballistics info
 				float ammoDamage;

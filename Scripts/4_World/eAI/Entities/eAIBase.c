@@ -95,11 +95,13 @@ modded class PlayerBase
 		}
 		m_AimArbitration = true;
 		if (eAIGlobal_HeadlessClient) {
-			Print("Starting aim arbitration for " + this + " with HC");
+			if (g_eAISettings.eAIDebug > 0)
+				Print("Starting aim arbitration for " + this + " with HC");
 			GetRPCManager().SendRPC("eAI", "eAIAimArbiterStart", new Param1<Weapon_Base>(weap), false, eAIGlobal_HeadlessClient);
 			return true;
 		}
-		Print("Starting aim arbitration for " + this + " with client " + m_CurrentArbiter.GetIdentity());
+		if (g_eAISettings.eAIDebug > 0)
+			Print("Starting aim arbitration for " + this + " with client " + m_CurrentArbiter.GetIdentity());
 		GetRPCManager().SendRPC("eAI", "eAIAimArbiterStart", new Param2<Weapon_Base, int>(weap, 100), false, m_CurrentArbiter.GetIdentity());
 		return true;
 	}
@@ -113,11 +115,13 @@ modded class PlayerBase
 		}
 		m_AimArbitration = false;
 		if (eAIGlobal_HeadlessClient) {
-			Print("Stopping aim arbitration for " + this + " with HC");
+			if (g_eAISettings.eAIDebug > 0)
+				Print("Stopping aim arbitration for " + this + " with HC");
 			GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap), false, eAIGlobal_HeadlessClient);
 			return true;
 		}
-		Print("Stopping aim arbitration for " + this + " with client " + m_CurrentArbiter.GetIdentity());
+		if (g_eAISettings.eAIDebug > 0)
+			Print("Stopping aim arbitration for " + this + " with client " + m_CurrentArbiter.GetIdentity());
 		GetRPCManager().SendRPC("eAI", "eAIAimArbiterStop", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter.GetIdentity());
 		return true;
 	}
@@ -147,7 +151,8 @@ modded class PlayerBase
 		Man nearest = GetNearestPlayer();
 		if (!nearest) return false;
 		
-		Print("Refreshing aim arbitration for " + this + " current: " + m_CurrentArbiter + " closest: " + nearest);
+		if (g_eAISettings.eAIDebug > 0)
+			Print("Refreshing aim arbitration for " + this + " current: " + m_CurrentArbiter + " closest: " + nearest);
 		if (!m_CurrentArbiter || !m_CurrentArbiter.GetIdentity() || !m_CurrentArbiter.IsAlive()) {
 			m_CurrentArbiter = nearest;
 			GetRPCManager().SendRPC("eAI", "eAIAimArbiterSetup", new Param1<Weapon_Base>(weap), false, m_CurrentArbiter.GetIdentity());
@@ -169,7 +174,8 @@ modded class PlayerBase
 			return true;
 		}
 		
-		Print("Aim arbitration was refreshed, but is already running with the best client.");
+		if (g_eAISettings.eAIDebug > 0)
+			Print("Aim arbitration was refreshed, but is already running with the best client.");
 		
 		return false;
 	}
@@ -231,9 +237,11 @@ modded class PlayerBase
 	{
 		super.EEHitBy(damageResult, damageType, source, component, dmgZone, ammo, modelPos, speedCoef);
 		
-		Print("eAI: Damage registered from " + source + " type: " + damageType + " component: " + component + " datageResult: " + damageResult + " dmgZone: " + dmgZone + " modelPos: " + modelPos + " speedCoef: " + speedCoef);
+		if (g_eAISettings.eAIDebug > 1)
+			Print("eAI: Damage registered from " + source + " type: " + damageType + " component: " + component + " datageResult: " + damageResult + " dmgZone: " + dmgZone + " modelPos: " + modelPos + " speedCoef: " + speedCoef);
 		
-		Print("eAI: Damage registered from " + source);
+		if (g_eAISettings.eAIDebug > 1)
+			Print("eAI: Damage registered from " + source);
 		Weapon_Base player_weapon = Weapon_Base.Cast(source);
 		if (player_weapon) {
 			array<Object> objects = new array<Object>();
@@ -725,7 +733,8 @@ modded class PlayerBase
 	// We should integrate this into ReloadWeapon
 	void ReloadWeaponAI( EntityAI weapon, EntityAI magazine )
 	{
-		Print(this.ToString() + "(DayZPlayerInstanceType." + GetInstanceType().ToString() + ") is trying to reload " + magazine.ToString() + " into " + weapon.ToString());
+		if (g_eAISettings.eAIDebug > 0)
+			Print(this.ToString() + "(DayZPlayerInstanceType." + GetInstanceType().ToString() + ") is trying to reload " + magazine.ToString() + " into " + weapon.ToString());
 		eAIActionManager mngr_ai;
 		CastTo(mngr_ai, GetActionManager());
 		
@@ -843,7 +852,8 @@ modded class PlayerBase
 				// We'll worry about that later.
 				if (!weapon.aim.WarnedOld) {
 					weapon.aim.WarnedOld = true;
-					Print("Warning! Aim profile has gone out of date for " + weapon.ToString());
+					if (g_eAISettings.eAIDebug > 0)
+						Print("Warning! Aim profile has gone out of date for " + weapon.ToString());
 				}
 				
 				RefreshAimArbitration();

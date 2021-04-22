@@ -88,7 +88,8 @@ class HumanLoadout {
 			HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
 			item.SetHealth(item.GetMaxHealth() * HealthModifier);
 
-		Print("HumanLoadout: Added clothes");
+		if (g_eAISettings.eAIDebug > 0)
+			Print("HumanLoadout: Added clothes");
 	}
 
 	//----------------------------------------------------------------
@@ -103,7 +104,8 @@ class HumanLoadout {
 		EntityAI gun = h.GetHumanInventory().CreateInHands(weapon);
 		float HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
 		gun.SetHealth(gun.GetMaxHealth() * HealthModifier);
-		Print("HumanLoadout: Add weapon: " + weapon + " (" + HealthModifier + ")" );
+		if (g_eAISettings.eAIDebug > 0)
+			Print("HumanLoadout: Add weapon: " + weapon + " (" + HealthModifier + ")" );
 	}
 	
 	//----------------------------------------------------------------
@@ -132,7 +134,7 @@ class HumanLoadout {
 		{
 			//Maxcount probably was larger than mincount
 			count = 1;
-			Print("HumanLoadout: ERROR: Please check you Weapon___MagCount. Giving 1 mag.");
+			Print("HumanLoadout: Warning: Please check you Weapon___MagCount. Giving 1 mag.");
 		}
 		
 		for( i = 0; i < count; i++)
@@ -140,7 +142,8 @@ class HumanLoadout {
 			h.GetHumanInventory().CreateInInventory(mag);
 		}
 
-		Print("HumanLoadout: Add " + count + " of " + mag + " magazines for weapon " + weapon);
+		if (g_eAISettings.eAIDebug > 0)
+			Print("HumanLoadout: Add " + count + " of " + mag + " magazines for weapon " + weapon);
 	}
 	
 	//----------------------------------------------------------------
@@ -152,7 +155,8 @@ class HumanLoadout {
 		string LoadoutDefaultFileName = LoadoutDataDir + FileName;
 		
         ref HumanLoadout data = new HumanLoadout();
-        Print("HumanLoadout: LoadData: Looking for " + LoadoutFileName);
+		if (g_eAISettings.eAIDebug > 0)
+        	Print("HumanLoadout: LoadData: Looking for " + LoadoutFileName);
 
         if (!FileExist(LoadoutFileName))
         {
