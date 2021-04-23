@@ -29,6 +29,16 @@ class eAITargetInformation
     }
 
 	/**
+	 * @brief Abstract function. If the target is active or not. 
+	 *
+	 * @return bool
+	 */
+    bool IsActive()
+    {
+        return true;
+    }
+
+	/**
 	 * @brief Abstract function. Get the position for the AI within the target. Each AI could have their own position for the target. 
 	 *
      * @param ai null default, gets the position for the AI if specified, otherwise returns a default value
@@ -75,7 +85,7 @@ class eAITargetInformation
             return;
         }
 
-        if (target.found_at_time + target.max_time <= GetGame().GetTime())
+        if (!IsActive() || target.found_at_time + target.max_time <= GetGame().GetTime())
         {
             Remove(group_id);
         }

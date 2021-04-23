@@ -465,7 +465,7 @@ class eAIBase extends PlayerBase
 			eAITargetInformation target = eAITargetInformation.GetTargetInformation(newThreats[i]);
 			if (!target) continue;
 
-			if (newThreats[i].GetHealth() <= 0.0) continue;
+			if (!target.IsActive()) continue;
 
 			if (target.IsTargetted(m_eAI_Group)) continue;
 

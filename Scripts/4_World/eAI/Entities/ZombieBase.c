@@ -4,7 +4,12 @@ modded class ZombieBase
 
     void ZombieBase()
     {
-        m_TargetInformation = new eAIZombieTargetInformation(this);
+        m_TargetInformation = CreateTargetInformation();
+    }
+
+    protected eAITargetInformation CreateTargetInformation()
+    {
+        return new eAIZombieTargetInformation(this);
     }
 
     eAITargetInformation GetTargetInformation()

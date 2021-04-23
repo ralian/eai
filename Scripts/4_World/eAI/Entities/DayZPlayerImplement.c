@@ -6,7 +6,12 @@ modded class DayZPlayerImplement
 
     void DayZPlayerImplement()
     {
-        m_TargetInformation = new eAIEntityTargetInformation(this);
+        m_TargetInformation = CreateTargetInformation();
+    }
+
+    protected eAITargetInformation CreateTargetInformation()
+    {
+        return new eAIPlayerTargetInformation(this);
     }
 
     eAITargetInformation GetTargetInformation()
