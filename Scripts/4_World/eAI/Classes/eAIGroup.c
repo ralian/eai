@@ -35,7 +35,7 @@ class eAIGroup
 	private autoptr array<vector> m_Waypoints;
 	private eAIWaypointBehavior m_WaypointBehaviour = eAIWaypointBehavior.REVERSE;
 
-	private eAIGroupFormationState m_FormationState;
+	private eAIGroupFormationState m_FormationState = eAIGroupFormationState.IN;
 	
 	// return the group owned by leader, otherwise create a new one.
 	static eAIGroup GetGroupByLeader(PlayerBase leader, bool createIfNoneExists = true)

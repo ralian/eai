@@ -532,6 +532,12 @@ class eAIBase extends PlayerBase
 		m_eAI_TargetOverriding = eAITargetOverriding.NONE;
 	}
 
+	void OverridePath()
+	{
+		m_eAI_TargetOverriding = eAITargetOverriding.PATH;
+		m_Path.Clear();
+	}
+
 	void OverridePath(array<vector> pPath)
 	{
 		m_eAI_TargetOverriding = eAITargetOverriding.PATH;

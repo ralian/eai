@@ -12,7 +12,7 @@
 				<size width="150" height="40" />
 			</editor_data>
 			<event_entry>
-				unit.UseTargetting();
+				unit.OverridePath();
 			</event_entry>
 			<event_exit></event_exit>
 			<event_update>
