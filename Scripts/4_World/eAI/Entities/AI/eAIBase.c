@@ -462,6 +462,10 @@ class eAIBase extends PlayerBase
 			PlayerBase playerThreat;
 			if (Class.CastTo(playerThreat, newThreats[i]) && m_eAI_Group.IsMember(playerThreat)) continue;
 
+			if (newThreats[i].IsInherited(ItemBase)) continue;
+			if (newThreats[i].IsInherited(Building)) continue;
+			if (newThreats[i].IsInherited(Transport)) continue;
+
 			eAITargetInformation target = eAITargetInformation.GetTargetInformation(newThreats[i]);
 			if (!target) continue;
 
