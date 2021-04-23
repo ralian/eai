@@ -165,7 +165,6 @@ class eAIBase extends PlayerBase
 			m_MinTimeTillNextFire += Math.RandomInt(0, 300);
 
 			GetWeaponManager().Fire(weap);
-			GetInputController().OverrideAimChangeY(true, 0.0);
 		}
 	}
 	
@@ -605,10 +604,10 @@ class eAIBase extends PlayerBase
 		vector transform[4];
 		GetTransform(transform);
 
-		if (m_eAI_Targets.Count() > 0) AimAtPosition(m_eAI_Targets[0].GetPosition(this));
+		if (m_eAI_Targets.Count() > 0) AimAtPosition(m_eAI_Targets[0].GetPosition(this) + "0 1.5 0");
 
-		if (m_eAI_LookDirection_Recalculate) m_eAI_LookDirection_ModelSpace = vector.Direction(GetPosition(), m_eAI_LookPosition_WorldSpace).Normalized().InvMultiply3(transform);
-		if (m_eAI_AimDirection_Recalculate) m_eAI_AimDirection_ModelSpace = vector.Direction(GetPosition(), m_eAI_AimPosition_WorldSpace).Normalized().InvMultiply3(transform);
+		if (m_eAI_LookDirection_Recalculate) m_eAI_LookDirection_ModelSpace = vector.Direction(GetPosition() + "0 1.5 0", m_eAI_LookPosition_WorldSpace).Normalized().InvMultiply3(transform);
+		if (m_eAI_AimDirection_Recalculate) m_eAI_AimDirection_ModelSpace = vector.Direction(GetPosition() + "0 1.5 0", m_eAI_AimPosition_WorldSpace).Normalized().InvMultiply3(transform);
 
 		HumanInputController hic = GetInputController();
 		EntityAI entityInHands = GetHumanInventory().GetEntityInHands();
@@ -885,6 +884,9 @@ class eAIBase extends PlayerBase
 
 		float targetLR = 0.0;
 		float targetUD = 0.0;
+		
+		float offsetLR = 0.0;
+		float offsetUD = 0.0;
 
 		if (m_WeaponRaised && m_WeaponRaised != m_WeaponRaisedPrev)
 		{
@@ -896,17 +898,33 @@ class eAIBase extends PlayerBase
 
 		if (IsRaised())
 		{
+			#ifndef SERVER
+			vector position;
+			vector direction;
+			
+			GetAimingProfile().Get(position, direction);
+			
+			vector points[2];
+			points[0] = position;
+			points[1] = position + (direction * 500.0);
+			m_DebugShapes.Insert(Shape.CreateLines(COLOR_BLUE, ShapeFlags.VISIBLE, points, 2));
+			#endif
+
 			targetLR = m_eAI_AimDirection_ModelSpace.VectorToAngles()[0];
 			targetUD = m_eAI_AimDirection_ModelSpace.VectorToAngles()[1];
-
-			//TODO: perform a raycast and get the offset based on distance like vanilla dayz. Further away, the less the offset needs to be.
-			targetLR -= 9.0;
-			targetUD -= 0.0;
-
-			if (targetLR > 180.0) targetLR = targetLR - 360.0;
-			if (targetUD > 180.0) targetUD = targetUD - 360.0;
+			
+			float dist = vector.Distance(GetPosition() + "0 1.5 0", m_eAI_AimPosition_WorldSpace);
+			if (dist < 1.0) dist = 1.0;
+			
+			offsetLR = -15.0 / dist;
+			offsetUD = 0.0;
 		}
 		
+		targetLR += offsetLR;
+		targetUD += offsetUD;
+		
+		if (targetLR > 180.0) targetLR = targetLR - 360.0;
+		if (targetUD > 180.0) targetUD = targetUD - 360.0;
 		targetLR = Math.Clamp(targetLR, -90.0, 90.0);
 		targetUD = Math.Clamp(targetUD, -90.0, 90.0);
 

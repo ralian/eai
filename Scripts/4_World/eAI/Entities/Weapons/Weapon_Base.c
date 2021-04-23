@@ -12,60 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-WeaponEventBase CreateWeaponEventFromContextAI(int packedType, DayZPlayer player, Magazine magazine)
-{
-	WeaponEventID eventID = packedType >> 16;
-	WeaponEvents animEvent = packedType & 0x0000ffff;
-	WeaponEventBase b = WeaponEventFactory(eventID, animEvent, player, magazine);
-	//b.ReadFromContext(ctx); // currently does nothing in the bI code anyways
-	return b;
-}
-
-bool DayZPlayerInventory_OnEventForRemoteWeaponAI(int packedType, DayZPlayer player, Magazine magazine)
-{
-	PlayerBase pb = PlayerBase.Cast(player);
-	if (!pb)
-	{
-		Print("DayZPlayerInventory_OnEventForRemoteWeaponAI Callback for null PlayerBase! I am giving up, some inventory will be out of sync!");
-		return false;
-	}
-	
-	if (!pb.GetDayZPlayerInventory())
-	{
-		Error("DayZPlayerInventory_OnEventForRemoteWeaponAI Callback for " + pb + " has a broken inventory reference!");
-		return false;
-	}
-	
-	if (pb.GetDayZPlayerInventory().GetEntityInHands())
-	{
-		Weapon_Base wpn = Weapon_Base.Cast(pb.GetDayZPlayerInventory().GetEntityInHands());
-		if (wpn)
-		{
-			WeaponEventBase e = CreateWeaponEventFromContextAI(packedType, player, magazine);
-			if (pb && e)
-			{
-				pb.GetWeaponManager().SetRunning(true);
-	
-				fsmDebugSpam("[wpnfsm] " + Object.GetDebugName(wpn) + " recv event from remote: created event=" + e);
-				if (e.GetEventID() == WeaponEventID.HUMANCOMMAND_ACTION_ABORTED)
-				{
-					wpn.ProcessWeaponAbortEvent(e);
-				}
-				else
-				{
-					wpn.ProcessWeaponEvent(e);
-				}
-				pb.GetWeaponManager().SetRunning(false);
-			}
-		}
-		else
-			Error("OnEventForRemoteWeapon - entity in hands, but not weapon. item=" + pb.GetDayZPlayerInventory().GetEntityInHands());
-	}
-	else
-		Error("OnEventForRemoteWeapon - no entity in hands");
-	return true;
-}
-
 modded class Weapon_Base
 {
 	bool Hitscan(out EntityAI entity, out vector hitPosition, out int contactComponent)
@@ -134,14 +80,11 @@ modded class Weapon_Base
 		eAIBase ai;
 		if (Class.CastTo(ai, e.m_player))
 		{
-			/* THIS SHOULD WORK BUT IF IT DOESN'T, REMOVE THESE 4 LINES AND UNCOMMENT THE RPC */
 			ScriptRemoteInputUserData ctx = new ScriptRemoteInputUserData;
 			ctx.Write(INPUT_UDT_WEAPON_REMOTE_EVENT);
 			e.WriteToContext(ctx);
 			ai.StoreInputForRemotes(ctx);
 
-			//GetRPCManager().SendRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", new Param3<int, DayZPlayer, Magazine>(e.GetPackedType(), e.m_player, e.m_magazine));
-			
 			// @NOTE: synchronous events not handled by fsm
 			if (e.GetEventID() == WeaponEventID.SET_NEXT_MUZZLE_MODE)
 			{

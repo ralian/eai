@@ -34,7 +34,6 @@ class eAIGame
 		GetRPCManager().AddRPC("eAI", "ReqFormationChange", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "ReqFormRejoin", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "ReqFormStop", this, SingeplayerExecutionType.Server);
-		GetRPCManager().AddRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", this, SingeplayerExecutionType.Server);
     }
 	
 	void OnUpdate(float pDt)
@@ -190,17 +189,6 @@ class eAIGame
 			Particle p = Particle.PlayInWorld(ParticleList.DEBUG_DOT, data.param1);
 			p.SetOrientation(data.param2);			
 		}
-	}
-	
-	// Client Side: This RPC replaces a member function of DayZPlayerInventory that handles remote weapon events. I cannot override the functionality that 
-	// class, but this workaround seems to do a pretty good job.
-	void DayZPlayerInventory_OnEventForRemoteWeaponAICallback(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param3<int, DayZPlayer, Magazine> data;
-        if (!ctx.Read(data)) return;
-		//if(type == CallType.Client ) {
-			Print("Received weapon event for " + data.param1.ToString() + " player:" + data.param2.ToString() + " mag:" + data.param3.ToString());
-            DayZPlayerInventory_OnEventForRemoteWeaponAI(data.param1, data.param2, data.param3);
-		//}
 	}
 	
 	// Client Side: This RPC gets the client side transformation of a Weapon_Base, then sends some data back to server
