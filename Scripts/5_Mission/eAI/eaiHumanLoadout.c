@@ -1,5 +1,5 @@
 class HumanLoadout {	
-	static int LOADOUT_VERSION = 002;
+	static int LOADOUT_VERSION = 001;
 	
 	ref TIntArray 	 Version = {000};								//!!DO NOT CHANGE!!				
 	ref TStringArray Shirts = {"HikingJacket_Blue"};
@@ -15,12 +15,16 @@ class HumanLoadout {
 	ref TStringArray WeaponMelee = {"MeleeBat"}; 	
 	ref TStringArray WeaponRifle = {"Ruger1022"}; 	
 	ref TIntArray	 WeaponRifleMagCount = {1,3};
-	ref TStringArray WeaponAttachment = {"Ruger1022"}; 	
-	ref TIntArray    WeaponAttachmentChance = {50}; 	
+	ref TStringArray WeaponAttachment = {"any"}; 	
+	ref TStringArray WeaponOptic = {"any"}; 	
 	
 	ref TStringArray WeaponHandgun = {"MakarovIJ70"}; 		
 	ref TIntArray	 WeaponHandgunMagCount = {1,3}; 	
+	ref TStringArray WeaponHandgunAttachment = {"any"}; 	
+	ref TStringArray WeaponHandgunOptic = {"any"}; 	
+
 	ref TIntArray	 WeaponHealth = {10,100}; 						//Weapon health given. 10%->100%
+	ref TIntArray	 AttachmentHealth = {10,100}; 						//Weapon health given. 10%->100%
 
 	ref TStringArray Loot = {"SodaCan_Cola"};  						//These are added always
 	ref TStringArray LootRandom = {"Screwdriver"};  				//Added with a LootRandomChance%
@@ -51,12 +55,10 @@ class HumanLoadout {
 
 		string weapon;
 
-		weapon = Loadout.WeaponRifle.GetRandomElement();
-//		HumanLoadout.AddWeapon(h, weapon);
-		HumanLoadout.AddWeapon(h, weapon, Loadout.WeaponHealth[0], Loadout.WeaponHealth[1]);
+		HumanLoadout.AddWeapon(h, Loadout);
 		HumanLoadout.AddMagazine(h, weapon, Loadout.WeaponRifleMagCount[0], Loadout.WeaponRifleMagCount[1]);
 		weapon = Loadout.WeaponHandgun.GetRandomElement();
-		HumanLoadout.AddWeapon(h, weapon, Loadout.WeaponHealth[0], Loadout.WeaponHealth[1]);
+		HumanLoadout.AddWeapon(h, Loadout, weapon);
 		HumanLoadout.AddMagazine(h, weapon, Loadout.WeaponHandgunMagCount[0], Loadout.WeaponHandgunMagCount[1]);
 
 		HumanLoadout.AddLoot(h, Loadout);		
@@ -130,13 +132,23 @@ class HumanLoadout {
 	//
 	//	Adds a weapon to AI. First weapon is put to hands. The rest go to inventory.
 	//
-	//	Usage: HumanLoadout.AddWeapon(pb_AI, "AKM");			//A pristine AKM is added
-	//	       HumanLoadout.AddWeapon(pb_AI, "AKM", 10, 80);	//An AKM with 10%-80% health
+	//	Usage: HumanLoadout.AddWeapon(pb_AI, Loadout);				//A random weapon is added
+	//		   HumanLoadout.AddWeapon(pb_AI, Loadout, "AKM");		//An AKM is added
 
-	static void AddWeapon(PlayerBase h, string weapon, int minhealth = 100, int maxhealth = 100) {
+	static void AddWeapon(PlayerBase h, HumanLoadout Loadout, string weapon = "") {
 		EntityAI gun;
-//		Print("Holding " + h.GetHumanInventory().GetEntityInHands() + " in hands");
+		EntityAI att;
+		float HealthModifier;
 		
+		int minhealth = Loadout.WeaponHealth[0];
+		int maxhealth = Loadout.WeaponHealth[1];		
+		
+		if (weapon == "")
+		{
+				weapon = Loadout.WeaponRifle.GetRandomElement();
+		}
+
+		//If there is a weapon already in hanad, create the next on in inventory		
 		if (h.GetHumanInventory().GetEntityInHands() == null) 
 		{
 			gun = h.GetHumanInventory().CreateInHands(weapon);
@@ -146,11 +158,34 @@ class HumanLoadout {
 			gun = h.GetHumanInventory().CreateInInventory(weapon);
 		}
 		
-		float HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
+		HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
 		gun.SetHealth(gun.GetMaxHealth() * HealthModifier);
+
+		//Add optics
+		string optic = Loadout.WeaponOptic.GetRandomElement();
+		TStringArray optics = darc_ListOptics(weapon);
+		if ( optic == "any")
+		{
+			 optic = optics.GetRandomElement();
+		}
+		att = gun.GetInventory().CreateAttachment(optic);
+		HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
+		att.SetHealth(att.GetMaxHealth() * HealthModifier);		
+
+		//Add attachment
+		string attachment = Loadout.WeaponAttachment.GetRandomElement();
+		TStringArray attachments = darc_ListAttachments(weapon);
+		if (attachment == "any")
+		{
+			 attachment = attachments.GetRandomElement();
+		}
+		att = gun.GetInventory().CreateAttachment(attachment);
+		HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
+		att.SetHealth(att.GetMaxHealth() * HealthModifier);	
+						
 		Print("HumanLoadout: Add weapon: " + weapon + " (" + HealthModifier + ")" );
 	}
-	
+		
 	//----------------------------------------------------------------
 	//	HumanLoadout.AddMagazine
 	//
@@ -258,35 +293,3 @@ class HumanLoadout {
         JsonFileLoader<HumanLoadout>.JsonSaveFile(FileName, data);
     }	
 };
-
-/*
-class SoldierLoadout : HumanLoadout {
-	static string SoldierLoadoutSave = "SoldierLoadout.json";
-	
-	override static void Apply(PlayerBase h)	
-	{
-		HumanLoadout Loadout = LoadData(SoldierLoadoutSave);
-		HumanLoadout.AddClothes(h, Loadout);
-
-		string weapon = Loadout.WeaponRifle.GetRandomElement();
-//		HumanLoadout.AddWeapon(h, weapon);
-		HumanLoadout.AddWeapon(h, weapon, Loadout.WeaponHealth[0], Loadout.WeaponHealth[1]);
-		HumanLoadout.AddMagazine(h, weapon, Loadout.WeaponRifleMagCount[0], Loadout.WeaponRifleMagCount[1]);
-	}
-}	
-
-class PoliceLoadout : HumanLoadout {
-	static string PoliceLoadoutSave = "PoliceLoadout.json";
-	
-	override static void Apply(PlayerBase h)
-	{
-		HumanLoadout Loadout = LoadData(PoliceLoadoutSave);
-		HumanLoadout.AddClothes(h, Loadout);
-
-		string weapon = Loadout.WeaponRifle.GetRandomElement();
-//		HumanLoadout.AddWeapon(h, weapon);
-		HumanLoadout.AddWeapon(h, weapon, Loadout.WeaponHealth[0], Loadout.WeaponHealth[1]);
-		HumanLoadout.AddMagazine(h, weapon, 2);
-	}
-}
-*/

@@ -68,6 +68,12 @@
         1,
         3
     ],
+    "WeaponAttachment": [
+        "any"
+    ],
+    "WeaponOptic": [
+        "any"
+    ],	
     "WeaponHandgun": [
 		"", "", "", "", "", "", 
         "Colt1911",
@@ -77,10 +83,20 @@
         1,
         2
     ],	
+    "WeaponHandgunAttachment": [
+        "any"
+    ],
+    "WeaponHandgunOptic": [
+        "any"
+    ],	
     "WeaponHealth": [
         30,
         100
     ],
+    "AttachmentHealth": [
+        10,
+        100
+    ],	
     "Loot": [
         "SodaCan_Cola",
 		"Apple"

@@ -54,6 +54,12 @@
         1,
         2
     ],
+    "WeaponAttachment": [
+        "any"
+    ],
+    "WeaponOptic": [
+        "any"
+    ],	
     "WeaponHandgun": [
 		"", "", "", 
         "FNX45",
@@ -63,7 +69,17 @@
         1,
         2
     ],	
+    "WeaponHandgunAttachment": [
+        "any"
+    ],
+    "WeaponHandgunOptic": [
+        "any"
+    ],	
     "WeaponHealth": [
+        10,
+        100
+    ],	
+    "AttachmentHealth": [
         10,
         100
     ],	
