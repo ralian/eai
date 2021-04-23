@@ -16,7 +16,7 @@ class eAIEntityTargetInformation extends eAITargetInformation
     {
         if (!m_Target) return false;
         
-        return m_Target.GetHealth() <= 0.0;
+        return m_Target.GetHealth() > 0.0;
     }
 
     override vector GetPosition(eAIBase ai = null)
