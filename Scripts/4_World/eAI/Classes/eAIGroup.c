@@ -13,7 +13,7 @@ enum eAIGroupFormationState
 
 class eAIGroup
 {
-	static autoptr array<eAIGroup> GROUPS = new array<eAIGroup>();
+	static autoptr array<ref eAIGroup> GROUPS = new array<ref eAIGroup>();
 
 	private static int m_IDCounter = 0;
 
@@ -179,7 +179,24 @@ class eAIGroup
 
 	vector GetFormationPosition(eAIBase ai)
 	{
-		return m_Form.GetPosition(m_Members.Find(ai));
+		int pos = 0;
+		vector position = "0 0 0";
+				
+		for (int i = 0; i < m_Members.Count(); i++)
+		{
+			// ignore members who have died so their position can be taken over
+			if (!m_Members[i].IsAlive()) continue;
+			
+			if (m_Members[i] == ai)
+			{
+				position = m_Form.GetPosition(pos);
+				break;
+			}
+
+			pos++;
+		}
+		
+		return m_Form.ToWorld(position);
 	}
 
 	void SetLeader(DayZPlayerImplement leader)

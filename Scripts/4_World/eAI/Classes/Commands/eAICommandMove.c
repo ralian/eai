@@ -30,6 +30,8 @@ class eAICommandMove extends eAICommandBase
 	private float m_MovementSpeed;
 	private float m_TargetSpeed;
 	private float m_SpeedLimit;
+	
+	private vector m_MovementCorrection;
 			
 	void eAICommandMove(eAIBase unit, eAIAnimationST st)
 	{
@@ -155,23 +157,90 @@ class eAICommandMove extends eAICommandBase
 
 	override void PrePhysUpdate(float pDt)
 	{
-		float wayPointDistance = 0.0;
-		int wayPointIndex;
-		vector wayPoint;
-		bool isFinal = true;
-
+		vector debug_points[2];
+		
 		vector translation;
 		PrePhys_GetTranslation(translation);
 		vector position = m_Unit.ModelToWorld(translation);
+		
+		vector transform[4];
+		m_Unit.GetTransform(transform);
+
+		float wayPointDistance = 0.0;
+		int wayPointIndex;
+		vector wayPoint = position;
+		bool isFinal = true;
 
 		SetTargetSpeed(0.0);
 		SetTargetDirection(0.0);
 
-		if (m_Unit.PathCount() != 0)
+		PhxInteractionLayers collisionLayerMask = PhxInteractionLayers.ROADWAY|PhxInteractionLayers.BUILDING|PhxInteractionLayers.FENCE|PhxInteractionLayers.VEHICLE;
+		Object hitObject; //! always null and low priority fix at BI
+		vector hitPosition;
+		vector hitNormal;
+		float hitFraction;
+		
+		if (m_Unit.PathCount() >= 2)
 		{
 			wayPointIndex = m_Unit.FindNext(position, wayPointDistance);
 			wayPoint = m_Unit.PathGet(wayPointIndex);
-			wayPointDistance = vector.DistanceSq(Vector(wayPoint[0], 0, wayPoint[2]), Vector(position[0], 0, position[2]));
+
+			float y = GetGame().SurfaceY(wayPoint[0], wayPoint[2]);			
+			if (y > wayPoint[1]) wayPoint[1] = y;
+			
+#ifndef SERVER
+			m_Unit.AddShape(Shape.CreateSphere(0xFFFFFFFF, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, wayPoint, 0.3));
+#endif
+			
+			vector orig_WayPoint = wayPoint;
+			if (DayZPhysics.SphereCastBullet(wayPoint, wayPoint - Vector(0.0, 10.0, 0.0), 0.3, collisionLayerMask|PhxInteractionLayers.TERRAIN, m_Unit, hitObject, hitPosition, hitNormal, hitFraction)) wayPoint = hitPosition;
+			
+#ifndef SERVER
+			m_Unit.AddShape(Shape.CreateSphere(0xFF0000FF, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, wayPoint, 0.05));
+#endif
+			
+			wayPointDistance = vector.DistanceSq(wayPoint, position);
+			
+			vector newWayPoint = wayPoint;
+
+			if (wayPointDistance > 0.01 && wayPointDistance < 1.0 && DayZPhysics.RayCastBullet(position, newWayPoint, collisionLayerMask, m_Unit, hitObject, hitPosition, hitNormal, hitFraction))
+			{
+				wayPoint = hitPosition;
+			}
+			else 
+			{
+				wayPoint = newWayPoint;
+			}
+			
+#ifndef SERVER
+			debug_points[0] = position;
+			debug_points[1] = wayPoint;
+			m_Unit.AddShape(Shape.CreateLines(0xFFFF00FF, ShapeFlags.NOZBUFFER, debug_points, 2));
+#endif
+
+#ifndef SERVER
+			m_Unit.AddShape(Shape.CreateSphere(0xFFFFFF00, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, wayPoint + Vector(0.0, 0.2, 0.0), 0.3));
+#endif
+				
+#ifndef SERVER
+			m_Unit.AddShape(Shape.CreateSphere(0xFFFFFF00, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, wayPoint - Vector(0.0, 0.2, 0.0), 0.3));
+#endif
+				
+			if (DayZPhysics.SphereCastBullet(wayPoint + Vector(0.0, 0.2, 0.0), wayPoint - Vector(0.0, 0.2, 0.0), 0.3, collisionLayerMask, m_Unit, hitObject, hitPosition, hitNormal, hitFraction)) 
+			{
+				wayPoint = hitPosition;
+			
+#ifndef SERVER
+				m_Unit.AddShape(Shape.CreateSphere(0xFF00FF00, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, wayPoint, 0.05));
+#endif
+			}
+			else
+			{
+			
+#ifndef SERVER
+				m_Unit.AddShape(Shape.CreateSphere(0xFFFF0000, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, wayPoint, 0.05));
+#endif
+			}
 
 			isFinal = wayPointIndex == m_Unit.PathCount() - 1;
 		}
@@ -196,38 +265,53 @@ class eAICommandMove extends eAICommandBase
 		{
 			m_TurnDifference = m_TurnTarget - m_Turn;
 		}
-		
-		int color;
 
 		if (isFinal && wayPointDistance < minFinal)
 		{
-			color = 0xFFFF0000;
 			SetTargetSpeed(0.0);
 		}
-		else if (wayPointDistance < 8.0)
+		else if (isFinal && wayPointDistance < 8.0)
 		{
-			color = 0xFF00FF00;
 			SetTargetSpeed(1.0);
 		}
 		else if (wayPointDistance < 20.0)
 		{
-			color = 0xFF0000FF;
 			SetTargetSpeed(2.0);
 		}
 		else
 		{
-			color = 0xFF000000;
 			SetTargetSpeed(Math.Lerp(m_TargetSpeed, 3.0, pDt * 2.0));
 		}
-		
-#ifndef SERVER
-		m_Unit.AddShape(Shape.CreateSphere(color, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, wayPoint, 0.05));
-#endif
 		
 		if (m_Raised) SetSpeedLimit(1.0);
 		else SetSpeedLimit(-1.0);
 
 		SetTargetDirection(0.0);
+		
+		// TODO: this is only temporary code and a better solution has to be found later on
+		// This fix is for when the AI is meant to be moving faster but height elevation is blocking us
+		// Reason why this is temporary; it effictively is telling the player to jump.
+		m_MovementCorrection = vector.Zero;
+					
+		dBodyEnableGravity(m_Unit, true);
+		if (m_MovementSpeed != 0 && translation.LengthSq() < 0.1 * pDt)
+		{			
+			if (wayPointDistance < 1.0)
+			{
+				float yDiff = wayPoint[1] - position[1];
+				
+				if (yDiff > 0.01 && yDiff <= 0.4)
+				{
+					m_MovementCorrection = Vector(0, yDiff / pDt, 0);
+
+					translation[1] = translation[1] + (yDiff * pDt);
+					
+					dBodyEnableGravity(m_Unit, false);
+				}
+			}
+		}
+
+		PrePhys_SetTranslation(translation);
 	}
 
 	override bool PostPhysUpdate(float pDt)

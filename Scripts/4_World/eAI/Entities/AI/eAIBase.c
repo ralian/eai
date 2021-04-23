@@ -212,7 +212,6 @@ class eAIBase extends PlayerBase
 
 		m_eAI.Insert(this);
 
-		m_AimingModel = new eAIImplementAiming(this);
 		m_ActionManager = new eAIActionManager(this);
 		m_WeaponManager = new eAIWeaponManager(this);
 		
@@ -224,9 +223,7 @@ class eAIBase extends PlayerBase
 		int exFlags = PGPolyFlags.DISABLED | PGPolyFlags.SWIM | PGPolyFlags.SWIM_SEA | PGPolyFlags.SPECIAL | PGPolyFlags.JUMP | PGPolyFlags.CLIMB | PGPolyFlags.CRAWL | PGPolyFlags.CROUCH;
 
 		m_PathFilter.SetFlags( inFlags, exFlags, PGPolyFlags.NONE );
-		m_PathFilter.SetCost( PGAreaType.JUMP, 0.0 );
-		m_PathFilter.SetCost( PGAreaType.FENCE_WALL, 0.0 );
-		m_PathFilter.SetCost( PGAreaType.WATER, 1.0 );
+		m_PathFilter.SetCost( PGAreaType.WATER, 0.0 );
 
 		eAIHFSMType type = eAIHFSM.LoadXML("eAI/scripts/FSM", "Master");
 		if (type)
@@ -417,7 +414,7 @@ class eAIBase extends PlayerBase
 
 		minDist = 1000000000.0;
 
-		float epsilon = 0.1;
+		float epsilon = -0.5;
 		for (int i = 0; i < m_Path.Count() - 1; ++i)
 		{
 			float dist = Distance(i, position);
@@ -584,8 +581,14 @@ class eAIBase extends PlayerBase
 					if (target.HasInfo()) 
 						m_TargetPosition = target.GetPosition(this);
 				}
+
+				vector modifiedTargetPosition = m_TargetPosition;
+				if (vector.DistanceSq(GetPosition(), m_TargetPosition) > 5000.0)
+				{
+					modifiedTargetPosition = GetPosition() + (vector.Direction(GetPosition(), m_TargetPosition).Normalized() * 70.0);
+				}
 				
-				world.FindPath(GetPosition(), m_TargetPosition, m_PathFilter, m_Path);
+				world.FindPath(GetPosition(), modifiedTargetPosition, m_PathFilter, m_Path);
 			}
 		}
 		
@@ -893,7 +896,7 @@ class eAIBase extends PlayerBase
 			targetUD = m_eAI_AimDirection_ModelSpace.VectorToAngles()[1];
 
 			//TODO: perform a raycast and get the offset based on distance like vanilla dayz. Further away, the less the offset needs to be.
-			targetLR -= 0.0;
+			targetLR -= 9.0;
 			targetUD -= 0.0;
 
 			if (targetLR > 180.0) targetLR = targetLR - 360.0;

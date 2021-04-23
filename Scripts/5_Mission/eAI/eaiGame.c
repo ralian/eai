@@ -49,13 +49,12 @@ class eAIGame
 		PlayerBase pb_Human;
 		if (!Class.CastTo(pb_Human, owner)) return null;
 		
-		eAIGroup ownerGrp = eAIGroup.GetGroupByLeader(pb_Human);
-
 		eAIBase pb_AI;
-		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, GetRandomAI(), pb_Human.GetPosition(), 0, "NONE"))) return null;
+		if (!Class.CastTo(pb_AI, GetGame().CreateObject(GetRandomAI(), pb_Human.GetPosition()))) return null;
+
 		if (eAIGlobal_HeadlessClient && eAIGlobal_HeadlessClient.GetIdentity()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
 		
-		pb_AI.SetAI(ownerGrp);
+		pb_AI.SetAI(eAIGroup.GetGroupByLeader(pb_Human));
 			
 //		SoldierLoadout.Apply(pb_AI);	//or PoliceLoadout.Apply(pb_AI);
 		HumanLoadout.Apply(pb_AI, "SoldierLoadout.json");
@@ -66,7 +65,7 @@ class eAIGame
 	
 	eAIBase SpawnAI_Sentry(vector pos) {
 		eAIBase pb_AI;
-		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, GetRandomAI(), pos, 0, "NONE"))) return null;
+		if (!Class.CastTo(pb_AI, GetGame().CreateObject(GetRandomAI(), pos))) return null;
 		if (eAIGlobal_HeadlessClient && eAIGlobal_HeadlessClient.GetIdentity()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
 		
 		eAIGroup ownerGrp = eAIGroup.GetGroupByLeader(pb_AI);
@@ -80,7 +79,7 @@ class eAIGame
 	
 	eAIBase SpawnAI_Patrol(vector pos) {
 		eAIBase pb_AI;
-		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, GetRandomAI(), pos, 0, "NONE"))) return null;
+		if (!Class.CastTo(pb_AI, GetGame().CreateObject(GetRandomAI(), pos))) return null;
 		if (eAIGlobal_HeadlessClient && eAIGlobal_HeadlessClient.GetIdentity()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
 		
 		eAIGroup ownerGrp = eAIGroup.GetGroupByLeader(pb_AI);
@@ -96,11 +95,13 @@ class eAIGame
 	
 	// Server Side: This RPC spawns a helper AI next to the player, and tells them to join the player's formation.
 	void SpawnEntity(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<DayZPlayer> data(null);
+		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
 		
 		if(type == CallType.Server )
 		{
+			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
+			
             Print("eAI: spawn entity RPC called.");
 			SpawnAI_Helper(data.param1);
 		}
@@ -133,6 +134,8 @@ class eAIGame
         if (!ctx.Read(data)) return;
 		
 		if(type == CallType.Server) {
+			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
+			
             Print("eAI: SpawnZombie RPC called.");
 			GetGame().CreateObject("ZmbF_JournalistNormal_Blue", data.param1.GetPosition() + debug_offset_2, false, true, true);
         }
@@ -143,6 +146,8 @@ class eAIGame
 		Param1<PlayerBase> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
+			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
+			
             Print("eAI: ClearAllAI called.");
 			foreach (eAIGroup g : eAIGroup.GROUPS) {
 				for (int i = g.Count() - 1; i > -1; i--) {
@@ -162,6 +167,8 @@ class eAIGame
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
             Print("eAI: ProcessReload called.");
+			
+			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
 			
 			eAIGroup g = eAIGroup.GetGroupByLeader(data.param1);
 
@@ -234,6 +241,8 @@ class eAIGame
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
+			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
+			
 			Print("eAI: ReqFormRejoin called.");
 			eAIGroup g = eAIGroup.GetGroupByLeader(data.param1, false);
 			g.SetFormationState(eAIGroupFormationState.IN);
@@ -244,6 +253,8 @@ class eAIGame
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
+			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
+			
 			Print("eAI: ReqFormStop called.");
 			eAIGroup g = eAIGroup.GetGroupByLeader(data.param1, false);
 			g.SetFormationState(eAIGroupFormationState.NONE);
@@ -254,6 +265,8 @@ class eAIGame
 		Param2<DayZPlayer, int> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
+			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
+			
 			Print("eAI: ReqFormationChange called.");
 			eAIGroup g = eAIGroup.GetGroupByLeader(data.param1, false);
 			eAIFormation newForm;
