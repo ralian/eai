@@ -385,7 +385,20 @@
 
                 if (!leader.IsInTransport()) return FAIL;
 
-                return SUCCESS;
+				Transport transport;
+				Class.CastTo(transport, leader.GetParent());
+
+				//TODO: make this event based instead and store as a variable within CarScript.
+				//Prevents looping through the crew and insteads just compares a bool.
+				for (int i = 1; i &lt; transport.CrewSize(); i++)
+				{
+					if (transport.CrewMember(i) == null)
+					{
+               			return SUCCESS;
+					}
+				}
+
+                return FAIL;
             </guard>
 			<event name="" />
 			<from_state name="" />

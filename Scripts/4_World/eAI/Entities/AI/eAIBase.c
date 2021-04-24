@@ -41,6 +41,9 @@ class eAIBase extends PlayerBase
 
 	private bool m_eAI_UnconsciousVehicle;
 
+	private Transport m_eAI_Transport;
+	private int m_eAI_Transport_SeatIndex;
+
 	private ref eAIAimingProfile m_AimingProfile;
 
 	// Position for aiming/looking in the world
@@ -527,6 +530,12 @@ class eAIBase extends PlayerBase
 		return cmd;
 	}
 
+	void Notify_Transport(Transport vehicle, int seatIndex)
+	{
+		m_eAI_Transport = vehicle;
+		m_eAI_Transport_SeatIndex = seatIndex;
+	}
+
 	void UseTargetting()
 	{
 		m_eAI_TargetOverriding = eAITargetOverriding.NONE;
@@ -779,6 +788,15 @@ class eAIBase extends PlayerBase
 		{
 			StartCommand_MoveAI();
 			return;
+		}
+
+		if (m_eAI_Transport)
+		{
+			int seat_anim_type = m_eAI_Transport.GetSeatAnimationType(m_eAI_Transport_SeatIndex);
+			auto vehCommand = StartCommand_VehicleAI(m_eAI_Transport, m_eAI_Transport_SeatIndex, seat_anim_type);
+			vehCommand.SetVehicleType(m_eAI_Transport.GetAnimInstance());
+			
+			m_eAI_Transport = null;
 		}
 		
 		if (pCurrentCommandID == DayZPlayerConstants.COMMANDID_SCRIPT && m_eAI_Command)
