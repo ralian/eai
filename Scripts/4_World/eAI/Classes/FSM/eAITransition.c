@@ -49,7 +49,7 @@ class eAITransition
     /* STATE VARIABLES */
     protected eAIBase unit;
 
-    void eAITransition(eAIBase _unit, eAIHFSM _fsm)
+    void eAITransition(eAIHFSM _fsm, eAIBase _unit)
     {
         unit = _unit;
 		m_FSM = _fsm;
@@ -112,7 +112,7 @@ class eAITransition
         FPrintln(file, "private " + from_state_class + " src;");
         FPrintln(file, "private " + to_state_class + " dst;");
 
-        FPrintln(file, "void " + class_name + "(eAIBase _unit, eAIHFSM _fsm) {");
+        FPrintln(file, "void " + class_name + "(eAIHFSM _fsm, eAIBase _unit) {");
         FPrintln(file, "m_ClassName = \"" + class_name + "\";");
         FPrintln(file, "src = _fsm.GetState(\"" + from_state_class + "\");");
         FPrintln(file, "dst = _fsm.GetState(\"" + to_state_class + "\");");
@@ -132,8 +132,8 @@ class eAITransition
 
         FPrintln(file, "}");
 
-        FPrintln(file, "eAITransition Create_" + class_name + "(eAIBase _unit, eAIHFSM _fsm) {");
-        FPrintln(file, "return new " + class_name + "(_unit, _fsm);");
+        FPrintln(file, "eAITransition Create_" + class_name + "(eAIHFSM _fsm, eAIBase _unit) {");
+        FPrintln(file, "return new " + class_name + "(_fsm, _unit);");
         FPrintln(file, "}");
 
         CloseFile(file);

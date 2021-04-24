@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<fsm name="Vehicles">
+	<states default="GoTo_Transport">
+		<state name="GoTo_Transport">
+			<variables>
+				<variable name="transport" type="Transport" />
+				<variable name="seat_index" type="int" />
+			</variables>
+			<editor_data>
+				<position x="551" y="94" />
+				<size width="150" height="40" />
+			</editor_data>
+			<event_entry>
+                auto group = unit.GetGroup();
+				auto leader = group.GetLeader();
+				Class.CastTo(transport, leader.GetParent());
+			</event_entry>
+			<event_exit>
+			</event_exit>
+			<event_update>
+				unit.OverridePosition(transport.GetPosition());
+
+                return EXIT;
+            </event_update>
+		</state>
+	</states>
+	<transitions>
+		<transition>
+			<editor_data>
+				<position_source x="1" y="0.3" />
+				<position_destination x="0" y="0.3" />
+			</editor_data>
+			<guard>
+                auto group = unit.GetGroup();
+                if (!group) return SUCCESS;
+
+                auto leader = group.GetLeader();
+                if (!leader || leader == unit) return SUCCESS;
+				
+                if (leader.IsInTransport()) return FAIL;
+
+				if (group.GetFormationState() == eAIGroupFormationState.IN) return FAIL;
+
+                return SUCCESS;
+            </guard>
+			<event name="" />
+			<from_state name="GoTo_Transport" />
+			<to_state name="" />
+		</transition>
+	</transitions>
+</fsm>

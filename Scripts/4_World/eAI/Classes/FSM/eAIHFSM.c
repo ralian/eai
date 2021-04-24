@@ -77,6 +77,11 @@ class eAIHFSM
         return m_Unit;
     }
 
+    eAIState GetParent()
+    {
+        return m_ParentState;
+    }
+
     void AddState(eAIState state)
     {
         m_States.Insert(state);
@@ -251,24 +256,29 @@ class eAIHFSM
     static eAIHFSMType LoadXML(string path, string fileName)
     {
         string actualFilePath = path + "/" + fileName + ".xml";
+        Print(actualFilePath);
         if (!FileExist(actualFilePath)) return null;
         
         CF_XML_Document document;
         CF_XML.ReadDocument(actualFilePath, document);
 		
-        string name = document.Get("hfsm")[0].GetAttribute("name").ValueAsString();
+        string name = document.Get("fsm")[0].GetAttribute("name").ValueAsString();
         string class_name = "eAI_" + name + "_HFSM";
 
         if (eAIHFSMType.Contains(class_name)) return eAIHFSMType.Get(class_name);
 
-        auto subs = document.Get("hfsm");
-        subs = subs[0].GetTag("subs");
-        subs = subs[0].GetTag("file");
-
-	    foreach (auto sub : subs)
+        auto files = document.Get("fsm");
+        files = files[0].GetTag("files");
+        if (files.Count() > 0)
         {
-            string subPath = sub.GetAttribute("path").ValueAsString();
-            eAIHFSM.LoadXML(path, subPath);
+            files = files[0].GetTag("file");
+
+            for (int i = 0; i < files.Count(); i++)
+            {
+                string subFSMName = files[i].GetAttribute("name").ValueAsString();
+                Print(subFSMName);
+                eAIHFSM.LoadXML(path, subFSMName);
+            }
         }
 
         eAIHFSMType new_type = new eAIHFSMType();
@@ -281,7 +291,7 @@ class eAIHFSM
 		
         FPrintln(file, "class " + class_name + " extends eAIHFSM {");
 
-        auto states = document.Get("hfsm");
+        auto states = document.Get("fsm");
         states = states[0].GetTag("states");
         string defaultState = states[0].GetAttribute("default").ValueAsString();
 		defaultState = "eAI_" + name + "_" + defaultState + "_State";
@@ -306,11 +316,11 @@ class eAIHFSM
                 module = stateType.m_Module;
                 new_type.m_States.Insert(stateType);
                 
-                FPrintln(file, "AddState(new " + stateType.m_ClassName + "(m_Unit));");
+                FPrintln(file, "AddState(new " + stateType.m_ClassName + "(this, m_Unit));");
             }
         }
 
-        auto transitions = document.Get("hfsm");
+        auto transitions = document.Get("fsm");
         transitions = transitions[0].GetTag("transitions");
         transitions = transitions[0].GetTag("transition");
 
@@ -322,7 +332,7 @@ class eAIHFSM
                 module = transitionType.m_Module;
                 new_type.m_Transitions.Insert(transitionType);
 
-                FPrintln(file, "AddTransition(new " + transitionType.m_ClassName + "(m_Unit, this));");
+                FPrintln(file, "AddTransition(new " + transitionType.m_ClassName + "(this, m_Unit));");
             }
         }
 

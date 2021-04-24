@@ -177,7 +177,7 @@ class eAIGroup
 		m_Form.Update(pDt);
 	}
 
-	vector GetFormationPosition(eAIBase ai)
+	int GetMemberIndex(eAIBase ai)
 	{
 		int pos = 0;
 		vector position = "0 0 0";
@@ -187,15 +187,19 @@ class eAIGroup
 			// ignore members who have died so their position can be taken over
 			if (!m_Members[i].IsAlive()) continue;
 			
-			if (m_Members[i] == ai)
-			{
-				position = m_Form.GetPosition(pos);
-				break;
-			}
+			if (m_Members[i] == ai) return pos;
 
 			pos++;
 		}
 		
+		return -1;
+	}
+
+	vector GetFormationPosition(eAIBase ai)
+	{
+		int pos = GetMemberIndex(ai);
+		vector position = "0 0 0";
+		if (pos != -1) position = m_Form.GetPosition(pos);
 		return m_Form.ToWorld(position);
 	}
 

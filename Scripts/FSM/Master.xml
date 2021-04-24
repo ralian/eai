@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<hfsm name="Targetting">
-	<subs>
-		<!-- <file path="Weapon.xml"/> -->
-	</subs>
+<fsm name="Master">
+	<files>
+		<file name="Vehicles"/>
+	</files>
 	<states default="Idle">
 		<state name="Idle">
 			<variables>
@@ -88,6 +88,14 @@
 
                 return EXIT;
             </event_update>
+		</state>
+		<state name="Vehicles" fsm="Vehicles">
+			<variables>
+			</variables>
+			<editor_data>
+				<position x="551" y="94" />
+				<size width="150" height="40" />
+			</editor_data>
 		</state>
 		<state name="Weapon_Reloading">
 			<variables>
@@ -361,5 +369,39 @@
 			<from_state name="Weapon_Reloading" />
 			<to_state name="Idle" />
 		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="1" y="0.3" />
+				<position_destination x="0" y="0.3" />
+			</editor_data>
+			<guard>
+                auto group = unit.GetGroup();
+                if (!group) return FAIL;
+
+				if (group.GetFormationState() != eAIGroupFormationState.IN) return FAIL;
+
+                auto leader = group.GetLeader();
+                if (!leader || leader == unit) return FAIL;
+
+                if (!leader.IsInTransport()) return FAIL;
+
+                return SUCCESS;
+            </guard>
+			<event name="" />
+			<from_state name="" />
+			<to_state name="Vehicles" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+                return SUCCESS;
+            </guard>
+			<event name="" />
+			<from_state name="Vehicles" />
+			<to_state name="Idle" />
+		</transition>
 	</transitions>
-</hfsm>
+</fsm>
