@@ -111,5 +111,8 @@
     "LootHealth": [
         10,
         100
+    ],
+    "BlackList": [
+        "ReservedForFuture"
     ]
 }

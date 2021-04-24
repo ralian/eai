@@ -24,13 +24,15 @@ class HumanLoadout {
 	ref TStringArray WeaponHandgunOptic = {"any"}; 	
 
 	ref TIntArray	 WeaponHealth = {10,100}; 						//Weapon health given. 10%->100%
-	ref TIntArray	 AttachmentHealth = {10,100}; 						//Weapon health given. 10%->100%
+	ref TIntArray	 AttachmentHealth = {10,100}; 					//Weapon health given. 10%->100%
 
 	ref TStringArray Loot = {"SodaCan_Cola"};  						//These are added always
 	ref TStringArray LootRandom = {"Screwdriver"};  				//Added with a LootRandomChance%
 	ref TIntArray 	 LootRandomChance = {30};						//Add item from Loot array
 	ref TIntArray	 LootHealth = {10,100}; 						//Item health given. 10%->100%
-		
+
+	ref TStringArray BlackList = {"ReservedForFuture"};				//These will not be added to AI even if defined above
+				
 	//---------------------
 	static string LoadoutSaveDir = "$profile:eAI/Loadout/";
 	static string LoadoutDataDir = "eAI/Scripts/Data/Loadout/";
@@ -57,13 +59,22 @@ class HumanLoadout {
 		string weapon;
 		
 		weapon = Loadout.WeaponRifle.GetRandomElement();
-		HumanLoadout.AddWeapon(h, Loadout, weapon);
-		HumanLoadout.AddMagazine(h, weapon, Loadout.WeaponRifleMagCount[0], Loadout.WeaponRifleMagCount[1]);
+		if (weapon != "")
+		{
+			HumanLoadout.AddWeapon(h, Loadout, weapon);
+			HumanLoadout.AddMagazine(h, weapon, Loadout.WeaponRifleMagCount[0], Loadout.WeaponRifleMagCount[1]);
+		}
 		weapon = Loadout.WeaponHandgun.GetRandomElement();
-		HumanLoadout.AddWeapon(h, Loadout, weapon);
-		HumanLoadout.AddMagazine(h, weapon, Loadout.WeaponHandgunMagCount[0], Loadout.WeaponHandgunMagCount[1]);
-
+		if (weapon != "")
+		{
+			HumanLoadout.AddWeapon(h, Loadout, weapon);
+			HumanLoadout.AddMagazine(h, weapon, Loadout.WeaponHandgunMagCount[0], Loadout.WeaponHandgunMagCount[1]);
+		}
+		
 		HumanLoadout.AddLoot(h, Loadout);
+		
+		//TBD: Should we destroy the Loadout object here? 
+		//delete Loadout;
 	}
 
 	//----------------------------------------------------------------
@@ -204,8 +215,10 @@ class HumanLoadout {
 	static bool AddWeapon_Helper_attachment(EntityAI gun, string attachment, TStringArray attachments, int minhealth = 100, int maxhealth = 100) {
 		EntityAI att;
 		float HealthModifier;
-			
-		if (attachment != "")
+		bool success = false;		
+		
+		//Check that an attachment was defined and there are compatible ones available.			
+		if ( (attachment != "") && (attachments.Count() > 0) )
 		{
 			//If "any" is used, pick any compatible one
 			if (attachment == "any")
@@ -213,19 +226,26 @@ class HumanLoadout {
 				 attachment = attachments.GetRandomElement();
 			}
 
-			Print("HumanLoadout: AddWeapon_Helper_attachment: Trying: " + attachment);
-						
+//			Print("HumanLoadout: AddWeapon_Helper_attachment: Trying: " + attachment);
+
 			//Check that attachment is compatible with the gun from attachments list.
 			if (attachments.Find(attachment) > -1)
 			{		
 				att = gun.GetInventory().CreateAttachment(attachment);
-				HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
-				att.SetHealth(att.GetMaxHealth() * HealthModifier);	
-				
-				Print("HumanLoadout: AddWeapon_Helper_attachment: Added: " + attachment);
+				if (att == null)
+				{
+					Print("HumanLoadout: AddWeapon_Helper_attachment: ERROR: tried " + attachment + ", but the slot was occupied");
+				}
+				else
+				{
+					HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
+					att.SetHealth(att.GetMaxHealth() * HealthModifier);	
+					success = true;
+					Print("HumanLoadout: AddWeapon_Helper_attachment: Added: " + attachment);
+				}
 			}
 		}		
-		return true; //TBD: return true/false if succeeded
+		return success;
 	}
 	
 	//----------------------------------------------------------------
@@ -308,7 +328,9 @@ class HumanLoadout {
         {
             Print("HumanLoadout: " + LoadoutFileName + " exists, loading!");
             JsonFileLoader<HumanLoadout>.JsonLoadFile(LoadoutFileName, data);
-			
+
+//            Print("HumanLoadout: Loaded version: " + data.Version[0]);
+						
 			//If the version does not match, show an error. The JSON loader loads what it is able to load, but does not completely fail.
 			if (data.Version[0] != LOADOUT_VERSION)
 			{
