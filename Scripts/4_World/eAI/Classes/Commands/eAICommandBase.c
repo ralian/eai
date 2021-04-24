@@ -1,16 +1,5 @@
 class eAICommandBase extends HumanCommandScript
 {
-	protected eAIBase m_Unit;
-	protected eAIAnimationST m_Table;
-
-	void eAICommandBase(eAIBase unit, eAIAnimationST st)
-	{
-		m_Unit = unit;
-		m_Table = st;
-	}
-
-	void SetLookDirection(vector direction)	{ }
-
 	//! Helper functions
 	void AnglesToQuat(vector angles, out float[] quat)
 	{

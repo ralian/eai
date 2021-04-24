@@ -1,11 +1,6 @@
 modded class ZombieBase
 {
-    private autoptr eAITargetInformation m_TargetInformation;
-
-    void ZombieBase()
-    {
-        m_TargetInformation = new eAIZombieTargetInformation(this);
-    }
+    private autoptr eAITargetInformation m_TargetInformation = new eAIEntityTargetInformation(this);
 
     eAITargetInformation GetTargetInformation()
     {

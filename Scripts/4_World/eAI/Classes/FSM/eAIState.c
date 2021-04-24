@@ -132,7 +132,7 @@ class eAIState
             auto event_entry = xml_root_tag.GetTag("event_entry");
             if (event_entry.Count() > 0)
             {
-                FPrintln(file, "override void OnEntry(string Event, eAIState From) {");
+                FPrintln(file, "override void OnEntry(string Event) {");
                 FPrintln(file, event_entry[0].GetContent().GetContent());
                 FPrintln(file, "}");
             }
@@ -140,7 +140,7 @@ class eAIState
             auto event_exit = xml_root_tag.GetTag("event_exit");
             if (event_exit.Count() > 0)
             {
-                FPrintln(file, "override void OnExit(string Event, bool Aborted, eAIState To) {");
+                FPrintln(file, "override void OnExit(string Event, bool Aborted) {");
                 FPrintln(file, event_exit[0].GetContent().GetContent());
                 FPrintln(file, "}");
             }
@@ -174,18 +174,17 @@ class eAIState
 		return new_type;
     }
 	
-	string GetName()
-    {
+	string GetName() {
 		return m_Name;
 	}
 
     /* IMPLEMENTED IN XML */
-    void OnEntry(string Event, eAIState From)
+    void OnEntry(string Event)
     {
 
     }
 
-    void OnExit(string Event, bool Aborted, eAIState To)
+    void OnExit(string Event, bool Aborted)
     {
 
     }

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 //! Client only - manage set up crafting on client 
-class eAIInventoryActionHandler
+class InventoryActionHandlerAI
 {
 	ActionBase m_action;
 	ActionTarget m_target;
@@ -30,7 +30,7 @@ class eAIInventoryActionHandler
 	const int IAH_CONTINUOUS = 2;
 
 
-	void eAIInventoryActionHandler(PlayerBase player)
+	void InventoryActionHandlerAI(PlayerBase player)
 	{
 		m_player = player;
 		m_isActive = false;

@@ -19,13 +19,6 @@ class eAIGroupTargetInformation extends eAITargetInformation
         return m_Target.GetLeader();
     }
 
-	vector GetLeaderPosition()
-	{
-		if (GetEntity()) return GetEntity().GetPosition();
-
-		return m_LeaderPosOld;
-	}
-
     override vector GetPosition(eAIBase ai = null)
     {
 		// If the target is in the given group (not necessarily the leader)
@@ -37,7 +30,8 @@ class eAIGroupTargetInformation extends eAITargetInformation
             return worldPos;
         }
 
-        return GetLeaderPosition();
+		// Otherwise
+        return GetEntity().GetPosition();
     }
 
 	// First number is horizontal offset, sec number is forwards in the formation

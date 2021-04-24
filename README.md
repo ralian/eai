@@ -1,33 +1,33 @@
 # Enfusion AI Project (eAI)
-This mod adds headless player units under the control of a script on the server. Although the script is very rudimentary now, I hope to produce an AI which is dynamic like similar mods for A3 (and DayZ on the RV engine) which could be used as hostiles, team members, or even things like bodyguards for traders or safe zone enforcers.
+This mod adds server controlled AI to DayZ Standalone on the Enfusion engine. The mod is in a beta testing phase, but stay tuned for a release announcement.
 
-The mod is in a prerelease state and has no version info/changelog.
+Find out how to contribute on our discord: https://discord.gg/hxY7a4CA7t
 
-Join the discord community for updates/questions/suggestions:
+You can support the project here: https://www.patreon.com/ralian
 
-https://discord.gg/hxY7a4CA7t
+### Current Build: 0.10
 
 #### Current Features
 
-- Movement (Move to waypoint)
-- Follow Unit
-- Basic Weapon Handling
+- AI patrols
+- Formations and group behavior
+- Targeting, aiming, and basic weapon handling (firing, reloading, etc)
 
-#### In Progress
+#### In Progress & Wishlist Features
 
-- Advanced Weapon Handling
-- Targeting System
-- Ballistics computation
+- Advanced Weapon Handling (Unjamming, fire modes, single shot reloading, mag repack)
+- Melee combat
+- Actual ballistics computation (or find a way to inject the engine ballistics)
+- More loadout features, possible integration with Expansion loadouts
+- Combat movement (crouching, repositioning, etc)
+- Map markers and patrol manager
+- Resupply (ability to pick up items on ground)
+- Stamina, incapacitation, blood loss
+- Headless Client
 
-#### Known Bugs
+#### Known Issues
 
-- Possible server crash if unit tries to fire a jammed weapon
-- Script crash if reload is triggered during a weapon raise animation
-- Unit can enter an indefinite turn/walk state under certain circumstances
-- Loadouts do not yet support attachments, melee weapons nor handguns
-
-#### Wishlist Features
-
-- Group Behavior
-- Vehicle Control
-- Melee Behavior
+- AI cannot unjam weapons
+- Entering network bubble while AI starts combat may break the aiming stream sometimes
+- Without a headless client, aiming performance is worse over a high-ping or jittery network
+- Performance as a whole can be improved

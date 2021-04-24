@@ -157,9 +157,9 @@ class HumanLoadout {
 		EntityAI gun;
 		float HealthModifier;
 		
-		int minhealth = 100;
-		int maxhealth = 100;
-		
+		int minhealth = Loadout.WeaponHealth[0];
+		int maxhealth = Loadout.WeaponHealth[1];
+				
 		if (weapon != "")
 		{
 			//If there is a weapon already in hand, create the next one in inventory		

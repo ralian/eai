@@ -26,11 +26,13 @@
         "CoyoteBag_Green"
     ],
     "Vests": [
+        "",	
         "HighCapacityVest_Black",
         "PlateCarrierVest",
         "UKAssVest_Camo"
     ],
     "Headgear": [
+        "", "",
         "GorkaHelmet",
         "Mich2001Helmet",
         "MotoHelmet_Black",
@@ -38,6 +40,7 @@
         "DirtBikeHelmet_Black"
     ],
     "Gloves": [
+        "", "",	
         "WorkingGloves_Beige",
         "WorkingGloves_Black",
         "NBCGlovesGray",
@@ -69,9 +72,11 @@
         3
     ],
     "WeaponAttachment": [
-        "any"
+		"", "",
+		"any"
     ],
     "WeaponOptic": [
+		"", "", "", "",
         "any"
     ],	
     "WeaponHandgun": [

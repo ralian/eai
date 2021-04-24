@@ -26,6 +26,7 @@
         "OfficerHat"
     ],
     "Gloves": [
+        "", "",
         "LeatherGloves_Black",
         "TacticalGloves_Black",
         "WorkingGloves_Black"
@@ -55,9 +56,11 @@
         2
     ],
     "WeaponAttachment": [
+        "", "",
         "any"
     ],
     "WeaponOptic": [
+        "", "",
         "any"
     ],	
     "WeaponHandgun": [
