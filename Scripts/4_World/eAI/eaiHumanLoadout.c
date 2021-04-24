@@ -50,6 +50,7 @@ class HumanLoadout {
 	//	4) Create a dummy loadout (blue clothes) with the given LoadoutFile filename under "profile\eAI\loadout\".
 	
 	static void Apply(PlayerBase h, string LoadoutFile) {
+		
 		HumanLoadout Loadout = LoadData(LoadoutFile);
 		HumanLoadout.AddClothes(h, Loadout);
 
@@ -62,7 +63,7 @@ class HumanLoadout {
 		HumanLoadout.AddWeapon(h, Loadout, weapon);
 		HumanLoadout.AddMagazine(h, weapon, Loadout.WeaponHandgunMagCount[0], Loadout.WeaponHandgunMagCount[1]);
 
-		HumanLoadout.AddLoot(h, Loadout);		
+		HumanLoadout.AddLoot(h, Loadout);
 	}
 
 	//----------------------------------------------------------------
@@ -71,31 +72,23 @@ class HumanLoadout {
 	//	Adds loot.
 	
 	static void AddLoot(PlayerBase h, HumanLoadout Loadout) {
-		EntityAI item;
 		int minhealth = Loadout.LootHealth[0];
 		int maxhealth = Loadout.LootHealth[1];		
-		float HealthModifier;
 		string loot;
 		int i;
 		
 		for( i = 0; i < Loadout.Loot.Count(); i++)
 		{
 			loot = Loadout.Loot[i];
-			item = h.GetHumanInventory().CreateInInventory(loot);
-			HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
-			item.SetHealth(item.GetMaxHealth() * HealthModifier);
-			Print("HumanLoadout: Add loot: " + loot + " (" + HealthModifier + ")" );
+			AddItem_Helper(h, loot, minhealth, maxhealth);
 		}
 
 		for( i = 0; i < Loadout.LootRandom.Count(); i++)
 		{
 			loot = Loadout.LootRandom[i];
-			if (Loadout.LootRandomChance < Math.RandomInt(0, 100))
+			if (Loadout.LootRandomChance[0] < Math.RandomInt(0, 100))
 			{
-				item = h.GetHumanInventory().CreateInInventory(loot);
-				HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
-				item.SetHealth(item.GetMaxHealth() * HealthModifier);
-				Print("HumanLoadout: Add random loot: " + loot + " (" + HealthModifier + ")" );
+				AddItem_Helper(h, loot, minhealth, maxhealth);
 			}
 		}
 	}	
@@ -109,37 +102,38 @@ class HumanLoadout {
 		EntityAI item;
 		int minhealth = Loadout.ClothesHealth[0];
 		int maxhealth = Loadout.ClothesHealth[1];		
-		float HealthModifier;
 		
-		item = h.GetInventory().CreateInInventory(Loadout.Pants.GetRandomElement());
-			HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
-			item.SetHealth(item.GetMaxHealth() * HealthModifier);
-//			Print("HumanLoadout: Add pants: " + item.GetMaxHealth() + "/" + HealthModifier + "/" + item.GetMaxHealth() * HealthModifier + ")" );
-		item = h.GetInventory().CreateInInventory(Loadout.Shirts.GetRandomElement());
-			HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
-			item.SetHealth(item.GetMaxHealth() * HealthModifier);
-		item = h.GetInventory().CreateInInventory(Loadout.Shoes.GetRandomElement());
-			HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
-			item.SetHealth(item.GetMaxHealth() * HealthModifier);
-		item = h.GetInventory().CreateInInventory(Loadout.Headgear.GetRandomElement());
-			HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
-			item.SetHealth(item.GetMaxHealth() * HealthModifier);
-		item = h.GetInventory().CreateInInventory(Loadout.Gloves.GetRandomElement());			
-			HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
-			item.SetHealth(item.GetMaxHealth() * HealthModifier);
-		item = h.GetInventory().CreateInInventory(Loadout.BackPacks.GetRandomElement());
-			HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
-			item.SetHealth(item.GetMaxHealth() * HealthModifier);
-		item = h.GetInventory().CreateInInventory(Loadout.Vests.GetRandomElement());
-			HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
-			item.SetHealth(item.GetMaxHealth() * HealthModifier);
-		item = h.GetInventory().CreateInInventory(Loadout.Misc.GetRandomElement());
-			HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
-			item.SetHealth(item.GetMaxHealth() * HealthModifier);
+		AddItem_Helper(h, Loadout.Pants.GetRandomElement(), minhealth, maxhealth);
+		AddItem_Helper(h, Loadout.Shirts.GetRandomElement(), minhealth, maxhealth);
+		AddItem_Helper(h, Loadout.Shoes.GetRandomElement(), minhealth, maxhealth);
+		AddItem_Helper(h, Loadout.Headgear.GetRandomElement(), minhealth, maxhealth);
+		AddItem_Helper(h, Loadout.Gloves.GetRandomElement(), minhealth, maxhealth);
+		AddItem_Helper(h, Loadout.BackPacks.GetRandomElement(), minhealth, maxhealth);
+		AddItem_Helper(h, Loadout.Vests.GetRandomElement(), minhealth, maxhealth);
+		AddItem_Helper(h, Loadout.Misc.GetRandomElement(), minhealth, maxhealth);
 
 		Print("HumanLoadout: Added clothes");
 	}
 
+	//----------------------------------------------------------------
+	//	HumanLoadout.AddItem_Helper
+
+	static bool AddItem_Helper(PlayerBase h, string item, int minhealth = 100, int maxhealth = 100) {
+		float HealthModifier;
+		
+		if (item != "")
+		{
+			EntityAI itementity = h.GetInventory().CreateInInventory(item);
+			if (itementity != null)
+			{
+				HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
+				itementity.SetHealth(itementity.GetMaxHealth() * HealthModifier);
+//				Print("HumanLoadout: AddItem_Helper: " + item + " (" + HealthModifier + ")" );
+			}
+		}
+		return true; //TBD: return true/false if succeeded
+	}
+	
 	//----------------------------------------------------------------
 	//	HumanLoadout.AddWeapon
 	//
@@ -170,34 +164,34 @@ class HumanLoadout {
 			HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
 			gun.SetHealth(gun.GetMaxHealth() * HealthModifier);
 	
+			//Add both optics and attachments
+			TStringArray optics = darc_ListOptics(weapon);				//Find compatible ones
+			TStringArray attachments = darc_ListAttachments(weapon);	//Find compatible ones
+			minhealth = Loadout.AttachmentHealth[0];
+			maxhealth = Loadout.AttachmentHealth[1];
+			
 			//Add optics
 			string optic = "";
-			if (Loadout.WeaponRifle.Find(weapon) > -1)
-			{
-				optic = Loadout.WeaponOptic.GetRandomElement();
-			}
-			if (Loadout.WeaponHandgun.Find(weapon) > -1)			
+			if (GetGame().IsKindOf(weapon, "Pistol_Base"))
 			{
 				optic = Loadout.WeaponHandgunOptic.GetRandomElement();
 			}
-			TStringArray optics = darc_ListOptics(weapon);
-			minhealth = Loadout.AttachmentHealth[0];
-			maxhealth = Loadout.AttachmentHealth[1];
+			else
+			{
+				optic = Loadout.WeaponOptic.GetRandomElement();
+			}
 			AddWeapon_Helper_attachment(gun, optic, optics, minhealth, maxhealth);		
 			
 			//Add attachment
 			string attachment = "";
-			if (Loadout.WeaponRifle.Find(weapon) > -1)
-			{
-				attachment = Loadout.WeaponAttachment.GetRandomElement();
-			}
-			if (Loadout.WeaponHandgun.Find(weapon) > -1)			
+			if (GetGame().IsKindOf(weapon, "Pistol_Base"))
 			{
 				attachment = Loadout.WeaponHandgunAttachment.GetRandomElement();
 			}
-			TStringArray attachments = darc_ListAttachments(weapon);
-			minhealth = Loadout.AttachmentHealth[0];
-			maxhealth = Loadout.AttachmentHealth[1];
+			else
+			{
+				attachment = Loadout.WeaponAttachment.GetRandomElement();
+			}		
 			AddWeapon_Helper_attachment(gun, attachment, attachments, minhealth, maxhealth);
 			
 			Print("HumanLoadout: Added weapon: " + weapon + " (" + HealthModifier + ")" );
@@ -210,15 +204,27 @@ class HumanLoadout {
 	static bool AddWeapon_Helper_attachment(EntityAI gun, string attachment, TStringArray attachments, int minhealth = 100, int maxhealth = 100) {
 		EntityAI att;
 		float HealthModifier;
-		
-		if (attachment == "any")
+			
+		if (attachment != "")
 		{
-			 attachment = attachments.GetRandomElement();
-		}
-		att = gun.GetInventory().CreateAttachment(attachment);
-		HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
-		att.SetHealth(att.GetMaxHealth() * HealthModifier);	
-		
+			//If "any" is used, pick any compatible one
+			if (attachment == "any")
+			{
+				 attachment = attachments.GetRandomElement();
+			}
+
+			Print("HumanLoadout: AddWeapon_Helper_attachment: Trying: " + attachment);
+						
+			//Check that attachment is compatible with the gun from attachments list.
+			if (attachments.Find(attachment) > -1)
+			{		
+				att = gun.GetInventory().CreateAttachment(attachment);
+				HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
+				att.SetHealth(att.GetMaxHealth() * HealthModifier);	
+				
+				Print("HumanLoadout: AddWeapon_Helper_attachment: Added: " + attachment);
+			}
+		}		
 		return true; //TBD: return true/false if succeeded
 	}
 	
@@ -256,7 +262,7 @@ class HumanLoadout {
 			h.GetHumanInventory().CreateInInventory(mag);
 		}
 
-		Print("HumanLoadout: Add " + count + " of " + mag + " magazines for weapon " + weapon);
+		Print("HumanLoadout: Added magazines: " + weapon + " : " + mag + " (" + count + ")");
 	}
 	
 	//----------------------------------------------------------------
