@@ -281,9 +281,8 @@ class eAICommandMenu extends UIScriptedMenu
 		Widget gesture_item_card_widget = gesture_item.GetRadialItemCard();
 
 		//set text
-		ButtonWidget text_widget = gesture_item_card_widget.FindAnyWidget(RADIAL_TEXT);
-		if (text_widget)
-			text_widget.SetText(gesture_item.GetName());
+		ButtonWidget text_widget;
+		if (Class.CastTo(text_widget, gesture_item_card_widget.FindAnyWidget(RADIAL_TEXT))) text_widget.SetText(gesture_item.GetName());
 	}
 
 	protected void DeleteGestureItems()

@@ -38,7 +38,7 @@ class eAIGroup
 	private eAIGroupFormationState m_FormationState = eAIGroupFormationState.IN;
 	
 	// return the group owned by leader, otherwise create a new one.
-	static eAIGroup GetGroupByLeader(PlayerBase leader, bool createIfNoneExists = true)
+	static eAIGroup GetGroupByLeader(DayZPlayerImplement leader, bool createIfNoneExists = true)
 	{
 		for (int i = 0; i < GROUPS.Count(); i++) if (GROUPS[i].GetLeader() == leader) return GROUPS[i];
 		

@@ -154,12 +154,15 @@ class eAIManager extends eAIManagerImplement
 			if (!GetGame().IsMultiplayer()) Class.CastTo(data.param1, GetGame().GetPlayer());
 			
             Print("eAI: ClearAllAI called.");
-			foreach (eAIGroup g : eAIGroup.GROUPS) {
-				for (int i = g.Count() - 1; i > -1; i--) {
-					PlayerBase p = g.GetMember(i);
-					if (p.IsAI()) {
+			foreach (eAIGroup g : eAIGroup.GROUPS)
+			{
+				for (int i = g.Count() - 1; i > -1; i--)
+				{
+					eAIBase ai;
+					if (Class.CastTo(ai, g.GetMember(i)))
+					{
 						g.RemoveMember(i);
-						GetGame().ObjectDelete(p);
+						GetGame().ObjectDelete(ai);
 					}
 				}	
 			}
@@ -172,10 +175,10 @@ class eAIManager extends eAIManagerImplement
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server)
 		{
-			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
+			if (!GetGame().IsMultiplayer()) Class.CastTo(data.param1, GetGame().GetPlayer());
 			
 			Print("eAI: ReqFormRejoin called.");
-			eAIGroup g = eAIGroup.GetGroupByLeader(data.param1, false);
+			eAIGroup g = eAIGroup.GetGroupByLeader(DayZPlayerImplement.Cast(data.param1), false);
 			g.SetFormationState(eAIGroupFormationState.IN);
 		}
 	}
@@ -186,10 +189,10 @@ class eAIManager extends eAIManagerImplement
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server)
 		{
-			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
+			if (!GetGame().IsMultiplayer()) Class.CastTo(data.param1, GetGame().GetPlayer());
 			
 			Print("eAI: ReqFormStop called.");
-			eAIGroup g = eAIGroup.GetGroupByLeader(data.param1, false);
+			eAIGroup g = eAIGroup.GetGroupByLeader(DayZPlayerImplement.Cast(data.param1), false);
 			g.SetFormationState(eAIGroupFormationState.NONE);
 		}
 	}
@@ -200,10 +203,10 @@ class eAIManager extends eAIManagerImplement
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server)
 		{
-			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
+			if (!GetGame().IsMultiplayer()) Class.CastTo(data.param1, GetGame().GetPlayer());
 			
 			Print("eAI: ReqFormationChange called.");
-			eAIGroup g = eAIGroup.GetGroupByLeader(data.param1, false);
+			eAIGroup g = eAIGroup.GetGroupByLeader(DayZPlayerImplement.Cast(data.param1), false);
 			eAIFormation newForm;
 			switch (data.param2)
 			{

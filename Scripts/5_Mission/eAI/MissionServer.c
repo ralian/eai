@@ -25,9 +25,8 @@ modded class MissionServer
 			{
 				for (int i = 0; i < g.Count(); i++)
 				{
-					eAIBase ai = g.GetMember(i);
-					if (ai && ai.IsAI() && ai.IsAlive())
-						GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(ai), false, identity);
+					eAIBase ai;
+					if (Class.CastTo(ai, g.GetMember(i)) && ai.IsAlive()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(ai), false, identity);
 				}
 			}
 		}
