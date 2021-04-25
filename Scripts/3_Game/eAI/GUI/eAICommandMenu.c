@@ -234,7 +234,6 @@ class eAICommandMenu extends UIScriptedMenu
 		{
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_SPAWNALLY, "Spawn Ally", eAICommandCategories.CAT_DEBUG));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_CLEARALL, "Clear All AI", eAICommandCategories.CAT_DEBUG));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_RELOAD, "Force Reload", eAICommandCategories.CAT_DEBUG));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_SPAWNZOM, "Spawn Zombie", eAICommandCategories.CAT_DEBUG));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_AIMAP, "AI Menu", eAICommandCategories.CAT_DEBUG));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_GRPMGR, "Group Manager", eAICommandCategories.CAT_DEBUG));
@@ -282,9 +281,8 @@ class eAICommandMenu extends UIScriptedMenu
 		Widget gesture_item_card_widget = gesture_item.GetRadialItemCard();
 
 		//set text
-		ButtonWidget text_widget = gesture_item_card_widget.FindAnyWidget(RADIAL_TEXT);
-		if (text_widget)
-			text_widget.SetText(gesture_item.GetName());
+		ButtonWidget text_widget;
+		if (Class.CastTo(text_widget, gesture_item_card_widget.FindAnyWidget(RADIAL_TEXT))) text_widget.SetText(gesture_item.GetName());
 	}
 
 	protected void DeleteGestureItems()

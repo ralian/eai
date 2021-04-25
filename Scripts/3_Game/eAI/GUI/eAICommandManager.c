@@ -7,15 +7,11 @@ class eAICommandManagerClient : eAICommandManager {
 	override bool Send(eAICommands cmd) {
 		switch (cmd) {
 			case eAICommands.DEB_SPAWNALLY:
-				GetRPCManager().SendRPC("eAI", "SpawnEntity", new Param1<DayZPlayer>(GetGame().GetPlayer()));
+				GetRPCManager().SendRPC("eAI", "SpawnAI", new Param1<DayZPlayer>(GetGame().GetPlayer()));
 				return true;
 			
 			case eAICommands.DEB_CLEARALL:
 				GetRPCManager().SendRPC("eAI", "ClearAllAI", new Param1<DayZPlayer>(GetGame().GetPlayer()));
-				return true;
-			
-			case eAICommands.DEB_RELOAD:
-				GetRPCManager().SendRPC("eAI", "ProcessReload", new Param1<DayZPlayer>(GetGame().GetPlayer()));
 				return true;
 			
 			case eAICommands.DEB_SPAWNZOM:

@@ -21,12 +21,9 @@ enum eAITargetOverriding
 
 class eAIBase extends PlayerBase
 {
-	static autoptr array<eAIBase> m_eAI = new array<eAIBase>();
-
-	private bool m_eAI_Is = false;
+	private static autoptr array<eAIBase> m_AllAI = new array<eAIBase>();
 
 	private autoptr eAIHFSM m_FSM;
-	private autoptr array<string> m_Transitions = {};
 
 	// Targeting data 
 	private autoptr array<eAITarget> m_eAI_Targets;
@@ -74,6 +71,44 @@ class eAIBase extends PlayerBase
 
 	void eAIBase()
 	{
+		if (IsMissionHost())
+		{
+			if (eAIGlobal_HeadlessClient && eAIGlobal_HeadlessClient.GetIdentity())
+			{
+				GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<eAIBase>(this), false, eAIGlobal_HeadlessClient.GetIdentity());
+			}
+		}
+
+		m_AllAI.Insert(this);
+		
+		m_eAI_Targets = new array<eAITarget>();
+
+		m_AimingProfile = new eAIAimingProfile(this);
+		
+		SetGroup(eAIGroup.CreateGroup());
+
+		m_ActionManager = new eAIActionManager(this);
+		m_WeaponManager = new eAIWeaponManager(this);
+		
+		m_eAI_AnimationST = new eAIAnimationST(this);
+
+		m_PathFilter = new PGFilter();
+
+		int inFlags = PGPolyFlags.WALK | PGPolyFlags.DOOR | PGPolyFlags.INSIDE | PGPolyFlags.JUMP_OVER;
+		int exFlags = PGPolyFlags.DISABLED | PGPolyFlags.SWIM | PGPolyFlags.SWIM_SEA | PGPolyFlags.SPECIAL | PGPolyFlags.JUMP | PGPolyFlags.CLIMB | PGPolyFlags.CRAWL | PGPolyFlags.CROUCH;
+
+		m_PathFilter.SetFlags( inFlags, exFlags, PGPolyFlags.NONE );
+		m_PathFilter.SetCost( PGAreaType.WATER, 0.0 );
+
+		eAIHFSMType type = eAIHFSM.LoadXML("eAI/scripts/FSM", "Master");
+		if (type)
+		{
+			m_FSM = type.Spawn(this, null);
+			m_FSM.StartDefault();
+		}
+
+		LookAtDirection("0 0 1");
+		AimAtDirection("0 0 1");
 	}
 
 	void ~eAIBase()
@@ -82,7 +117,7 @@ class eAIBase extends PlayerBase
 		{
 			m_eAI_Group.RemoveMember(m_eAI_Group.GetIndex(this));
 
-			m_eAI.RemoveItem(this);
+			m_AllAI.RemoveItem(this);
 		}
 	}
 	
@@ -120,19 +155,23 @@ class eAIBase extends PlayerBase
 		GetAimingProfile().UpdateArbiter(GetNearestPlayer());
 	}
 	
-	bool PlayerIsEnemy(EntityAI other) {
+	bool PlayerIsEnemy(EntityAI other)
+	{
 		PlayerBase player = PlayerBase.Cast(other);
 		if (!player) return true;
 		
-		if (player.GetGroup() && GetGroup()) {
+		if (player.GetGroup() && GetGroup())
+		{
 			if (player.GetGroup() == GetGroup())
 				return false;
-			if (player.GetGroup().GetFaction().isFriendly(GetGroup().GetFaction()))
+
+			if (player.GetGroup().GetFaction().IsFriendly(GetGroup().GetFaction()))
 				return false;
 			
 			// at this point we know both we and they have groups, and the groups aren't friendly towards each other
 			return true;
 		}
+
 		return false;
 	}
 	
@@ -149,12 +188,10 @@ class eAIBase extends PlayerBase
 		if (!IsRaised()) return false;
 		
 		// This check is to see if a friendly happens to be in the line of fire
-		/*
 		vector hitPos;
 		int contactComponent;
 		EntityAI hitPlayer;
 		if (weap.Hitscan(hitPlayer, hitPos, contactComponent) && !PlayerIsEnemy(hitPlayer)) return false;
-		*/
 
 		return true;
 	}
@@ -189,55 +226,7 @@ class eAIBase extends PlayerBase
 	
 	override bool IsAI()
 	{
-		return m_eAI_Is;
-	}
-
-	ref eAIGroup SetAI(eAIGroup group = null)
-	{
-		m_eAI_Is = true;
-        m_eAI_Group = group;
-
-		m_eAI_Targets = new array<eAITarget>();
-
-		m_AimingProfile = new eAIAimingProfile(this);
-		
-        if (m_eAI_Group)
-		{
-			m_eAI_Group.AddMember(this);
-		}
-		else
-		{
-			// We will only be using this case with AI which don't already have a group leader.
-			m_eAI_Group = new eAIGroup();
-			m_eAI_Group.SetLeader(this);
-		}
-
-		m_eAI.Insert(this);
-
-		m_ActionManager = new eAIActionManager(this);
-		m_WeaponManager = new eAIWeaponManager(this);
-		
-		m_eAI_AnimationST = new eAIAnimationST(this);
-
-		m_PathFilter = new PGFilter();
-
-		int inFlags = PGPolyFlags.WALK | PGPolyFlags.DOOR | PGPolyFlags.INSIDE | PGPolyFlags.JUMP_OVER;
-		int exFlags = PGPolyFlags.DISABLED | PGPolyFlags.SWIM | PGPolyFlags.SWIM_SEA | PGPolyFlags.SPECIAL | PGPolyFlags.JUMP | PGPolyFlags.CLIMB | PGPolyFlags.CRAWL | PGPolyFlags.CROUCH;
-
-		m_PathFilter.SetFlags( inFlags, exFlags, PGPolyFlags.NONE );
-		m_PathFilter.SetCost( PGAreaType.WATER, 0.0 );
-
-		eAIHFSMType type = eAIHFSM.LoadXML("eAI/scripts/FSM", "Master");
-		if (type)
-		{
-			m_FSM = type.Spawn(this, null);
-			m_FSM.StartDefault();
-		}
-
-		LookAtDirection("0 0 1");
-		AimAtDirection("0 0 1");
-
-		return m_eAI_Group;
+		return true;
 	}
 
 	eAIHFSM GetFSM()
@@ -266,28 +255,6 @@ class eAIBase extends PlayerBase
 	eAIAimingProfile GetAimingProfile()
 	{
 		return m_AimingProfile;
-	}
-	
-	// Request that a transition with the given event name be forcibly undergone.
-	// Does not preserve order in which transitions were forced.
-	void RequestTransition(string s) {
-		m_Transitions.Clear();
-		m_Transitions.Insert(s);
-	}
-	
-	// Warning: this should only be called when you don't want to clear the prior requests, which is usually only 
-	// if there are two possible transitions that do the same effect.
-	void RequestAdditionalTransition(string s) {
-		m_Transitions.Insert(s);
-	}
-	
-	bool GetRequestedTransition(string s) {
-		int i = m_Transitions.Find(s);
-		if (i > -1) {
-			m_Transitions.Clear();
-			return true;
-		}
-		return false;
 	}
 
 	array<eAITarget> GetTargets()
@@ -573,7 +540,14 @@ class eAIBase extends PlayerBase
 		m_DebugShapes.Clear();
 #endif
 		
+		//! handle death with high priority
+		if (HandleDeath(pCurrentCommandID))
+		{
+			return;
+		}
+		
 		if (!GetGame().IsServer()) return;
+
 		int simulationPrecision = 0;
 
 		UpdateTargets();
@@ -603,12 +577,6 @@ class eAIBase extends PlayerBase
 				world.FindPath(GetPosition(), modifiedTargetPosition, m_PathFilter, m_Path);
 			}
 		}
-		
-		//! handle death with high priority
-		if (HandleDeath(pCurrentCommandID))
-		{
-			return;
-		}
 
 		vector transform[4];
 		GetTransform(transform);
@@ -635,11 +603,12 @@ class eAIBase extends PlayerBase
 
 		if (m_WeaponManager) m_WeaponManager.Update(pDt);
 		if (m_EmoteManager) m_EmoteManager.Update(pDt);
-		if (m_FSM) m_FSM.Update(pDt, simulationPrecision);
 		
 		GetPlayerSoundManagerServer().Update();
 		GetHumanInventory().Update(pDt);
 		UpdateDelete();
+
+		if (m_FSM) m_FSM.Update(pDt, simulationPrecision);
 
 		if (m_ActionManager)
 		{

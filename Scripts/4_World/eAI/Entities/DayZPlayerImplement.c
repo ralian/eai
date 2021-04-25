@@ -2,7 +2,7 @@ modded class DayZPlayerImplement
 {
     private autoptr eAITargetInformation m_TargetInformation;
 
-    protected autoptr eAIGroup m_eAI_Group;
+    protected eAIGroup m_eAI_Group;
 
     void DayZPlayerImplement()
     {
@@ -26,7 +26,19 @@ modded class DayZPlayerImplement
 
 	void SetGroup(eAIGroup group)
     {
+        if (m_eAI_Group == group) return;
+
+        if (m_eAI_Group)
+        {
+            m_eAI_Group.RemoveMember(this);
+        }
+
 		m_eAI_Group = group;
+
+        if (m_eAI_Group)
+        {
+            m_eAI_Group.AddMember(this);
+        }
 	}
 
 	eAIGroup GetGroup()

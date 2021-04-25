@@ -13,7 +13,7 @@ enum eAIGroupFormationState
 
 class eAIGroup
 {
-	static autoptr array<ref eAIGroup> GROUPS = new array<ref eAIGroup>();
+	private static autoptr array<ref eAIGroup> m_AllGroups = new array<ref eAIGroup>();
 
 	private static int m_IDCounter = 0;
 
@@ -38,20 +38,30 @@ class eAIGroup
 	private eAIGroupFormationState m_FormationState = eAIGroupFormationState.IN;
 	
 	// return the group owned by leader, otherwise create a new one.
-	static eAIGroup GetGroupByLeader(PlayerBase leader, bool createIfNoneExists = true)
+	static eAIGroup GetGroupByLeader(DayZPlayerImplement leader, bool createIfNoneExists = true)
 	{
-		for (int i = 0; i < GROUPS.Count(); i++) if (GROUPS[i].GetLeader() == leader) return GROUPS[i];
+		for (int i = 0; i < m_AllGroups.Count(); i++) if (m_AllGroups[i].GetLeader() == leader) return m_AllGroups[i];
 		
 		if (!createIfNoneExists) return null;
 		
-		eAIGroup group = new eAIGroup();
-		GROUPS.Insert(group);
-		group.SetLeader(leader);
+		eAIGroup group = CreateGroup();
 		leader.SetGroup(group);
 		return group;
 	}
 
-	void eAIGroup()
+	static eAIGroup CreateGroup()
+	{
+		return new eAIGroup();
+	}
+
+	static void DeleteGroup(eAIGroup group)
+	{
+		int index = m_AllGroups.Find(group);
+		m_AllGroups.Remove(index);
+		delete group;
+	}
+
+	private void eAIGroup()
 	{
 		m_TargetInformation = new eAIGroupTargetInformation(this);
 		m_Targets = new array<eAITargetInformation>();
@@ -65,13 +75,18 @@ class eAIGroup
 		
 		m_Waypoints = new array<vector>();
 
-		GROUPS.Insert(this);
+		m_AllGroups.Insert(this);
 	}
 
-	void ~eAIGroup()
+	private void ~eAIGroup()
 	{
-		int idx = GROUPS.Find(this);
-		if (idx != -1) GROUPS.RemoveOrdered(idx);
+		int idx = m_AllGroups.Find(this);
+		if (idx != -1) m_AllGroups.RemoveOrdered(idx);
+	}
+
+	void Delete()
+	{
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(DeleteGroup, this);
 	}
 	
 	void AddWaypoint(vector pos)
@@ -89,8 +104,7 @@ class eAIGroup
 		m_Waypoints.Clear();
 	}
 
-	//TODO: rename to SetWaypointBehaviour
-	void SetLooping(eAIWaypointBehavior bhv)
+	void SetWaypointBehaviour(eAIWaypointBehavior bhv)
 	{
 		m_WaypointBehaviour = bhv;
 	}
@@ -110,11 +124,13 @@ class eAIGroup
 		return m_FormationState;
 	}
 	
-	eAIFaction GetFaction() {
+	eAIFaction GetFaction()
+	{
 		return m_Faction;
 	}
 	
-	void SetFaction(eAIFaction f) {
+	void SetFaction(eAIFaction f)
+	{
 		m_Faction = f;
 	}
 
@@ -177,6 +193,14 @@ class eAIGroup
 		m_Form.Update(pDt);
 	}
 
+	static void UpdateAll(float pDt)
+	{
+        // don't process if we aren't the server
+        if (!GetGame().IsServer()) return;
+
+		for (int i = 0; i < m_AllGroups.Count(); i++) m_AllGroups[i].Update(pDt);
+	}
+
 	int GetMemberIndex(eAIBase ai)
 	{
 		int pos = 0;
@@ -236,22 +260,43 @@ class eAIGroup
 		m_Form = f;
 	}
 
-	bool IsMember(DayZPlayerImplement player)
+	bool IsMember(DayZPlayerImplement member)
 	{
-		return m_Members.Find(player) != -1;
+		return m_Members.Find(member) != -1;
  	}
 	
 	int AddMember(DayZPlayerImplement member)
 	{
 		return m_Members.Insert(member);
 	}
-		
-	bool RemoveMember(int i)
+
+	bool RemoveMember(DayZPlayerImplement member, bool autoDelete = true)
+	{
+		return RemoveMember(m_Members.Find(member), autoDelete);
+	}
+
+	bool RemoveMember(int i, bool autoDelete = true)
 	{
 		if (i < 0 || i >= m_Members.Count()) return false;
 
 		m_Members.RemoveOrdered(i);
+
+		if (autoDelete && m_Members.Count() == 0)
+		{
+			Delete();
+		}
+
 		return true;
+	}
+
+	void RemoveAllMembers(bool autoDelete = true)
+	{
+		m_Members.Clear();
+
+		if (autoDelete)
+		{
+			Delete();
+		}
 	}
 	
 	DayZPlayerImplement GetMember(int i)
@@ -267,5 +312,33 @@ class eAIGroup
 	int Count()
 	{
 		return m_Members.Count();
+	}
+
+	static void DeleteAllAI()
+	{
+		foreach (eAIGroup group : m_AllGroups)
+		{
+			for (int i = group.Count() - 1; i > -1; i--)
+			{
+				eAIBase ai;
+				if (Class.CastTo(ai, group.GetMember(i)))
+				{
+					group.RemoveMember(i);
+					GetGame().ObjectDelete(ai);
+				}
+			}	
+		}
+	}
+
+	static void OnHeadlessClientConnect(PlayerIdentity identity)
+	{
+		foreach (eAIGroup group : m_AllGroups)
+		{
+			for (int i = 0; i < group.Count(); i++)
+			{
+				eAIBase ai;
+				if (Class.CastTo(ai, group.GetMember(i)) && ai.IsAlive()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(ai), false, identity);
+			}
+		}
 	}
 };
