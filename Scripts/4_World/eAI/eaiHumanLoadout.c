@@ -14,11 +14,13 @@ class HumanLoadout {
 	
 	ref TStringArray WeaponMelee = {"MeleeBat"}; 	
 	ref TStringArray WeaponRifle = {"Ruger1022"}; 	
+	ref TStringArray WeaponRifleMag = {"any"}; 	
 	ref TIntArray	 WeaponRifleMagCount = {1,3};
 	ref TStringArray WeaponAttachment = {"any"}; 	
 	ref TStringArray WeaponOptic = {"any"}; 	
 	
 	ref TStringArray WeaponHandgun = {"MakarovIJ70"}; 		
+	ref TStringArray WeaponHandgunMag = {"any"}; 	
 	ref TIntArray	 WeaponHandgunMagCount = {1,3}; 	
 	ref TStringArray WeaponHandgunAttachment = {"any"}; 	
 	ref TStringArray WeaponHandgunOptic = {"any"}; 	
@@ -62,13 +64,13 @@ class HumanLoadout {
 		if (weapon != "")
 		{
 			HumanLoadout.AddWeapon(h, Loadout, weapon);
-			HumanLoadout.AddMagazine(h, weapon, Loadout.WeaponRifleMagCount[0], Loadout.WeaponRifleMagCount[1]);
+			HumanLoadout.AddMagazine(h, Loadout, weapon);
 		}
 		weapon = Loadout.WeaponHandgun.GetRandomElement();
 		if (weapon != "")
 		{
 			HumanLoadout.AddWeapon(h, Loadout, weapon);
-			HumanLoadout.AddMagazine(h, weapon, Loadout.WeaponHandgunMagCount[0], Loadout.WeaponHandgunMagCount[1]);
+			HumanLoadout.AddMagazine(h, Loadout, weapon);
 		}
 		
 		HumanLoadout.AddLoot(h, Loadout);
@@ -253,13 +255,39 @@ class HumanLoadout {
 	//
 	//	Adds magazines to AI inventory.
 	//
-	//	Usage: HumanLoadout.AddMagazine(pb_AI, "AKM", 3);		//Three random AKM magazines are added
-	//	       HumanLoadout.AddMagazine(pb_AI, "AKM", 1, 4);	//1 to 4 random AKM magazines are added
+	//	Usage: HumanLoadout.AddMagazine(pb_AI, Loadout, "AKM");			//Magazines for an AKM is added
 
-	static void AddMagazine(PlayerBase h, string weapon, int mincount = 1, int maxcount = 0) {
-        TStringArray magazines = {};
+	static void AddMagazine(PlayerBase h, HumanLoadout Loadout, string weapon = "") {
+
+		int mincount = 1;
+		int maxcount = 1;
+		string mag = "";
+		
+		TStringArray magazines = {};				//Compatible magazines list
 		magazines = darc_ListMagazines(weapon);
-		string mag = magazines.GetRandomElement();
+		
+		if (GetGame().IsKindOf(weapon, "Pistol_Base"))
+		{
+			mag = Loadout.WeaponHandgunMag.GetRandomElement();
+			mincount = Loadout.WeaponHandgunMagCount[0];
+			maxcount = Loadout.WeaponHandgunMagCount[1];
+		}
+		else
+		{
+			mag = Loadout.WeaponRifleMag.GetRandomElement();
+			mincount = Loadout.WeaponRifleMagCount[0];
+			maxcount = Loadout.WeaponRifleMagCount[1];
+		}
+		
+		if (mag == "any")
+		{
+			mag = magazines.GetRandomElement();
+		}
+		else
+		{
+			Print("HumanLoadout: ERROR: Currently only 'any' is supported in mag definitions. Adding a random compatible mag.");
+			mag = magazines.GetRandomElement();
+		}
 
 		int i;
 		int count = mincount;

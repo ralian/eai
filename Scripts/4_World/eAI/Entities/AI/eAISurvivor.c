@@ -31,6 +31,24 @@ string GetRandomAIMale()
 	return "eAI_" + MaleList.GetRandomElement();
 }
 
+string GetRandomName()
+{
+	//Names inspired from https://www.fantasynamegenerators.com . The are neutral names that fit both genders
+		
+	TStringArray firstname = {	"Billy", "Jessie", "Jaime", "Charlie", "Blake", "Jackie", "Caden", "Vic", "Casey", "Taylor", "Ash", "Addison", "Danny", "Angel", 
+								"Jesse", "Rudy", "Blair", "Skyler", "Nicky", "Mell", "Dane", "Bret", "Clem", "Gabe", "River", "Kit", "Reggie", "Drew", "Steff", 
+								"Gabe", "Gene", "Jaden", "Sam", "Rory", "Hayden", "Mel", "Phoenix", "Gale", "Caden", "Angel", "Nicky", "Bennie", "Aiden", "Taylor", 
+								"Sam", "Ali", "Jess", "Nicky", "Harper", "Angel"
+							};
+	TStringArray lastname = {	"Allen", "Dixon", "Carter", "Byrne", "Richards", "Houghton", "Bennett", "Morgan", "West", "Rees", "Morris", "Phillips", "Johnston", 
+								"Smith", "Jenkins", "May", "Price", "James", "Gardner", "Gibson", "Hill", "Harris", "Mccarthy", "Graham", "Knight", "Gardner", "White", 
+								"Hopkins", "Mcdonald", "Green", "Williamson", "Francis", "Brown", "Read", "Anderson", "Elliott", "Powell", "Young", "Shaw", "Woods", 
+								"Hunter", "Thomson", "Ryan", "Walker", "Foster", "Hunt", "Pearce", "Cooke", "Palmer", "Parker"
+							};	
+	
+	return firstname.GetRandomElement() + " " + lastname.GetRandomElement();
+}
+
 class eAI_SurvivorM_Mirek extends eAIBase {}
 class eAI_SurvivorM_Denis extends eAIBase {}
 class eAI_SurvivorM_Boris extends eAIBase {}

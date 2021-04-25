@@ -50,7 +50,8 @@ class eAIGame
 		
 		eAIBase pb_AI;
 		if (!Class.CastTo(pb_AI, GetGame().CreateObject(GetRandomAI(), pb_Human.GetPosition()))) return null;
-
+		Print("My name is: " + GetRandomName());
+		
 		if (eAIGlobal_HeadlessClient && eAIGlobal_HeadlessClient.GetIdentity()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
 		
 		pb_AI.SetAI(eAIGroup.GetGroupByLeader(pb_Human));
