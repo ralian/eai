@@ -22,7 +22,7 @@ class eAIManager extends eAIManagerImplement
 	{
 		m_AimingManager = new eAIAimingProfileManager();
 		
-		GetRPCManager().AddRPC("eAI", "SpawnEntity", this, SingeplayerExecutionType.Server);
+		GetRPCManager().AddRPC("eAI", "SpawnAI", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "SpawnZombie", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "ClearAllAI", this, SingeplayerExecutionType.Server);
 
@@ -74,7 +74,7 @@ class eAIManager extends eAIManagerImplement
 	}
 	
 	// Server Side: This RPC spawns a helper AI next to the player, and tells them to join the player's formation.
-	void SpawnEntity(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
+	void SpawnAI(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
