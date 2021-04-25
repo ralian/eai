@@ -104,8 +104,7 @@ class eAIGroup
 		m_Waypoints.Clear();
 	}
 
-	//TODO: rename to SetWaypointBehaviour
-	void SetLooping(eAIWaypointBehavior bhv)
+	void SetWaypointBehaviour(eAIWaypointBehavior bhv)
 	{
 		m_WaypointBehaviour = bhv;
 	}
@@ -290,9 +289,14 @@ class eAIGroup
 		return true;
 	}
 
-	void RemoveAllMembers()
+	void RemoveAllMembers(bool autoDelete = true)
 	{
 		m_Members.Clear();
+
+		if (autoDelete)
+		{
+			Delete();
+		}
 	}
 	
 	DayZPlayerImplement GetMember(int i)
