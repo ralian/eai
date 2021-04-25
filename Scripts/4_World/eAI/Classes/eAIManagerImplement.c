@@ -11,14 +11,7 @@ class eAIManagerImplement extends eAIManagerBase
     {
 		super.OnUpdate(doSim, timeslice);
 
-        // don't process if we aren't the server
-        if (!GetGame().IsServer()) return;
-
-		int count = eAIGroup.GROUPS.Count();
-		for (int i = 0; i < count; i++)
-		{
-			eAIGroup.GROUPS[i].Update(timeslice);
-		}
+		eAIGroup.UpdateAll(timeslice);
 	}
 
 	/*

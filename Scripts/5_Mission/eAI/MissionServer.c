@@ -21,14 +21,7 @@ modded class MissionServer
 		if (identity && identity.GetId() == HeadlessClientSteamID)
 		{
 			eAIGlobal_HeadlessClient = player;
-			foreach (eAIGroup g : eAIGroup.GROUPS)
-			{
-				for (int i = 0; i < g.Count(); i++)
-				{
-					eAIBase ai;
-					if (Class.CastTo(ai, g.GetMember(i)) && ai.IsAlive()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(ai), false, identity);
-				}
-			}
+			eAIGroup.OnHeadlessClientConnect(identity);
 		}
 
 		eAIGroup.GetGroupByLeader(player);

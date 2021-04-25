@@ -13,7 +13,7 @@ enum eAIGroupFormationState
 
 class eAIGroup
 {
-	static autoptr array<ref eAIGroup> GROUPS = new array<ref eAIGroup>();
+	private static autoptr array<ref eAIGroup> m_AllGroups = new array<ref eAIGroup>();
 
 	private static int m_IDCounter = 0;
 
@@ -40,12 +40,11 @@ class eAIGroup
 	// return the group owned by leader, otherwise create a new one.
 	static eAIGroup GetGroupByLeader(DayZPlayerImplement leader, bool createIfNoneExists = true)
 	{
-		for (int i = 0; i < GROUPS.Count(); i++) if (GROUPS[i].GetLeader() == leader) return GROUPS[i];
+		for (int i = 0; i < m_AllGroups.Count(); i++) if (m_AllGroups[i].GetLeader() == leader) return m_AllGroups[i];
 		
 		if (!createIfNoneExists) return null;
 		
 		eAIGroup group = new eAIGroup();
-		GROUPS.Insert(group);
 		group.SetLeader(leader);
 		leader.SetGroup(group);
 		return group;
@@ -65,13 +64,13 @@ class eAIGroup
 		
 		m_Waypoints = new array<vector>();
 
-		GROUPS.Insert(this);
+		m_AllGroups.Insert(this);
 	}
 
 	void ~eAIGroup()
 	{
-		int idx = GROUPS.Find(this);
-		if (idx != -1) GROUPS.RemoveOrdered(idx);
+		int idx = m_AllGroups.Find(this);
+		if (idx != -1) m_AllGroups.RemoveOrdered(idx);
 	}
 	
 	void AddWaypoint(vector pos)
@@ -110,11 +109,13 @@ class eAIGroup
 		return m_FormationState;
 	}
 	
-	eAIFaction GetFaction() {
+	eAIFaction GetFaction()
+	{
 		return m_Faction;
 	}
 	
-	void SetFaction(eAIFaction f) {
+	void SetFaction(eAIFaction f)
+	{
 		m_Faction = f;
 	}
 
@@ -175,6 +176,14 @@ class eAIGroup
 		ProcessTargets();
 
 		m_Form.Update(pDt);
+	}
+
+	static void UpdateAll(float pDt)
+	{
+        // don't process if we aren't the server
+        if (!GetGame().IsServer()) return;
+
+		for (int i = 0; i < m_AllGroups.Count(); i++) m_AllGroups[i].Update(pDt);
 	}
 
 	int GetMemberIndex(eAIBase ai)
@@ -253,6 +262,11 @@ class eAIGroup
 		m_Members.RemoveOrdered(i);
 		return true;
 	}
+
+	void RemoveAllMembers()
+	{
+		m_Members.Clear();
+	}
 	
 	DayZPlayerImplement GetMember(int i)
 	{
@@ -267,5 +281,33 @@ class eAIGroup
 	int Count()
 	{
 		return m_Members.Count();
+	}
+
+	static void DeleteAllAI()
+	{
+		foreach (eAIGroup group : m_AllGroups)
+		{
+			for (int i = group.Count() - 1; i > -1; i--)
+			{
+				eAIBase ai;
+				if (Class.CastTo(ai, group.GetMember(i)))
+				{
+					group.RemoveMember(i);
+					GetGame().ObjectDelete(ai);
+				}
+			}	
+		}
+	}
+
+	static void OnHeadlessClientConnect(PlayerIdentity identity)
+	{
+		foreach (eAIGroup group : m_AllGroups)
+		{
+			for (int i = 0; i < group.Count(); i++)
+			{
+				eAIBase ai;
+				if (Class.CastTo(ai, group.GetMember(i)) && ai.IsAlive()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(ai), false, identity);
+			}
+		}
 	}
 };

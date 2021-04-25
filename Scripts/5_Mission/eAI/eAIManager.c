@@ -154,18 +154,7 @@ class eAIManager extends eAIManagerImplement
 			if (!GetGame().IsMultiplayer()) Class.CastTo(data.param1, GetGame().GetPlayer());
 			
             Print("eAI: ClearAllAI called.");
-			foreach (eAIGroup g : eAIGroup.GROUPS)
-			{
-				for (int i = g.Count() - 1; i > -1; i--)
-				{
-					eAIBase ai;
-					if (Class.CastTo(ai, g.GetMember(i)))
-					{
-						g.RemoveMember(i);
-						GetGame().ObjectDelete(ai);
-					}
-				}	
-			}
+			eAIGroup.DeleteAllAI();
 		}
 	}
 	
