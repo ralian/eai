@@ -1,7 +1,4 @@
 {
-    "Version": [
-        1
-    ],
     "Shirts": [
         "GorkaEJacket_Autumn",
         "GorkaEJacket_Flat",
@@ -26,13 +23,11 @@
         "CoyoteBag_Green"
     ],
     "Vests": [
-        "",	
         "HighCapacityVest_Black",
         "PlateCarrierVest",
         "UKAssVest_Camo"
     ],
     "Headgear": [
-        "", "",
         "GorkaHelmet",
         "Mich2001Helmet",
         "MotoHelmet_Black",
@@ -40,7 +35,6 @@
         "DirtBikeHelmet_Black"
     ],
     "Gloves": [
-        "", "",	
         "WorkingGloves_Beige",
         "WorkingGloves_Black",
         "NBCGlovesGray",
@@ -71,53 +65,26 @@
         1,
         3
     ],
-    "WeaponAttachment": [
-		"", "",
-		"any"
-    ],
-    "WeaponOptic": [
-		"", "", "", "",
-        "any"
-    ],	
     "WeaponHandgun": [
-		"", "", "", "", "", "", 
-        "Colt1911",
-		"MakarovIJ70"
+        ""
     ],
     "WeaponHandgunMagCount": [
         1,
         2
     ],	
-    "WeaponHandgunAttachment": [
-        "any"
-    ],
-    "WeaponHandgunOptic": [
-        "any"
-    ],	
     "WeaponHealth": [
-        30,
-        100
-    ],
-    "AttachmentHealth": [
         10,
         100
-    ],	
+    ],
     "Loot": [
-        "SodaCan_Cola",
-		"Apple"
+        "SodaCan_Cola"
     ],
     "LootRandom": [
         "Rope",
         "Screwdriver"
     ],
-    "LootRandomChance": [
-        30
-    ],
     "LootHealth": [
         10,
         100
-    ],
-    "BlackList": [
-        "ReservedForFuture"
     ]
 }

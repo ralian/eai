@@ -56,7 +56,6 @@ class eAIHFSM
 
     protected string m_Name;
     protected string m_DefaultState;
-	protected string m_LastState = "";
     protected eAIBase m_Unit;
 
     void eAIHFSM(eAIBase unit, eAIState parentState)
@@ -72,14 +71,15 @@ class eAIHFSM
     {
         return m_Name;
     }
-	
-	string GetLastState() {
-		return m_LastState;
-	}
 
     eAIBase GetUnit()
     {
         return m_Unit;
+    }
+
+    eAIState GetParent()
+    {
+        return m_ParentState;
     }
 
     void AddState(eAIState state)
@@ -121,19 +121,21 @@ class eAIHFSM
 	{
         Print("eAIFSM::StartDefault");
 
-        if (m_Running && m_CurrentState)
+        eAIState src = m_CurrentState;
+        eAIState dst = GetState(m_DefaultState);
+
+        if (m_Running && src)
         {
-            Print("Exiting state: " + m_CurrentState);
-            m_CurrentState.OnExit("", true);
-			m_LastState = m_CurrentState.GetName();
+            Print("Exiting state: " + src);
+            src.OnExit("", true, dst);
         }
 	
-		m_CurrentState = GetState(m_DefaultState);
+		m_CurrentState = dst;
 		
         if (m_CurrentState)
         {
             Print("Starting state: " + m_CurrentState);
-            m_CurrentState.OnEntry("");
+            m_CurrentState.OnEntry("", src);
             return true;
         }
 		
@@ -146,19 +148,30 @@ class eAIHFSM
     {
         Print("eAIFSM::Start e=" + e);
 
-        if (m_Running && m_CurrentState)
+        Param2<eAIState, bool> new_state = FindSuitableTransition(m_CurrentState, "");
+
+        eAIState src = m_CurrentState;
+        eAIState dst = new_state.param1;
+
+        if (dst == null)
         {
-            Print("Exiting state: " + m_CurrentState);
-            m_CurrentState.OnExit(e, true);
-			m_LastState = m_CurrentState.GetName();
+            Print("No valid state found. Aborting.");
+
+            return false;
         }
 
-        m_CurrentState = FindSuitableTransition(m_CurrentState, e).param1;
+        if (m_Running && m_CurrentState && m_CurrentState != dst)
+        {
+            Print("Exiting state: " + m_CurrentState);
+            m_CurrentState.OnExit(e, true, dst);
+        }
 
-        if (m_CurrentState)
+        m_CurrentState = dst;
+
+        if (m_CurrentState && src != m_CurrentState)
         {
             Print("Starting state: " + m_CurrentState);
-            m_CurrentState.OnEntry(e);
+            m_CurrentState.OnEntry(e, src);
             return true;
         }
 
@@ -174,7 +187,7 @@ class eAIHFSM
         if (m_Running && m_CurrentState)
         {
             Print("Exiting state: " + m_CurrentState);
-            m_CurrentState.OnExit(e, true);
+            m_CurrentState.OnExit(e, true, null);
             return true;
         }
 
@@ -197,16 +210,17 @@ class eAIHFSM
             return CONTINUE;
         }
 
-        if (m_CurrentState) m_CurrentState.OnExit("", false);
-		m_LastState = m_CurrentState.GetName();
+        eAIState src = m_CurrentState;
+
+        if (m_CurrentState) m_CurrentState.OnExit("", false, new_state.param1);
 
         m_CurrentState = new_state.param1;
 
         if (new_state.param1 == null) return EXIT;
 		
-		Print("State transition " + m_LastState + " -> " + m_CurrentState.GetName());
+		Print("State transition " + src.GetName() + " -> " + m_CurrentState.GetName());
 
-        m_CurrentState.OnEntry("");
+        m_CurrentState.OnEntry("", src);
 
         return CONTINUE;
     }
@@ -215,13 +229,15 @@ class eAIHFSM
 	{
         // returns tuple as a valid destination can still be null
 
+        //TODO: store a reference to the transitions inside the state for that state
+
 		eAIState curr_state = s;
 
 		int count = m_Transitions.Count();
 		for (int i = 0; i < count; ++i)
 		{
 			auto t = m_Transitions.Get(i);
-			if (t.GetSource() == curr_state && (e == "" || (e != "" && t.GetEvent() == e)))
+			if ((t.GetSource() == curr_state || t.GetSource() == null) && (e == "" || (e != "" && t.GetEvent() == e)))
 			{
 				int guard = t.Guard();
                 switch (guard)
@@ -240,24 +256,29 @@ class eAIHFSM
     static eAIHFSMType LoadXML(string path, string fileName)
     {
         string actualFilePath = path + "/" + fileName + ".xml";
+        Print(actualFilePath);
         if (!FileExist(actualFilePath)) return null;
         
         CF_XML_Document document;
         CF_XML.ReadDocument(actualFilePath, document);
 		
-        string name = document.Get("hfsm")[0].GetAttribute("name").ValueAsString();
+        string name = document.Get("fsm")[0].GetAttribute("name").ValueAsString();
         string class_name = "eAI_" + name + "_HFSM";
 
         if (eAIHFSMType.Contains(class_name)) return eAIHFSMType.Get(class_name);
 
-        auto subs = document.Get("hfsm");
-        subs = subs[0].GetTag("subs");
-        subs = subs[0].GetTag("file");
-
-	    foreach (auto sub : subs)
+        auto files = document.Get("fsm");
+        files = files[0].GetTag("files");
+        if (files.Count() > 0)
         {
-            string subPath = sub.GetAttribute("path").ValueAsString();
-            eAIHFSM.LoadXML(path, subPath);
+            files = files[0].GetTag("file");
+
+            for (int i = 0; i < files.Count(); i++)
+            {
+                string subFSMName = files[i].GetAttribute("name").ValueAsString();
+                Print(subFSMName);
+                eAIHFSM.LoadXML(path, subFSMName);
+            }
         }
 
         eAIHFSMType new_type = new eAIHFSMType();
@@ -270,7 +291,7 @@ class eAIHFSM
 		
         FPrintln(file, "class " + class_name + " extends eAIHFSM {");
 
-        auto states = document.Get("hfsm");
+        auto states = document.Get("fsm");
         states = states[0].GetTag("states");
         string defaultState = states[0].GetAttribute("default").ValueAsString();
 		defaultState = "eAI_" + name + "_" + defaultState + "_State";
@@ -295,11 +316,11 @@ class eAIHFSM
                 module = stateType.m_Module;
                 new_type.m_States.Insert(stateType);
                 
-                FPrintln(file, "AddState(new " + stateType.m_ClassName + "(m_Unit));");
+                FPrintln(file, "AddState(new " + stateType.m_ClassName + "(this, m_Unit));");
             }
         }
 
-        auto transitions = document.Get("hfsm");
+        auto transitions = document.Get("fsm");
         transitions = transitions[0].GetTag("transitions");
         transitions = transitions[0].GetTag("transition");
 
@@ -311,7 +332,7 @@ class eAIHFSM
                 module = transitionType.m_Module;
                 new_type.m_Transitions.Insert(transitionType);
 
-                FPrintln(file, "AddTransition(new " + transitionType.m_ClassName + "(m_Unit, this));");
+                FPrintln(file, "AddTransition(new " + transitionType.m_ClassName + "(this, m_Unit));");
             }
         }
 

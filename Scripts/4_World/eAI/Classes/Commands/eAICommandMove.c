@@ -1,37 +1,40 @@
-//todo: handle weapon firing from this command. In vanilla dayz, weapon firing doesn't work outside of HumanCommandMove anyways so there is no loss of functionality.
-
 class eAICommandMove extends eAICommandBase
 {
-	private PlayerBase m_Unit;
-	private eAIAnimationST m_ST;
-
+	static const int TURN_STATE_NONE = 0;
+	static const int TURN_STATE_TURNING = 1;
+	
 	private int m_PreviousInteractionLayer;
-	
-	private float m_PathAngle;
-	
-	private float m_TurnSpeed;
-	private float m_TurnTargetSpeed;
-	private float m_MaxTurnSpeed;
-	private float m_MaxTurnAcceleration;
+
+	private bool m_UseAimPosition;
+	private vector m_AimPosition;
+
+	private float m_Turn;
+	private float m_TurnTarget;
+	private float m_TurnDifference;
+	private float m_TurnTime;
+	private float m_ReevaluateTurnTime;
+	private float m_TurnDifferenceStart;
+	private int m_TurnState;
 
 	private vector m_Direction;
 	private float m_MovementDirection;
 	private float m_TargetMovementDirection;
+
+	private bool m_Look;
+	private float m_LookLR;
+	private float m_LookUD;
 	
 	private bool m_Raised;
 	
-	private float m_Speed;
+	private float m_SpeedUpdateTime;
+	private float m_MovementSpeed;
 	private float m_TargetSpeed;
 	private float m_SpeedLimit;
-	private float m_SpeedMapping[8];
-	private int m_ChangeCounter = 0;
-
-	private vector m_Transform[4];
-
-	void eAICommandMove(PlayerBase unit, eAIAnimationST st)
+	
+	private vector m_MovementCorrection;
+			
+	void eAICommandMove(eAIBase unit, eAIAnimationST st)
 	{
-		m_Unit = unit;
-		m_ST = st;
 	}
 	
 	void ~eAICommandMove()
@@ -42,15 +45,27 @@ class eAICommandMove extends eAICommandBase
 	{
 		SetSpeedLimit(-1);
 		
-		m_Unit.GetTransform(m_Transform);
-		
-		m_PreviousInteractionLayer = dBodyGetInteractionLayer(m_Unit);
 		dBodySetInteractionLayer(m_Unit, PhxInteractionLayers.CHARACTER | PhxInteractionLayers.BUILDING | PhxInteractionLayers.DOOR | PhxInteractionLayers.VEHICLE | PhxInteractionLayers.ITEM_LARGE | PhxInteractionLayers.FENCE | PhxInteractionLayers.AI);
 	}
 
 	override void OnDeactivate()
 	{
-		dBodySetInteractionLayer(m_Unit, m_PreviousInteractionLayer);
+	}
+
+	override void SetLookDirection(vector direction)
+	{
+		vector angles = direction.VectorToAngles();
+		m_LookLR = angles[0];
+		m_LookUD = angles[1];
+		if (m_LookLR > 180) m_LookLR = m_LookLR - 360;
+		if (m_LookUD > 180) m_LookUD = m_LookUD - 360;
+		m_Look = (Math.AbsFloat(m_LookLR) > 0.01) || (Math.AbsFloat(m_LookUD) > 0.01);
+	}
+
+	void SetAimPosition(bool use, vector position = "0 0 0")
+	{
+		m_UseAimPosition = use;
+		m_AimPosition = position;
 	}
 
 	void SetSpeedLimit(float speedIdx)
@@ -60,264 +75,247 @@ class eAICommandMove extends eAICommandBase
 		if (m_SpeedLimit < 0 || m_SpeedLimit > 3) m_SpeedLimit = 3;
 	}
 	
+	void SetTargetSpeed(float target)
+	{
+		if (m_TargetSpeed > target && target < 2.0 && m_SpeedUpdateTime < 0.1) return;
+
+		m_SpeedUpdateTime = 0;
+		m_TargetSpeed = target;
+	}
+
+	void SetTargetDirection(float target)
+	{
+		m_TargetMovementDirection = target;
+	}
+	
 	void SetRaised(bool raised)
 	{
 		m_Raised = raised;
 	}
 
-	void SetSpeedMapping(int i, float speedMS)
-	{
-		int index = i * 2;
-		m_SpeedMapping[ index ]		= i;
-		m_SpeedMapping[ index + 1 ]	= speedMS;
-	}
-
-	float GetSpeedMS(float speedIdx)
-	{
-		int index = Math.Floor(speedIdx);
-		if (index >= 3)
-			return m_SpeedMapping[ 7 ];
-
-		float a = m_SpeedMapping[ (index * 2) + 1 ];
-		float b = m_SpeedMapping[ ((index + 1) * 2) + 1 ];
-
-		return Math.Lerp(a, b, speedIdx - index);
-	}
-
-	float GetSpeedIndex(float speedMs)
-	{
-		int i = 0;
-		while (i < 4)
-		{
-			if (m_SpeedMapping[ i * 2 + 1 ] > speedMs)
-				break;
-
-			++i;
-		}
-
-		if (i >= 3)
-			return m_SpeedMapping[ 6 ];
-
-		float a = m_SpeedMapping[ i * 2 + 1 ];
-		float b = m_SpeedMapping[ (i + 1) * 2 + 1 ];
-
-		return i + ((a - speedMs) / (a - b));
-	}
-	
-	float ShortestAngle(float a, float b)
-	{
-		//if (a - b > 0) return a - b;
-		//return b - a;
-		
-		int aa = a;
-		int bb = b;
-		
-		int phi = Math.AbsInt(aa - bb) % 360; 
-		if (phi > 180) phi = 360 - phi;
-		
-		if ((a - b >= 0 && a - b <= 180) || (a - b <=-180 && a- b>= -360))
-		{
-			return phi;
-		}
-		
-		return -phi;
-	}
-
 	override void PreAnimUpdate(float pDt)
 	{
-		SetSpeedMapping(0, 0.0);
-		SetSpeedMapping(1, 2.0);
-		SetSpeedMapping(2, 4.0);
-		SetSpeedMapping(3, 7.0);
+		m_SpeedUpdateTime += pDt;
+		m_MovementDirection += Math.Clamp((m_TargetMovementDirection - m_MovementDirection) * pDt, -180.0, 180.0);
 
-		m_ST.SetMovementSpeed(this, m_Speed);
-		
-		m_TargetMovementDirection = Math.NormalizeAngle(m_Direction.VectorToAngles()[0]);
-		if (m_TargetMovementDirection > 180.0) m_TargetMovementDirection = m_TargetMovementDirection - 360.0;
+		m_MovementSpeed = m_TargetSpeed;
+		if (m_MovementSpeed > m_SpeedLimit && m_SpeedLimit != -1) m_MovementSpeed = m_SpeedLimit;	
 
-		m_ST.SetMovementDirection(this, m_MovementDirection);
-		
-		m_ST.SetRaised(this, m_Raised);
-		
-		//m_ST.SetAimX(this, false);
-		//if (m_Raised)
-		//	m_ST.SetAimY(this, -15.0);
+		m_Table.SetMovementDirection(this, m_MovementDirection);
+		m_Table.SetMovementSpeed(this, m_MovementSpeed);
+
+		m_Table.SetRaised(this, m_Raised);
+
+		m_Table.SetLook(this, m_Look);
+		m_Table.SetLookDirX(this, m_LookLR);
+		m_Table.SetLookDirY(this, m_LookUD);
+
+		if (m_MovementSpeed == 0)
+		{
+			switch (m_TurnState)
+			{
+				case TURN_STATE_NONE:
+					if (Math.AbsFloat(m_TurnDifference) > 5.0)
+					{
+						m_TurnTime = 0;
+						m_TurnDifferenceStart = m_TurnDifference;
+
+						m_ReevaluateTurnTime = (m_TurnDifferenceStart / 90.0);
+
+						m_Table.CallTurn(this);
+
+						m_TurnState = TURN_STATE_TURNING;
+					}
+					break;
+				case TURN_STATE_TURNING:
+					m_TurnTime += pDt;
+
+					if (Math.AbsFloat(m_TurnDifferenceStart - m_TurnDifference) / pDt < 0.1)
+					{
+						m_Table.CallStopTurn(this);
+						
+						m_TurnState = TURN_STATE_NONE;
+					} else if (m_TurnTime > m_ReevaluateTurnTime)
+					{
+						m_Table.CallStopTurn(this);
+
+						m_TurnState = TURN_STATE_NONE;
+					}
+
+					break;
+			}
+
+			m_Table.SetTurnAmount(this, m_TurnDifference / 90.0);
+		}
+		else
+		{
+			m_TurnState = TURN_STATE_NONE;
+		}
+
+		PreAnim_SetFilteredHeading(-m_TurnTarget * Math.DEG2RAD, 0.1, 30.0);
 	}
 
 	override void PrePhysUpdate(float pDt)
 	{
-		vector expectedPosition = m_Unit.GetPosition() + (m_Direction * GetSpeedMS(m_Speed) * pDt);
-		m_MaxTurnSpeed = 25.0;
-		m_MaxTurnAcceleration = 10.0;
+		vector debug_points[2];
 		
-		// First, if we are in combat, just do turn
-		float currentYaw, pathAngleDiff;
-		if (m_Raised && m_Unit.threats.Count() > 0 && m_Unit.threats[0]) {
-			m_PathAngle = Math.NormalizeAngle(m_Unit.AngleBetweenPoints(expectedPosition, m_Unit.threats[0].GetPosition()));
-			
-			currentYaw = Math.NormalizeAngle(m_Unit.GetOrientation()[0]);
-			if (m_PathAngle > 180.0) m_PathAngle = m_PathAngle - 360.0;
-			if (currentYaw > 180.0) currentYaw = currentYaw - 360.0;
-			
-			pathAngleDiff = ShortestAngle(m_PathAngle, currentYaw);
-			m_TurnSpeed = Math.Clamp(pathAngleDiff, -m_MaxTurnSpeed, m_MaxTurnSpeed);
-			
-			PrePhys_SetAngles(Vector(m_TurnSpeed * pDt * 10.0, 0, 0));
-			
-			m_Speed = 0;
-			PrePhys_SetTranslation(vector.Zero);
-			
-			//Print(pathAngleDiff.ToString() + " " + m_TurnSpeed.ToString());
-			return;
-		}
+		vector translation;
+		PrePhys_GetTranslation(translation);
+		vector position = m_Unit.ModelToWorld(translation);
 		
-		if (m_Unit.PathCount() == 0)
-		{
-			m_Speed = 0;
-			
-			PrePhys_SetAngles(vector.Zero);
-			PrePhys_SetTranslation(vector.Zero);
-			
-			return;
-		}
-		float wayPointDistance;
-		int wayPointIndex = m_Unit.FindNext(expectedPosition, wayPointDistance);
-		vector wayPoint = m_Unit.PathGet(wayPointIndex);
-		wayPointDistance = Math.Pow(wayPoint[0]-expectedPosition[0],2) + Math.Pow(wayPoint[2]-expectedPosition[2],2);
+		vector transform[4];
+		m_Unit.GetTransform(transform);
 
-		bool isFinal = wayPointIndex == m_Unit.PathCount() - 1;
-		
-		if (!isFinal || (isFinal && wayPointDistance > 0.5))
-		{
-			m_PathAngle = Math.NormalizeAngle(m_Unit.AngleBetweenPoints(expectedPosition, wayPoint));
-			
-			currentYaw = Math.NormalizeAngle(m_Unit.GetOrientation()[0]);
-			if (m_PathAngle > 180.0) m_PathAngle = m_PathAngle - 360.0;
-			if (currentYaw > 180.0) currentYaw = currentYaw - 360.0;
-			
-			pathAngleDiff = ShortestAngle(m_PathAngle, currentYaw);
-			m_TurnSpeed = Math.Clamp(pathAngleDiff, -m_MaxTurnSpeed, m_MaxTurnSpeed);
-			
-		} else
-		{
-			m_PathAngle = m_Unit.GetOrientation()[0];
-			m_TurnSpeed = 0;
-		}
-		
-		Vector(m_PathAngle, 0, 0).RotationMatrixFromAngles(m_Transform);
-		m_Transform[3] = m_Unit.GetPosition();
-		
-		float angleDt = m_TurnSpeed * pDt * 10.0;
-		
-		m_TargetSpeed = 0.0;
-		
-		if (Math.AbsFloat(angleDt) < 0.125)
-			angleDt = 0;
-		
-		if (wayPointDistance < 20.0)
-			m_TargetSpeed = 2.0;
-		else if (wayPointDistance < 8.0)
-			m_TargetSpeed = 1.0;
-		else
-			m_TargetSpeed = 2.0; // use 3.0 for sprint
-		
-		if (isFinal && wayPointDistance < 1.0)
-			m_TargetSpeed = 0.0;
+		float wayPointDistance = 0.0;
+		int wayPointIndex;
+		vector wayPoint = position;
+		bool isFinal = true;
 
+		SetTargetSpeed(0.0);
+		SetTargetDirection(0.0);
+
+		PhxInteractionLayers collisionLayerMask = PhxInteractionLayers.ROADWAY|PhxInteractionLayers.BUILDING|PhxInteractionLayers.FENCE|PhxInteractionLayers.VEHICLE;
+		Object hitObject; //! always null and low priority fix at BI
+		vector hitPosition;
+		vector hitNormal;
+		float hitFraction;
 		
-		vector leftPos;
-		vector rightPos;
-		vector forwardPos;
-		vector outNormal;
+		if (m_Unit.PathCount() >= 2)
+		{
+			wayPointIndex = m_Unit.FindNext(position, wayPointDistance);
+			wayPoint = m_Unit.PathGet(wayPointIndex);
+
+			float y = GetGame().SurfaceY(wayPoint[0], wayPoint[2]);			
+			if (y > wayPoint[1]) wayPoint[1] = y;
 			
-		bool blockedForward = m_Unit.PathBlocked(m_Transform[3], m_Transform[3] + (7.0 * pDt * m_Transform[2]), forwardPos, outNormal); // check forward
-		float hitFraction = CheckPhysicsInFront();
-		float forwardBlocking = hitFraction;
-		if (blockedForward)
-		{
-			forwardBlocking *= vector.DistanceSq(m_Transform[3], forwardPos) / (49.0 * pDt);
-		}
-		
-		m_Unit.PathBlocked(m_Transform[3], m_Transform[3] + (-5.0 * m_Transform[0]), leftPos, outNormal); // check the left
-		m_Unit.PathBlocked(m_Transform[3], m_Transform[3] + (5.0 * m_Transform[0]), rightPos, outNormal); // check the right
+#ifndef SERVER
+			m_Unit.AddShape(Shape.CreateSphere(0xFFFFFFFF, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, wayPoint, 0.3));
+#endif
+			
+			vector orig_WayPoint = wayPoint;
+			if (DayZPhysics.SphereCastBullet(wayPoint, wayPoint - Vector(0.0, 10.0, 0.0), 0.3, collisionLayerMask|PhxInteractionLayers.TERRAIN, m_Unit, hitObject, hitPosition, hitNormal, hitFraction)) wayPoint = hitPosition;
+			
+#ifndef SERVER
+			m_Unit.AddShape(Shape.CreateSphere(0xFF0000FF, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, wayPoint, 0.05));
+#endif
+			
+			wayPointDistance = vector.DistanceSq(wayPoint, position);
+			
+			vector newWayPoint = wayPoint;
 
-		float leftDist = vector.DistanceSq(m_Transform[3], leftPos) / 25;
-		float rightDist = vector.DistanceSq(m_Transform[3], rightPos) / 25;
-		float minLRDist = Math.Min(leftDist, rightDist);
-		float maxLRDist = Math.Max(leftDist, rightDist);
-
-		m_TargetMovementDirection = 0.0;
-		
-		if (rightDist > leftDist && forwardBlocking < 0.9)
-		{
-			m_TargetMovementDirection = 90.0;
-		}
-		else if (leftDist < rightDist && forwardBlocking < 0.9)
-		{
-			m_TargetMovementDirection = -90.0;
-		}
-		
-		m_MovementDirection += Math.Clamp((m_TargetMovementDirection - m_MovementDirection) * pDt, -180.0, 180.0);
-		
-		if (maxLRDist < 0.1)
-		{
-		//	m_TargetSpeed = 0.0;
-		}
-		
-		float movementDirectionCorrected = m_MovementDirection;
-		if (movementDirectionCorrected < 0) movementDirectionCorrected = 360.0 - movementDirectionCorrected;
-		m_Direction = Vector(movementDirectionCorrected, 0, 0).AnglesToVector();
+			if (wayPointDistance > 0.01 && wayPointDistance < 1.0 && DayZPhysics.RayCastBullet(position, newWayPoint, collisionLayerMask, m_Unit, hitObject, hitPosition, hitNormal, hitFraction))
+			{
+				wayPoint = hitPosition;
+			}
+			else 
+			{
+				wayPoint = newWayPoint;
+			}
+			
+#ifndef SERVER
+			debug_points[0] = position;
+			debug_points[1] = wayPoint;
+			m_Unit.AddShape(Shape.CreateLines(0xFFFF00FF, ShapeFlags.NOZBUFFER, debug_points, 2));
+#endif
 
 #ifndef SERVER
-		m_Unit.AddShape(Shape.CreateSphere(0xFF0000FF, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, m_Unit.ModelToWorld(m_Direction), 0.05));
-		m_Unit.AddShape(Shape.CreateSphere(0xFFFF0000, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, m_Unit.GetPosition() + m_Transform[2], 0.05));
-		m_Unit.AddShape(Shape.CreateSphere(0xFF00FF00, ShapeFlags.NOZBUFFER | ShapeFlags.WIREFRAME, wayPoint, 0.05));
+			m_Unit.AddShape(Shape.CreateSphere(0xFFFFFF00, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, wayPoint + Vector(0.0, 0.2, 0.0), 0.3));
 #endif
-		//float dS = 2*(Math.Min(m_TargetSpeed, m_SpeedLimit) - m_Speed);
-		//float animationIndexAcceleration = Math.Clamp(dS, -1000.0, 1.0) * pDt;
-		//m_Speed= Math.Clamp(m_Speed + animationIndexAcceleration, 0.0, 3.0);
-		
-		// This is an integer smoother to prevent m_Speed from rapidly changing
-		if (Math.AbsFloat(m_TargetSpeed - m_Speed) > 0.20) {
-			if (++m_ChangeCounter > 7) {
-				if (m_TargetSpeed > m_Speed)
-					m_Speed++;
-				else m_Speed--;
-				//m_Speed = m_TargetSpeed;
-				m_ChangeCounter = 0;
+				
+#ifndef SERVER
+			m_Unit.AddShape(Shape.CreateSphere(0xFFFFFF00, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, wayPoint - Vector(0.0, 0.2, 0.0), 0.3));
+#endif
+				
+			if (DayZPhysics.SphereCastBullet(wayPoint + Vector(0.0, 0.2, 0.0), wayPoint - Vector(0.0, 0.2, 0.0), 0.3, collisionLayerMask, m_Unit, hitObject, hitPosition, hitNormal, hitFraction)) 
+			{
+				wayPoint = hitPosition;
+			
+#ifndef SERVER
+				m_Unit.AddShape(Shape.CreateSphere(0xFF00FF00, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, wayPoint, 0.05));
+#endif
 			}
-		} else m_ChangeCounter = 0;
+			else
+			{
+			
+#ifndef SERVER
+				m_Unit.AddShape(Shape.CreateSphere(0xFFFF0000, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, wayPoint, 0.05));
+#endif
+			}
+
+			isFinal = wayPointIndex == m_Unit.PathCount() - 1;
+		}
+
+		float minFinal = 0.1;
+
+		if (!isFinal || !m_UseAimPosition || wayPointDistance > minFinal)
+		{
+			m_AimPosition = wayPoint;
+		}
 		
-		PrePhys_SetAngles(Vector(angleDt, 0, 0));
-		PrePhys_SetTranslation(m_Direction * GetSpeedMS(m_Speed) * pDt);
+		vector pathDir = vector.Direction(position, m_AimPosition).Normalized();
+		m_Turn = m_Unit.GetOrientation()[0];
+		m_TurnTarget = pathDir.VectorToAngles()[0];
+		if (m_TurnTarget > 180.0) m_TurnTarget = m_TurnTarget - 360.0;
+
+		if (m_TurnTarget < m_Turn)
+		{
+			m_TurnDifference = m_Turn - m_TurnTarget;
+		}
+		else
+		{
+			m_TurnDifference = m_TurnTarget - m_Turn;
+		}
+
+		if (isFinal && wayPointDistance < minFinal)
+		{
+			SetTargetSpeed(0.0);
+		}
+		else if (isFinal && wayPointDistance < 8.0)
+		{
+			SetTargetSpeed(1.0);
+		}
+		else if (wayPointDistance < 20.0)
+		{
+			SetTargetSpeed(2.0);
+		}
+		else
+		{
+			SetTargetSpeed(Math.Lerp(m_TargetSpeed, 3.0, pDt * 2.0));
+		}
+		
+		if (m_Raised) SetSpeedLimit(1.0);
+		else SetSpeedLimit(-1.0);
+
+		SetTargetDirection(0.0);
+		
+		// TODO: this is only temporary code and a better solution has to be found later on
+		// This fix is for when the AI is meant to be moving faster but height elevation is blocking us
+		// Reason why this is temporary; it effictively is telling the player to jump.
+		m_MovementCorrection = vector.Zero;
+					
+		dBodyEnableGravity(m_Unit, true);
+		if (m_MovementSpeed != 0 && translation.LengthSq() < 0.1 * pDt)
+		{			
+			if (wayPointDistance < 1.0)
+			{
+				float yDiff = wayPoint[1] - position[1];
+				
+				if (yDiff > 0.01 && yDiff <= 0.4)
+				{
+					m_MovementCorrection = Vector(0, yDiff / pDt, 0);
+
+					translation[1] = translation[1] + (yDiff * pDt);
+					
+					dBodyEnableGravity(m_Unit, false);
+				}
+			}
+		}
+
+		PrePhys_SetTranslation(translation);
 	}
 
 	override bool PostPhysUpdate(float pDt)
 	{
 		return true;
-	}
-
-	private float CheckPhysicsInFront()
-	{
-		vector CHECK_MIN_HEIGHT = "0 1.25 0";
-
-		Object hitObject;
-		vector hitPosition, hitNormal;
-		float hitFraction;
-		PhxInteractionLayers hit_mask = PhxInteractionLayers.CHARACTER | PhxInteractionLayers.DOOR | PhxInteractionLayers.VEHICLE | PhxInteractionLayers.ITEM_LARGE | PhxInteractionLayers.FENCE | PhxInteractionLayers.AI;
-		bool hit = DayZPhysics.SphereCastBullet(m_Transform[3] + CHECK_MIN_HEIGHT, m_Transform[3] + (1.0 * m_Transform[2]) + CHECK_MIN_HEIGHT, 0.5, hit_mask, m_Unit, hitObject, hitPosition, hitNormal, hitFraction);
-		hitFraction = 1.0 - hitFraction;
-			
-#ifndef SERVER
-		int debugColour = 0xFF00AAFF;
-		if (hit) debugColour = 0xFFAA00FF;
-		vector points2[2];
-		points2[0] = m_Transform[3] + CHECK_MIN_HEIGHT;
-		points2[1] = m_Transform[3] + (1.0 * m_Transform[2]) + CHECK_MIN_HEIGHT;
-		if (hit) points2[1] = hitPosition;
-		m_Unit.AddShape(Shape.CreateLines(debugColour, ShapeFlags.NOZBUFFER, points2, 2));
-#endif
-
-		return hitFraction;
 	}
 };

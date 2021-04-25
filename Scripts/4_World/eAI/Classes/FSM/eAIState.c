@@ -47,24 +47,29 @@ class eAIState
     protected string m_Name;
     protected string m_ClassName;
 
-    protected eAIHFSM m_FSM;
+    //! only used if there is a sub-fsm
+    protected ref eAIHFSM m_SubFSM;
 
     /* STATE VARIABLES */
+    protected eAIHFSM fsm;
+    protected eAIState parent;
     protected eAIBase unit;
 
-    void eAIState(eAIBase _unit)
+    void eAIState(eAIHFSM _fsm, eAIBase _unit)
     {
+        fsm = _fsm;
+        parent = _fsm.GetParent();
         unit = _unit;
     }
 
-    static eAIStateType LoadXML(string fsm, CF_XML_Tag xml_root_tag, ScriptModule module)
+    static eAIStateType LoadXML(string fsmName, CF_XML_Tag xml_root_tag, ScriptModule module)
     {
         string name = xml_root_tag.GetAttribute("name").ValueAsString();
         string child_fsm;
         if (xml_root_tag.GetAttribute("fsm")) child_fsm = xml_root_tag.GetAttribute("fsm").ValueAsString();
-        string class_name = "eAI_" + fsm + "_" + name + "_State";
+        string class_name = "eAI_" + fsmName + "_" + name + "_State";
         
-        if (child_fsm != "") class_name = "eAI_FSM_" + child_fsm + "_State";
+        //if (child_fsm != "") class_name = "eAI_FSM_" + child_fsm + "_State";
 
         if (eAIStateType.Contains(class_name)) return eAIStateType.Get(class_name);
 
@@ -99,12 +104,12 @@ class eAIState
 	        }
 		}
 
-        FPrintln(file, "void " + class_name + "(eAIBase _unit) {");
+        FPrintln(file, "void " + class_name + "(eAIHFSM _fsm, eAIBase _unit) {");
         if (child_fsm != "")
         {
             FPrintln(file, "m_Name = \"" + child_fsm + "\";");
             FPrintln(file, "m_ClassName = \"" + class_name + "\";");
-            FPrintln(file, "m_FSM = eAIHFSMType.Get(\"eAI_\" + child_fsm + \"_HFSM\");");
+            FPrintln(file, "m_SubFSM = eAIHFSMType.Spawn(\"eAI_" + child_fsm + "_HFSM\", _unit, this);");
         }
         else
         {
@@ -115,16 +120,17 @@ class eAIState
 
         if (child_fsm != "")
         {
-            FPrintln(file, "override void OnEntry(string Event) {");
-            FPrintln(file, "m_FSM.Start(Event);");
+            FPrintln(file, "override void OnEntry(string Event, eAIState From) {");
+            FPrintln(file, "if (Event != \""+"\") m_SubFSM.Start(Event);");
+            FPrintln(file, "else m_SubFSM.StartDefault();");
             FPrintln(file, "}");
 
-            FPrintln(file, "override void OnExit(string Event, bool Aborted) {");
-            FPrintln(file, "if (wasAbort) m_FSM.Abort(Event);");
+            FPrintln(file, "override void OnExit(string Event, bool Aborted, eAIState To) {");
+            FPrintln(file, "if (Aborted) m_SubFSM.Abort(Event);");
             FPrintln(file, "}");
 
             FPrintln(file, "override int OnUpdate(float DeltaTime, int SimulationPrecision) {");
-            FPrintln(file, "return m_FSM.Update(Event, SimulationPrecision);");
+            FPrintln(file, "return m_SubFSM.Update(DeltaTime, SimulationPrecision);");
             FPrintln(file, "}");
         }
         else
@@ -132,7 +138,7 @@ class eAIState
             auto event_entry = xml_root_tag.GetTag("event_entry");
             if (event_entry.Count() > 0)
             {
-                FPrintln(file, "override void OnEntry(string Event) {");
+                FPrintln(file, "override void OnEntry(string Event, eAIState From) {");
                 FPrintln(file, event_entry[0].GetContent().GetContent());
                 FPrintln(file, "}");
             }
@@ -140,7 +146,7 @@ class eAIState
             auto event_exit = xml_root_tag.GetTag("event_exit");
             if (event_exit.Count() > 0)
             {
-                FPrintln(file, "override void OnExit(string Event, bool Aborted) {");
+                FPrintln(file, "override void OnExit(string Event, bool Aborted, eAIState To) {");
                 FPrintln(file, event_exit[0].GetContent().GetContent());
                 FPrintln(file, "}");
             }
@@ -156,8 +162,8 @@ class eAIState
 
         FPrintln(file, "}");
 
-        FPrintln(file, "eAIState Create_" + class_name + "(eAIBase _unit) {");
-        FPrintln(file, "return new " + class_name + "(_unit);");
+        FPrintln(file, "eAIState Create_" + class_name + "(eAIHFSM _fsm, eAIBase _unit) {");
+        FPrintln(file, "return new " + class_name + "(_fsm, _unit);");
         FPrintln(file, "}");
 
         CloseFile(file);
@@ -174,17 +180,18 @@ class eAIState
 		return new_type;
     }
 	
-	string GetName() {
+	string GetName()
+    {
 		return m_Name;
 	}
 
     /* IMPLEMENTED IN XML */
-    void OnEntry(string Event)
+    void OnEntry(string Event, eAIState From)
     {
 
     }
 
-    void OnExit(string Event, bool Aborted)
+    void OnExit(string Event, bool Aborted, eAIState To)
     {
 
     }

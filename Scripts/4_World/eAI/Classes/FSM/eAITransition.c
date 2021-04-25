@@ -49,7 +49,7 @@ class eAITransition
     /* STATE VARIABLES */
     protected eAIBase unit;
 
-    void eAITransition(eAIBase _unit, eAIHFSM _fsm)
+    void eAITransition(eAIHFSM _fsm, eAIBase _unit)
     {
         unit = _unit;
 		m_FSM = _fsm;
@@ -80,13 +80,13 @@ class eAITransition
         string from_state_name;
         auto from_state = xml_root_tag.GetTag("from_state");
         if (from_state.Count() > 0) from_state_name = from_state[0].GetAttribute("name").ValueAsString();
-        string from_state_class = "";
+        string from_state_class = "eAIState";
         if (from_state_name != "") from_state_class = "eAI_" + fsm + "_" + from_state_name + "_State";
 
         string to_state_name;
         auto to_state = xml_root_tag.GetTag("to_state");
         if (to_state.Count() > 0) to_state_name = to_state[0].GetAttribute("name").ValueAsString();
-        string to_state_class = "";
+        string to_state_class = "eAIState";
         if (to_state_name != "") to_state_class = "eAI_" + fsm + "_" + to_state_name + "_State";
 
         string event_name;
@@ -112,7 +112,7 @@ class eAITransition
         FPrintln(file, "private " + from_state_class + " src;");
         FPrintln(file, "private " + to_state_class + " dst;");
 
-        FPrintln(file, "void " + class_name + "(eAIBase _unit, eAIHFSM _fsm) {");
+        FPrintln(file, "void " + class_name + "(eAIHFSM _fsm, eAIBase _unit) {");
         FPrintln(file, "m_ClassName = \"" + class_name + "\";");
         FPrintln(file, "src = _fsm.GetState(\"" + from_state_class + "\");");
         FPrintln(file, "dst = _fsm.GetState(\"" + to_state_class + "\");");
@@ -132,8 +132,8 @@ class eAITransition
 
         FPrintln(file, "}");
 
-        FPrintln(file, "eAITransition Create_" + class_name + "(eAIBase _unit, eAIHFSM _fsm) {");
-        FPrintln(file, "return new " + class_name + "(_unit, _fsm);");
+        FPrintln(file, "eAITransition Create_" + class_name + "(eAIHFSM _fsm, eAIBase _unit) {");
+        FPrintln(file, "return new " + class_name + "(_fsm, _unit);");
         FPrintln(file, "}");
 
         CloseFile(file);

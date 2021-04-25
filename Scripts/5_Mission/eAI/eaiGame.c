@@ -12,33 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-class eAIGame {
-	
-	// On client, list of weapons we are asked to provide a feed of
-	autoptr eAIClientAimArbiterManager m_ClientAimMngr;
-	
-	// Server side list of weapon data 
-	autoptr eAIServerAimProfileManager m_ServerAimMngr;
+class eAIGame
+{
+	autoptr eAIAimingProfileManager m_AimingManager;
 	
 	vector debug_offset = "8 0 0"; // Offset from player to spawn a new AI entity at when debug called
 	vector debug_offset_2 = "20 0 0"; // Electric bugaloo
 	
 	float gametime = 0;
 	
-    void eAIGame() {
-		if (GetGame().IsClient()) {
-			m_ClientAimMngr = new eAIClientAimArbiterManager();
-			GetRPCManager().AddRPC("eAI", "eAIAimArbiterSetup", m_ClientAimMngr, SingeplayerExecutionType.Client);
-			GetRPCManager().AddRPC("eAI", "eAIAimArbiterStart", m_ClientAimMngr, SingeplayerExecutionType.Client);
-			GetRPCManager().AddRPC("eAI", "eAIAimArbiterStop", m_ClientAimMngr, SingeplayerExecutionType.Client);
-			GetRPCManager().AddRPC("eAI", "HCLinkObject", m_ClientAimMngr, SingeplayerExecutionType.Client);
-			GetRPCManager().AddRPC("eAI", "HCUnlinkObject", m_ClientAimMngr, SingeplayerExecutionType.Client);
-		}
-		
-		if (GetGame().IsServer()) {
-			m_ServerAimMngr = new eAIServerAimProfileManager();
-			GetRPCManager().AddRPC("eAI", "eAIAimDetails", m_ServerAimMngr, SingeplayerExecutionType.Server);
-		}
+    void eAIGame()
+	{
+		m_AimingManager = new eAIAimingProfileManager();
 		
 		GetRPCManager().AddRPC("eAI", "SpawnEntity", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "DebugFire", this, SingeplayerExecutionType.Server);
@@ -49,24 +34,12 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "ReqFormationChange", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "ReqFormRejoin", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "ReqFormStop", this, SingeplayerExecutionType.Server);
-		GetRPCManager().AddRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", this, SingeplayerExecutionType.Server);
     }
 	
-	// Todo we may want to make a "group manager" class
-	autoptr array<autoptr eAIGroup> m_groups = {};
-	
-	// return the group owned by leader, otherwise create a new one.
-	eAIGroup GetGroupByLeader(PlayerBase leader, bool createIfNoneExists = true) {
-		for (int i = 0; i < m_groups.Count(); i++)
-			if (m_groups[i].GetLeader() == leader)
-				return m_groups[i];
-		
-		if (!createIfNoneExists) return null;
-		
-		eAIGroup newGroup = m_groups.Get(m_groups.Insert(new eAIGroup()));
-		newGroup.SetLeader(leader);
-		leader.SetGroup(newGroup);
-		return newGroup;
+	void OnUpdate(float pDt)
+	{
+		//!no need to call on server
+		if (GetGame().IsClient()) m_AimingManager.Update(pDt);
 	}
 	
 	//! @param owner Who is the manager of this AI
@@ -75,27 +48,26 @@ class eAIGame {
 		PlayerBase pb_Human;
 		if (!Class.CastTo(pb_Human, owner)) return null;
 		
-		eAIGroup ownerGrp = GetGroupByLeader(pb_Human);
-
 		eAIBase pb_AI;
-		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pb_Human.GetPosition(), 0, "NONE"))) return null;
-		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient);
-		
-		pb_AI.SetAI(ownerGrp);
+		if (!Class.CastTo(pb_AI, GetGame().CreateObject(GetRandomAI(), pb_Human.GetPosition()))) return null;
 
+		if (eAIGlobal_HeadlessClient && eAIGlobal_HeadlessClient.GetIdentity()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
+		
+		pb_AI.SetAI(eAIGroup.GetGroupByLeader(pb_Human));
+			
+//		SoldierLoadout.Apply(pb_AI);	//or PoliceLoadout.Apply(pb_AI);
 		HumanLoadout.Apply(pb_AI, "SoldierLoadout.json");
 //		HumanLoadout.Apply(pb_AI, "PoliceLoadout.json");
-//		HumanLoadout.Apply(pb_AI, "$profile:myloadouts/SoldierLoadout.json");					
 		
 		return pb_AI;
 	}
 	
 	eAIBase SpawnAI_Sentry(vector pos) {
 		eAIBase pb_AI;
-		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pos, 0, "NONE"))) return null;
-		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient);
+		if (!Class.CastTo(pb_AI, GetGame().CreateObject(GetRandomAI(), pos))) return null;
+		if (eAIGlobal_HeadlessClient && eAIGlobal_HeadlessClient.GetIdentity()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
 		
-		eAIGroup ownerGrp = GetGroupByLeader(pb_AI);
+		eAIGroup ownerGrp = eAIGroup.GetGroupByLeader(pb_AI);
 		
 		pb_AI.SetAI(ownerGrp);
 			
@@ -106,10 +78,10 @@ class eAIGame {
 	
 	eAIBase SpawnAI_Patrol(vector pos) {
 		eAIBase pb_AI;
-		if (!Class.CastTo(pb_AI, GetGame().CreatePlayer(null, SurvivorRandom(), pos, 0, "NONE"))) return null;
-		if (eAIGlobal_HeadlessClient) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient);
+		if (!Class.CastTo(pb_AI, GetGame().CreateObject(GetRandomAI(), pos))) return null;
+		if (eAIGlobal_HeadlessClient && eAIGlobal_HeadlessClient.GetIdentity()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
 		
-		eAIGroup ownerGrp = GetGroupByLeader(pb_AI);
+		eAIGroup ownerGrp = eAIGroup.GetGroupByLeader(pb_AI);
 		
 		pb_AI.SetAI(ownerGrp);
 			
@@ -122,13 +94,13 @@ class eAIGame {
 	
 	// Server Side: This RPC spawns a helper AI next to the player, and tells them to join the player's formation.
 	void SpawnEntity(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<DayZPlayer> data(null);
+		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
-		
-		if (IsMissionOffline()) data.param1 = GetGame().GetPlayer();
 		
 		if(type == CallType.Server )
 		{
+			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
+			
             Print("eAI: spawn entity RPC called.");
 			SpawnAI_Helper(data.param1);
 		}
@@ -157,9 +129,12 @@ class eAIGame {
 	// Server Side: This RPC spawns a zombie. It's actually not the right way to do it. But it's only for testing.
 	// BUG: this has sometimes crashed us before. Not sure why yet.
 	void SpawnZombie(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param1<PlayerBase> data;
-        if ( !ctx.Read( data ) ) return;
+		Param1<DayZPlayer> data;
+        if (!ctx.Read(data)) return;
+		
 		if(type == CallType.Server) {
+			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
+			
             Print("eAI: SpawnZombie RPC called.");
 			GetGame().CreateObject("ZmbF_JournalistNormal_Blue", data.param1.GetPosition() + debug_offset_2, false, true, true);
         }
@@ -170,8 +145,10 @@ class eAIGame {
 		Param1<PlayerBase> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
+			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
+			
             Print("eAI: ClearAllAI called.");
-			foreach (eAIGroup g : m_groups) {
+			foreach (eAIGroup g : eAIGroup.GROUPS) {
 				for (int i = g.Count() - 1; i > -1; i--) {
 					PlayerBase p = g.GetMember(i);
 					if (p.IsAI()) {
@@ -190,7 +167,9 @@ class eAIGame {
 		if(type == CallType.Server ) {
             Print("eAI: ProcessReload called.");
 			
-			eAIGroup g = GetGroupByLeader(data.param1);
+			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
+			
+			eAIGroup g = eAIGroup.GetGroupByLeader(data.param1);
 
 			for (int i = g.Count() - 1; i > -1; i--) {
 				PlayerBase p = g.GetMember(i);
@@ -210,17 +189,6 @@ class eAIGame {
 			Particle p = Particle.PlayInWorld(ParticleList.DEBUG_DOT, data.param1);
 			p.SetOrientation(data.param2);			
 		}
-	}
-	
-	// Client Side: This RPC replaces a member function of DayZPlayerInventory that handles remote weapon events. I cannot override the functionality that 
-	// class, but this workaround seems to do a pretty good job.
-	void DayZPlayerInventory_OnEventForRemoteWeaponAICallback(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
-		Param3<int, DayZPlayer, Magazine> data;
-        if (!ctx.Read(data)) return;
-		//if(type == CallType.Client ) {
-			Print("Received weapon event for " + data.param1.ToString() + " player:" + data.param2.ToString() + " mag:" + data.param3.ToString());
-            DayZPlayerInventory_OnEventForRemoteWeaponAI(data.param1, data.param2, data.param3);
-		//}
 	}
 	
 	// Client Side: This RPC gets the client side transformation of a Weapon_Base, then sends some data back to server
@@ -261,13 +229,11 @@ class eAIGame {
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
+			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
+			
 			Print("eAI: ReqFormRejoin called.");
-			eAIGroup g = GetGroupByLeader(data.param1);
-			for (int i = 0; i < g.Count(); i++) {
-				eAIBase ai = g.GetMember(i);
-				if (ai && ai.IsAI() && ai.IsAlive())
-					ai.RequestTransition("Rejoin");
-			}
+			eAIGroup g = eAIGroup.GetGroupByLeader(data.param1, false);
+			g.SetFormationState(eAIGroupFormationState.IN);
 		}
 	}
 	
@@ -275,13 +241,11 @@ class eAIGame {
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
+			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
+			
 			Print("eAI: ReqFormStop called.");
-			eAIGroup g = GetGroupByLeader(data.param1);
-			for (int i = 0; i < g.Count(); i++) {
-				eAIBase ai = g.GetMember(i);
-				if (ai && ai.IsAI() && ai.IsAlive())
-					ai.RequestTransition("Stop");
-			}
+			eAIGroup g = eAIGroup.GetGroupByLeader(data.param1, false);
+			g.SetFormationState(eAIGroupFormationState.NONE);
 		}
 	}
 	
@@ -289,21 +253,23 @@ class eAIGame {
 		Param2<DayZPlayer, int> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server ) {
+			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
+			
 			Print("eAI: ReqFormationChange called.");
-			eAIGroup g = GetGroupByLeader(data.param1);
+			eAIGroup g = eAIGroup.GetGroupByLeader(data.param1, false);
 			eAIFormation newForm;
 			switch (data.param2) {
 				case eAICommands.FOR_VEE:
-					newForm = new eAIFormationVee();
+					newForm = new eAIFormationVee(g);
 					break;
 				case eAICommands.FOR_FILE:
-					newForm = new eAIFormationFile();
+					newForm = new eAIFormationFile(g);
 					break;
 				case eAICommands.FOR_WALL:
-					newForm = new eAIFormationWall();
+					newForm = new eAIFormationWall(g);
 					break;
 				case eAICommands.FOR_COL:
-					newForm = new eAIFormationColumn();
+					newForm = new eAIFormationColumn(g);
 					break;
 				// no default needed here
 			}
@@ -329,30 +295,35 @@ modded class MissionServer
 
     void MissionServer()
     {
-        MakeDirectory("$profile:eAI/");
-        MakeDirectory("$profile:eAI/Loadout/");
-
-		m_eaiGame = new eAIGame();
+        m_eaiGame = new eAIGame();
 
 		GetDayZGame().eAICreateManager();
 
         Print( "eAI - Loaded Server Mission" );
     }
+
+	override void OnUpdate(float timeslice)
+	{
+		super.OnUpdate(timeslice);
+
+		m_eaiGame.OnUpdate(timeslice);
+	}
 	
 	override void InvokeOnConnect(PlayerBase player, PlayerIdentity identity) {
 		super.InvokeOnConnect(player, identity);
+		
 		if (identity && identity.GetId() == HeadlessClientSteamID) {
-			eAIGlobal_HeadlessClient = identity;
-			foreach (eAIGroup g : m_eaiGame.m_groups) {
+			eAIGlobal_HeadlessClient = player;
+			foreach (eAIGroup g : eAIGroup.GROUPS) {
 				for (int i = 0; i < g.Count(); i++) {
 					eAIBase ai = g.GetMember(i);
 					if (ai && ai.IsAI() && ai.IsAlive())
 						GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(ai), false, identity);
 				}
 			}
-				
-		} else
-		m_eaiGame.GetGroupByLeader(player);
+		}
+		
+		eAIGroup.GetGroupByLeader(player);
 	}
 };
 
@@ -373,6 +344,8 @@ modded class MissionGameplay
 	
 	override void OnUpdate(float timeslice) {
 		super.OnUpdate(timeslice);
+
+		m_eaiGame.OnUpdate(timeslice);
 
 		// If we want to open the command menu, and nothing else is open
 		if (m_eAIRadialKey.LocalPress() && !GetGame().GetUIManager().GetMenu()) {

@@ -1,6 +1,18 @@
 modded class DayZPlayerImplement
 {
-    private autoptr eAITargetInformation m_TargetInformation = new eAIEntityTargetInformation(this);
+    private autoptr eAITargetInformation m_TargetInformation;
+
+    protected autoptr eAIGroup m_eAI_Group;
+
+    void DayZPlayerImplement()
+    {
+        m_TargetInformation = CreateTargetInformation();
+    }
+
+    protected eAITargetInformation CreateTargetInformation()
+    {
+        return new eAIPlayerTargetInformation(this);
+    }
 
     eAITargetInformation GetTargetInformation()
     {
@@ -11,6 +23,16 @@ modded class DayZPlayerImplement
     {
         return false;
     }
+
+	void SetGroup(eAIGroup group)
+    {
+		m_eAI_Group = group;
+	}
+
+	eAIGroup GetGroup()
+	{
+		return m_eAI_Group;
+	}
 
 	override void EEKilled(Object killer)
 	{
