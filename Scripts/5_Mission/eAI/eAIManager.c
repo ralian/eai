@@ -41,55 +41,36 @@ class eAIManager extends eAIManagerImplement
 	
 	//! @param owner Who is the manager of this AI
 	//! @param formOffset Where should this AI follow relative to the formation?
-	eAIBase SpawnAI_Helper(DayZPlayer owner)
-	{
-		PlayerBase pb_Human;
-		if (!Class.CastTo(pb_Human, owner)) return null;
-		
-		eAIBase pb_AI;
-		if (!Class.CastTo(pb_AI, GetGame().CreateObject(GetRandomAI(), pb_Human.GetPosition()))) return null;
+	eAIBase SpawnAI_Helper(PlayerBase owner, string loadout = "SoldierLoadout.json")
+	{		
+		eAIBase ai;
+		if (!Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), owner.GetPosition()))) return null;
 
-		if (eAIGlobal_HeadlessClient && eAIGlobal_HeadlessClient.GetIdentity()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
-		
-		pb_AI.SetAI(eAIGroup.GetGroupByLeader(pb_Human));
-			
-//		SoldierLoadout.Apply(pb_AI);	//or PoliceLoadout.Apply(pb_AI);
-		HumanLoadout.Apply(pb_AI, "SoldierLoadout.json");
-//		HumanLoadout.Apply(pb_AI, "PoliceLoadout.json");
-		
-		return pb_AI;
+		ai.SetGroup(eAIGroup.GetGroupByLeader(owner));
+
+		HumanLoadout.Apply(ai, loadout);
+
+		return ai;
 	}
 	
-	eAIBase SpawnAI_Sentry(vector pos)
+	eAIBase SpawnAI_Sentry(vector pos, string loadout = "SoldierLoadout.json")
 	{
-		eAIBase pb_AI;
-		if (!Class.CastTo(pb_AI, GetGame().CreateObject(GetRandomAI(), pos))) return null;
-		if (eAIGlobal_HeadlessClient && eAIGlobal_HeadlessClient.GetIdentity()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
-		
-		eAIGroup ownerGrp = eAIGroup.GetGroupByLeader(pb_AI);
-		
-		pb_AI.SetAI(ownerGrp);
-			
-		HumanLoadout.Apply(pb_AI, "SoldierLoadout.json");
-				
-		return pb_AI;
+		eAIBase ai;
+		if (!Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), pos))) return null;
+
+		HumanLoadout.Apply(ai, loadout);
+
+		return ai;
 	}
 	
-	eAIBase SpawnAI_Patrol(vector pos)
+	eAIBase SpawnAI_Patrol(vector pos, string loadout = "SoldierLoadout.json")
 	{
-		eAIBase pb_AI;
-		if (!Class.CastTo(pb_AI, GetGame().CreateObject(GetRandomAI(), pos))) return null;
-		if (eAIGlobal_HeadlessClient && eAIGlobal_HeadlessClient.GetIdentity()) GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(pb_AI), false, eAIGlobal_HeadlessClient.GetIdentity());
-		
-		eAIGroup ownerGrp = eAIGroup.GetGroupByLeader(pb_AI);
-		
-		pb_AI.SetAI(ownerGrp);
-			
-		HumanLoadout.Apply(pb_AI, "SoldierLoadout.json");
-		
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(pb_AI.RequestTransition, 10000, false, "Rejoin");
+		eAIBase ai;
+		if (!Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), pos))) return null;
+
+		HumanLoadout.Apply(ai, loadout);
 				
-		return pb_AI;
+		return ai;
 	}
 	
 	// Server Side: This RPC spawns a helper AI next to the player, and tells them to join the player's formation.
@@ -103,7 +84,7 @@ class eAIManager extends eAIManagerImplement
 			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
 			
             Print("eAI: spawn entity RPC called.");
-			SpawnAI_Helper(data.param1);
+			SpawnAI_Helper(PlayerBase.Cast(data.param1));
 		}
 	}
 	

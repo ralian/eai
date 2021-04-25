@@ -44,13 +44,24 @@ class eAIGroup
 		
 		if (!createIfNoneExists) return null;
 		
-		eAIGroup group = new eAIGroup();
-		group.SetLeader(leader);
+		eAIGroup group = CreateGroup();
 		leader.SetGroup(group);
 		return group;
 	}
 
-	void eAIGroup()
+	static eAIGroup CreateGroup()
+	{
+		return new eAIGroup();
+	}
+
+	static void DeleteGroup(eAIGroup group)
+	{
+		int index = m_AllGroups.Find(group);
+		m_AllGroups.Remove(index);
+		delete group;
+	}
+
+	private void eAIGroup()
 	{
 		m_TargetInformation = new eAIGroupTargetInformation(this);
 		m_Targets = new array<eAITargetInformation>();
@@ -67,10 +78,15 @@ class eAIGroup
 		m_AllGroups.Insert(this);
 	}
 
-	void ~eAIGroup()
+	private void ~eAIGroup()
 	{
 		int idx = m_AllGroups.Find(this);
 		if (idx != -1) m_AllGroups.RemoveOrdered(idx);
+	}
+
+	void Delete()
+	{
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(DeleteGroup, this);
 	}
 	
 	void AddWaypoint(vector pos)
@@ -245,21 +261,32 @@ class eAIGroup
 		m_Form = f;
 	}
 
-	bool IsMember(DayZPlayerImplement player)
+	bool IsMember(DayZPlayerImplement member)
 	{
-		return m_Members.Find(player) != -1;
+		return m_Members.Find(member) != -1;
  	}
 	
 	int AddMember(DayZPlayerImplement member)
 	{
 		return m_Members.Insert(member);
 	}
-		
-	bool RemoveMember(int i)
+
+	bool RemoveMember(DayZPlayerImplement member, bool autoDelete = true)
+	{
+		return RemoveMember(m_Members.Find(member), autoDelete);
+	}
+
+	bool RemoveMember(int i, bool autoDelete = true)
 	{
 		if (i < 0 || i >= m_Members.Count()) return false;
 
 		m_Members.RemoveOrdered(i);
+
+		if (autoDelete && m_Members.Count() == 0)
+		{
+			Delete();
+		}
+
 		return true;
 	}
 

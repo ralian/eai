@@ -23,7 +23,5 @@ modded class MissionServer
 			eAIGlobal_HeadlessClient = player;
 			eAIGroup.OnHeadlessClientConnect(identity);
 		}
-
-		eAIGroup.GetGroupByLeader(player);
 	}
 };
