@@ -4,6 +4,7 @@ class eAIPatrol : Managed
 	private static const float UPDATE_RATE_IN_SECONDS = 15.0;
 	
 	private ref Timer m_Timer;
+	private bool m_IsBeingDestroyed;
 
 	/**
 	 * @brief Creates a dynamic patrol which spawns a patrol under the right conditions.
@@ -68,7 +69,16 @@ class eAIPatrol : Managed
 	 */
 	void Delete()
 	{
+		m_IsBeingDestroyed = true;
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(DeletePatrol, this);
+	}
+
+	/**
+	 * @brief Returns true if the patrol is being destroyed
+	 */
+	bool IsBeingDestroyed()
+	{
+		return m_IsBeingDestroyed;
 	}
 
 	/**
