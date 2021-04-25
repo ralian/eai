@@ -1,4 +1,7 @@
 {
+    "Version": [
+        1
+    ],
     "Shirts": [
         "PoliceJacket",
         "PoliceJacketOrel"
@@ -23,6 +26,7 @@
         "OfficerHat"
     ],
     "Gloves": [
+        "", "",
         "LeatherGloves_Black",
         "TacticalGloves_Black",
         "WorkingGloves_Black"
@@ -47,18 +51,44 @@
         "SVD",
         "M4A1"
     ],
+    "WeaponRifleMag": [
+        "any"
+    ],
     "WeaponRifleMagCount": [
         1,
         2
     ],
+    "WeaponAttachment": [
+        "", "",
+        "any"
+    ],
+    "WeaponOptic": [
+        "", "",
+        "any"
+    ],	
     "WeaponHandgun": [
-        ""
+		"", "", "", 
+        "FNX45",
+		"MakarovIJ70"
+    ],
+    "WeaponHandgunMag": [
+        "any"
     ],
     "WeaponHandgunMagCount": [
         1,
         2
     ],	
+    "WeaponHandgunAttachment": [
+        "any"
+    ],
+    "WeaponHandgunOptic": [
+        "any"
+    ],	
     "WeaponHealth": [
+        10,
+        100
+    ],	
+    "AttachmentHealth": [
         10,
         100
     ],	
@@ -69,8 +99,14 @@
         "Rope",
         "Screwdriver"
     ],
+    "LootRandomChance": [
+        30
+    ],
     "LootHealth": [
         10,
         100
+    ],
+    "BlackList": [
+        "ReservedForFuture"
     ]
 }
