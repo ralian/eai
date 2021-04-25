@@ -5,7 +5,8 @@ modded class DayZGame
     private ref eAIManagerBase m_eAI_Manager;
 	private ref eAICommandManager m_eAI_CommandManager;
 	
-	void DayZGame() {
+	void DayZGame()
+    {
 		m_eAI_CommandManager = new eAICommandManagerClient();
 	}
 
@@ -28,7 +29,9 @@ modded class DayZGame
 			m_eAI_Manager.OnUpdate(doSim, timeslice);
     }
 	
-	eAICommandManager GetEAICommandManager() {
+    //TODO: move to 5_Mission/eAIManager
+	eAICommandManager GetEAICommandManager()
+    {
 		return m_eAI_CommandManager;
 	}
 };

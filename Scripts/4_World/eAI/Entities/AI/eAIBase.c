@@ -155,19 +155,23 @@ class eAIBase extends PlayerBase
 		GetAimingProfile().UpdateArbiter(GetNearestPlayer());
 	}
 	
-	bool PlayerIsEnemy(EntityAI other) {
+	bool PlayerIsEnemy(EntityAI other)
+	{
 		PlayerBase player = PlayerBase.Cast(other);
 		if (!player) return true;
 		
-		if (player.GetGroup() && GetGroup()) {
+		if (player.GetGroup() && GetGroup())
+		{
 			if (player.GetGroup() == GetGroup())
 				return false;
-			if (player.GetGroup().GetFaction().isFriendly(GetGroup().GetFaction()))
+
+			if (player.GetGroup().GetFaction().IsFriendly(GetGroup().GetFaction()))
 				return false;
 			
 			// at this point we know both we and they have groups, and the groups aren't friendly towards each other
 			return true;
 		}
+
 		return false;
 	}
 	
@@ -184,12 +188,10 @@ class eAIBase extends PlayerBase
 		if (!IsRaised()) return false;
 		
 		// This check is to see if a friendly happens to be in the line of fire
-		/*
 		vector hitPos;
 		int contactComponent;
 		EntityAI hitPlayer;
 		if (weap.Hitscan(hitPlayer, hitPos, contactComponent) && !PlayerIsEnemy(hitPlayer)) return false;
-		*/
 
 		return true;
 	}

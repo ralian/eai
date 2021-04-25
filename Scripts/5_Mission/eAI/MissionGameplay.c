@@ -15,6 +15,8 @@ modded class MissionGameplay
 	{
 		super.OnUpdate(timeslice);
 
+    	//TODO: move to 5_Mission/eAIManager
+
 		// If we want to open the command menu, and nothing else is open
 		if (m_eAIRadialKey.LocalPress() && !GetGame().GetUIManager().GetMenu())
 		{
