@@ -5,13 +5,19 @@ class eAIPatrol : Managed
 	
 	private ref Timer m_Timer;
 
-	// @brief Create a dynamic patrol object which spawns a patrol under the right conditions.
-	// @param pos the position that the trigger distance is calculated from
-	// @param waypoints the waypoints the patrol follows. Only stores a soft pointer.
-	// @param loadout the loadout each member is given
-	// @param count the number of ai
-	// @param minR minimum radius a player can be away from the spawn point, if a player teleports or spawns right on top of it, they won't
-	// @param maxR distance at which an incoming player will spawn the patrol
+	/**
+	 * @brief Creates a dynamic patrol which spawns a patrol under the right conditions.
+	 * 
+	 * @param pos the position that the trigger distance is calculated from
+	 * @param waypoints an array of points which the patrol will traverse
+	 * @param behaviour how the waypoints will be traversed
+	 * @param loadout the loadout each member is given @todo change to AI "type" which may have a different FSM/Goal tree
+	 * @param count the number of ai to be spawned in the patrol
+	 * @param minR miminum distance between the patrol and nearest player for a patrol to not (re)spawn
+	 * @param maxR maximum distance between the patrol and nearest player for a patrol to (re)spawn
+	 * 
+	 * @return the patrol instance
+	 */
 	static eAIDynamicPatrol CreateDynamicPatrol(vector pos, array<vector> waypoints, eAIWaypointBehavior behaviour, string loadout = "SoldierLoadout.json", int count = 1, float minR = 300, float maxR = 800)
 	{
 		eAIDynamicPatrol patrol = new eAIDynamicPatrol();
@@ -26,6 +32,11 @@ class eAIPatrol : Managed
 		return patrol;
 	}
 
+	/**
+	 * @brief Destroys a patrol
+	 * 
+	 * @param patrol the patrol to destroy
+	 */
 	static void DeletePatrol(eAIPatrol patrol)
 	{
 		int index = m_AllPatrols.Find(patrol);
@@ -33,11 +44,17 @@ class eAIPatrol : Managed
 		delete patrol;
 	}
 
+	/**
+	 * @brief Privated constructor to prevent calling/storing in ref. The instance is managed through 'Create(X)Patrol' and 'DeletePatrol'
+	 */
 	private void eAIPatrol()
 	{
 		m_AllPatrols.Insert(this);
 	}
 
+	/**
+	 * @brief Privated destructor to prevent calling/storing in ref. The instance is managed through 'Create(X)Patrol' and 'DeletePatrol'
+	 */
 	private void ~eAIPatrol()
 	{
 		int idx = m_AllPatrols.Find(this);
@@ -46,11 +63,17 @@ class eAIPatrol : Managed
 		Stop();
 	}
 
+	/**
+	 * @brief Destroys this patrol on the next frame
+	 */
 	void Delete()
 	{
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(DeletePatrol, this);
 	}
 
+	/**
+	 * @brief Waits around a second and then calls OnUpdate at a frequency specified in UPDATE_RATE_IN_SECONDS in a new timer
+	 */
 	void Start()
 	{
 		//DelayedStart();
@@ -61,16 +84,21 @@ class eAIPatrol : Managed
 
 	private void DelayedStart()
 	{
-		m_Timer = new Timer(CALL_CATEGORY_GAMEPLAY);
+		if (!m_Timer) m_Timer = new Timer(CALL_CATEGORY_GAMEPLAY);
 		m_Timer.Run(UPDATE_RATE_IN_SECONDS, this, "OnUpdate");
 	}
 
+	/**
+	 * @brief Stops the timer and OnUpdate from being called.
+	 */
 	void Stop()
 	{
-		if (m_Timer && m_Timer.IsRunning())
-			m_Timer.Stop();
+		if (m_Timer && m_Timer.IsRunning()) m_Timer.Stop();
 	}
 
+	/**
+	 * @brief Abstract function. 
+	 */
 	void OnUpdate()
 	{
 
