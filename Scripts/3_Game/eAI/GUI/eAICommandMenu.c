@@ -234,7 +234,6 @@ class eAICommandMenu extends UIScriptedMenu
 		{
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_SPAWNALLY, "Spawn Ally", eAICommandCategories.CAT_DEBUG));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_CLEARALL, "Clear All AI", eAICommandCategories.CAT_DEBUG));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_RELOAD, "Force Reload", eAICommandCategories.CAT_DEBUG));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_SPAWNZOM, "Spawn Zombie", eAICommandCategories.CAT_DEBUG));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_AIMAP, "AI Menu", eAICommandCategories.CAT_DEBUG));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_GRPMGR, "Group Manager", eAICommandCategories.CAT_DEBUG));

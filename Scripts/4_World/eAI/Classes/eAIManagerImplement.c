@@ -5,10 +5,12 @@ enum eAIProcessingState
 	REMOVE
 };
 
-class eAIManager extends eAIManagerBase
+class eAIManagerImplement extends eAIManagerBase
 {
 	override void OnUpdate(bool doSim, float timeslice)
     {
+		super.OnUpdate(doSim, timeslice);
+
         // don't process if we aren't the server
         if (!GetGame().IsServer()) return;
 

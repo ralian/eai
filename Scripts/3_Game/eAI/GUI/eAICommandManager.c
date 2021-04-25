@@ -14,10 +14,6 @@ class eAICommandManagerClient : eAICommandManager {
 				GetRPCManager().SendRPC("eAI", "ClearAllAI", new Param1<DayZPlayer>(GetGame().GetPlayer()));
 				return true;
 			
-			case eAICommands.DEB_RELOAD:
-				GetRPCManager().SendRPC("eAI", "ProcessReload", new Param1<DayZPlayer>(GetGame().GetPlayer()));
-				return true;
-			
 			case eAICommands.DEB_SPAWNZOM:
 				GetRPCManager().SendRPC("eAI", "SpawnZombie", new Param1<DayZPlayer>(GetGame().GetPlayer()));
 				return true;
