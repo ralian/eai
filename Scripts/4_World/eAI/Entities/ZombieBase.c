@@ -1,10 +1,10 @@
 modded class ZombieBase
 {
-    private autoptr eAITargetInformation m_TargetInformation;
+    private autoptr eAIZombieTargetInformation m_TargetInformation;
 
     void ZombieBase()
     {
-        m_TargetInformation = CreateTargetInformation();
+		Class.CastTo(m_TargetInformation, CreateTargetInformation());
     }
 
     protected eAITargetInformation CreateTargetInformation()
@@ -12,7 +12,7 @@ modded class ZombieBase
         return new eAIZombieTargetInformation(this);
     }
 
-    eAITargetInformation GetTargetInformation()
+    eAIZombieTargetInformation GetTargetInformation()
     {
         return m_TargetInformation;
     }
@@ -30,4 +30,11 @@ modded class ZombieBase
 
 		super.EEHitBy(damageResult, damageType, source, component, dmgZone, ammo, modelPos, speedCoef);
     }
+
+	override bool ModCommandHandlerBefore(float pDt, int pCurrentCommandID, bool pCurrentCommandFinished)
+	{
+        m_TargetInformation.m_Crawling = pCurrentCommandID == DayZInfectedConstants.COMMANDID_CRAWL;
+        
+		return super.ModCommandHandlerBefore(pDt, pCurrentCommandID, pCurrentCommandFinished);
+	}
 };

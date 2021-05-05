@@ -11,6 +11,8 @@ enum eAIGroupFormationState
 	IN
 };
 
+//TODO: sync to the client automatically within DayZPlayerImplement
+// only data that needs to be known is just the id, members and faction
 class eAIGroup
 {
 	private static autoptr array<ref eAIGroup> m_AllGroups = new array<ref eAIGroup>();

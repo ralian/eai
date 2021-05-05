@@ -118,7 +118,7 @@ class eAIBase extends PlayerBase
 	{
 		if (IsAI())
 		{
-			m_eAI_Group.RemoveMember(m_eAI_Group.GetIndex(this));
+			GetGroup().RemoveMember(GetGroup().GetIndex(this));
 
 			m_AllAI.RemoveItem(this);
 		}
@@ -175,7 +175,7 @@ class eAIBase extends PlayerBase
 			return true;
 		}
 
-		return false;
+		return true;
 	}
 	
 	// Update the aim during combat, return true if we are within parameters to fire.
@@ -220,7 +220,7 @@ class eAIBase extends PlayerBase
         ZombieBase zmb;
         if (Class.CastTo(zmb, source))
 		{
-			if (!zmb.GetTargetInformation().IsTargetted(m_eAI_Group))
+			if (!zmb.GetTargetInformation().IsTargetted(GetGroup()))
 			{
 				zmb.GetTargetInformation().AddAI(this);
 			}
@@ -432,7 +432,7 @@ class eAIBase extends PlayerBase
 		for (int i = 0; i < newThreats.Count(); i++)
 		{
 			PlayerBase playerThreat;
-			if (Class.CastTo(playerThreat, newThreats[i]) && m_eAI_Group.IsMember(playerThreat)) continue;
+			if (Class.CastTo(playerThreat, newThreats[i])) if (GetGroup() && GetGroup().IsMember(playerThreat)) continue;
 
 			if (newThreats[i].IsInherited(ItemBase)) continue;
 			if (newThreats[i].IsInherited(Building)) continue;
@@ -443,7 +443,7 @@ class eAIBase extends PlayerBase
 
 			if (!target.IsActive()) continue;
 
-			if (target.IsTargetted(m_eAI_Group)) continue;
+			if (target.IsTargetted(GetGroup())) continue;
 
 			target.AddAI(this);
 		}
@@ -584,7 +584,7 @@ class eAIBase extends PlayerBase
 		vector transform[4];
 		GetTransform(transform);
 
-		if (m_eAI_Targets.Count() > 0) AimAtPosition(m_eAI_Targets[0].GetPosition(this) + "0 1.5 0");
+		if (m_eAI_Targets.Count() > 0) AimAtPosition(m_eAI_Targets[0].GetPosition(this) + m_eAI_Targets[0].GetAimOffset(this));
 
 		if (m_eAI_LookDirection_Recalculate) m_eAI_LookDirection_ModelSpace = vector.Direction(GetPosition() + "0 1.5 0", m_eAI_LookPosition_WorldSpace).Normalized().InvMultiply3(transform);
 		if (m_eAI_AimDirection_Recalculate) m_eAI_AimDirection_ModelSpace = vector.Direction(GetPosition() + "0 1.5 0", m_eAI_AimPosition_WorldSpace).Normalized().InvMultiply3(transform);

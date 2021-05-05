@@ -5,11 +5,20 @@ class eAIZombieTargetInformation extends eAIEntityTargetInformation
     private ZombieBase m_Zombie;
 	private DayZInfectedInputController m_DIIP;
 
+	bool m_Crawling;
+
     void eAIZombieTargetInformation(EntityAI target)
     {
         Class.CastTo(m_Zombie, target);
 
 		m_DIIP = m_Zombie.GetInputController();
+    }
+
+    override vector GetAimOffset(eAIBase ai = null)
+    {
+		if (m_Crawling) return "0 0 0";
+
+		return "0 1.3 0";
     }
 
 	// https://www.desmos.com/calculator/r4mqu91qff

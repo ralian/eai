@@ -57,6 +57,11 @@ class eAITarget
         return info.GetPosition(ai);
     }
 
+    vector GetAimOffset(eAIBase ai = null)
+    {
+        return info.GetAimOffset(ai);
+    }
+
     float GetThreat(eAIBase ai = null)
     {
         return info.GetThreat(ai);

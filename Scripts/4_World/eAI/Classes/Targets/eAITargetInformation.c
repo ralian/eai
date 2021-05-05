@@ -50,6 +50,17 @@ class eAITargetInformation
     }
 
 	/**
+	 * @brief Abstract function. Get the aim offset for the AI within the target. Each AI could have their own offset for the target. 
+	 *
+     * @param ai null default, gets the aim offset for the AI if specified, otherwise returns a default value
+	 * @return EntityAI
+	 */
+    vector GetAimOffset(eAIBase ai = null)
+    {
+        return "0 0 0";
+    }
+
+	/**
 	 * @brief Abstract function. Get the threat level for the AI within the target. Each AI could have their own threat level for the target. 
 	 *
      * @param ai null default, gets the position for the AI if specified, otherwise returns a default value

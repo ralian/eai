@@ -201,7 +201,7 @@ class eAICommandMenu extends UIScriptedMenu
 		{
 			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_MOVEMENT, "Movement", eAICommandCategories.CATEGORIES));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_FORMATION, "Formation", eAICommandCategories.CATEGORIES));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_STATUS, "Status", eAICommandCategories.CATEGORIES));
+			//gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_STATUS, "Status", eAICommandCategories.CATEGORIES));
 			#ifndef EAI_COMMAND_DEBUG_DISABLE
 			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_DEBUG, "Debug", eAICommandCategories.CATEGORIES));
 			#endif
@@ -211,9 +211,9 @@ class eAICommandMenu extends UIScriptedMenu
 		else if (category == eAICommandCategories.CAT_MOVEMENT)
 		{
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.MOV_STOP, "Stop", eAICommandCategories.CAT_MOVEMENT));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommands.MOV_GOTO, "Go To...", eAICommandCategories.CAT_MOVEMENT));
+			//gesture_items.Insert(new eAICommandMenuItem(eAICommands.MOV_GOTO, "Go To...", eAICommandCategories.CAT_MOVEMENT));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.MOV_RTF, "Rejoin", eAICommandCategories.CAT_MOVEMENT));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommands.MOV_GETIN, "Get In", eAICommandCategories.CAT_MOVEMENT));
+			//gesture_items.Insert(new eAICommandMenuItem(eAICommands.MOV_GETIN, "Get In", eAICommandCategories.CAT_MOVEMENT));
 		}
 
 		//Category 2 - Formation

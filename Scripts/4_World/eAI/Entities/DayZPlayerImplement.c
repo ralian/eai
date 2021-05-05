@@ -2,7 +2,7 @@ modded class DayZPlayerImplement
 {
     private autoptr eAITargetInformation m_TargetInformation;
 
-    protected eAIGroup m_eAI_Group;
+    private eAIGroup m_eAI_Group;
 
     void DayZPlayerImplement()
     {
