@@ -906,7 +906,7 @@ class eAIBase extends PlayerBase
 			float dist = vector.Distance(GetPosition() + "0 1.5 0", m_eAI_AimPosition_WorldSpace);
 			if (dist < 1.0) dist = 1.0;
 			
-			offsetLR = -15.0 / dist;
+			offsetLR = -9.0 / dist;
 			offsetUD = 0.0;
 		}
 		
