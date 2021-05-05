@@ -206,7 +206,7 @@
                 auto leader = group.GetLeader();
                 if (leader &amp;&amp; leader != unit) return FAIL;
 
-                return FAIL;
+                return SUCCESS;
             </guard>
 			<event name="" />
 			<from_state name="Idle" />

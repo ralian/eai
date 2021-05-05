@@ -84,8 +84,6 @@ class eAIBase extends PlayerBase
 		m_eAI_Targets = new array<eAITarget>();
 
 		m_AimingProfile = new eAIAimingProfile(this);
-		
-		SetGroup(eAIGroup.CreateGroup());
 
 		m_ActionManager = new eAIActionManager(this);
 		m_WeaponManager = new eAIWeaponManager(this);
@@ -100,11 +98,16 @@ class eAIBase extends PlayerBase
 		m_PathFilter.SetFlags( inFlags, exFlags, PGPolyFlags.NONE );
 		m_PathFilter.SetCost( PGAreaType.WATER, 0.0 );
 
-		eAIHFSMType type = eAIHFSM.LoadXML("eAI/scripts/FSM", "Master");
-		if (type)
+		if (GetGame().IsServer())
 		{
-			m_FSM = type.Spawn(this, null);
-			m_FSM.StartDefault();
+			SetGroup(eAIGroup.CreateGroup());
+
+			eAIHFSMType type = eAIHFSM.LoadXML("eAI/scripts/FSM", "Master");
+			if (type)
+			{
+				m_FSM = type.Spawn(this, null);
+				m_FSM.StartDefault();
+			}
 		}
 
 		LookAtDirection("0 0 1");
