@@ -40,6 +40,7 @@ class HumanLoadout {
 	
 	static void Apply(PlayerBase h, string LoadoutFile) 
 	{
+        eAITrace trace("HumanLoadout::Apply");
 //		static string LoadoutSave = "SoldierLoadout.json";
 	
 		HumanLoadout Loadout = LoadData(LoadoutFile);
@@ -57,6 +58,8 @@ class HumanLoadout {
 	//	Adds a clothes to.
 	
 	static void AddClothes(PlayerBase h, HumanLoadout Loadout) {
+        eAITrace trace("HumanLoadout::AddClothes");
+
 		EntityAI item;
 		int minhealth = Loadout.ClothesHealth[0];
 		int maxhealth = Loadout.ClothesHealth[1];		
@@ -65,7 +68,7 @@ class HumanLoadout {
 		item = h.GetInventory().CreateInInventory(Loadout.Pants.GetRandomElement());
 			HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
 			item.SetHealth(item.GetMaxHealth() * HealthModifier);
-//			Print("HumanLoadout: Add pants: " + item.GetMaxHealth() + "/" + HealthModifier + "/" + item.GetMaxHealth() * HealthModifier + ")" );
+//			eAILogger.Debug("HumanLoadout: Add pants: " + item.GetMaxHealth() + "/" + HealthModifier + "/" + item.GetMaxHealth() * HealthModifier + ")" );
 		item = h.GetInventory().CreateInInventory(Loadout.Shirts.GetRandomElement());
 			HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
 			item.SetHealth(item.GetMaxHealth() * HealthModifier);
@@ -87,8 +90,6 @@ class HumanLoadout {
 		item = h.GetInventory().CreateInInventory(Loadout.Misc.GetRandomElement());
 			HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
 			item.SetHealth(item.GetMaxHealth() * HealthModifier);
-
-		Print("HumanLoadout: Added clothes");
 	}
 
 	//----------------------------------------------------------------
@@ -100,10 +101,12 @@ class HumanLoadout {
 	//	       HumanLoadout.AddWeapon(pb_AI, "AKM", 10, 80);	//An AKM with 10%-80% health
 
 	static void AddWeapon(PlayerBase h, string weapon, int minhealth = 100, int maxhealth = 100) {
+        eAITrace trace("HumanLoadout::AddWeapon");
+
 		EntityAI gun = h.GetHumanInventory().CreateInHands(weapon);
 		float HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
 		gun.SetHealth(gun.GetMaxHealth() * HealthModifier);
-		Print("HumanLoadout: Add weapon: " + weapon + " (" + HealthModifier + ")" );
+		eAILogger.Debug("HumanLoadout: Add weapon: " + weapon + " (" + HealthModifier + ")" );
 	}
 	
 	//----------------------------------------------------------------
@@ -115,6 +118,8 @@ class HumanLoadout {
 	//	       HumanLoadout.AddMagazine(pb_AI, "AKM", 1, 4);	//1 to 4 random AKM magazines are added
 
 	static void AddMagazine(PlayerBase h, string weapon, int mincount = 1, int maxcount = 0) {
+        eAITrace trace("HumanLoadout::AddMagazine");
+
         TStringArray magazines = {};
         GetGame().ConfigGetTextArray("CfgWeapons " + weapon + " magazines", magazines);		
 		string mag = magazines.GetRandomElement();
@@ -132,7 +137,7 @@ class HumanLoadout {
 		{
 			//Maxcount probably was larger than mincount
 			count = 1;
-			Print("HumanLoadout: ERROR: Please check you Weapon___MagCount. Giving 1 mag.");
+			eAILogger.Error("HumanLoadout: ERROR: Please check you Weapon___MagCount. Giving 1 mag.");
 		}
 		
 		for( i = 0; i < count; i++)
@@ -140,7 +145,7 @@ class HumanLoadout {
 			h.GetHumanInventory().CreateInInventory(mag);
 		}
 
-		Print("HumanLoadout: Add " + count + " of " + mag + " magazines for weapon " + weapon);
+		eAILogger.Debug("HumanLoadout: Add " + count + " of " + mag + " magazines for weapon " + weapon);
 	}
 	
 	//----------------------------------------------------------------
@@ -148,37 +153,39 @@ class HumanLoadout {
 
 	static HumanLoadout LoadData(string FileName)
     {
+        eAITrace trace("HumanLoadout::LoadData");
+
 		string LoadoutFileName = LoadoutSaveDir + FileName;
 		string LoadoutDefaultFileName = LoadoutDataDir + FileName;
 		
         ref HumanLoadout data = new ref HumanLoadout;
-        Print("HumanLoadout: LoadData: Looking for " + FileName);
+        eAILogger.Debug("HumanLoadout: LoadData: Looking for " + FileName);
 
         if (!FileExist(LoadoutFileName))
         {
 			/*if(FileExist(LoadoutDefaultFileName))
 			{
 				//Profile does not have the loadouts. Copy them from mod. 
-	            Print("HumanLoadout: " + LoadoutFileName + " doesn't exist, copying default file!");
+	            eAILogger.Debug("HumanLoadout: " + LoadoutFileName + " doesn't exist, copying default file!");
 				CopyFile(LoadoutDefaultFileName, LoadoutFileName);
 			}
 			else
 			{*/
 				//If the files under Data\Loadout in mod does not exist, create a default from the class. 
 				//This is an error situation but useful if you need to create a clean and working json
-	            Print("HumanLoadout: " + LoadoutDefaultFileName + " doesn't exist. Creating a default file: " + LoadoutFileName);
+	            eAILogger.Debug("HumanLoadout: " + LoadoutDefaultFileName + " doesn't exist. Creating a default file: " + LoadoutFileName);
 	            SaveData(LoadoutFileName, data);
 			//}
 		}
 
 		if (FileExist(LoadoutFileName))
         {
-            Print("HumanLoadout: " + LoadoutFileName + " exists, loading!");
+            eAILogger.Debug("HumanLoadout: " + LoadoutFileName + " exists, loading!");
             JsonFileLoader<HumanLoadout>.JsonLoadFile(LoadoutFileName, data);
         }
         else
         {
-            Print("HumanLoadout: ERROR : Coult not find " + LoadoutFileName);
+            eAILogger.Debug("HumanLoadout: ERROR : Coult not find " + LoadoutFileName);
 		}
 
         return data;
@@ -189,7 +196,7 @@ class HumanLoadout {
 	
     static void SaveData(string FileName, ref HumanLoadout data)
     {
-		Print("HumanLoadout: Saving loadout to " + FileName);
+		eAILogger.Debug("HumanLoadout: Saving loadout to " + FileName);
         JsonFileLoader<HumanLoadout>.JsonSaveFile(FileName, data);
     }	
 	

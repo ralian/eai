@@ -24,7 +24,7 @@ modded class Weapon_Base
 		
 		if (!ai.GetAimingProfile().Get(position, direction))
 		{
-			Print("Data invalid.");
+			eAILogger.Error("Data invalid.");
 
 			hitPosition = position;
 

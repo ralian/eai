@@ -83,7 +83,7 @@ class eAIManager extends eAIManagerImplement
 		{
 			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
 			
-            Print("eAI: spawn entity RPC called.");
+            eAILogger.Debug("eAI: spawn entity RPC called.");
 			SpawnAI_Helper(PlayerBase.Cast(data.param1));
 		}
 	}
@@ -94,7 +94,7 @@ class eAIManager extends eAIManagerImplement
 		Param1<PlayerBase> data;
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server) {
-            Print("HC: Linking object " + data.param1);
+            eAILogger.Debug("HC: Linking object " + data.param1);
 			eAIObjectManager.Register(data.param1);
         }
 	}
@@ -105,7 +105,7 @@ class eAIManager extends eAIManagerImplement
 		Param1<PlayerBase> data;
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server) {
-            Print("HC: Unlinking object " + data.param1);
+            eAILogger.Debug("HC: Unlinking object " + data.param1);
 			eAIObjectManager.Unregister(data.param1);
         }
 	}
@@ -120,7 +120,7 @@ class eAIManager extends eAIManagerImplement
 		if(type == CallType.Server) {
 			if (!GetGame().IsMultiplayer()) Class.CastTo(data.param1, GetGame().GetPlayer());
 			
-            Print("eAI: SpawnZombie RPC called.");
+            eAILogger.Debug("eAI: SpawnZombie RPC called.");
 			GetGame().CreateObject("ZmbF_JournalistNormal_Blue", data.param1.GetPosition() + ZOMBIE_OFFSET, false, true, true);
         }
 	}
@@ -134,7 +134,7 @@ class eAIManager extends eAIManagerImplement
 		{
 			if (!GetGame().IsMultiplayer()) Class.CastTo(data.param1, GetGame().GetPlayer());
 			
-            Print("eAI: ClearAllAI called.");
+            eAILogger.Debug("eAI: ClearAllAI called.");
 			eAIGroup.DeleteAllAI();
 		}
 	}
@@ -147,7 +147,7 @@ class eAIManager extends eAIManagerImplement
 		{
 			if (!GetGame().IsMultiplayer()) Class.CastTo(data.param1, GetGame().GetPlayer());
 			
-			Print("eAI: ReqFormRejoin called.");
+			eAILogger.Debug("eAI: ReqFormRejoin called.");
 			eAIGroup g = eAIGroup.GetGroupByLeader(DayZPlayerImplement.Cast(data.param1), false);
 			g.SetFormationState(eAIGroupFormationState.IN);
 		}
@@ -161,7 +161,7 @@ class eAIManager extends eAIManagerImplement
 		{
 			if (!GetGame().IsMultiplayer()) Class.CastTo(data.param1, GetGame().GetPlayer());
 			
-			Print("eAI: ReqFormStop called.");
+			eAILogger.Debug("eAI: ReqFormStop called.");
 			eAIGroup g = eAIGroup.GetGroupByLeader(DayZPlayerImplement.Cast(data.param1), false);
 			g.SetFormationState(eAIGroupFormationState.NONE);
 		}
@@ -175,7 +175,7 @@ class eAIManager extends eAIManagerImplement
 		{
 			if (!GetGame().IsMultiplayer()) Class.CastTo(data.param1, GetGame().GetPlayer());
 			
-			Print("eAI: ReqFormationChange called.");
+			eAILogger.Debug("eAI: ReqFormationChange called.");
 			eAIGroup g = eAIGroup.GetGroupByLeader(DayZPlayerImplement.Cast(data.param1), false);
 			eAIFormation newForm;
 			switch (data.param2)

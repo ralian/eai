@@ -6,7 +6,7 @@ modded class MissionServer
 	{
 		GetDayZGame().eAICreateManager();
 
-		Print("eAI - Loaded Server Mission");
+		eAILogger.Info("eAI - Loaded Server Mission");
 	}
 
 	override void OnUpdate(float timeslice)

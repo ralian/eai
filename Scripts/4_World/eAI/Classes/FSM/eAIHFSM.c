@@ -119,14 +119,14 @@ class eAIHFSM
 	
 	bool StartDefault()
 	{
-        Print("eAIFSM::StartDefault");
+        eAITrace trace("eAIFSM::StartDefault");
 
         eAIState src = m_CurrentState;
         eAIState dst = GetState(m_DefaultState);
 
         if (m_Running && src)
         {
-            Print("Exiting state: " + src);
+            eAILogger.Debug("Exiting state: " + src);
             src.OnExit("", true, dst);
         }
 	
@@ -134,19 +134,19 @@ class eAIHFSM
 		
         if (m_CurrentState)
         {
-            Print("Starting state: " + m_CurrentState);
+            eAILogger.Debug("Starting state: " + m_CurrentState);
             m_CurrentState.OnEntry("", src);
             return true;
         }
 		
-        Print("No valid state found.");
+        eAILogger.Warn("No valid state found.");
 		
         return false;
 	}
 
     bool Start(string e = "")
     {
-        Print("eAIFSM::Start e=" + e);
+        eAITrace trace("eAIFSM::Start e=" + e);
 
         Param2<eAIState, bool> new_state = FindSuitableTransition(m_CurrentState, "");
 
@@ -155,14 +155,14 @@ class eAIHFSM
 
         if (dst == null)
         {
-            Print("No valid state found. Aborting.");
+            eAILogger.Warn("No valid state found. Aborting.");
 
             return false;
         }
 
         if (m_Running && m_CurrentState && m_CurrentState != dst)
         {
-            Print("Exiting state: " + m_CurrentState);
+            eAILogger.Debug("Exiting state: " + m_CurrentState);
             m_CurrentState.OnExit(e, true, dst);
         }
 
@@ -170,23 +170,23 @@ class eAIHFSM
 
         if (m_CurrentState && src != m_CurrentState)
         {
-            Print("Starting state: " + m_CurrentState);
+            eAILogger.Debug("Starting state: " + m_CurrentState);
             m_CurrentState.OnEntry(e, src);
             return true;
         }
 
-        Print("No valid state found.");
+        eAILogger.Warn("No valid state found.");
 
         return false;
     }
 
     bool Abort(string e = "")
     {
-        Print("eAIFSM::Abort e=" + e);
+        eAITrace trace("eAIFSM::Abort e=" + e);
 
         if (m_Running && m_CurrentState)
         {
-            Print("Exiting state: " + m_CurrentState);
+            eAILogger.Debug("Exiting state: " + m_CurrentState);
             m_CurrentState.OnExit(e, true, null);
             return true;
         }
@@ -218,7 +218,7 @@ class eAIHFSM
 
         if (new_state.param1 == null) return EXIT;
 		
-		Print("State transition " + src.GetName() + " -> " + m_CurrentState.GetName());
+		eAILogger.Debug("State transition " + src.GetName() + " -> " + m_CurrentState.GetName());
 
         m_CurrentState.OnEntry("", src);
 
@@ -256,7 +256,7 @@ class eAIHFSM
     static eAIHFSMType LoadXML(string path, string fileName)
     {
         string actualFilePath = path + "/" + fileName + ".xml";
-        Print(actualFilePath);
+        eAILogger.Debug(actualFilePath);
         if (!FileExist(actualFilePath)) return null;
         
         CF_XML_Document document;

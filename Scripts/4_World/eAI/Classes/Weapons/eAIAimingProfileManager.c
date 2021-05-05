@@ -19,7 +19,7 @@ class eAIAimingProfileManager
 		int idx = m_AIs.Find(ai);
 		if (idx == -1) m_AIs.Insert(ai);
 
-		//Print("Started arbitrating for " + ai);
+		//eAILogger.Debug("Started arbitrating for " + ai);
 
 		ai.CreateAimingProfile();
 	}
@@ -31,7 +31,7 @@ class eAIAimingProfileManager
 		int idx = m_AIs.Find(ai);
 		if (idx != -1) m_AIs.RemoveOrdered(idx);
 
-		//Print("Stopped arbitrating for " + ai);
+		//eAILogger.Debug("Stopped arbitrating for " + ai);
 
 		ai.DestroyAimingProfile();
 	}

@@ -470,7 +470,7 @@ class eAIBase extends PlayerBase
 		for (i = m_eAI_Targets.Count() - 1; i >= 0; i--) 
 		{
 			if (m_eAI_Targets[i] == null) m_eAI_Targets.Remove(i);
-			//Print("m_eAI_Targets[" + i + "] entity = " + m_eAI_Targets[i].GetEntity() + " threat = " + m_eAI_Targets[i].GetThreat(this));
+			//eAILogger.Debug("m_eAI_Targets[" + i + "] entity = " + m_eAI_Targets[i].GetEntity() + " threat = " + m_eAI_Targets[i].GetThreat(this));
 		}
 	}
 
@@ -702,7 +702,7 @@ class eAIBase extends PlayerBase
 
 				// land
 				m_FallYDiff = m_FallYDiff - GetPosition()[1];
-				//Print(m_FallYDiff);
+				//eAILogger.Debug(m_FallYDiff);
 				if (m_FallYDiff < 0.5)
 				{
 					landType = HumanCommandFall.LANDTYPE_NONE; 
@@ -790,7 +790,7 @@ class eAIBase extends PlayerBase
 	// We should integrate this into ReloadWeapon
 	void ReloadWeaponAI( EntityAI weapon, EntityAI magazine )
 	{
-		Print(this.ToString() + "(DayZPlayerInstanceType." + GetInstanceType().ToString() + ") is trying to reload " + magazine.ToString() + " into " + weapon.ToString());
+		//eAILogger.Debug(this.ToString() + "(DayZPlayerInstanceType." + GetInstanceType().ToString() + ") is trying to reload " + magazine.ToString() + " into " + weapon.ToString());
 		eAIActionManager mngr_ai;
 		CastTo(mngr_ai, GetActionManager());
 		
@@ -941,8 +941,8 @@ class eAIBase extends PlayerBase
 		
 		GetMovementState(m_MovementState);
 		
-		//Print("IsInIronsights " + IsInIronsights());
-		//Print("IsInOptics " + IsInOptics());
+		//eAILogger.Debug("IsInIronsights " + IsInIronsights());
+		//eAILogger.Debug("IsInOptics " + IsInOptics());
 		// hold breath
 		if (pInputs.IsHoldBreath() && m_MovementState.IsRaised() && (IsInIronsights() || IsInOptics()))
 		{
@@ -1163,8 +1163,8 @@ class eAIBase extends PlayerBase
 				SetSynchDirty();
 			}
 			
-			//PrintString(last_command.ToString());
-			//PrintString(DayZPlayerConstants.COMMANDID_SWIM.ToString());
+			//eAILogger.Debug(last_command.ToString());
+			//eAILogger.Debug(DayZPlayerConstants.COMMANDID_SWIM.ToString());
 			
 			if( m_UnconsciousTime > PlayerConstants.UNCONSCIOUS_IN_WATER_TIME_LIMIT_TO_DEATH && last_command == DayZPlayerConstants.COMMANDID_SWIM )
 			{
