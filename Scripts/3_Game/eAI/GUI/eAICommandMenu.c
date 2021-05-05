@@ -4,7 +4,9 @@ enum eAICommandCategories
 	CAT_MOVEMENT,
 	CAT_FORMATION,
 	CAT_STATUS,
-	CAT_DEBUG
+	#ifndef EAI_COMMAND_DEBUG_DISABLE
+	CAT_DEBUG,
+	#endif
 }
 
 class eAICommandMenuItem
@@ -200,7 +202,9 @@ class eAICommandMenu extends UIScriptedMenu
 			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_MOVEMENT, "Movement", eAICommandCategories.CATEGORIES));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_FORMATION, "Formation", eAICommandCategories.CATEGORIES));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_STATUS, "Status", eAICommandCategories.CATEGORIES));
+			#ifndef EAI_COMMAND_DEBUG_DISABLE
 			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_DEBUG, "Debug", eAICommandCategories.CATEGORIES));
+			#endif
 		}
 
 		//Category 1 - Movement
@@ -229,6 +233,7 @@ class eAICommandMenu extends UIScriptedMenu
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.STA_THREATS, "Report Threats", eAICommandCategories.CAT_STATUS));
 		}
 
+		#ifndef EAI_COMMAND_DEBUG_DISABLE
 		//Category 4 - Debug
 		else if (category == eAICommandCategories.CAT_DEBUG)
 		{
@@ -238,6 +243,7 @@ class eAICommandMenu extends UIScriptedMenu
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_AIMAP, "AI Menu", eAICommandCategories.CAT_DEBUG));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_GRPMGR, "Group Manager", eAICommandCategories.CAT_DEBUG));
 		}
+		#endif
 	}
 
 	protected void CreateGestureContent()

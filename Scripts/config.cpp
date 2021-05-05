@@ -38,17 +38,29 @@ class CfgMods
 			class gameScriptModule
 			{
 				value = "";
-				files[] = {"eAI/Scripts/3_Game"};
+				files[] =
+				{
+					"eAI/Scripts/Common",
+					"eAI/Scripts/3_Game"
+				};
 			};
 			class worldScriptModule
 			{
 				value = "";
-				files[] = {"eAI/Scripts/4_World"};
+				files[] =
+				{
+					"eAI/Scripts/Common",
+					"eAI/Scripts/4_World"
+				};
 			};
 			class missionScriptModule
 			{
 				value = "";
-				files[] = {"eAI/Scripts/5_Mission"};
+				files[] =
+				{
+					"eAI/Scripts/Common",
+					"eAI/Scripts/5_Mission"
+				};
 			};
 		};
 	};
