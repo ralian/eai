@@ -65,8 +65,8 @@ class eAIBase extends PlayerBase
 	private bool m_AimChangeState;
     
     // Path Finding
-	private autoptr PGFilter m_PathFilter;
-	private autoptr array<vector> m_Path = new array<vector>();
+	private ref PGFilter m_PathFilter;
+	private ref array<vector> m_Path;
 	private vector m_TargetPosition;
 	private eAITargetOverriding m_eAI_TargetOverriding = eAITargetOverriding.NONE;
 
@@ -91,6 +91,7 @@ class eAIBase extends PlayerBase
 	{
 		super.Init();
 
+		m_Path = new array<vector>();
 		m_eAI_Targets = new array<eAITarget>();
 
 		m_AimingProfile = new eAIAimingProfile(this);
@@ -434,6 +435,8 @@ class eAIBase extends PlayerBase
 
 	void UpdateTargets()
 	{
+		//eAITrace trace(this, "UpdateTargets");
+		
 		//TODO: use particle system instead
 
 		array<CargoBase> proxyCargos = new array<CargoBase>();
@@ -462,6 +465,8 @@ class eAIBase extends PlayerBase
 
 	void PriotizeTargets()
 	{
+		//eAITrace trace(this, "PriotizeTargets");
+		
 		// sorting the targets so the highest the threat is indexed lowest
 
 		for (int i = 0; i < m_eAI_Targets.Count() - 1; i++) 
@@ -513,12 +518,16 @@ class eAIBase extends PlayerBase
 
 	void Notify_Transport(Transport vehicle, int seatIndex)
 	{
+		//eAITrace trace(this, "Notify_Transport", Object.GetDebugName(vehicle), seatIndex.ToString());
+		
 		m_eAI_Transport = vehicle;
 		m_eAI_Transport_SeatIndex = seatIndex;
 	}
 
 	void UseTargetting()
 	{
+		//eAITrace trace(this, "UseTargetting");
+		
 		m_eAI_TargetOverriding = eAITargetOverriding.NONE;
 	}
 
@@ -527,6 +536,8 @@ class eAIBase extends PlayerBase
 	 */
 	void OverridePath()
 	{
+		//eAITrace trace(this, "OverridePath");
+
 		m_eAI_TargetOverriding = eAITargetOverriding.PATH;
 		m_Path.Clear();
 	}
@@ -538,6 +549,8 @@ class eAIBase extends PlayerBase
 	 */
 	void OverridePath(array<vector> pPath)
 	{
+		//eAITrace trace(this, "OverridePath", pPath.ToString());
+
 		m_eAI_TargetOverriding = eAITargetOverriding.PATH;
 		pPath.Copy(m_Path);
 	}
@@ -549,6 +562,8 @@ class eAIBase extends PlayerBase
 	 */
 	void OverridePosition(vector pPosition)
 	{
+		//eAITrace trace(this, "OverridePosition", pPosition.ToString());
+		
 		m_eAI_TargetOverriding = eAITargetOverriding.POSITION;
 		m_TargetPosition = pPosition;
 	}
@@ -561,6 +576,8 @@ class eAIBase extends PlayerBase
 	 */
 	void OverrideMovementSpeed(bool pActive, int pSpeed)
 	{
+		//eAITrace trace(this, "OverrideMovementSpeed", pActive.ToString(), pSpeed.ToString());
+		
 		m_MovementSpeedActive = pActive;
 		m_MovementSpeed = pSpeed;
 	}
@@ -573,18 +590,16 @@ class eAIBase extends PlayerBase
 	 */
 	void OverrideMovementDirection(bool pActive, float pDirection)
 	{
+		//eAITrace trace(this, "OverrideMovementDirection", pActive.ToString(), pDirection.ToString());
+		
 		m_MovementDirectionActive = pActive;
 		m_MovementDirection = pDirection;
 	}
 
 	override void CommandHandler(float pDt, int pCurrentCommandID, bool pCurrentCommandFinished) 
 	{
-		if (!IsAI())
-		{
-			super.CommandHandler(pDt, pCurrentCommandID, pCurrentCommandFinished);
-			return;
-		}
-
+		//eAITrace trace(this, "CommandHandler", pDt.ToString(), pCurrentCommandID.ToString(), pCurrentCommandFinished.ToString());
+		
 #ifndef SERVER
 		for (int i = m_DebugShapes.Count() - 1; i >= 0; i--)
 			m_DebugShapes[i].Destroy();
@@ -924,12 +939,8 @@ class eAIBase extends PlayerBase
 	
 	override void HandleWeapons(float pDt, Entity pInHands, HumanInputController pInputs, out bool pExitIronSights)
 	{
-		if (!IsAI())
-		{
-			super.HandleWeapons(pDt, pInHands, pInputs, pExitIronSights);
-			return;
-		}
-
+		//eAITrace trace(this, "HandleWeapons", pDt.ToString(), Object.GetDebugName(pInHands));
+		
 		HumanCommandWeapons hcw = GetCommandModifier_Weapons();
     	GetDayZPlayerInventory().HandleWeaponEvents(pDt, pExitIronSights);
 		
@@ -1103,21 +1114,16 @@ class eAIBase extends PlayerBase
 	
 	// As with many things we do, this is an almagomation of the client and server code
 	override void CheckLiftWeapon()
-	{
-		if (IsAI())
+	{		
+		if (!GetGame().IsServer()) return;
+
+		Weapon_Base weap;
+		if (Weapon_Base.CastTo(weap, GetItemInHands()))
 		{
-			if (!GetGame().IsServer()) return;
-
-			Weapon_Base weap;
-			if (Weapon_Base.CastTo(weap, GetItemInHands()))
-			{
-				m_LiftWeapon_player = weap.LiftWeaponCheck(this);
-			}
-
-			return;
+			m_LiftWeapon_player = weap.LiftWeaponCheck(this);
 		}
 
-		super.CheckLiftWeapon();
+		return;
 	}
 	
 	// @param true to put weapon up, false to lower
@@ -1158,28 +1164,13 @@ class eAIBase extends PlayerBase
 	}
 		
 	override bool AimingModel(float pDt, SDayZPlayerAimingModel pModel)
-	{
-		if (IsAI())
-		{
-			return false;
-		}
-			
-		return super.AimingModel(pDt, pModel);
+	{			
+		return false;
 	}
 		
 	override bool HeadingModel(float pDt, SDayZPlayerHeadingModel pModel)
 	{
-		if (IsAI())
-		{
-			return false;
-		}
-		
-		return super.HeadingModel(pDt, pModel);
-	}
-	
-	override void OnCommandDeathStart()
-	{
-		super.OnCommandDeathStart();
+		return false;
 	}
 
 	void OnCommandVehicleAIStart()
@@ -1218,7 +1209,7 @@ class eAIBase extends PlayerBase
 
 	override void OnUnconsciousUpdate(float pDt, int last_command)
 	{
-		if (IsAI() && !GetGame().IsMultiplayer() && GetGame().IsServer())
+		if (!GetGame().IsMultiplayer() && GetGame().IsServer())
 		{
 			m_UnconsciousTime += pDt;
 
@@ -1237,10 +1228,6 @@ class eAIBase extends PlayerBase
 			{
 				SetHealth("","",-100);
 			}
-
-			return;
 		}
-
-		super.OnUnconsciousUpdate(pDt, last_command);
 	}
 };

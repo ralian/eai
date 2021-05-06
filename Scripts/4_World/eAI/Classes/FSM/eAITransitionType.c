@@ -35,9 +35,11 @@ class eAITransitionType
     {
         return m_Types[type].Spawn(fsm);
     }
-	
+
     static eAITransitionType LoadXML(string fsm, CF_XML_Tag xml_root_tag, ScriptModule module)
     {
+		//eAITrace trace(null, "eAITransitionType::LoadXML", fsm);
+
         string from_state_name;
         auto from_state = xml_root_tag.GetTag("from_state");
         if (from_state.Count() > 0) from_state_name = from_state[0].GetAttribute("name").ValueAsString();
@@ -83,6 +85,7 @@ class eAITransitionType
         if (guard.Count() > 0)
         {
             FPrintln(file, "override int Guard() {");
+        	FPrintln(file, "//eAITrace trace(this, \"Guard\");");
             FPrintln(file, guard[0].GetContent().GetContent());
             FPrintln(file, "}");
         }

@@ -19,6 +19,16 @@ class eAITargetInformation
     }
 
 	/**
+	 * @brief Debugging information about the target
+	 *
+	 * @return string
+	 */
+    string DebugString()
+    {
+        return "";
+    }
+
+	/**
 	 * @brief Get the entity that this target belongs to, if it does so
 	 *
 	 * @return EntityAI
@@ -89,6 +99,8 @@ class eAITargetInformation
 	 */
     void Process(int group_id)
     {
+        //eAITrace trace(this, "Process", group_id.ToString());
+
         eAITarget target;
         if (!m_Groups.Find(group_id, target))
         {
@@ -110,6 +122,8 @@ class eAITargetInformation
      */
     void Update(eAIGroup group, int max_time = -2147483647 /*-int.MIN*/)
     {
+        //eAITrace trace(this, "Update", group.GetID().ToString(), max_time.ToString());
+
         eAITarget target;
         if (!m_Groups.Find(group.GetID(), target)) return;
 
@@ -122,8 +136,10 @@ class eAITargetInformation
 	 *
      * @param group_id group id of an eAIGroup
 	 */
-    eAITarget Insert(eAIGroup group, int max_time = -2147483647 /*-int.MIN*/)
+    eAITarget Insert(notnull eAIGroup group, int max_time = -2147483647 /*-int.MIN*/)
     {
+        //eAITrace trace(this, "Insert", group.GetID().ToString(), max_time.ToString());
+
         eAITarget target;
         target = new eAITarget(group, GetGame().GetTime(), max_time, this);
         if (!m_Groups.Insert(group.GetID(), target)) return null;
@@ -141,6 +157,8 @@ class eAITargetInformation
 	 */
     eAITarget Insert(eAIBase ai, int max_time = -2147483647 /*-int.MIN*/)
     {
+        //eAITrace trace(this, "Insert", Object.GetDebugName(ai), max_time.ToString());
+
         eAITarget target;
         target = Insert(ai.GetGroup(), max_time);
         if (!target) return null; 
@@ -157,6 +175,8 @@ class eAITargetInformation
 	 */
     eAITarget AddAI(eAIBase ai, int max_time = -2147483647 /*-int.MIN*/)
     {
+        //eAITrace trace(this, "AddAI", Object.GetDebugName(ai), max_time.ToString());
+
         eAITarget target;
         int group_id = ai.GetGroup().GetID();
         if (!m_Groups.Find(group_id, target)) return Insert(ai, max_time);
@@ -176,6 +196,8 @@ class eAITargetInformation
      */
     bool RemoveAI(eAIBase ai)
     {
+        //eAITrace trace(this, "RemoveAI", Object.GetDebugName(ai));
+
         eAITarget target;
         int group_id = ai.GetGroup().GetID();
         if (!m_Groups.Find(group_id, target)) return false;
@@ -201,6 +223,8 @@ class eAITargetInformation
      */
     void Remove(int group_id)
     {
+        //eAITrace trace(this, "Remove", group_id.ToString());
+
         eAITarget target;
         if (!m_Groups.Find(group_id, target)) return;
 		
@@ -223,6 +247,7 @@ class eAITargetInformation
      */
     void Remove(eAIGroup group)
     {
+        //eAITrace trace(this, "Remove", group.GetID().ToString());
         int group_id = group.GetID();
         
         Remove(group_id);
@@ -230,6 +255,7 @@ class eAITargetInformation
 
     void RemoveFromAll()
     {
+        //eAITrace trace(this, "RemoveFromAll");
         foreach (int id, eAITarget target : m_Groups) Remove(id);
     }
 
@@ -240,6 +266,7 @@ class eAITargetInformation
      */
     bool IsTargetted()
     {
+        //eAITrace trace(this, "IsTargetted");
         return m_Groups.Count() > 0;
     }
 
@@ -251,6 +278,7 @@ class eAITargetInformation
      */
     bool IsTargetted(int group_id)
     {
+        //eAITrace trace(this, "IsTargetted", group_id.ToString());
         return m_Groups.Contains(group_id);
     }
 
@@ -260,8 +288,9 @@ class eAITargetInformation
      * @param group the eAIGroup
      * @return bool true if being targetted, false otherwise
      */
-    bool IsTargetted(eAIGroup group)
+    bool IsTargetted(notnull eAIGroup group)
     {
+        //eAITrace trace(this, "IsTargetted", group.GetID().ToString());
         return m_Groups.Contains(group.GetID());
     }
 
@@ -273,6 +302,7 @@ class eAITargetInformation
      */
     bool IsTargettedBy(eAIBase ai)
     {
+        //eAITrace trace(this, "IsTargettedBy", Object.GetDebugName(ai));
         eAITarget target;
         if (!m_Groups.Find(ai.GetGroup().GetID(), target)) return false;
 

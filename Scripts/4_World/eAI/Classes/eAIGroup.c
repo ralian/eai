@@ -42,6 +42,7 @@ class eAIGroup
 	// return the group owned by leader, otherwise create a new one.
 	static eAIGroup GetGroupByLeader(DayZPlayerImplement leader, bool createIfNoneExists = true)
 	{
+        //eAITrace trace(null, "eAIGroup::GetGroupByLeader", Object.GetDebugName(leader), createIfNoneExists.ToString());
 		for (int i = 0; i < m_AllGroups.Count(); i++) if (m_AllGroups[i].GetLeader() == leader) return m_AllGroups[i];
 		
 		if (!createIfNoneExists) return null;
@@ -53,11 +54,13 @@ class eAIGroup
 
 	static eAIGroup CreateGroup()
 	{
+        //eAITrace trace(null, "eAIGroup::CreateGroup");
 		return new eAIGroup();
 	}
 
 	static void DeleteGroup(eAIGroup group)
 	{
+        //eAITrace trace(null, "eAIGroup::DeleteGroup");
 		int index = m_AllGroups.Find(group);
 		m_AllGroups.Remove(index);
 		delete group;
@@ -65,6 +68,8 @@ class eAIGroup
 
 	private void eAIGroup()
 	{
+        //eAITrace trace(this, "eAIGroup");
+
 		m_TargetInformation = new eAIGroupTargetInformation(this);
 		m_Targets = new array<eAITargetInformation>();
 
@@ -82,58 +87,70 @@ class eAIGroup
 
 	private void ~eAIGroup()
 	{
+        //eAITrace trace(this, "~eAIGroup");
+
 		int idx = m_AllGroups.Find(this);
 		if (idx != -1) m_AllGroups.RemoveOrdered(idx);
 	}
 
 	void Delete()
 	{
+        //eAITrace trace(this, "Delete");
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(DeleteGroup, this);
 	}
 	
 	void AddWaypoint(vector pos)
 	{
+        //eAITrace trace(this, "AddWaypoint");
 		m_Waypoints.Insert(pos);
 	}
 
 	array<vector> GetWaypoints()
 	{
+        //eAITrace trace(this, "GetWaypoints");
 		return m_Waypoints;
 	}
 	
 	void ClearWaypoints()
 	{
+        //eAITrace trace(this, "ClearWaypoints");
 		m_Waypoints.Clear();
 	}
 
 	void SetWaypointBehaviour(eAIWaypointBehavior bhv)
 	{
+        //eAITrace trace(this, "SetWaypointBehaviour");
 		m_WaypointBehaviour = bhv;
 	}
 
 	eAIWaypointBehavior GetWaypointBehaviour()
 	{
+        //eAITrace trace(this, "GetWaypointBehaviour");
 		return m_WaypointBehaviour;
 	}
 
 	void SetFormationState(eAIGroupFormationState state)
 	{
+        //eAITrace trace(this, "SetFormationState")
 		m_FormationState = state;
 	}
 
 	eAIGroupFormationState GetFormationState()
 	{
+        //eAITrace trace(this, "GetFormationState");
 		return m_FormationState;
-	}
-	
-	eAIFaction GetFaction()
-	{
-		return m_Faction;
 	}
 	
 	void SetFaction(eAIFaction f)
 	{
+        //eAITrace trace(this, "SetFaction");
 		m_Faction = f;
+	}
+	
+	eAIFaction GetFaction()
+	{
+        //eAITrace trace(this, "GetFaction");
+		return m_Faction;
 	}
 
 	/**
@@ -153,6 +170,7 @@ class eAIGroup
 	 */
 	void OnTargetAdded(eAITargetInformation target)
 	{
+        //eAITrace trace(this, "OnTargetAdded", target.DebugString());
 		m_Targets.Insert(target);
 	}
 
@@ -163,6 +181,7 @@ class eAIGroup
 	 */
 	void OnTargetRemoved(eAITargetInformation target)
 	{
+        //eAITrace trace(this, "OnTargetRemoved", target.DebugString());
 		m_Targets.RemoveItem(target);
 	}
 
@@ -171,6 +190,7 @@ class eAIGroup
 	 */
 	void ProcessTargets()
 	{
+        //eAITrace trace(this, "ProcessTargets");
 		for (int i = m_Targets.Count() - 1; i >= 0; i--) m_Targets[i].Process(m_ID);
 	}
 
@@ -185,11 +205,13 @@ class eAIGroup
 	 */
     eAITargetInformation GetTargetInformation()
     {
+        //eAITrace trace(this, "GetTargetInformation");
 		return m_TargetInformation;
     }
 
 	void Update(float pDt)
 	{
+        //eAITrace trace(this, "Update");
 		ProcessTargets();
 
 		m_Form.Update(pDt);
@@ -197,6 +219,7 @@ class eAIGroup
 
 	static void UpdateAll(float pDt)
 	{
+        ////eAITrace trace(null, "eAIGroup::UpdateAll");
         // don't process if we aren't the server
         if (!GetGame().IsServer()) return;
 
@@ -205,6 +228,8 @@ class eAIGroup
 
 	int GetMemberIndex(eAIBase ai)
 	{
+        //eAITrace trace(this, "GetMemberIndex", Object.GetDebugName(ai));
+
 		int pos = 0;
 		vector position = "0 0 0";
 				
@@ -223,6 +248,8 @@ class eAIGroup
 
 	vector GetFormationPosition(eAIBase ai)
 	{
+        //eAITrace trace(this, "GetFormationPosition", Object.GetDebugName(ai));
+
 		int pos = GetMemberIndex(ai);
 		vector position = "0 0 0";
 		if (pos != -1) position = m_Form.GetPosition(pos);
@@ -231,6 +258,8 @@ class eAIGroup
 
 	void SetLeader(DayZPlayerImplement leader)
 	{
+        //eAITrace trace(this, "SetLeader", Object.GetDebugName(leader));
+
 		if (!IsMember(leader)) AddMember(leader);
 
 		DayZPlayerImplement temp = m_Members[0];
@@ -249,36 +278,43 @@ class eAIGroup
 
 	DayZPlayerImplement GetLeader()
 	{
+        //eAITrace trace(this, "GetLeader");
 		return m_Members[0];
 	}
 	
 	eAIFormation GetFormation()
 	{
+        //eAITrace trace(this, "GetFormation");
 		return m_Form;
 	}
 	
 	void SetFormation(eAIFormation f)
 	{
+        //eAITrace trace(this, "SetFormation");
 		m_Form = f;
 	}
 
 	bool IsMember(DayZPlayerImplement member)
 	{
+        //eAITrace trace(this, "IsMember", Object.GetDebugName(member));
 		return m_Members.Find(member) != -1;
  	}
 	
 	int AddMember(DayZPlayerImplement member)
 	{
+        //eAITrace trace(this, "AddMember", Object.GetDebugName(member));
 		return m_Members.Insert(member);
 	}
 
 	bool RemoveMember(DayZPlayerImplement member, bool autoDelete = true)
 	{
+        //eAITrace trace(this, "RemoveMember", Object.GetDebugName(member), autoDelete.ToString());
 		return RemoveMember(m_Members.Find(member), autoDelete);
 	}
 
 	bool RemoveMember(int i, bool autoDelete = true)
 	{
+        //eAITrace trace(this, "RemoveMember", i.ToString(), autoDelete.ToString());
 		if (i < 0 || i >= m_Members.Count()) return false;
 
 		m_Members.RemoveOrdered(i);
@@ -293,6 +329,7 @@ class eAIGroup
 
 	void RemoveAllMembers(bool autoDelete = true)
 	{
+        //eAITrace trace(this, "RemoveAllMembers", autoDelete.ToString());
 		m_Members.Clear();
 
 		if (autoDelete)
@@ -303,21 +340,25 @@ class eAIGroup
 	
 	DayZPlayerImplement GetMember(int i)
 	{
+        //eAITrace trace(this, "GetMember", i.ToString());
 		return m_Members[i];
 	}
 
 	int GetIndex(DayZPlayerImplement player)
 	{
+        //eAITrace trace(this, "GetIndex", Object.GetDebugName(player));
 		return m_Members.Find(player);
 	}
 	
 	int Count()
 	{
+        //eAITrace trace(this, "Count");
 		return m_Members.Count();
 	}
 
 	static void DeleteAllAI()
 	{
+        //eAITrace trace(null, "eAIGroup::DeleteAllAI");
 		foreach (eAIGroup group : m_AllGroups)
 		{
 			for (int i = group.Count() - 1; i > -1; i--)
@@ -334,6 +375,7 @@ class eAIGroup
 
 	static void OnHeadlessClientConnect(PlayerIdentity identity)
 	{
+        //eAITrace trace(null, "eAIGroup::OnHeadlessClientConnect");
 		foreach (eAIGroup group : m_AllGroups)
 		{
 			for (int i = 0; i < group.Count(); i++)

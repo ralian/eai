@@ -3,16 +3,16 @@ class eAIState
     static const int EXIT = 0;
     static const int CONTINUE = 1;
 
-    protected string m_Name;
-    protected string m_ClassName;
+    string m_Name;
+    string m_ClassName;
 
     //! only used if there is a sub-fsm
-    protected ref eAIFSM m_SubFSM;
+    ref eAIFSM m_SubFSM;
 
     /* STATE VARIABLES */
-    protected eAIFSM fsm;
-    protected eAIState parent;
-    protected eAIBase unit;
+    eAIFSM fsm;
+    eAIState parent;
+    eAIBase unit;
 
     void eAIState(eAIFSM _fsm, eAIBase _unit)
     {

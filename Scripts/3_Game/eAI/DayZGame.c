@@ -18,6 +18,7 @@ modded class DayZGame
 
     eAIManagerBase eAIManagerGet()
     {
+		//eAITrace trace(this, "eAIManagerGet");
         return m_eAI_Manager;
     }
 
@@ -49,6 +50,7 @@ modded class DayZGame
     //TODO: move to 5_Mission/eAIManager
 	eAICommandManager GetEAICommandManager()
     {
+		//eAITrace trace(this, "GetEAICommandManager");
 		return m_eAI_CommandManager;
 	}
 };

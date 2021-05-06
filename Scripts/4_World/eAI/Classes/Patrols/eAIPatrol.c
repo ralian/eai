@@ -22,6 +22,7 @@ class eAIPatrol : Managed
 	 */
 	private void eAIPatrol()
 	{
+        //eAITrace trace(this, "eAIPatrol");
 		m_AllPatrols.Insert(this);
 	}
 
@@ -30,6 +31,7 @@ class eAIPatrol : Managed
 	 */
 	private void ~eAIPatrol()
 	{
+        //eAITrace trace(this, "~eAIPatrol");
 		int idx = m_AllPatrols.Find(this);
 		if (idx != -1) m_AllPatrols.RemoveOrdered(idx);
 
@@ -41,6 +43,7 @@ class eAIPatrol : Managed
 	 */
 	void Delete()
 	{
+        //eAITrace trace(this, "Delete");
 		m_IsBeingDestroyed = true;
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(DeletePatrol, this);
 	}
@@ -50,6 +53,7 @@ class eAIPatrol : Managed
 	 */
 	bool IsBeingDestroyed()
 	{
+        //eAITrace trace(this, "IsBeingDestroyed");
 		return m_IsBeingDestroyed;
 	}
 
@@ -58,6 +62,7 @@ class eAIPatrol : Managed
 	 */
 	void Start()
 	{
+        //eAITrace trace(this, "Start");
 		//DelayedStart();
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.DelayedStart, Math.RandomInt(1, 1000), false);
 
@@ -66,6 +71,7 @@ class eAIPatrol : Managed
 
 	private void DelayedStart()
 	{
+        //eAITrace trace(this, "DelayedStart");
 		if (!m_Timer) m_Timer = new Timer(CALL_CATEGORY_GAMEPLAY);
 		m_Timer.Run(UPDATE_RATE_IN_SECONDS, this, "OnUpdate", null, true);
 	}
@@ -75,6 +81,7 @@ class eAIPatrol : Managed
 	 */
 	void Stop()
 	{
+        //eAITrace trace(this, "Stop");
 		if (m_Timer && m_Timer.IsRunning()) m_Timer.Stop();
 	}
 

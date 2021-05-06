@@ -16,6 +16,8 @@ modded class Weapon_Base
 {
 	bool Hitscan(out EntityAI entity, out vector hitPosition, out int contactComponent)
 	{
+		//eAITrace trace(this, "Hitscan");
+
 		eAIBase ai;
 		if (!Class.CastTo(ai, GetHierarchyRootPlayer())) return false;
 		

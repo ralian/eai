@@ -44,7 +44,9 @@ class eAIManager extends eAIManagerImplement
 	//! @param owner Who is the manager of this AI
 	//! @param formOffset Where should this AI follow relative to the formation?
 	eAIBase SpawnAI_Helper(PlayerBase owner, string loadout = "SoldierLoadout.json")
-	{		
+	{
+		//eAITrace trace(this, "SpawnAI_Helper");
+
 		eAIBase ai;
 		if (!Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), owner.GetPosition()))) return null;
 
@@ -57,6 +59,8 @@ class eAIManager extends eAIManagerImplement
 	
 	eAIBase SpawnAI_Sentry(vector pos, string loadout = "SoldierLoadout.json")
 	{
+		//eAITrace trace(this, "SpawnAI_Sentry");
+
 		eAIBase ai;
 		if (!Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), pos))) return null;
 
@@ -67,6 +71,8 @@ class eAIManager extends eAIManagerImplement
 	
 	eAIBase SpawnAI_Patrol(vector pos, string loadout = "SoldierLoadout.json")
 	{
+		//eAITrace trace(this, "SpawnAI_Patrol");
+
 		eAIBase ai;
 		if (!Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), pos))) return null;
 
@@ -78,6 +84,8 @@ class eAIManager extends eAIManagerImplement
 	// Server Side: This RPC spawns a helper AI next to the player, and tells them to join the player's formation.
 	void SpawnAI(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
+		//eAITrace trace(this, "SpawnAI");
+
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
 		
@@ -93,6 +101,8 @@ class eAIManager extends eAIManagerImplement
 	// Client Side: Link the given AI
 	void HCLinkObject(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
+		//eAITrace trace(this, "HCLinkObject");
+
 		Param1<PlayerBase> data;
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server) {
@@ -104,6 +114,8 @@ class eAIManager extends eAIManagerImplement
 	// Client Side: Link the given AI
 	void HCUnlinkObject(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
+		//eAITrace trace(this, "HCUnlinkObject");
+
 		Param1<PlayerBase> data;
         if ( !ctx.Read( data ) ) return;
 		if(type == CallType.Server) {
@@ -116,6 +128,8 @@ class eAIManager extends eAIManagerImplement
 	// BUG: this has sometimes crashed us before. Not sure why yet.
 	void SpawnZombie(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
+		//eAITrace trace(this, "SpawnZombie");
+
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
 		
@@ -130,6 +144,8 @@ class eAIManager extends eAIManagerImplement
 	// Server Side: Delete AI.
 	void ClearAllAI(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
+		//eAITrace trace(this, "ClearAllAI");
+
 		Param1<PlayerBase> data;
         if (!ctx.Read(data)) return;
 		if (type == CallType.Server)
@@ -143,6 +159,8 @@ class eAIManager extends eAIManagerImplement
 	
 	void ReqFormRejoin(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
+		//eAITrace trace(this, "ReqFormRejoin");
+
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server)
@@ -157,6 +175,8 @@ class eAIManager extends eAIManagerImplement
 	
 	void ReqFormStop(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
+		//eAITrace trace(this, "ReqFormStop");
+
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server)
@@ -171,6 +191,8 @@ class eAIManager extends eAIManagerImplement
 	
 	void ReqFormationChange(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
+		//eAITrace trace(this, "ReqFormationChange");
+
 		Param2<DayZPlayer, int> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server)

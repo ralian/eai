@@ -6,6 +6,8 @@ class eAIAimingProfileManager
 
 	void eAIAimingProfileManager()
 	{
+        //eAITrace trace(this, "eAIAimingProfileManager");
+
 		GetRPCManager().AddRPC("eAIAimingProfileManager", "OnStart", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAIAimingProfileManager", "OnEnd", this, SingeplayerExecutionType.Client);
 
@@ -14,6 +16,8 @@ class eAIAimingProfileManager
 
 	void AddAI(eAIBase ai)
 	{
+        //eAITrace trace(this, "AddAI");
+
 		if (GetGame().IsServer()) return;
 
 		int idx = m_AIs.Find(ai);
@@ -26,6 +30,8 @@ class eAIAimingProfileManager
 
 	void RemoveAI(eAIBase ai)
 	{
+        //eAITrace trace(this, "RemoveAI");
+		
 		if (GetGame().IsServer()) return;
 
 		int idx = m_AIs.Find(ai);
@@ -38,6 +44,8 @@ class eAIAimingProfileManager
 
 	void Update(float pDt)
 	{
+        //eAITrace trace(this, "Update");
+
 		m_Time += pDt;
 		//if (m_Time < 0.5) return;
 
@@ -60,6 +68,8 @@ class eAIAimingProfileManager
 
 	void OnStart(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
+        //eAITrace trace(this, "OnStart");
+
 		eAIBase ai;
 		if (!Class.CastTo(ai, target)) return;
 
@@ -70,6 +80,8 @@ class eAIAimingProfileManager
 
 	void OnEnd(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
+        //eAITrace trace(this, "OnEnd");
+
 		eAIBase ai;
 		if (!Class.CastTo(ai, target)) return;
 
@@ -80,6 +92,8 @@ class eAIAimingProfileManager
 
 	void OnSync(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
+        //eAITrace trace(this, "OnSync");
+
 		eAIBase ai;
 		if (!Class.CastTo(ai, target)) return;
 

@@ -9,11 +9,13 @@ modded class AnimalBase
 
     protected eAITargetInformation CreateTargetInformation()
     {
+		//eAITrace trace(this, "CreateTargetInformation");
         return new eAIEntityTargetInformation(this);
     }
 
     eAITargetInformation GetTargetInformation()
     {
+		//eAITrace trace(this, "UpdateTargets");
         return m_TargetInformation;
     }
 

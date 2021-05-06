@@ -7,6 +7,11 @@ class eAIEntityTargetInformation extends eAITargetInformation
         m_Target = target;
     }
 
+    override string DebugString()
+    {
+        return Object.GetDebugName(m_Target);
+    }
+
     override EntityAI GetEntity()
     {
         return m_Target;

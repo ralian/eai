@@ -43,6 +43,8 @@ class eAIFSMType
 
     static eAIFSMType LoadXML(string path, string fileName)
     {
+		//eAITrace trace(null, "eAIFSMType::LoadXML", path, fileName);
+
         string actualFilePath = path + "/" + fileName + ".xml";
         eAILogger.Debug(actualFilePath);
         if (!FileExist(actualFilePath)) return null;
@@ -93,6 +95,7 @@ class eAIFSMType
         FPrintln(file, "}");
 
         FPrintln(file, "void Setup() {");
+        FPrintln(file, "//eAITrace trace(this, \"Setup\");");
 
         ScriptModule module = GetGame().GetMission().MissionScript;
 

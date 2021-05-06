@@ -50,6 +50,7 @@ class eAIDynamicPatrol : eAIPatrol
 
 	private eAIBase SpawnAI(vector pos)
 	{
+        //eAITrace trace(this, "SpawnAI");
 		eAIBase ai;
 		if (!Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), pos))) return null;
 
@@ -62,6 +63,7 @@ class eAIDynamicPatrol : eAIPatrol
 
 	private bool IsGroupDestroyed()
 	{
+        //eAITrace trace(this, "IsGroupDestroyed");
 		for (int i = 0; i < m_Group.Count(); i++)
 		{
 			DayZPlayerImplement member = m_Group.GetMember(i);
@@ -76,6 +78,7 @@ class eAIDynamicPatrol : eAIPatrol
 
 	void Spawn()
 	{
+        //eAITrace trace(this, "Spawn");
 		if (m_Group) return;
 
 		m_LastSpawn = 0;
@@ -98,6 +101,7 @@ class eAIDynamicPatrol : eAIPatrol
 
 	void Despawn()
 	{
+        //eAITrace trace(this, "Despawn");
 		if (!m_Group) return;
 
 		m_Group.RemoveAllMembers();
@@ -108,6 +112,7 @@ class eAIDynamicPatrol : eAIPatrol
 
 	override void OnUpdate()
 	{
+        //eAITrace trace(this, "OnUpdate");
 		super.OnUpdate();
 
 		vector patrolPos = m_Position;

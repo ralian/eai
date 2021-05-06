@@ -75,7 +75,7 @@ class eAIFSM
 	
 	bool StartDefault()
 	{
-        eAITrace trace("eAIFSM::StartDefault");
+        //eAITrace trace(this, "StartDefault");
 
         eAIState src = m_CurrentState;
         eAIState dst = GetState(m_DefaultState);
@@ -102,7 +102,7 @@ class eAIFSM
 
     bool Start(string e = "")
     {
-        eAITrace trace("eAIFSM::Start e=" + e);
+        //eAITrace trace(this, "Start", e);
 
         Param2<eAIState, bool> new_state = FindSuitableTransition(m_CurrentState, "");
 
@@ -138,7 +138,7 @@ class eAIFSM
 
     bool Abort(string e = "")
     {
-        eAITrace trace("eAIFSM::Abort e=" + e);
+        //eAITrace trace(this, "Abort", e);
 
         if (m_Running && m_CurrentState)
         {
@@ -156,6 +156,8 @@ class eAIFSM
      */
     int Update(float pDt, int pSimulationPrecision)
     {
+        //eAITrace trace(this, "Update", pDt.ToString(), pSimulationPrecision.ToString());
+
         if (m_CurrentState && m_CurrentState.OnUpdate(pDt, pSimulationPrecision) == CONTINUE) return CONTINUE;
 
         Param2<eAIState, bool> new_state = FindSuitableTransition(m_CurrentState, "");
@@ -183,6 +185,8 @@ class eAIFSM
 	
 	Param2<eAIState, bool> FindSuitableTransition(eAIState s, string e = "")
 	{
+        //eAITrace trace(this, "FindSuitableTransition", "" + s, e);
+
         // returns tuple as a valid destination can still be null
 
         //TODO: store a reference to the transitions inside the state for that state

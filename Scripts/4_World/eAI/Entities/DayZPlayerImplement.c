@@ -11,21 +11,26 @@ modded class DayZPlayerImplement
 
     protected eAITargetInformation CreateTargetInformation()
     {
+		//eAITrace trace(this, "CreateTargetInformation");
         return new eAIPlayerTargetInformation(this);
     }
 
     eAITargetInformation GetTargetInformation()
     {
+		//eAITrace trace(this, "GetTargetInformation");
         return m_TargetInformation;
     }
 
     bool IsAI()
     {
+		//eAITrace trace(this, "IsAI");
         return false;
     }
 
 	void SetGroup(eAIGroup group)
     {
+		//eAITrace trace(this, "SetGroup", "" + group);
+
         if (m_eAI_Group == group) return;
 
         if (m_eAI_Group)
@@ -43,6 +48,7 @@ modded class DayZPlayerImplement
 
 	eAIGroup GetGroup()
 	{
+		//eAITrace trace(this, "GetGroup");
 		return m_eAI_Group;
 	}
 

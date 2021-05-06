@@ -9,11 +9,13 @@ modded class ZombieBase
 
     protected eAITargetInformation CreateTargetInformation()
     {
+		//eAITrace trace(this, "CreateTargetInformation");
         return new eAIZombieTargetInformation(this);
     }
 
     eAIZombieTargetInformation GetTargetInformation()
     {
+		//eAITrace trace(this, "GetTargetInformation");
         return m_TargetInformation;
     }
 
