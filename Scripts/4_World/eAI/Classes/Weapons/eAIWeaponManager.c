@@ -44,8 +44,6 @@ class eAIWeaponManager extends WeaponManager
 
 	override void OnWeaponActionEnd()
 	{
-		DumpStack();
-
 		if ( !m_InProgress )
 			return;
 		
@@ -137,9 +135,6 @@ class eAIWeaponManager extends WeaponManager
 		
 			if(m_canEnd)
 			{
-				Print(m_WeaponInHand.GetCurrentState());
-				Print(m_WeaponInHand.IsIdle());
-			
 				if(m_WeaponInHand.IsIdle())
 				{
 					OnWeaponActionEnd();

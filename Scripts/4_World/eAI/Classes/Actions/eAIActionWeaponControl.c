@@ -61,13 +61,3 @@ class eAIActionWeaponControl : ActionBase
 		}
 	}
 };
-
-modded class RBF_JAM_BU1_MA1
-{
-	override void OnEntry (WeaponEventBase e) {
-		Print(e);
-		DumpStack();
-		super.OnEntry(e);
-		}
-	
-}
