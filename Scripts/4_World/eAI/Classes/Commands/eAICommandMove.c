@@ -30,6 +30,7 @@ class eAICommandMove extends eAICommandBase
 	private float m_MovementSpeed;
 	private float m_TargetSpeed;
 	private float m_SpeedLimit;
+	private bool m_SpeedOverrider;
 	
 	private vector m_MovementCorrection;
 			
@@ -52,9 +53,9 @@ class eAICommandMove extends eAICommandBase
 	{
 	}
 
-	override void SetLookDirection(vector direction)
+	override void SetLookDirection(vector pDirection)
 	{
-		vector angles = direction.VectorToAngles();
+		vector angles = pDirection.VectorToAngles();
 		m_LookLR = angles[0];
 		m_LookUD = angles[1];
 		if (m_LookLR > 180) m_LookLR = m_LookLR - 360;
@@ -62,35 +63,40 @@ class eAICommandMove extends eAICommandBase
 		m_Look = (Math.AbsFloat(m_LookLR) > 0.01) || (Math.AbsFloat(m_LookUD) > 0.01);
 	}
 
-	void SetAimPosition(bool use, vector position = "0 0 0")
+	void SetAimPosition(bool pActive, vector pPosition = "0 0 0")
 	{
-		m_UseAimPosition = use;
-		m_AimPosition = position;
+		m_UseAimPosition = pActive;
+		m_AimPosition = pPosition;
 	}
 
-	void SetSpeedLimit(float speedIdx)
+	void SetSpeedLimit(float pSpeedIdx)
 	{
-		m_SpeedLimit = speedIdx;
+		m_SpeedLimit = pSpeedIdx;
 
 		if (m_SpeedLimit < 0 || m_SpeedLimit > 3) m_SpeedLimit = 3;
 	}
 	
-	void SetTargetSpeed(float target)
+	void SetTargetSpeed(float pTarget)
 	{
-		if (m_TargetSpeed > target && target < 2.0 && m_SpeedUpdateTime < 0.1) return;
+		if (m_TargetSpeed > pTarget && pTarget < 2.0 && m_SpeedUpdateTime < 0.1) return;
 
 		m_SpeedUpdateTime = 0;
-		m_TargetSpeed = target;
+		m_TargetSpeed = pTarget;
 	}
 
-	void SetTargetDirection(float target)
+	void SetSpeedOverrider(bool pActive)
 	{
-		m_TargetMovementDirection = target;
+		m_SpeedOverrider = pActive;
+	}
+
+	void SetTargetDirection(float pTarget)
+	{
+		m_TargetMovementDirection = pTarget;
 	}
 	
-	void SetRaised(bool raised)
+	void SetRaised(bool pActive)
 	{
-		m_Raised = raised;
+		m_Raised = pActive;
 	}
 
 	override void PreAnimUpdate(float pDt)
@@ -171,9 +177,6 @@ class eAICommandMove extends eAICommandBase
 		vector wayPoint = position;
 		bool isFinal = true;
 
-		SetTargetSpeed(0.0);
-		SetTargetDirection(0.0);
-
 		PhxInteractionLayers collisionLayerMask = PhxInteractionLayers.ROADWAY|PhxInteractionLayers.BUILDING|PhxInteractionLayers.FENCE|PhxInteractionLayers.VEHICLE;
 		Object hitObject; //! always null and low priority fix at BI
 		vector hitPosition;
@@ -245,7 +248,7 @@ class eAICommandMove extends eAICommandBase
 			isFinal = wayPointIndex == m_Unit.PathCount() - 1;
 		}
 
-		float minFinal = 0.1;
+		float minFinal = 0.05;
 
 		if (!isFinal || !m_UseAimPosition || wayPointDistance > minFinal)
 		{
@@ -270,23 +273,21 @@ class eAICommandMove extends eAICommandBase
 		{
 			SetTargetSpeed(0.0);
 		}
-		else if (isFinal && wayPointDistance < 8.0)
+		else if (!m_SpeedOverrider)
 		{
-			SetTargetSpeed(1.0);
+			if (isFinal && wayPointDistance < 8.0)
+			{
+				SetTargetSpeed(1.0);
+			}
+			else if (wayPointDistance < 20.0)
+			{
+				SetTargetSpeed(2.0);
+			}
+			else
+			{
+				SetTargetSpeed(Math.Lerp(m_TargetSpeed, 3.0, pDt * 2.0));
+			}
 		}
-		else if (wayPointDistance < 20.0)
-		{
-			SetTargetSpeed(2.0);
-		}
-		else
-		{
-			SetTargetSpeed(Math.Lerp(m_TargetSpeed, 3.0, pDt * 2.0));
-		}
-		
-		if (m_Raised) SetSpeedLimit(1.0);
-		else SetSpeedLimit(-1.0);
-
-		SetTargetDirection(0.0);
 		
 		// TODO: this is only temporary code and a better solution has to be found later on
 		// This fix is for when the AI is meant to be moving faster but height elevation is blocking us
@@ -304,7 +305,7 @@ class eAICommandMove extends eAICommandBase
 				{
 					m_MovementCorrection = Vector(0, yDiff / pDt, 0);
 
-					translation[1] = translation[1] + (yDiff * pDt);
+					translation[1] = translation[1] + (yDiff * pDt * 1.1);
 					
 					dBodyEnableGravity(m_Unit, false);
 				}

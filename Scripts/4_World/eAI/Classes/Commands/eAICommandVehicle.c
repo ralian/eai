@@ -57,9 +57,9 @@ class eAICommandVehicle extends eAICommandBase
 		m_PreviousState = STATE_UNKNOWN;
 	}
 
-	override void SetLookDirection(vector direction)
+	override void SetLookDirection(vector pDirection)
 	{
-		vector angles = direction.VectorToAngles();
+		vector angles = pDirection.VectorToAngles();
 		m_LookLR = angles[0];
 		m_LookUD = angles[1];
 		if (m_LookLR > 180) m_LookLR = m_LookLR - 360;

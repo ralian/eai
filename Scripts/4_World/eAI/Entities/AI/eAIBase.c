@@ -52,6 +52,11 @@ class eAIBase extends PlayerBase
 	private bool m_eAI_LookDirection_Recalculate;
 	private vector m_eAI_AimDirection_ModelSpace;
 	private bool m_eAI_AimDirection_Recalculate;
+
+	private bool m_MovementSpeedActive;
+	private int m_MovementSpeed;
+	private bool m_MovementDirectionActive;
+	private float m_MovementDirection;
 	
 	private bool m_WeaponRaised;
 	private bool m_WeaponRaisedPrev;
@@ -80,13 +85,19 @@ class eAIBase extends PlayerBase
 		}
 
 		m_AllAI.Insert(this);
-		
+	}
+
+	override void Init()
+	{
+		super.Init();
+
 		m_eAI_Targets = new array<eAITarget>();
 
 		m_AimingProfile = new eAIAimingProfile(this);
 
 		m_ActionManager = new eAIActionManager(this);
 		m_WeaponManager = new eAIWeaponManager(this);
+		m_ShockHandler = new eAIShockHandler(this);
 		
 		m_eAI_AnimationST = new eAIAnimationST(this);
 
@@ -511,22 +522,59 @@ class eAIBase extends PlayerBase
 		m_eAI_TargetOverriding = eAITargetOverriding.NONE;
 	}
 
+	/**
+	 * @brief Overrides the desired path with no input
+	 */
 	void OverridePath()
 	{
 		m_eAI_TargetOverriding = eAITargetOverriding.PATH;
 		m_Path.Clear();
 	}
 
+	/**
+	 * @brief Overrides the desired path
+	 * 
+	 * @param pPath the path for path finding
+	 */
 	void OverridePath(array<vector> pPath)
 	{
 		m_eAI_TargetOverriding = eAITargetOverriding.PATH;
 		pPath.Copy(m_Path);
 	}
 
+	/**
+	 * @brief Overrides the desired position to generate a new path
+	 * 
+	 * @param pPosition the target position for path finding
+	 */
 	void OverridePosition(vector pPosition)
 	{
 		m_eAI_TargetOverriding = eAITargetOverriding.POSITION;
 		m_TargetPosition = pPosition;
+	}
+
+	/**
+	 * @brief Overrides speed target at which the ai wants to move at
+	 * 
+	 * @param pActive is the override active
+	 * @param pPosition 0 = IDLE, 1 = WALK, 2 = RUN, 3 = SPRINT
+	 */
+	void OverrideMovementSpeed(bool pActive, int pSpeed)
+	{
+		m_MovementSpeedActive = pActive;
+		m_MovementSpeed = pSpeed;
+	}
+
+	/**
+	 * @brief Overrides movement direction (forwards, backwards or strafing)
+	 * 
+	 * @param pActive is the override active
+	 * @param pDirection Relative angle on current model orientation from [-180, 180] where 0 is forward.
+	 */
+	void OverrideMovementDirection(bool pActive, float pDirection)
+	{
+		m_MovementDirectionActive = pActive;
+		m_MovementDirection = pDirection;
 	}
 
 	override void CommandHandler(float pDt, int pCurrentCommandID, bool pCurrentCommandFinished) 
@@ -606,6 +654,10 @@ class eAIBase extends PlayerBase
 
 		if (m_WeaponManager) m_WeaponManager.Update(pDt);
 		if (m_EmoteManager) m_EmoteManager.Update(pDt);
+		if (m_StaminaHandler) m_StaminaHandler.Update(pDt, pCurrentCommandID);
+		if (m_InjuryHandler) m_InjuryHandler.Update(pDt);
+		if (m_ShockHandler) m_ShockHandler.Update(pDt);
+		if (m_HCAnimHandler) m_HCAnimHandler.Update(pDt, m_MovementState);
 		
 		GetPlayerSoundManagerServer().Update();
 		GetHumanInventory().Update(pDt);
@@ -778,9 +830,24 @@ class eAIBase extends PlayerBase
 			eAICommandMove hcm;
 			if (Class.CastTo(hcm, m_eAI_Command))
 			{
+				float speedLimit = 3;
+
 				hcm.SetRaised(m_WeaponRaised);
+				if (m_WeaponRaised) speedLimit = Math.Min(speedLimit, 1);
 
 				hcm.SetAimPosition(m_WeaponRaised, m_eAI_AimPosition_WorldSpace);
+
+				if (m_StaminaHandler && !CanConsumeStamina(EStaminaConsumers.SPRINT) || !CanSprint())
+				{
+					speedLimit = Math.Min(speedLimit, 2);
+				}
+				
+				if (!m_MovementDirectionActive) m_MovementDirection = 0;
+
+				hcm.SetSpeedOverrider(m_MovementSpeedActive);
+				hcm.SetTargetSpeed(m_MovementSpeed);
+				hcm.SetSpeedLimit(speedLimit);
+				hcm.SetTargetDirection(m_MovementDirection);
 
 				return;
 			}
