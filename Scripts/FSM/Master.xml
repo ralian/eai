@@ -121,6 +121,30 @@
                 return EXIT;
             </event_update>
 		</state>
+		<state name="Weapon_Unjamming">
+			<variables>
+				<variable name="weapon" type="EntityAI" />
+			</variables>
+			<editor_data>
+				<position x="333" y="374" />
+				<size width="150" height="40" />
+			</editor_data>
+			<event_entry>
+				unit.RaiseWeapon(true);
+
+				unit.StartActionObject(eAIActionWeaponUnjam, null);
+			</event_entry>
+			<event_exit>
+				unit.RaiseWeapon(false);
+			</event_exit>
+			<event_update>
+				if (!unit.GetWeaponManager()) return EXIT;
+
+				if (unit.GetWeaponManager().IsRunning()) return CONTINUE;
+
+                return EXIT;
+            </event_update>
+		</state>
 		<state name="Weapon_GoingToPosition">
 			<variables>
 				<variable name="time" type="float" />
@@ -275,6 +299,22 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
+				if (!Class.CastTo(dst.weapon, unit.GetItemInHands())) return FAIL;
+
+				if (!unit.GetWeaponManager().CanUnjam(dst.weapon)) return FAIL;
+
+				return SUCCESS;
+            </guard>
+			<event name="" />
+			<from_state name="" />
+			<to_state name="Weapon_Unjamming" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
                 if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
 
                 return FAIL;
@@ -349,6 +389,20 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
+                if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
+
+                return FAIL;
+            </guard>
+			<event name="" />
+			<from_state name="Weapon_Unjamming" />
+			<to_state name="Weapon_GoingToPosition" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
                 if (unit.GetThreatToSelf() &lt; 0.4) return SUCCESS;
 
                 return FAIL;
@@ -367,6 +421,18 @@
             </guard>
 			<event name="" />
 			<from_state name="Weapon_Reloading" />
+			<to_state name="Idle" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+                return SUCCESS;
+            </guard>
+			<event name="" />
+			<from_state name="Weapon_Unjamming" />
 			<to_state name="Idle" />
 		</transition>
 		<transition>

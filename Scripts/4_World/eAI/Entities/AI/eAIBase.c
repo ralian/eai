@@ -43,6 +43,8 @@ class eAIBase extends PlayerBase
 
 	private ref eAIAimingProfile m_AimingProfile;
 
+	private ref eAIActionManager m_eActionManager;
+
 	// Position for aiming/looking in the world
 	private vector m_eAI_LookPosition_WorldSpace;
 	private vector m_eAI_AimPosition_WorldSpace;
@@ -96,7 +98,8 @@ class eAIBase extends PlayerBase
 
 		m_AimingProfile = new eAIAimingProfile(this);
 
-		m_ActionManager = new eAIActionManager(this);
+		m_eActionManager = new eAIActionManager(this);;
+		m_ActionManager = m_eActionManager;
 		m_WeaponManager = new eAIWeaponManager(this);
 		m_ShockHandler = new eAIShockHandler(this);
 		
@@ -1135,6 +1138,20 @@ class eAIBase extends PlayerBase
 	override bool IsRaised()
 	{
 		return m_WeaponRaised && m_WeaponRaisedTimer > 0.3;
+	}
+
+	ActionBase StartAction(typename actionType, ActionTarget target)
+	{
+		ActionBase action = m_eActionManager.GetAction(actionType);
+
+		m_eActionManager.PerformActionStart(action, target, GetItemInHands());
+
+		return action;
+	}
+
+	ActionBase StartActionObject(typename actionType, Object target)
+	{
+		return StartAction(actionType, new ActionTarget(target, null, -1, vector.Zero, -1.0));
 	}
 	
 	// @param LookWS a position in WorldSpace to look at

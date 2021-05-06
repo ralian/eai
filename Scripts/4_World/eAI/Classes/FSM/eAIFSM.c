@@ -158,6 +158,8 @@ class eAIFSM
     {
         //eAITrace trace(this, "Update", pDt.ToString(), pSimulationPrecision.ToString());
 
+        //eAILogger.Debug("m_CurrentState: %1", "" + m_CurrentState);
+
         if (m_CurrentState && m_CurrentState.OnUpdate(pDt, pSimulationPrecision) == CONTINUE) return CONTINUE;
 
         Param2<eAIState, bool> new_state = FindSuitableTransition(m_CurrentState, "");
@@ -176,7 +178,7 @@ class eAIFSM
 
         if (new_state.param1 == null) return EXIT;
 		
-		eAILogger.Debug("State transition " + src.GetName() + " -> " + m_CurrentState.GetName());
+		eAILogger.Info("State transition " + src.GetName() + " -> " + m_CurrentState.GetName());
 
         m_CurrentState.OnEntry("", src);
 
