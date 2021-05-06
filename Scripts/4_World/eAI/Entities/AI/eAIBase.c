@@ -23,7 +23,7 @@ class eAIBase extends PlayerBase
 {
 	private static autoptr array<eAIBase> m_AllAI = new array<eAIBase>();
 
-	private autoptr eAIHFSM m_FSM;
+	private autoptr eAIFSM m_FSM;
 
 	// Targeting data 
 	private autoptr array<eAITarget> m_eAI_Targets;
@@ -113,7 +113,7 @@ class eAIBase extends PlayerBase
 		{
 			SetGroup(eAIGroup.CreateGroup());
 
-			eAIHFSMType type = eAIHFSM.LoadXML("eAI/scripts/FSM", "Master");
+			eAIFSMType type = eAIFSMType.LoadXML("eAI/scripts/FSM", "Master");
 			if (type)
 			{
 				m_FSM = type.Spawn(this, null);
@@ -243,7 +243,7 @@ class eAIBase extends PlayerBase
 		return true;
 	}
 
-	eAIHFSM GetFSM()
+	eAIFSM GetFSM()
 	{
 		return m_FSM;
 	}
