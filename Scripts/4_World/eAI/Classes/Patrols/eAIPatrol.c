@@ -1,7 +1,7 @@
 class eAIPatrol : Managed
 {
 	private static autoptr array<ref eAIPatrol> m_AllPatrols = new array<ref eAIPatrol>();
-	private static const float UPDATE_RATE_IN_SECONDS = 1.0;
+	static const float UPDATE_RATE_IN_SECONDS = 5.0;
 	
 	private ref Timer m_Timer;
 	private bool m_IsBeingDestroyed;

@@ -1,5 +1,7 @@
 class eAIDynamicPatrol : eAIPatrol
 {
+	static const float RESPAWN_TIME_IN_SECONDS = 600.0; // 10 minutes
+
 	vector m_Position;
 	autoptr array<vector> m_Waypoints;
 	eAIWaypointBehavior m_WaypointBehaviour;
@@ -8,9 +10,11 @@ class eAIDynamicPatrol : eAIPatrol
 	float m_DespawnRadius; // m_MaximumRadius + 10%
 	int m_NumberOfAI;
 	string m_Loadout;
+	ref eAIFaction m_Faction;
 
 	eAIGroup m_Group;
-	int m_LastSpawnIndex;
+	float m_LastSpawn;
+	bool m_CanSpawn;
 
 	/**
 	 * @brief Creates a dynamic patrol which spawns a patrol under the right conditions.
@@ -25,7 +29,7 @@ class eAIDynamicPatrol : eAIPatrol
 	 * 
 	 * @return the patrol instance
 	 */
-	static eAIDynamicPatrol Create(vector pos, array<vector> waypoints, eAIWaypointBehavior behaviour, string loadout = "SoldierLoadout.json", int count = 1, bool autoStart = true, float minR = 300, float maxR = 800)
+	static eAIDynamicPatrol Create(vector pos, array<vector> waypoints, eAIWaypointBehavior behaviour, string loadout = "SoldierLoadout.json", int count = 1, eAIFaction faction = null, bool autoStart = true, float minR = 300, float maxR = 800)
 	{
 		eAIDynamicPatrol patrol;
 		Class.CastTo(patrol, ((typename)eAIDynamicPatrol).Spawn());
@@ -37,6 +41,9 @@ class eAIDynamicPatrol : eAIPatrol
 		patrol.m_DespawnRadius = maxR * 1.1;
 		patrol.m_NumberOfAI = count;
 		patrol.m_Loadout = loadout;
+		patrol.m_Faction = faction;
+		patrol.m_CanSpawn = true;
+		if (patrol.m_Faction == null) patrol.m_Faction = new eAIFactionCivilian();
 		if (autoStart) patrol.Start();
 		return patrol;
 	}
@@ -57,7 +64,8 @@ class eAIDynamicPatrol : eAIPatrol
 	{
 		for (int i = 0; i < m_Group.Count(); i++)
 		{
-			if (m_Group.GetMember(i) && m_Group.GetMember(i).IsAlive())
+			DayZPlayerImplement member = m_Group.GetMember(i);
+			if (member && member.IsInherited(PlayerBase) && member.IsAlive())
 			{
 				return false;
 			}
@@ -66,14 +74,49 @@ class eAIDynamicPatrol : eAIPatrol
 		return true;
 	}
 
+	void Spawn()
+	{
+		if (m_Group) return;
+
+		m_LastSpawn = 0;
+		m_CanSpawn = false;
+
+		eAIBase ai = SpawnAI(m_Position);
+		m_Group = ai.GetGroup();
+		m_Group.SetFaction(m_Faction);
+		m_Group.SetWaypointBehaviour(m_WaypointBehaviour);
+		foreach (vector v : m_Waypoints) m_Group.AddWaypoint(v);
+
+		int count = m_NumberOfAI - 1;
+		while (count != 0)
+		{
+			ai = SpawnAI(m_Position);
+			ai.SetGroup(m_Group);
+			count--;
+		}
+	}
+
+	void Despawn()
+	{
+		if (!m_Group) return;
+
+		m_Group.RemoveAllMembers();
+		m_Group = null;
+		m_LastSpawn = 0;
+		m_CanSpawn = false;
+	}
+
 	override void OnUpdate()
 	{
 		super.OnUpdate();
-		
-		if (!m_Group) m_LastSpawnIndex++;
 
 		vector patrolPos = m_Position;
-		if (m_Group && m_Group.GetLeader()) patrolPos = m_Group.GetLeader().GetPosition();
+		DayZPlayerImplement leader = null;
+		if (m_Group && m_Group.GetLeader())
+		{
+			leader = m_Group.GetLeader();
+			patrolPos = leader.GetPosition();
+		}
 		
 		autoptr array<Man> players = {};
 		GetGame().GetPlayers(players);
@@ -81,32 +124,33 @@ class eAIDynamicPatrol : eAIPatrol
 		foreach (auto player : players)
 		{
 			float dist = vector.Distance(patrolPos, player.GetPosition());
-			if (dist < minimumDistance) minimumDistance = dist;
+			if (dist < minimumDistance && leader != player) minimumDistance = dist;
 		}
 
 		if (m_Group)
 		{
 			if (IsGroupDestroyed() || minimumDistance > m_DespawnRadius)
 			{
-				m_Group.RemoveAllMembers();
-				m_LastSpawnIndex = 0;
+				Despawn();
 			}
 		}
 		else
 		{
-			if (minimumDistance < m_MaximumRadius && minimumDistance > m_MinimumRadius)
+			if (m_CanSpawn)
 			{
-				eAIBase ai = SpawnAI(m_Position);
-				m_Group = ai.GetGroup();
-				m_Group.SetWaypointBehaviour(m_WaypointBehaviour);
-				foreach (vector v : m_Waypoints) m_Group.AddWaypoint(v);
-
-				int count = m_NumberOfAI;
-				while (count > 1)
+				if (minimumDistance < m_MaximumRadius && minimumDistance > m_MinimumRadius)
 				{
-					ai = SpawnAI(m_Position);
-					ai.SetGroup(m_Group);
-					count--;
+					Spawn();
+				}
+			}
+			else
+			{
+				m_LastSpawn += eAIPatrol.UPDATE_RATE_IN_SECONDS;
+
+				if (m_LastSpawn > RESPAWN_TIME_IN_SECONDS)
+				{
+					m_LastSpawn = 0;
+					m_CanSpawn = true;
 				}
 			}
 		}
