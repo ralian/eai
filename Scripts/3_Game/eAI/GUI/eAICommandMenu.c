@@ -74,7 +74,7 @@ class eAICommandMenu extends UIScriptedMenu
 	//============================================
 	void eAICommandMenu()
 	{
-		m_GestureItems = new ref array < ref eAICommandMenuItem > ;
+		m_GestureItems = new array < ref eAICommandMenuItem > ;
 
 		if (!instance)
 		{
@@ -192,7 +192,7 @@ class eAICommandMenu extends UIScriptedMenu
 		UpdateToolbar();
 	}
 
-	protected void GetGestureItems(out ref array < ref eAICommandMenuItem > gesture_items, eAICommandCategories category)
+	protected void GetGestureItems(out array < ref eAICommandMenuItem > gesture_items, eAICommandCategories category)
 	{
 		gesture_items.Clear();
 

@@ -24,7 +24,7 @@ class eAIManagerImplement extends eAIManagerBase
 	private float m_MinimumTime = 0.5; // 0.050; // 20hz
 	private float m_ProcessingTime = 0;
 
-    override ref Class AddAI(DayZPlayer entity)
+    override Class AddAI(DayZPlayer entity)
     {
         eAIPlayerHandler handler = new eAIPlayerHandler(PlayerBase.Cast(entity));
         m_AI.Insert(handler); // insert the new handler to the back of the array

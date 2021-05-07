@@ -158,7 +158,7 @@ class HumanLoadout {
 		string LoadoutFileName = LoadoutSaveDir + FileName;
 		string LoadoutDefaultFileName = LoadoutDataDir + FileName;
 		
-        ref HumanLoadout data = new ref HumanLoadout;
+        HumanLoadout data = new HumanLoadout;
         eAILogger.Debug("HumanLoadout: Looking for " + FileName);
 
         if (!FileExist(LoadoutFileName))
@@ -194,7 +194,7 @@ class HumanLoadout {
 	//----------------------------------------------------------------
 	//	HumanLoadout.SaveData
 	
-    static void SaveData(string FileName, ref HumanLoadout data)
+    static void SaveData(string FileName, HumanLoadout data)
     {
         //eAITrace trace(null, "HumanLoadout::SaveData", FileName);
 		
