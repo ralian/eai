@@ -6,7 +6,8 @@ class eAISettings : JsonApiStruct
 
 	private static ref eAISettings m_Instance = new eAISettings();
 
-	private LogLevel m_LogLevel = LogLevel.WARNING;
+	private LogLevel m_LogLevel = LogLevel.INFO;
+	private bool m_LogLevelSavedAsString = true;
 	private float m_Accuracy = 0.5;
 
 	void SetLogLevel(LogLevel logLevel)
@@ -33,7 +34,23 @@ class eAISettings : JsonApiStruct
 	{
 		if (name == "LogLevel")
 		{
+			m_LogLevelSavedAsString = false;
 			SetLogLevel(value);
+			return;
+		}
+	}
+
+	override void OnString(string name, string value)
+	{
+		if (name == "LogLevel")
+		{
+			m_LogLevelSavedAsString = true;
+			if (value == "TRACE") SetLogLevel(LogLevel.TRACE);
+			if (value == "DEBUG") SetLogLevel(LogLevel.DEBUG);
+			if (value == "INFO") SetLogLevel(LogLevel.INFO);
+			if (value == "WARNING") SetLogLevel(LogLevel.WARNING);
+			if (value == "ERROR") SetLogLevel(LogLevel.ERROR);
+			if (value == "NONE") SetLogLevel(LogLevel.NONE);
 			return;
 		}
 	}
@@ -49,7 +66,15 @@ class eAISettings : JsonApiStruct
 
 	override void OnPack()
 	{
-		StoreInteger("LogLevel", m_LogLevel);
+		if (m_LogLevelSavedAsString)
+		{
+			StoreString("LogLevel", typename.EnumToString(LogLevel, m_LogLevel));
+		}
+		else
+		{
+			StoreInteger("LogLevel", m_LogLevel);
+		}
+
 		StoreFloat("Accuracy", m_Accuracy);
 	}
 

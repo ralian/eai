@@ -159,7 +159,7 @@ class HumanLoadout {
 		string LoadoutDefaultFileName = LoadoutDataDir + FileName;
 		
         ref HumanLoadout data = new ref HumanLoadout;
-        eAILogger.Debug("HumanLoadout: LoadData: Looking for " + FileName);
+        eAILogger.Debug("HumanLoadout: Looking for " + FileName);
 
         if (!FileExist(LoadoutFileName))
         {
@@ -173,19 +173,19 @@ class HumanLoadout {
 			{*/
 				//If the files under Data\Loadout in mod does not exist, create a default from the class. 
 				//This is an error situation but useful if you need to create a clean and working json
-	            eAILogger.Debug("HumanLoadout: " + LoadoutDefaultFileName + " doesn't exist. Creating a default file: " + LoadoutFileName);
+	            eAILogger.Warn("HumanLoadout: " + LoadoutFileName + " doesn't exist. Creating a default file: " + LoadoutFileName);
 	            SaveData(LoadoutFileName, data);
 			//}
 		}
 
 		if (FileExist(LoadoutFileName))
         {
-            eAILogger.Debug("HumanLoadout: " + LoadoutFileName + " exists, loading!");
+            eAILogger.Info("HumanLoadout: " + LoadoutFileName + " exists, loading!");
             JsonFileLoader<HumanLoadout>.JsonLoadFile(LoadoutFileName, data);
         }
         else
         {
-            eAILogger.Debug("HumanLoadout: ERROR : Coult not find " + LoadoutFileName);
+            eAILogger.Error("HumanLoadout: Couldn't find " + LoadoutFileName);
 		}
 
         return data;
@@ -198,7 +198,7 @@ class HumanLoadout {
     {
         //eAITrace trace(null, "HumanLoadout::SaveData", FileName);
 		
-		eAILogger.Debug("HumanLoadout: Saving loadout to " + FileName);
+		eAILogger.Info("HumanLoadout: Saving loadout to " + FileName);
         JsonFileLoader<HumanLoadout>.JsonSaveFile(FileName, data);
     }	
 	
