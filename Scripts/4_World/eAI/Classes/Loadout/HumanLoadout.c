@@ -186,7 +186,7 @@ class HumanLoadout {
 	
     static void SaveData(string loadoutPath, HumanLoadout data)
     {
-        //eAITrace trace(null, "HumanLoadout::SaveData", FileName);
+        //eAITrace trace(null, "HumanLoadout::SaveData", loadoutPath);
 		
 		eAILogger.Info("HumanLoadout: Saving '" + loadoutPath + "'.");
         JsonFileLoader<HumanLoadout>.JsonSaveFile(loadoutPath, data);
