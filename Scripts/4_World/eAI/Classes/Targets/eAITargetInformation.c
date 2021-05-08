@@ -295,6 +295,40 @@ class eAITargetInformation
     }
 
 	/**
+	 * @brief Checks to see if the group specified is currently targetting this target
+	 *
+     * @param group_id the group id of the eAIGroup
+     * @return bool true if being targetted, false otherwise
+     */
+    bool IsTargetted(int group_id, out int num_ai)
+    {
+        //eAITrace trace(this, "IsTargetted", group_id.ToString());
+        eAITarget target;
+        if (!m_Groups.Find(group_id, target)) return false;
+
+        num_ai = target.ai_list.Count();
+
+        return true;
+    }
+
+	/**
+	 * @brief Checks to see if the group specified is currently targetting this target
+	 *
+     * @param group the eAIGroup
+     * @return bool true if being targetted, false otherwise
+     */
+    bool IsTargetted(notnull eAIGroup group, out int num_ai)
+    {
+        //eAITrace trace(this, "IsTargetted", group.GetID().ToString());
+        eAITarget target;
+        if (!m_Groups.Find(group.GetID(), target)) return false;
+
+        num_ai = target.ai_list.Count();
+
+        return true;
+    }
+
+	/**
 	 * @brief Checks to see if the AI specified is currently targetting this target
 	 *
      * @param group the eAIGroup

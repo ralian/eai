@@ -486,6 +486,8 @@ class eAIBase extends PlayerBase
 		array<Object> newThreats = new array<Object>();
 		GetGame().GetObjectsAtPosition(GetPosition(), 30.0, newThreats, proxyCargos);
 
+		float group_count = GetGroup().Count();
+
 		for (int i = 0; i < newThreats.Count(); i++)
 		{
 			PlayerBase playerThreat;
@@ -500,9 +502,19 @@ class eAIBase extends PlayerBase
 
 			if (!target.IsActive()) continue;
 
-			if (target.IsTargetted(GetGroup())) continue;
+			float threatLevel = target.GetThreat(this);
+			if (threatLevel == 0.0) continue;
+
+			int num_ai_in_group_targetting = 0;
+			if (target.IsTargetted(GetGroup(), num_ai_in_group_targetting))
+			{
+				float frac = (group_count - num_ai_in_group_targetting) / group_count;
+				if ((frac * threatLevel) < (1.0 / group_count)) continue;
+			}
 
 			target.AddAI(this);
+
+			if (m_eAI_Targets.Count() * 2 > group_count) break;
 		}
 	}
 
