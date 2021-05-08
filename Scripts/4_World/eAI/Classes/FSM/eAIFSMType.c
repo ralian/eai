@@ -1,6 +1,7 @@
 class eAIFSMType
 {
-    private static ref map<string, ref eAIFSMType> m_Types = new map<string, ref eAIFSMType>();
+    private static ref map<string, eAIFSMType> m_SpawnableTypes = new map<string, eAIFSMType>();
+    private static ref array<ref eAIFSMType> m_Types = new array<ref eAIFSMType>();
 
 	string m_ClassName;
     ScriptModule m_Module;
@@ -11,23 +12,29 @@ class eAIFSMType
 
     void eAIFSMType()
     {
+        m_Variables = new array<string>();
         m_States = new array<ref eAIStateType>();
         m_Transitions = new array<ref eAITransitionType>();
     }
 
     static bool Contains(string name)
     {
-        return m_Types.Contains(name);
+        return m_SpawnableTypes.Contains(name);
+    }
+    
+    static void AddSpawnable(string name, eAIFSMType type)
+    {
+        m_SpawnableTypes.Insert(name, type);
     }
 
     static void Add(eAIFSMType type)
     {
-        m_Types.Insert(type.m_ClassName, type);
+        m_Types.Insert(type);
     }
 
     static eAIFSMType Get(string type)
     {
-        return m_Types[type];
+        return m_SpawnableTypes[type];
     }
 
     eAIFSM Spawn(eAIBase unit, eAIState parentState)
@@ -39,12 +46,40 @@ class eAIFSMType
 
     static eAIFSM Spawn(string type, eAIBase unit, eAIState parentState)
     {
-        return m_Types[type].Spawn(unit, parentState);
+        return m_SpawnableTypes[type].Spawn(unit, parentState);
     }
-
+    
     static eAIFSMType LoadXML(string path, string fileName)
     {
-		//eAITrace trace(null, "eAIFSMType::LoadXML", path, fileName);
+        //eAITrace trace(null, "eAIFSMType::LoadXML", path, fileName);
+
+        if (eAIFSMType.Contains(fileName)) return eAIFSMType.Get(fileName);
+
+        MakeDirectory("$profile:eAI/");
+        string script_path = "$profile:eAI/" + fileName + ".c";
+        FileHandle file = OpenFile(script_path, FileMode.WRITE);
+        if (!file) return null;
+
+        eAIFSMType new_type = LoadXML(path, fileName, file);
+		
+		CloseFile(file);
+
+        ScriptModule module = GetGame().GetMission().MissionScript;
+        new_type.m_Module = ScriptModule.LoadScript(module, script_path, false);
+        if (new_type.m_Module == null)
+        {
+            Error("There was an error loading in the fsm.");
+            return null;
+        }
+
+        AddSpawnable(fileName, new_type);
+
+        return new_type;
+    }
+
+    static eAIFSMType LoadXML(string path, string fileName, FileHandle file)
+    {
+		//eAITrace trace(null, "eAIFSMType::LoadXML", path, fileName, "FileHandle");
 
         string actualFilePath = path + "/" + fileName + ".xml";
         eAILogger.Debug(actualFilePath);
@@ -56,8 +91,6 @@ class eAIFSMType
         string name = document.Get("fsm")[0].GetAttribute("name").ValueAsString();
         string class_name = "eAI_" + name + "_FSM";
 
-        if (eAIFSMType.Contains(class_name)) return eAIFSMType.Get(class_name);
-
         auto files = document.Get("fsm");
         files = files[0].GetTag("files");
         if (files.Count() > 0)
@@ -67,19 +100,35 @@ class eAIFSMType
             for (int i = 0; i < files.Count(); i++)
             {
                 string subFSMName = files[i].GetAttribute("name").ValueAsString();
-                Print(subFSMName);
-                eAIFSMType.LoadXML(path, subFSMName);
+                eAIFSMType.LoadXML(path, subFSMName, file);
             }
         }
 
         eAIFSMType new_type = new eAIFSMType();
-		new_type.m_ClassName = class_name;
+		new_type.m_ClassName = class_name;		
 
-        MakeDirectory("$profile:eAI/");
-        string script_path = "$profile:eAI/" + class_name + ".c";
-        FileHandle file = OpenFile(script_path, FileMode.WRITE);
-        if (!file) return null;
-		
+        auto states = document.Get("fsm");
+        states = states[0].GetTag("states");
+        auto defaultStateAttrib = states[0].GetAttribute("default");
+        string defaultState = "";
+        if (defaultStateAttrib)	defaultState = "eAI_" + name + "_" + defaultStateAttrib.ValueAsString() + "_State";
+        states = states[0].GetTag("state");
+
+	    foreach (auto state : states)
+        {
+            eAIStateType stateType = eAIStateType.LoadXML(name, state, file);
+            new_type.m_States.Insert(stateType);
+        }
+
+        auto transitions = document.Get("fsm");
+        transitions = transitions[0].GetTag("transitions");
+        transitions = transitions[0].GetTag("transition");
+	    foreach (auto transition : transitions)
+        {
+            eAITransitionType transitionType = eAITransitionType.LoadXML(name, transition, file);
+            new_type.m_Transitions.Insert(transitionType);
+        }
+
         FPrintln(file, "class " + class_name + " extends eAIFSM {");
 
         auto variables = document.Get("fsm");
@@ -103,12 +152,6 @@ class eAIFSMType
 	            FPrintln(file, variable_line);
 	        }
 		}
-
-        auto states = document.Get("fsm");
-        states = states[0].GetTag("states");
-        string defaultState = states[0].GetAttribute("default").ValueAsString();
-		defaultState = "eAI_" + name + "_" + defaultState + "_State";
-        states = states[0].GetTag("state");
 			
         FPrintln(file, "void " + class_name + "(eAIBase unit, eAIState parentState) {");
         FPrintln(file, "m_Name = \"" + name + "\";");
@@ -120,34 +163,14 @@ class eAIFSMType
         FPrintln(file, "void Setup() {");
         FPrintln(file, "//eAITrace trace(this, \"Setup\");");
 
-        ScriptModule module = GetGame().GetMission().MissionScript;
-
-	    foreach (auto state : states)
-        {
-            eAIStateType stateType = eAIStateType.LoadXML(name, state, module);
-            if (stateType.m_Module != null)
-            {
-                module = stateType.m_Module;
-                new_type.m_States.Insert(stateType);
-                
-                FPrintln(file, "AddState(new " + stateType.m_ClassName + "(this, m_Unit));");
-            }
+	    foreach (auto stateType0 : new_type.m_States)
+        {    
+            FPrintln(file, "AddState(new " + stateType0.m_ClassName + "(this, m_Unit));");
         }
 
-        auto transitions = document.Get("fsm");
-        transitions = transitions[0].GetTag("transitions");
-        transitions = transitions[0].GetTag("transition");
-
-	    foreach (auto transition : transitions)
+	    foreach (auto transitionType0 : new_type.m_Transitions)
         {
-            eAITransitionType transitionType = eAITransitionType.LoadXML(name, transition, module);
-            if (transitionType.m_Module != null)
-            {
-                module = transitionType.m_Module;
-                new_type.m_Transitions.Insert(transitionType);
-
-                FPrintln(file, "AddTransition(new " + transitionType.m_ClassName + "(this, m_Unit));");
-            }
+            FPrintln(file, "AddTransition(new " + transitionType0.m_ClassName + "(this, m_Unit));");
         }
 
         FPrintln(file, "}");
@@ -157,15 +180,6 @@ class eAIFSMType
         FPrintln(file, "eAIFSM Create_" + class_name + "(eAIBase unit, eAIState parentState) {");
         FPrintln(file, "return new " + class_name + "(unit, parentState);");
         FPrintln(file, "}");
-		
-		CloseFile(file);
-		
-        new_type.m_Module = ScriptModule.LoadScript(module, script_path, false);
-        if (new_type.m_Module == null)
-        {
-            Error("There was an error loading in the transition.");
-            return null;
-        }
 
 		eAIFSMType.Add(new_type);
 		

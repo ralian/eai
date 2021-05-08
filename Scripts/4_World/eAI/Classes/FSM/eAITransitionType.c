@@ -3,7 +3,6 @@ class eAITransitionType
     private static ref map<string, ref eAITransitionType> m_Types = new map<string, ref eAITransitionType>();
 
 	string m_ClassName;
-    ScriptModule m_Module;
 
     void eAITransitionType()
     {
@@ -24,19 +23,7 @@ class eAITransitionType
         return m_Types[type];
     }
 
-    eAITransition Spawn(eAIFSM fsm)
-    {
-        eAITransition retValue = null;
-        m_Module.CallFunction(null, "Create_" + m_ClassName, retValue, fsm);
-        return retValue;
-    }
-
-    static eAITransition Spawn(string type, eAIFSM fsm)
-    {
-        return m_Types[type].Spawn(fsm);
-    }
-
-    static eAITransitionType LoadXML(string fsmName, CF_XML_Tag xml_root_tag, ScriptModule module)
+    static eAITransitionType LoadXML(string fsmName, CF_XML_Tag xml_root_tag, FileHandle file)
     {
 		//eAITrace trace(null, "eAITransitionType::LoadXML", fsmName);
 
@@ -64,11 +51,6 @@ class eAITransitionType
 
         eAITransitionType new_type = new eAITransitionType();
 		new_type.m_ClassName = class_name;
-
-        MakeDirectory("$profile:eAI/");
-        string script_path = "$profile:eAI/" + class_name + ".c";
-        FileHandle file = OpenFile(script_path, FileMode.WRITE);
-        if (!file) return null;
 
         FPrintln(file, "class " + class_name + " extends eAITransition {");
 
@@ -98,19 +80,6 @@ class eAITransitionType
         FPrintln(file, "override string GetEvent() { return \"" + event_class + "\"; }");
 
         FPrintln(file, "}");
-
-        FPrintln(file, "eAITransition Create_" + class_name + "(eAIFSM _fsm, eAIBase _unit) {");
-        FPrintln(file, "return new " + class_name + "(_fsm, _unit);");
-        FPrintln(file, "}");
-
-        CloseFile(file);
-        
-        new_type.m_Module = ScriptModule.LoadScript(module, script_path, false);
-        if (new_type.m_Module == null)
-        {
-            Error("There was an error loading in the transition.");
-            return null;
-        }
 		
 		eAITransitionType.Add(new_type);
 		

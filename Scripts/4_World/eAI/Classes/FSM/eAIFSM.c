@@ -178,8 +178,12 @@ class eAIFSM
 
         m_CurrentState = new_state.param1;
 
-        if (new_state.param1 == null) return EXIT;
-		
+        if (m_CurrentState == null)
+        {
+		    eAILogger.Info("State transition exit " + src.GetName());
+            return EXIT;
+        }
+        
 		eAILogger.Info("State transition " + src.GetName() + " -> " + m_CurrentState.GetName());
 
         m_CurrentState.OnEntry("", src);

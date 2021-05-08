@@ -3,7 +3,6 @@ class eAIStateType
     private static ref map<string, ref eAIStateType> m_Types = new map<string, ref eAIStateType>();
 
 	string m_ClassName;
-    ScriptModule m_Module;
     ref array<string> m_Variables;
 
     void eAIStateType()
@@ -26,19 +25,7 @@ class eAIStateType
         return m_Types[type];
     }
 
-    eAIState Spawn(eAIFSM fsm)
-    {
-        eAIState retValue = null;
-        m_Module.CallFunction(null, "Create_" + m_ClassName, retValue, fsm);
-        return retValue;
-    }
-
-    static eAIState Spawn(string type, eAIFSM fsm)
-    {
-        return m_Types[type].Spawn(fsm);
-    }
-
-    static eAIStateType LoadXML(string fsmName, CF_XML_Tag xml_root_tag, ScriptModule module)
+    static eAIStateType LoadXML(string fsmName, CF_XML_Tag xml_root_tag, FileHandle file)
     {
 		//eAITrace trace(null, "eAIStateType::LoadXML", fsmName);
 
@@ -54,13 +41,9 @@ class eAIStateType
         eAIStateType new_type = new eAIStateType();
 		new_type.m_ClassName = class_name;
 
-        MakeDirectory("$profile:eAI/");
-        string script_path = "$profile:eAI/" + class_name + ".c";
-        FileHandle file = OpenFile(script_path, FileMode.WRITE);
-        if (!file) return null;
-
         FPrintln(file, "class " + class_name + " extends eAIState {");
 
+        if (child_fsm != "") FPrintln(file, "eAI_" + child_fsm + "_FSM sub_fsm;");
         FPrintln(file, "eAI_" + fsmName + "_FSM fsm;");
 
         auto variables = xml_root_tag.GetTag("variables");
@@ -90,7 +73,8 @@ class eAIStateType
         if (child_fsm != "")
         {
             FPrintln(file, "m_Name = \"" + child_fsm + "\";");
-            FPrintln(file, "m_SubFSM = eAIFSMType.Spawn(\"eAI_" + child_fsm + "_FSM\", _unit, this);");
+            FPrintln(file, "m_SubFSM = new eAI_" + child_fsm + "_FSM(_unit, this);");
+            FPrintln(file, "Class.CastTo(sub_fsm, m_SubFSM);");
         }
         else
         {
@@ -148,19 +132,6 @@ class eAIStateType
         }
 
         FPrintln(file, "}");
-
-        FPrintln(file, "eAIState Create_" + class_name + "(eAIFSM _fsm, eAIBase _unit) {");
-        FPrintln(file, "return new " + class_name + "(_fsm, _unit);");
-        FPrintln(file, "}");
-
-        CloseFile(file);
-        
-        new_type.m_Module = ScriptModule.LoadScript(module, script_path, false);
-        if (new_type.m_Module == null)
-        {
-            Error("There was an error loading in the state.");
-            return null;
-        }
 		
 		eAIStateType.Add(new_type);
 		
