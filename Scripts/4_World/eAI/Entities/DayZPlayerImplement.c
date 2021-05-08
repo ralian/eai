@@ -88,6 +88,8 @@ modded class DayZPlayerImplement
     {
         super.OnVariablesSynchronized();
 
+        if (GetGame().IsServer()) return;
+
         if ((m_eAI_Group && m_eAI_Group.GetID() != m_eAI_GroupID))
         {
             // moved group

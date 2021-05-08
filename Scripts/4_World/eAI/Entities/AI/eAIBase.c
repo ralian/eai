@@ -65,6 +65,9 @@ class eAIBase extends PlayerBase
 	private float m_WeaponRaisedTimer;
 
 	private bool m_AimChangeState;
+
+	ref array<ItemBase> m_Weapons = {};
+	ref array<ItemBase> m_MeleeWeapons = {};
     
     // Path Finding
 	private ref PGFilter m_PathFilter;
@@ -113,7 +116,7 @@ class eAIBase extends PlayerBase
 		m_PathFilter.SetFlags( inFlags, exFlags, PGPolyFlags.NONE );
 		m_PathFilter.SetCost( PGAreaType.WATER, 0.0 );
 
-		if (GetGame().IsServer())
+		if (IsMissionHost())
 		{
 			SetGroup(eAIGroup.CreateGroup());
 
@@ -250,6 +253,43 @@ class eAIBase extends PlayerBase
 	eAIFSM GetFSM()
 	{
 		return m_FSM;
+	}
+
+	ItemBase GetWeaponToUse(bool hasAmmo = false)
+	{
+		// very messy :)
+		for (int i = 0; i < m_Weapons.Count(); i++)
+		{
+			if (m_Weapons[i])
+			{
+				if (GetHealth() > 0)
+				{
+					if (!hasAmmo || GetMagazineToReload(m_Weapons[i]))
+					{
+						return m_Weapons[i];
+					}
+				}
+			}
+		}
+
+		return null;
+	}
+
+	ItemBase GetMeleeWeaponToUse()
+	{
+		// very messy :)
+		for (int i = 0; i < m_MeleeWeapons.Count(); i++)
+		{
+			if (m_MeleeWeapons[i])
+			{
+				if (GetHealth() > 0)
+				{
+					return m_MeleeWeapons[i];
+				}
+			}
+		}
+
+		return null;
 	}
 
 	void CreateAimingProfile()
