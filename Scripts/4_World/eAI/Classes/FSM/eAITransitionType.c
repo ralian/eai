@@ -36,21 +36,21 @@ class eAITransitionType
         return m_Types[type].Spawn(fsm);
     }
 
-    static eAITransitionType LoadXML(string fsm, CF_XML_Tag xml_root_tag, ScriptModule module)
+    static eAITransitionType LoadXML(string fsmName, CF_XML_Tag xml_root_tag, ScriptModule module)
     {
-		//eAITrace trace(null, "eAITransitionType::LoadXML", fsm);
+		//eAITrace trace(null, "eAITransitionType::LoadXML", fsmName);
 
         string from_state_name;
         auto from_state = xml_root_tag.GetTag("from_state");
         if (from_state.Count() > 0) from_state_name = from_state[0].GetAttribute("name").ValueAsString();
         string from_state_class = "eAIState";
-        if (from_state_name != "") from_state_class = "eAI_" + fsm + "_" + from_state_name + "_State";
+        if (from_state_name != "") from_state_class = "eAI_" + fsmName + "_" + from_state_name + "_State";
 
         string to_state_name;
         auto to_state = xml_root_tag.GetTag("to_state");
         if (to_state.Count() > 0) to_state_name = to_state[0].GetAttribute("name").ValueAsString();
         string to_state_class = "eAIState";
-        if (to_state_name != "") to_state_class = "eAI_" + fsm + "_" + to_state_name + "_State";
+        if (to_state_name != "") to_state_class = "eAI_" + fsmName + "_" + to_state_name + "_State";
 
         string event_name;
         auto evt = xml_root_tag.GetTag("event");
@@ -58,7 +58,7 @@ class eAITransitionType
         string event_class = "";
         if (event_name != "") event_class = "eAI_" + event_name + "_Event";
 
-        string class_name = "eAI_" + fsm + "_" + from_state_name + "_" + to_state_name + "_Transition";
+        string class_name = "eAI_" + fsmName + "_" + from_state_name + "_" + to_state_name + "_Transition";
 
         if (eAITransitionType.Contains(class_name)) return eAITransitionType.Get(class_name);
 
@@ -75,10 +75,13 @@ class eAITransitionType
         FPrintln(file, "private " + from_state_class + " src;");
         FPrintln(file, "private " + to_state_class + " dst;");
 
+        FPrintln(file, "eAI_" + fsmName + "_FSM fsm;");
+
         FPrintln(file, "void " + class_name + "(eAIFSM _fsm, eAIBase _unit) {");
+        FPrintln(file, "Class.CastTo(fsm, _fsm);");
         FPrintln(file, "m_ClassName = \"" + class_name + "\";");
-        FPrintln(file, "src = _fsm.GetState(\"" + from_state_class + "\");");
-        FPrintln(file, "dst = _fsm.GetState(\"" + to_state_class + "\");");
+        FPrintln(file, "Class.CastTo(src, _fsm.GetState(\"" + from_state_class + "\"));");
+        FPrintln(file, "Class.CastTo(dst, _fsm.GetState(\"" + to_state_class + "\"));");
         FPrintln(file, "}");
 
         auto guard = xml_root_tag.GetTag("guard");

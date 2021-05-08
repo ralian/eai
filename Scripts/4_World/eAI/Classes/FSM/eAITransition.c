@@ -5,15 +5,12 @@ class eAITransition
 
     protected string m_ClassName;
 	
-	protected eAIFSM m_FSM;
-
     /* STATE VARIABLES */
     protected eAIBase unit;
 
     void eAITransition(eAIFSM _fsm, eAIBase _unit)
     {
         unit = _unit;
-		m_FSM = _fsm;
     }
 
     eAIState GetSource()

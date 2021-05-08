@@ -4,7 +4,7 @@ class eAIStateType
 
 	string m_ClassName;
     ScriptModule m_Module;
-    autoptr array<string> m_Variables;
+    ref array<string> m_Variables;
 
     void eAIStateType()
     {
@@ -61,6 +61,8 @@ class eAIStateType
 
         FPrintln(file, "class " + class_name + " extends eAIState {");
 
+        FPrintln(file, "eAI_" + fsmName + "_FSM fsm;");
+
         auto variables = xml_root_tag.GetTag("variables");
         if (variables.Count() > 0)
 		{
@@ -83,17 +85,18 @@ class eAIStateType
 		}
 
         FPrintln(file, "void " + class_name + "(eAIFSM _fsm, eAIBase _unit) {");
+        FPrintln(file, "Class.CastTo(fsm, _fsm);");
+        FPrintln(file, "m_ClassName = \"" + class_name + "\";");
         if (child_fsm != "")
         {
             FPrintln(file, "m_Name = \"" + child_fsm + "\";");
-            FPrintln(file, "m_ClassName = \"" + class_name + "\";");
-            FPrintln(file, "m_SubFSM = eAIFSMType.Spawn(\"eAI_" + child_fsm + "_HFSM\", _unit, this);");
+            FPrintln(file, "m_SubFSM = eAIFSMType.Spawn(\"eAI_" + child_fsm + "_FSM\", _unit, this);");
         }
         else
         {
             FPrintln(file, "m_Name = \"" + name + "\";");
-            FPrintln(file, "m_ClassName = \"" + class_name + "\";");
         }
+
         FPrintln(file, "}");
 
         if (child_fsm != "")

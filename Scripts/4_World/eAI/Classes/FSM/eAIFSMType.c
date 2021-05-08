@@ -5,8 +5,9 @@ class eAIFSMType
 	string m_ClassName;
     ScriptModule m_Module;
 
-    autoptr array<ref eAIStateType> m_States;
-    autoptr array<ref eAITransitionType> m_Transitions;
+    ref array<string> m_Variables;
+    ref array<ref eAIStateType> m_States;
+    ref array<ref eAITransitionType> m_Transitions;
 
     void eAIFSMType()
     {
@@ -53,7 +54,7 @@ class eAIFSMType
         CF_XML.ReadDocument(actualFilePath, document);
 		
         string name = document.Get("fsm")[0].GetAttribute("name").ValueAsString();
-        string class_name = "eAI_" + name + "_HFSM";
+        string class_name = "eAI_" + name + "_FSM";
 
         if (eAIFSMType.Contains(class_name)) return eAIFSMType.Get(class_name);
 
@@ -80,6 +81,28 @@ class eAIFSMType
         if (!file) return null;
 		
         FPrintln(file, "class " + class_name + " extends eAIFSM {");
+
+        auto variables = document.Get("fsm");
+        variables = variables[0].GetTag("variables");
+        if (variables.Count() > 0)
+		{
+			variables = variables[0].GetTag("variable");
+	        foreach (auto variable : variables)
+	        {
+	            string variable_name = variable.GetAttribute("name").ValueAsString();
+	            string variable_type = variable.GetAttribute("type").ValueAsString();
+	            string variable_default = "";
+                if (variable.GetAttribute("default")) variable_default = variable.GetAttribute("default").ValueAsString();
+
+	            new_type.m_Variables.Insert(variable_name);
+
+                string variable_line = "" + variable_type + " " + variable_name;
+                if (variable_default != "") variable_line = variable_line + " = " + variable_default;
+                variable_line = variable_line + ";";
+
+	            FPrintln(file, variable_line);
+	        }
+		}
 
         auto states = document.Get("fsm");
         states = states[0].GetTag("states");

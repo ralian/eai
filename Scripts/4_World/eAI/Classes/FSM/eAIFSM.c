@@ -8,7 +8,7 @@ class eAIFSM
 
     private eAIState m_CurrentState;
     private eAIState m_ParentState;
-    private bool m_Running;
+    private bool m_Running = true;
 
     protected string m_Name;
     protected string m_DefaultState;
@@ -76,6 +76,8 @@ class eAIFSM
 	bool StartDefault()
 	{
         //eAITrace trace(this, "StartDefault");
+
+        if (m_DefaultState == "") return Start();
 
         eAIState src = m_CurrentState;
         eAIState dst = GetState(m_DefaultState);

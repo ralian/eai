@@ -10,13 +10,13 @@ class eAIState
     ref eAIFSM m_SubFSM;
 
     /* STATE VARIABLES */
-    eAIFSM fsm;
+    //eAIFSM fsm;
     eAIState parent;
     eAIBase unit;
 
     void eAIState(eAIFSM _fsm, eAIBase _unit)
     {
-        fsm = _fsm;
+        //fsm = _fsm;
         parent = _fsm.GetParent();
         unit = _unit;
     }
