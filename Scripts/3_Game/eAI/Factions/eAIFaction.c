@@ -7,7 +7,7 @@ class eAIFaction
 		return m_Name;
 	}
 
-	bool IsFriendly(eAIFaction other)
+	bool IsFriendly(notnull eAIFaction other)
 	{
 		return true;
 	}

@@ -5,7 +5,7 @@ class eAIFactionRaiders : eAIFaction
 		m_Name = "Raiders";
 	}
 
-	override bool IsFriendly(eAIFaction other)
+	override bool IsFriendly(notnull eAIFaction other)
 	{
 		return false;
 	}

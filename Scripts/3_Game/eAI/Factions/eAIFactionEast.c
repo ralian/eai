@@ -5,7 +5,7 @@ class eAIFactionEast : eAIFaction
 		m_Name = "Raiders";
 	}
 
-	override bool IsFriendly(eAIFaction other)
+	override bool IsFriendly(notnull eAIFaction other)
 	{
 		if (other.IsInherited(eAIFactionRaiders)) return true;
 		if (other.IsInherited(eAIFactionCivilian)) return true;

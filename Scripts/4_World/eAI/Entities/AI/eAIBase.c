@@ -131,11 +131,11 @@ class eAIBase extends PlayerBase
 
 	void ~eAIBase()
 	{
-		if (IsAI())
+		m_AllAI.RemoveItem(this);
+
+		if (IsAI() && GetGroup())
 		{
 			GetGroup().RemoveMember(GetGroup().GetIndex(this));
-
-			m_AllAI.RemoveItem(this);
 		}
 	}
 	
@@ -230,7 +230,7 @@ class eAIBase extends PlayerBase
 	{
 		super.EEHitBy(damageResult, damageType, source, component, dmgZone, ammo, modelPos, speedCoef);
 		
-		if (!IsAI()) return;
+		if (!IsAI() || !GetGroup()) return;
 
         ZombieBase zmb;
         if (Class.CastTo(zmb, source))
