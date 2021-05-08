@@ -2,6 +2,7 @@
 <fsm name="Master">
 	<files>
 		<file name="Vehicles"/>
+		<file name="Reloading"/>
 	</files>
 	<states default="Idle">
 		<state name="Idle">
@@ -97,29 +98,13 @@
 				<size width="150" height="40" />
 			</editor_data>
 		</state>
-		<state name="Weapon_Reloading">
+		<state name="Weapon_Reloading" fsm="Reloading">
 			<variables>
-				<variable name="magazine" type="EntityAI" />
-				<variable name="weapon" type="EntityAI" />
 			</variables>
 			<editor_data>
-				<position x="333" y="374" />
+				<position x="551" y="94" />
 				<size width="150" height="40" />
 			</editor_data>
-			<event_entry>
-				unit.RaiseWeapon(true);
-				unit.ReloadWeaponAI(weapon, magazine);
-			</event_entry>
-			<event_exit>
-				unit.RaiseWeapon(false);
-			</event_exit>
-			<event_update>
-				if (!unit.GetWeaponManager()) return EXIT;
-
-				if (unit.GetWeaponManager().IsRunning()) return CONTINUE;
-
-                return EXIT;
-            </event_update>
 		</state>
 		<state name="Weapon_Unjamming">
 			<variables>
@@ -147,25 +132,22 @@
 		</state>
 		<state name="Weapon_GoingToPosition">
 			<variables>
-				<variable name="time" type="float" />
 				<variable name="position" type="vector" />
 			</variables>
 			<editor_data>
 				<position x="333" y="374" />
 				<size width="150" height="40" />
 			</editor_data>
-			<event_entry>
-				time = 0;
-				
-				unit.OverridePosition(unit.GetPosition());
-
-				unit.RaiseWeapon(true);
+			<event_entry>				
+				unit.OverridePosition(position);
 			</event_entry>
 			<event_exit>
 				unit.RaiseWeapon(false);
 			</event_exit>
 			<event_update>
-				time += DeltaTime;
+				float dist = vector.DistanceSq(unit.GetPosition(), position);
+				if (dist &lt; 4.0) unit.RaiseWeapon(true);
+				else unit.RaiseWeapon(false);
 
 				return EXIT;
             </event_update>
@@ -187,6 +169,24 @@
 			</event_exit>
 			<event_update>
 				if (unit.CanFire()) unit.FireWeapon();
+
+				return EXIT;
+            </event_update>
+		</state>
+		<state name="Weapon_Melee">
+			<variables>
+			</variables>
+			<editor_data>
+				<position x="333" y="374" />
+				<size width="150" height="40" />
+			</editor_data>
+			<event_entry>
+				unit.RaiseWeapon(true);
+			</event_entry>
+			<event_exit>
+				unit.RaiseWeapon(false);
+			</event_exit>
+			<event_update>
 
 				return EXIT;
             </event_update>
@@ -273,20 +273,17 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-				Weapon weapon_in_hands;
-				if (!Class.CastTo(weapon_in_hands, unit.GetItemInHands())) return FAIL;
+				if (GetGame().GetTime() - dst.sub_fsm.last_attempt_time &lt; 5000) return FAIL;
 
-				int mi = weapon_in_hands.GetCurrentMuzzle();
-				Magazine mag = weapon_in_hands.GetMagazine(mi);
+				if (!Class.CastTo(dst.sub_fsm.weapon, unit.GetItemInHands())) return FAIL;
+
+				int mi = dst.sub_fsm.weapon.GetCurrentMuzzle();
+				Magazine mag = dst.sub_fsm.weapon.GetMagazine(mi);
 				if (mag &amp;&amp; mag.GetAmmoCount() &gt; 0) return FAIL;
 
-				dst.magazine = unit.GetMagazineToReload(weapon_in_hands);
-				dst.weapon = weapon_in_hands;
-				if (!dst.magazine || !dst.weapon) return FAIL;
-
-				// don't move to the state if the action manager can't be initiated.
+				// don't move to the state if the action manager is operating
 				if (!unit.GetActionManager() || unit.GetActionManager().GetRunningAction()) return FAIL;
-				
+
 				return SUCCESS;
             </guard>
 			<event name="" />
@@ -315,9 +312,11 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-                if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
+                if (unit.GetThreatToSelf() &lt; 0.4) return FAIL;
 
-                return FAIL;
+				dst.position = unit.GetPosition();
+
+                return SUCCESS;
             </guard>
 			<event name="" />
 			<from_state name="TraversingWaypoints" />
@@ -329,9 +328,11 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-                if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
+                if (unit.GetThreatToSelf() &lt; 0.4) return FAIL;
 
-                return FAIL;
+				dst.position = unit.GetPosition();
+
+                return SUCCESS;
             </guard>
 			<event name="" />
 			<from_state name="Idle" />
@@ -343,8 +344,12 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-				//float dist = vector.Distance(unit.GetPosition(), src.position);
-				//if (dist &gt; 1.0) return FAIL;
+				Weapon weapon;
+				if (!Class.CastTo(weapon, unit.GetItemInHands())) return FAIL;
+				
+				int mi = weapon.GetCurrentMuzzle();
+				Magazine mag = weapon.GetMagazine(mi);
+				if (mag &amp;&amp; mag.GetAmmoCount() &lt; 1) return FAIL;
 
 				return SUCCESS;
             </guard>
@@ -358,15 +363,32 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
+				float dist = vector.Distance(unit.GetPosition(), src.position);
+				if (dist &gt; 1.0) return FAIL;
+
+				return SUCCESS;
+            </guard>
+			<event name="" />
+			<from_state name="Weapon_GoingToPosition" />
+			<to_state name="Weapon_Melee" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
 				auto target = unit.GetTarget();
 				if (!target) return FAIL;
 
-				//if (vector.Distance(unit.GetPosition(), target.GetPosition(unit)) &gt; 15.0) return SUCCESS;
+				dst.position = target.GetPosition(unit);
 
-				return FAIL;
+				if (vector.Distance(unit.GetPosition(), dst.position) &lt; 1.0) return FAIL;
+
+				return SUCCESS;
             </guard>
 			<event name="" />
-			<from_state name="Weapon_Firing" />
+			<from_state name="Weapon_Melee" />
 			<to_state name="Weapon_GoingToPosition" />
 		</transition>
 		<transition>
@@ -375,9 +397,11 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-                if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
+                if (unit.GetThreatToSelf() &lt; 0.4) return FAIL;
 
-                return FAIL;
+				dst.position = unit.GetPosition();
+
+                return SUCCESS;
             </guard>
 			<event name="" />
 			<from_state name="Weapon_Reloading" />
@@ -389,9 +413,23 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-                if (unit.GetThreatToSelf() &gt; 0.4) return SUCCESS;
+                return SUCCESS;
+            </guard>
+			<event name="" />
+			<from_state name="Weapon_Reloading" />
+			<to_state name="Idle" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+                if (unit.GetThreatToSelf() &lt; 0.4) return FAIL;
 
-                return FAIL;
+				dst.position = unit.GetPosition();
+
+                return SUCCESS;
             </guard>
 			<event name="" />
 			<from_state name="Weapon_Unjamming" />
@@ -409,18 +447,6 @@
             </guard>
 			<event name="" />
 			<from_state name="Weapon_Firing" />
-			<to_state name="Idle" />
-		</transition>
-		<transition>
-			<editor_data>
-				<position_source x="0" y="0.7" />
-				<position_destination x="1" y="0.7" />
-			</editor_data>
-			<guard>
-                return SUCCESS;
-            </guard>
-			<event name="" />
-			<from_state name="Weapon_Reloading" />
 			<to_state name="Idle" />
 		</transition>
 		<transition>
