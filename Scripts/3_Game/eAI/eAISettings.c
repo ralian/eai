@@ -6,9 +6,15 @@ class eAISettings : JsonApiStruct
 
 	private static ref eAISettings m_Instance = new eAISettings();
 
+	private string m_LoadingArray;
+
 	private LogLevel m_LogLevel = LogLevel.INFO;
 	private bool m_LogLevelSavedAsString = true;
+
 	private float m_Accuracy = 0.5;
+
+	private ref array<string> m_LoadoutDirectories = { "$profile:" };
+	private bool m_LoadoutDirectoriesSavedAsArray = false;
 
 	void SetLogLevel(LogLevel logLevel)
 	{
@@ -28,6 +34,21 @@ class eAISettings : JsonApiStruct
 	static float GetAccuracy()
 	{
 		return m_Instance.m_Accuracy;
+	}
+
+	void AddLoadoutDirectory(string path)
+	{
+		m_LoadoutDirectories.Insert(path);
+	}
+	
+	void ClearLoadoutDirectories()
+	{
+		m_LoadoutDirectories.Clear();
+	}
+
+	static array<string> GetLoadoutDirectories()
+	{
+		return m_Instance.m_LoadoutDirectories;
 	}
 
 	override void OnInteger(string name, int value)
@@ -53,6 +74,12 @@ class eAISettings : JsonApiStruct
 			if (value == "NONE") SetLogLevel(LogLevel.NONE);
 			return;
 		}
+
+		if (name == "LoadoutDirectories")
+		{
+			AddLoadoutDirectory(value);
+			return;
+		}
 	}
 
 	override void OnFloat(string name, float value)
@@ -60,6 +87,32 @@ class eAISettings : JsonApiStruct
 		if (name == "Accuracy")
 		{
 			SetAccuracy(value);
+			return;
+		}
+	}
+
+	override void OnStartArray(string name)
+	{
+		m_LoadingArray = name;
+		
+		if (m_LoadingArray == "LoadoutDirectories")
+		{
+			ClearLoadoutDirectories();
+			return;
+		}
+	}
+
+	override void OnEndArray(int itemCount)
+	{
+		m_LoadingArray = "";
+	}
+
+	override void OnItemString(int index, string value)
+	{
+		if (m_LoadingArray == "LoadoutDirectories")
+		{
+			ClearLoadoutDirectories();
+			AddLoadoutDirectory(value);
 			return;
 		}
 	}
@@ -76,6 +129,20 @@ class eAISettings : JsonApiStruct
 		}
 
 		StoreFloat("Accuracy", m_Accuracy);
+
+		if (m_LoadoutDirectoriesSavedAsArray || m_LoadoutDirectories.Count() > 1)
+		{
+			StartArray("LoadoutDirectories");
+			foreach (string loadoutDirectory : m_LoadoutDirectories)
+			{
+				ItemString(loadoutDirectory);
+			}
+			EndArray();
+		}
+		else if (m_LoadoutDirectories.Count() == 1)
+		{
+			StoreString("LoadoutDirectories", m_LoadoutDirectories[0]);
+		}
 	}
 
 	override void OnSuccess(int errorCode)

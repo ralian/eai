@@ -21,11 +21,6 @@ class HumanLoadout {
 	ref TStringArray LootRandom = {"Screwdriver"};  				//Added with a LootRandomChance%
 //	ref TIntSet	 	 LootRandomChance = {30};						//Add item from Loot array
 	ref TIntArray	 LootHealth = {10,100}; 						//Item health given. 10%->100%
-		
-	//---------------------
-	static string LoadoutSaveDir = "$profile:";
-	static string LoadoutDataDir = "eAI/Scripts/Data/Loadout/";
-	//---------------------
 	
 	//----------------------------------------------------------------
 	//	HumanLoadout.Apply
@@ -151,42 +146,37 @@ class HumanLoadout {
 	//----------------------------------------------------------------
 	//	HumanLoadout.LoadData
 
-	static HumanLoadout LoadData(string FileName)
+	static HumanLoadout LoadData(string fileName)
     {
         //eAITrace trace(null, "HumanLoadout::LoadData");
 
-		string LoadoutFileName = LoadoutSaveDir + FileName;
-		string LoadoutDefaultFileName = LoadoutDataDir + FileName;
-		
         HumanLoadout data = new HumanLoadout;
-        eAILogger.Debug("HumanLoadout: Looking for " + FileName);
 
-        if (!FileExist(LoadoutFileName))
-        {
-			/*if(FileExist(LoadoutDefaultFileName))
+		string loadoutPath;
+
+		array<string> loadoutDirectories = eAISettings.GetLoadoutDirectories();
+		foreach (string loadoutDirectory : loadoutDirectories)
+		{
+			loadoutPath = loadoutDirectory + fileName;
+			if (FileExist(loadoutPath))
 			{
-				//Profile does not have the loadouts. Copy them from mod. 
-	            eAILogger.Debug("HumanLoadout: " + LoadoutFileName + " doesn't exist, copying default file!");
-				CopyFile(LoadoutDefaultFileName, LoadoutFileName);
+				eAILogger.Info("HumanLoadout: Loading '" + loadoutPath + "'.");
+				JsonFileLoader<HumanLoadout>.JsonLoadFile(loadoutPath, data);
+				return data;
 			}
-			else
-			{*/
-				//If the files under Data\Loadout in mod does not exist, create a default from the class. 
-				//This is an error situation but useful if you need to create a clean and working json
-	            eAILogger.Warn("HumanLoadout: " + LoadoutFileName + " doesn't exist. Creating a default file: " + LoadoutFileName);
-	            SaveData(LoadoutFileName, data);
-			//}
 		}
 
-		if (FileExist(LoadoutFileName))
-        {
-            eAILogger.Info("HumanLoadout: " + LoadoutFileName + " exists, loading!");
-            JsonFileLoader<HumanLoadout>.JsonLoadFile(LoadoutFileName, data);
-        }
-        else
-        {
-            eAILogger.Error("HumanLoadout: Couldn't find " + LoadoutFileName);
+        eAILogger.Error("HumanLoadout: Couldn't find a loadout matching '" + fileName + "', loading script defaults.");
+
+		if (loadoutDirectories.Count() == 0)
+		{
+            eAILogger.Error("HumanLoadout: Couldn't find a directory to save the loadout. Please set 'LoadoutDirectories' in 'eAI/eAISettings.json'");
+			return data;
 		}
+
+		loadoutPath = loadoutDirectories[0] + fileName;
+
+        SaveData(loadoutPath, data);
 
         return data;
     }
@@ -194,12 +184,12 @@ class HumanLoadout {
 	//----------------------------------------------------------------
 	//	HumanLoadout.SaveData
 	
-    static void SaveData(string FileName, HumanLoadout data)
+    static void SaveData(string loadoutPath, HumanLoadout data)
     {
         //eAITrace trace(null, "HumanLoadout::SaveData", FileName);
 		
-		eAILogger.Info("HumanLoadout: Saving loadout to " + FileName);
-        JsonFileLoader<HumanLoadout>.JsonSaveFile(FileName, data);
+		eAILogger.Info("HumanLoadout: Saving '" + loadoutPath + "'.");
+        JsonFileLoader<HumanLoadout>.JsonSaveFile(loadoutPath, data);
     }	
 	
 };
