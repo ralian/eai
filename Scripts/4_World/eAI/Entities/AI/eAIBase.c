@@ -711,16 +711,11 @@ class eAIBase extends PlayerBase
 		EntityAI entityInHands = GetHumanInventory().GetEntityInHands();
 		bool isWeapon = entityInHands && entityInHands.IsInherited(Weapon);
 		
-		// handle weapons
-		if (hic)
+		if (isWeapon && hic)
 		{
-			if (isWeapon && (!hic.IsImmediateAction() || !m_ProcessFirearmMeleeHit || !m_ContinueFirearmMelee))
-			{
-				m_ProcessFirearmMeleeHit = false;
-				bool exitIronSights = false;
-				HandleWeapons(pDt, entityInHands, hic, exitIronSights);
-			}	
-		}
+			bool exitIronSights = false;
+			HandleWeapons(pDt, entityInHands, hic, exitIronSights);
+		}	
 
 		if (m_WeaponManager) m_WeaponManager.Update(pDt);
 		if (m_EmoteManager) m_EmoteManager.Update(pDt);
@@ -1033,21 +1028,24 @@ class eAIBase extends PlayerBase
 			m_DebugShapes.Insert(Shape.CreateLines(COLOR_BLUE, ShapeFlags.VISIBLE, points, 2));
 			#endif
 
-			targetLR = m_eAI_AimDirection_ModelSpace.VectorToAngles()[0];
-			targetUD = m_eAI_AimDirection_ModelSpace.VectorToAngles()[1];
+			vector aimOrientation = m_eAI_AimDirection_ModelSpace.VectorToAngles();
+
+			targetLR = aimOrientation[0];
+			targetUD = aimOrientation[1];
 			
 			float dist = vector.Distance(GetPosition() + "0 1.5 0", m_eAI_AimPosition_WorldSpace);
-			if (dist < 1.0) dist = 1.0;
+			dist = Math.Clamp(dist, 1.0, 100.0);
 			
-			offsetLR = -9.0 / dist;
+			offsetLR = -45 / dist;
 			offsetUD = 0.0;
 		}
 		
-		targetLR += offsetLR;
-		targetUD += offsetUD;
-		
 		if (targetLR > 180.0) targetLR = targetLR - 360.0;
 		if (targetUD > 180.0) targetUD = targetUD - 360.0;
+		
+		targetLR += offsetLR;
+		targetUD += offsetUD;
+
 		targetLR = Math.Clamp(targetLR, -90.0, 90.0);
 		targetUD = Math.Clamp(targetUD, -90.0, 90.0);
 
@@ -1066,105 +1064,6 @@ class eAIBase extends PlayerBase
 		}
 
 		m_AimChangeState = !m_AimChangeState;
-
-		return;
-		
-		CheckLiftWeapon();
-		ProcessLiftWeapon();
-		
-		GetMovementState(m_MovementState);
-		
-		//eAILogger.Debug("IsInIronsights " + IsInIronsights());
-		//eAILogger.Debug("IsInOptics " + IsInOptics());
-		// hold breath
-		if (pInputs.IsHoldBreath() && m_MovementState.IsRaised() && (IsInIronsights() || IsInOptics()))
-		{
-			m_IsTryingHoldBreath = true;
-		}
-		else
-		{
-			m_IsTryingHoldBreath = false;
-		}
-		
-		ItemOptics optic = weapon.GetAttachedOptics();
-	
-		if (pInputs.IsFireModeChange())
-		{
-			GetWeaponManager().SetNextMuzzleMode();
-		}
-		if (pInputs.IsZeroingUp())
-		{
-			if (optic && (optic.IsInOptics() || optic.IsUsingWeaponIronsightsOverride()) )
-				optic.StepZeroingUp();
-			else
-			{
-				//weapon.StepZeroingUp(weapon.GetCurrentMuzzle());
-				weapon.StepZeroingUpAllMuzzles();
-			}
-		}
-		if (pInputs.IsZeroingDown())
-		{
-			if (optic && (optic.IsInOptics() || optic.IsUsingWeaponIronsightsOverride()) )
-				optic.StepZeroingDown();
-			else
-			{
-				//weapon.StepZeroingDown(weapon.GetCurrentMuzzle());
-				weapon.StepZeroingDownAllMuzzles();
-			}
-		}
-		
-		if (!m_LiftWeapon_player && (m_CameraIronsight || !weapon.CanEnterIronsights() || m_CameraOptics/*m_ForceHandleOptics*/)) 	// HACK straight to optics, if ironsights not allowed
-		{
-			if (optic)
-				HandleOptic(optic, false, pInputs, pExitIronSights);
-		}
-	
-		if (!m_MovementState.IsRaised())
-		{
-			m_IsFireWeaponRaised = false;
-			if (weapon && weapon.IsInOptics())
-				weapon.ExitOptics();
-			
-			StopADSTimer();
-	
-			return; // if not raised => return
-		}
-		else
-		{
-			m_IsFireWeaponRaised = true;
-			if ( !m_WeaponRaiseCompleted && (!m_ADSAutomationTimer || (m_ADSAutomationTimer && !m_ADSAutomationTimer.IsRunning())) )
-			{
-				if (GetInstanceType() == DayZPlayerInstanceType.INSTANCETYPE_SERVER || !GetGame().IsMultiplayer())
-					RunADSTimer();
-			}
-			if (m_ProcessWeaponRaiseCompleted)
-			{
-				CompleteWeaponRaise();
-				m_ProcessWeaponRaiseCompleted = false;
-			}
-		}
-			
-		//! fire
-		//if (!m_LiftWeapon_player && weapon && !weapon.IsDamageDestroyed() && weapon.CanProcessWeaponEvents() )
-		if (GetWeaponManager().CanFire(weapon))
-		{
-			bool autofire = weapon.GetCurrentModeAutoFire(weapon.GetCurrentMuzzle()) && weapon.IsChamberEjectable(weapon.GetCurrentMuzzle());
-			int burst = weapon.GetCurrentModeBurstSize(weapon.GetCurrentMuzzle());
-			if (!autofire)
-			{
-				if (pInputs.IsUseButtonDown())
-				{
-					GetWeaponManager().Fire(weapon);
-				}
-			}
-			else
-			{
-				if (pInputs.IsUseButton())
-				{
-					GetWeaponManager().Fire(weapon);
-				}
-			}
-		}		
 	}
 	
 	// As with many things we do, this is an almagomation of the client and server code

@@ -141,7 +141,8 @@ class eAICommandMove extends eAICommandBase
 						m_Table.CallStopTurn(this);
 						
 						m_TurnState = TURN_STATE_NONE;
-					} else if (m_TurnTime > m_ReevaluateTurnTime)
+					}
+					else if (m_TurnTime > m_ReevaluateTurnTime)
 					{
 						m_Table.CallStopTurn(this);
 
@@ -203,47 +204,6 @@ class eAICommandMove extends eAICommandBase
 #endif
 			
 			wayPointDistance = vector.DistanceSq(wayPoint, position);
-			
-			vector newWayPoint = wayPoint;
-
-			if (wayPointDistance > 0.01 && wayPointDistance < 1.0 && DayZPhysics.RayCastBullet(position, newWayPoint, collisionLayerMask, m_Unit, hitObject, hitPosition, hitNormal, hitFraction))
-			{
-				wayPoint = hitPosition;
-			}
-			else 
-			{
-				wayPoint = newWayPoint;
-			}
-			
-#ifndef SERVER
-			debug_points[0] = position;
-			debug_points[1] = wayPoint;
-			m_Unit.AddShape(Shape.CreateLines(0xFFFF00FF, ShapeFlags.NOZBUFFER, debug_points, 2));
-#endif
-
-#ifndef SERVER
-			m_Unit.AddShape(Shape.CreateSphere(0xFFFFFF00, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, wayPoint + Vector(0.0, 0.2, 0.0), 0.3));
-#endif
-				
-#ifndef SERVER
-			m_Unit.AddShape(Shape.CreateSphere(0xFFFFFF00, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, wayPoint - Vector(0.0, 0.2, 0.0), 0.3));
-#endif
-				
-			if (DayZPhysics.SphereCastBullet(wayPoint + Vector(0.0, 0.2, 0.0), wayPoint - Vector(0.0, 0.2, 0.0), 0.3, collisionLayerMask, m_Unit, hitObject, hitPosition, hitNormal, hitFraction)) 
-			{
-				wayPoint = hitPosition;
-			
-#ifndef SERVER
-				m_Unit.AddShape(Shape.CreateSphere(0xFF00FF00, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, wayPoint, 0.05));
-#endif
-			}
-			else
-			{
-			
-#ifndef SERVER
-				m_Unit.AddShape(Shape.CreateSphere(0xFFFF0000, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, wayPoint, 0.05));
-#endif
-			}
 
 			isFinal = wayPointIndex == m_Unit.PathCount() - 1;
 		}
@@ -295,11 +255,19 @@ class eAICommandMove extends eAICommandBase
 		m_MovementCorrection = vector.Zero;
 					
 		dBodyEnableGravity(m_Unit, true);
-		if (m_MovementSpeed != 0 && translation.LengthSq() < 0.1 * pDt)
-		{			
-			if (wayPointDistance < 1.0)
+		if (m_MovementSpeed != 0 && translation.LengthSq() < 0.0025 * pDt)
+		{
+			vector checkPosition = position + (transform[2] * 0.25);
+
+			int doPseudoJump = 0xFFFF0000;
+				
+			if (DayZPhysics.SphereCastBullet(checkPosition + Vector(0.0, 0.4, 0.0), checkPosition, 0.5, collisionLayerMask, m_Unit, hitObject, hitPosition, hitNormal, hitFraction)) 
 			{
-				float yDiff = wayPoint[1] - position[1];
+				checkPosition = hitPosition;
+
+				doPseudoJump = 0xFF00FF00;
+
+				float yDiff = checkPosition[1] - position[1];
 				
 				if (yDiff > 0.01 && yDiff <= 0.4)
 				{
@@ -310,6 +278,12 @@ class eAICommandMove extends eAICommandBase
 					dBodyEnableGravity(m_Unit, false);
 				}
 			}
+
+#ifndef SERVER
+			m_Unit.AddShape(Shape.CreateSphere(0xFFFFFF00, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, checkPosition + Vector(0.0, 0.4, 0.0), 0.5));
+			m_Unit.AddShape(Shape.CreateSphere(0xFFFFFF00, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, checkPosition, 0.5));
+			m_Unit.AddShape(Shape.CreateSphere(doPseudoJump, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, checkPosition, 0.05));
+#endif
 		}
 
 		PrePhys_SetTranslation(translation);
