@@ -83,27 +83,34 @@ class eAIStateType
 
         FPrintln(file, "}");
 
+        auto event_entry = xml_root_tag.GetTag("event_entry");
+        auto event_exit = xml_root_tag.GetTag("event_exit");
+        auto event_update = xml_root_tag.GetTag("event_update");
+
         if (child_fsm != "")
         {
             FPrintln(file, "override void OnEntry(string Event, eAIState From) {");
         	FPrintln(file, "//eAITrace trace(this, \"OnEntry\", Event, \"(\" + From + \")\");");
             FPrintln(file, "if (Event != \""+"\") m_SubFSM.Start(Event);");
             FPrintln(file, "else m_SubFSM.StartDefault();");
+            if (event_entry.Count() > 0) FPrintln(file, event_entry[0].GetContent().GetContent());
             FPrintln(file, "}");
 
             FPrintln(file, "override void OnExit(string Event, bool Aborted, eAIState To) {");
         	FPrintln(file, "//eAITrace trace(this, \"OnExit\", Event, Aborted.ToString(), \"(\" + To + \")\");");
             FPrintln(file, "if (Aborted) m_SubFSM.Abort(Event);");
+            if (event_exit.Count() > 0) FPrintln(file, event_exit[0].GetContent().GetContent());
             FPrintln(file, "}");
 
             FPrintln(file, "override int OnUpdate(float DeltaTime, int SimulationPrecision) {");
         	FPrintln(file, "//eAITrace trace(this, \"OnUpdate\", DeltaTime.ToString(), SimulationPrecision.ToString());");
-            FPrintln(file, "return m_SubFSM.Update(DeltaTime, SimulationPrecision);");
+            FPrintln(file, "if (m_SubFSM.Update(DeltaTime, SimulationPrecision) == EXIT) return EXIT;");
+            if (event_update.Count() > 0) FPrintln(file, event_update[0].GetContent().GetContent());
+            else FPrintln(file, "return CONTINUE;");
             FPrintln(file, "}");
         }
         else
         {
-            auto event_entry = xml_root_tag.GetTag("event_entry");
             if (event_entry.Count() > 0)
             {
                 FPrintln(file, "override void OnEntry(string Event, eAIState From) {");
@@ -112,7 +119,6 @@ class eAIStateType
                 FPrintln(file, "}");
             }
 
-            auto event_exit = xml_root_tag.GetTag("event_exit");
             if (event_exit.Count() > 0)
             {
                 FPrintln(file, "override void OnExit(string Event, bool Aborted, eAIState To) {");
@@ -121,7 +127,6 @@ class eAIStateType
                 FPrintln(file, "}");
             }
 
-            auto event_update = xml_root_tag.GetTag("event_update");
             if (event_update.Count() > 0)
             {
                 FPrintln(file, "override int OnUpdate(float DeltaTime, int SimulationPrecision) {");

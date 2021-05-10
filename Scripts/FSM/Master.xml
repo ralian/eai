@@ -39,7 +39,7 @@
 		</state>
 		<state name="TraversingWaypoints">
 			<variables>
-				<variable name="path" type="array<vector>" />
+				<variable name="path" type="ref array<vector>" />
 				<variable name="behaviour" type="eAIWaypointBehavior" />
 				<variable name="backtracking" type="bool" />
 				<variable name="index" type="int" />
@@ -50,6 +50,10 @@
 			</editor_data>
 			<event_entry>
 				path = unit.GetGroup().GetWaypoints();
+				if (path.Count() == 0)
+				{
+					path = { unit.GetPosition() };
+				}
 				behaviour = unit.GetGroup().GetWaypointBehaviour();
 			</event_entry>
 			<event_exit></event_exit>
@@ -105,6 +109,12 @@
 				<position x="551" y="94" />
 				<size width="150" height="40" />
 			</editor_data>
+			<event_entry>
+				unit.UpdateAimArbitration();
+			</event_entry>
+			<event_exit>
+				unit.StopAimArbitration();
+			</event_exit>
 		</state>
 		<state name="Weapon_Unjamming">
 			<variables>
@@ -140,8 +150,10 @@
 			</editor_data>
 			<event_entry>				
 				unit.OverridePosition(position);
+				unit.UpdateAimArbitration();
 			</event_entry>
 			<event_exit>
+				unit.StopAimArbitration();
 				unit.RaiseWeapon(false);
 			</event_exit>
 			<event_update>
@@ -175,6 +187,7 @@
 		</state>
 		<state name="Weapon_Melee">
 			<variables>
+				<variable name="target" type="EntityAI" />
 			</variables>
 			<editor_data>
 				<position x="333" y="374" />
@@ -365,6 +378,12 @@
 			<guard>
 				float dist = vector.Distance(unit.GetPosition(), src.position);
 				if (dist &gt; 1.0) return FAIL;
+
+				auto target = unit.GetTarget();
+				if (!target) return FAIL;
+
+				dst.target = target.GetEntity();
+				if (!dst.target) return FAIL;
 
 				return SUCCESS;
             </guard>
