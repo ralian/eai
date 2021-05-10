@@ -55,6 +55,8 @@ class eAIBase extends PlayerBase
 	private vector m_eAI_AimDirection_ModelSpace;
 	private bool m_eAI_AimDirection_Recalculate;
 
+	private eAIAimingState m_AimingState;
+
 	private bool m_MovementSpeedActive;
 	private int m_MovementSpeed;
 	private bool m_MovementDirectionActive;
@@ -162,18 +164,12 @@ class eAIBase extends PlayerBase
 	
 	void StopAimArbitration()
 	{
-		GetAimingProfile().UpdateArbiter(null);
+		m_AimingState = eAIAimingState.INACTIVE;
 	}
 	
 	void UpdateAimArbitration()
 	{
-		if (eAIGlobal_HeadlessClient)
-		{
-			GetAimingProfile().UpdateArbiter(eAIGlobal_HeadlessClient);
-			return;
-		}
-		
-		GetAimingProfile().UpdateArbiter(GetNearestPlayer());
+		m_AimingState = eAIAimingState.ACTIVE;
 	}
 	
 	bool PlayerIsEnemy(EntityAI other)
@@ -212,7 +208,7 @@ class eAIBase extends PlayerBase
 		vector hitPos;
 		int contactComponent;
 		EntityAI hitPlayer;
-		if (weap.Hitscan(hitPlayer, hitPos, contactComponent) && !PlayerIsEnemy(hitPlayer)) return false;
+		//if (weap.Hitscan(hitPlayer, hitPos, contactComponent) && !PlayerIsEnemy(hitPlayer)) return false;
 
 		return true;
 	}
@@ -524,7 +520,13 @@ class eAIBase extends PlayerBase
 		
 		// sorting the targets so the highest the threat is indexed lowest
 
-		for (int i = 0; i < m_eAI_Targets.Count() - 1; i++) 
+		for (int i = m_eAI_Targets.Count() - 1; i >= 0; i--) 
+		{
+			if (m_eAI_Targets[i] == null) m_eAI_Targets.Remove(i);
+			//eAILogger.Debug("m_eAI_Targets[" + i + "] entity = " + m_eAI_Targets[i].GetEntity() + " threat = " + m_eAI_Targets[i].GetThreat(this));
+		}
+		
+		for (i = 0; i < m_eAI_Targets.Count() - 1; i++) 
 		{
 			int min_idx = i; 
 			for (int j = i + 1; j < m_eAI_Targets.Count(); j++) 
@@ -536,12 +538,6 @@ class eAIBase extends PlayerBase
 			}
 
 			m_eAI_Targets.SwapItems(min_idx, i);
-		}
-
-		for (i = m_eAI_Targets.Count() - 1; i >= 0; i--) 
-		{
-			if (m_eAI_Targets[i] == null) m_eAI_Targets.Remove(i);
-			//eAILogger.Debug("m_eAI_Targets[" + i + "] entity = " + m_eAI_Targets[i].GetEntity() + " threat = " + m_eAI_Targets[i].GetThreat(this));
 		}
 	}
 
@@ -690,9 +686,9 @@ class eAIBase extends PlayerBase
 				}
 
 				vector modifiedTargetPosition = m_TargetPosition;
-				if (vector.DistanceSq(GetPosition(), m_TargetPosition) > 5000.0)
+				if (vector.DistanceSq(GetPosition(), m_TargetPosition) > 10000.0)
 				{
-					modifiedTargetPosition = GetPosition() + (vector.Direction(GetPosition(), m_TargetPosition).Normalized() * 70.0);
+					modifiedTargetPosition = GetPosition() + (vector.Direction(GetPosition(), m_TargetPosition).Normalized() * 100.0);
 				}
 				
 				world.FindPath(GetPosition(), modifiedTargetPosition, m_PathFilter, m_Path);
@@ -729,6 +725,22 @@ class eAIBase extends PlayerBase
 		UpdateDelete();
 
 		if (m_FSM) m_FSM.Update(pDt, simulationPrecision);
+
+		switch (m_AimingState)
+		{
+			case eAIAimingState.INACTIVE:
+				GetAimingProfile().UpdateArbiter(null);
+				break;
+			case eAIAimingState.ACTIVE:
+				if (eAIGlobal_HeadlessClient)
+				{
+					GetAimingProfile().UpdateArbiter(eAIGlobal_HeadlessClient);
+					break;
+				}
+				
+				GetAimingProfile().UpdateArbiter(GetNearestPlayer());
+				break;
+		}
 
 		if (m_ActionManager)
 		{
@@ -1030,13 +1042,13 @@ class eAIBase extends PlayerBase
 
 			vector aimOrientation = m_eAI_AimDirection_ModelSpace.VectorToAngles();
 
-			targetLR = aimOrientation[0];
+			targetLR = aimOrientation[0];// + (pInputs.GetHeadingAngle() * Math.RAD2DEG);
 			targetUD = aimOrientation[1];
 			
 			float dist = vector.Distance(GetPosition() + "0 1.5 0", m_eAI_AimPosition_WorldSpace);
-			dist = Math.Clamp(dist, 1.0, 100.0);
+			dist = Math.Clamp(dist, 1.0, 360.0);
 			
-			offsetLR = -45 / dist;
+			offsetLR = -45.0 / dist;
 			offsetUD = 0.0;
 		}
 		
@@ -1052,18 +1064,21 @@ class eAIBase extends PlayerBase
 		float deltaLR = (targetLR - currentLR) * pDt * 0.1;
 		float deltaUD = (targetUD - currentUD) * pDt * 0.1;
 
-		if (m_AimChangeState)
+		if (IsRaised())
 		{
-			pInputs.OverrideAimChangeX(true, deltaUD);
-			pInputs.OverrideAimChangeY(true, 0.0);
-		}
-		else
-		{
-			pInputs.OverrideAimChangeX(true, deltaLR);
-			pInputs.OverrideAimChangeY(false, 0.0);
-		}
+			if (m_AimChangeState)
+			{
+				pInputs.OverrideAimChangeX(true, deltaUD);
+				pInputs.OverrideAimChangeY(true, 0.01);
+			}
+			else
+			{
+				pInputs.OverrideAimChangeX(true, deltaLR);
+				pInputs.OverrideAimChangeY(false, 0.0);
+			}
 
-		m_AimChangeState = !m_AimChangeState;
+			m_AimChangeState = !m_AimChangeState;
+		}
 	}
 	
 	// As with many things we do, this is an almagomation of the client and server code

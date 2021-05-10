@@ -17,9 +17,12 @@ class eAITarget
         info = _info;
     }
 
-    void AddAI(eAIBase ai)
+    bool AddAI(eAIBase ai)
     {
+        if (ai_list.Find(ai) != -1) return false;
+		
         ai_list.Insert(ai);
+        return true;
     }
 
     bool RemoveAI(eAIBase ai)

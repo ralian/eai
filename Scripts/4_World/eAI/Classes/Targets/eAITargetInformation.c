@@ -162,7 +162,7 @@ class eAITargetInformation
         eAITarget target;
         target = Insert(ai.GetGroup(), max_time);
         if (!target) return null; 
-        target.AddAI(ai);
+        if (target.AddAI(ai)) 
         ai.OnAddTarget(target);
         return target;
     }
@@ -183,8 +183,7 @@ class eAITargetInformation
 
         if (max_time != int.MIN) target.max_time = max_time;
 
-        target.AddAI(ai);
-        ai.OnAddTarget(target);
+        if (target.AddAI(ai)) ai.OnAddTarget(target);
 
         return target;
     }
