@@ -218,16 +218,11 @@ class eAICommandMove extends eAICommandBase
 		vector pathDir = vector.Direction(position, m_AimPosition).Normalized();
 		m_Turn = m_Unit.GetOrientation()[0];
 		m_TurnTarget = pathDir.VectorToAngles()[0];
+		if (m_Turn > 180.0) m_Turn = m_Turn - 360.0;
 		if (m_TurnTarget > 180.0) m_TurnTarget = m_TurnTarget - 360.0;
 
-		if (m_TurnTarget < m_Turn)
-		{
-			m_TurnDifference = m_Turn - m_TurnTarget;
-		}
-		else
-		{
-			m_TurnDifference = m_TurnTarget - m_Turn;
-		}
+		m_TurnDifference = m_TurnTarget - m_Turn;
+		if (m_TurnDifference > 180.0) m_TurnDifference = m_TurnDifference - 360.0;
 
 		if (isFinal && wayPointDistance < minFinal)
 		{
