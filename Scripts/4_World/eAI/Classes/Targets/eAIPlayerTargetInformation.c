@@ -1,6 +1,6 @@
 class eAIPlayerTargetInformation extends eAIEntityTargetInformation
 {
-	private const float DISTANCE_COEF = 0.001;
+	private const float DISTANCE_COEF = 0.0001;
 
     private DayZPlayerImplement m_Player;
 
@@ -20,7 +20,7 @@ class eAIPlayerTargetInformation extends eAIEntityTargetInformation
 			if (distance > 1.0) levelFactor = levelFactor / distance;
 		}
 
-        return Math.Clamp(levelFactor, 0.0, 1.0);
+        return Math.Clamp(levelFactor, 0.0, 1.0 / DISTANCE_COEF);
     }
 
     override vector GetAimOffset(eAIBase ai = null)

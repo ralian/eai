@@ -57,6 +57,6 @@ class eAIZombieTargetInformation extends eAIEntityTargetInformation
 			if (distance > 1.0) levelFactor = levelFactor / distance;
 		}
 
-        return Math.Clamp(levelFactor, 0.0, 1.0);
+        return Math.Clamp(levelFactor, 0.0, 1.0 / DISTANCE_COEF);
     }
 };
