@@ -16,7 +16,7 @@ class eAISettings : JsonApiStruct
 	private ref array<string> m_LoadoutDirectories = { "$profile:" };
 	private bool m_LoadoutDirectoriesSavedAsArray = false;
 
-	private ref array<string> m_Admins = { "" };
+	private ref array<string> m_Admins = { };
 
 	private int m_MaxDynamicPatrols = -1;
 
