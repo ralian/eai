@@ -18,6 +18,8 @@ modded class MissionServer
 	{
 		super.InvokeOnConnect(player, identity);
 
+		GetDayZGame().eAIManagerGet().InvokeOnConnect(player, identity);
+
 		if (identity && identity.GetId() == HeadlessClientSteamID)
 		{
 			eAIGlobal_HeadlessClient = player;

@@ -16,6 +16,8 @@ class eAISettings : JsonApiStruct
 	private ref array<string> m_LoadoutDirectories = { "$profile:" };
 	private bool m_LoadoutDirectoriesSavedAsArray = false;
 
+	private ref array<string> m_Admins = { "" };
+
 	void SetLogLevel(LogLevel logLevel)
 	{
 		m_LogLevel = logLevel;
@@ -51,6 +53,33 @@ class eAISettings : JsonApiStruct
 		return m_Instance.m_LoadoutDirectories;
 	}
 
+	void AddAdmin(string admin)
+	{
+		m_Admins.Insert(admin);
+
+		array<PlayerIdentity> identities();
+		GetGame().GetPlayerIndentities(identities);
+		foreach (auto identity : identities)
+		{
+			if (identity.GetPlainId() == admin)
+			{
+        		GetRPCManager().SendRPC("eAI", "RPC_SetAdmin", new Param1<bool>(true), true, identity);
+			}
+		}
+	}
+	
+	void ClearAdmins()
+	{
+		m_Admins.Clear();
+
+        GetRPCManager().SendRPC("eAI", "RPC_SetAdmin", new Param1<bool>(false), true, null);
+	}
+
+	static array<string> GetAdmins()
+	{
+		return m_Instance.m_Admins;
+	}
+
 	override void OnInteger(string name, int value)
 	{
 		if (name == "LogLevel")
@@ -77,6 +106,7 @@ class eAISettings : JsonApiStruct
 
 		if (name == "LoadoutDirectories")
 		{
+			ClearLoadoutDirectories();
 			AddLoadoutDirectory(value);
 			return;
 		}
@@ -100,6 +130,12 @@ class eAISettings : JsonApiStruct
 			ClearLoadoutDirectories();
 			return;
 		}
+		
+		if (m_LoadingArray == "Admins")
+		{
+			ClearAdmins();
+			return;
+		}
 	}
 
 	override void OnEndArray(int itemCount)
@@ -111,8 +147,13 @@ class eAISettings : JsonApiStruct
 	{
 		if (m_LoadingArray == "LoadoutDirectories")
 		{
-			ClearLoadoutDirectories();
 			AddLoadoutDirectory(value);
+			return;
+		}
+
+		if (m_LoadingArray == "Admins")
+		{
+			AddAdmin(value);
 			return;
 		}
 	}
@@ -143,6 +184,13 @@ class eAISettings : JsonApiStruct
 		{
 			StoreString("LoadoutDirectories", m_LoadoutDirectories[0]);
 		}
+
+		StartArray("Admins");
+		foreach (string admin : m_Admins)
+		{
+			ItemString(admin);
+		}
+		EndArray();
 	}
 
 	override void OnSuccess(int errorCode)

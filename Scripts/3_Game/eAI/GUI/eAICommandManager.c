@@ -3,10 +3,12 @@ class eAICommandManager {
 }
 
 // This class handles the inputs from the eAICommandMenu locally and shoots RPCs to the server.
-class eAICommandManagerClient : eAICommandManager {
-	override bool Send(eAICommands cmd) {
-		switch (cmd) {
-			#ifndef EAI_COMMAND_DEBUG_DISABLE
+class eAICommandManagerClient : eAICommandManager
+{
+	override bool Send(eAICommands cmd)
+	{
+		switch (cmd)
+		{
 			case eAICommands.DEB_SPAWNALLY:
 				GetRPCManager().SendRPC("eAI", "SpawnAI", new Param1<DayZPlayer>(GetGame().GetPlayer()));
 				return true;
@@ -18,8 +20,6 @@ class eAICommandManagerClient : eAICommandManager {
 			case eAICommands.DEB_SPAWNZOM:
 				GetRPCManager().SendRPC("eAI", "SpawnZombie", new Param1<DayZPlayer>(GetGame().GetPlayer()));
 				return true;
-			#endif
-			
 			case eAICommands.FOR_VEE:
 			case eAICommands.FOR_FILE:
 			case eAICommands.FOR_WALL:
@@ -34,7 +34,8 @@ class eAICommandManagerClient : eAICommandManager {
 			case eAICommands.MOV_RTF:
 				GetRPCManager().SendRPC("eAI", "ReqFormRejoin", new Param1<DayZPlayer>(GetGame().GetPlayer()));
 				return true;
-
-		} return false;
+		}
+		
+		return false;
 	}
 };

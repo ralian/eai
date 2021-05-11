@@ -4,9 +4,7 @@ enum eAICommandCategories
 	CAT_MOVEMENT,
 	CAT_FORMATION,
 	CAT_STATUS,
-	#ifndef EAI_COMMAND_DEBUG_DISABLE
-	CAT_DEBUG,
-	#endif
+	CAT_DEBUG
 }
 
 class eAICommandMenuItem
@@ -82,7 +80,7 @@ class eAICommandMenu extends UIScriptedMenu
 		}
 	}
 
-	void~eAICommandMenu() {}
+	void ~eAICommandMenu() {}
 
 	//============================================
 	// Init &Widget Events
@@ -196,15 +194,25 @@ class eAICommandMenu extends UIScriptedMenu
 	{
 		gesture_items.Clear();
 
+		DayZPlayerImplement player;
+		Class.CastTo(player, GetGame().GetPlayer());
+
 		//All categories
 		if (category == eAICommandCategories.CATEGORIES)
 		{
-			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_MOVEMENT, "Movement", eAICommandCategories.CATEGORIES));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_FORMATION, "Formation", eAICommandCategories.CATEGORIES));
-			//gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_STATUS, "Status", eAICommandCategories.CATEGORIES));
-			#ifndef EAI_COMMAND_DEBUG_DISABLE
-			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_DEBUG, "Debug", eAICommandCategories.CATEGORIES));
-			#endif
+			// only show if we are in a group
+			if (player && player.GetGroup())
+			{
+				gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_MOVEMENT, "Movement", eAICommandCategories.CATEGORIES));
+				gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_FORMATION, "Formation", eAICommandCategories.CATEGORIES));
+				//gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_STATUS, "Status", eAICommandCategories.CATEGORIES));
+			}
+			
+			// only show if we are an admin
+			if (GetDayZGame().eAIManagerGet().IsAdmin())
+			{
+				gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_DEBUG, "Debug", eAICommandCategories.CATEGORIES));
+			}
 		}
 
 		//Category 1 - Movement
@@ -233,17 +241,15 @@ class eAICommandMenu extends UIScriptedMenu
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.STA_THREATS, "Report Threats", eAICommandCategories.CAT_STATUS));
 		}
 
-		#ifndef EAI_COMMAND_DEBUG_DISABLE
 		//Category 4 - Debug
 		else if (category == eAICommandCategories.CAT_DEBUG)
 		{
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_SPAWNALLY, "Spawn Ally", eAICommandCategories.CAT_DEBUG));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_CLEARALL, "Clear All AI", eAICommandCategories.CAT_DEBUG));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_SPAWNZOM, "Spawn Zombie", eAICommandCategories.CAT_DEBUG));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_AIMAP, "AI Menu", eAICommandCategories.CAT_DEBUG));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_GRPMGR, "Group Manager", eAICommandCategories.CAT_DEBUG));
+			//gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_AIMAP, "AI Menu", eAICommandCategories.CAT_DEBUG));
+			//gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_GRPMGR, "Group Manager", eAICommandCategories.CAT_DEBUG));
 		}
-		#endif
 	}
 
 	protected void CreateGestureContent()

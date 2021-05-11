@@ -22,11 +22,9 @@ class eAIManager extends eAIManagerImplement
 	{
 		m_AimingManager = new eAIAimingProfileManager();
 		
-		#ifndef EAI_COMMAND_DEBUG_DISABLE
 		GetRPCManager().AddRPC("eAI", "SpawnAI", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "SpawnZombie", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "ClearAllAI", this, SingeplayerExecutionType.Server);
-		#endif
 
 		GetRPCManager().AddRPC("eAI", "ReqFormationChange", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "ReqFormRejoin", this, SingeplayerExecutionType.Server);
@@ -89,6 +87,10 @@ class eAIManager extends eAIManagerImplement
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
 		
+        string guid = sender.GetPlainId();
+        int idx = eAISettings.GetAdmins().Find(guid);
+		if (idx == -1) return;
+		
 		if(type == CallType.Server )
 		{
 			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
@@ -132,7 +134,11 @@ class eAIManager extends eAIManagerImplement
 
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
-		
+
+        string guid = sender.GetPlainId();
+        int idx = eAISettings.GetAdmins().Find(guid);
+		if (idx == -1) return;
+
 		if(type == CallType.Server) {
 			if (!GetGame().IsMultiplayer()) Class.CastTo(data.param1, GetGame().GetPlayer());
 			
@@ -148,6 +154,11 @@ class eAIManager extends eAIManagerImplement
 
 		Param1<PlayerBase> data;
         if (!ctx.Read(data)) return;
+		
+        string guid = sender.GetPlainId();
+        int idx = eAISettings.GetAdmins().Find(guid);
+		if (idx == -1) return;
+		
 		if (type == CallType.Server)
 		{
 			if (!GetGame().IsMultiplayer()) Class.CastTo(data.param1, GetGame().GetPlayer());
