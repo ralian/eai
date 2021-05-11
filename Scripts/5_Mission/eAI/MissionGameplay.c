@@ -11,6 +11,20 @@ modded class MissionGameplay
 		eAILogger.Info("eAI - Loaded Client Mission");
 	}
 
+	override void OnMissionStart()
+	{
+		super.OnMissionStart();
+
+		if (IsMissionOffline()) GetDayZGame().eAIManagerGet().SetAdmin(true);
+	}
+
+	override void OnMissionFinish()
+	{
+		super.OnMissionFinish();
+
+		GetDayZGame().eAIManagerGet().SetAdmin(false);
+	}
+
 	override void OnUpdate(float timeslice)
 	{
 		super.OnUpdate(timeslice);

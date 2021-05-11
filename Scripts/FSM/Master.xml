@@ -180,7 +180,7 @@
 				unit.RaiseWeapon(false);
 			</event_exit>
 			<event_update>
-				if (unit.CanFire()) unit.FireWeapon();
+				unit.TryFireWeapon();
 
 				return EXIT;
             </event_update>

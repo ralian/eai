@@ -192,37 +192,21 @@ class eAIBase extends PlayerBase
 		return true;
 	}
 	
-	// Update the aim during combat, return true if we are within parameters to fire.
-	int m_MinTimeTillNextFire = 0; //! temp parameter, should be handled in fsm instead
-	bool CanFire()
+	void TryFireWeapon()
 	{
-		if (GetGame().GetTime() < m_MinTimeTillNextFire) return false;
-
 		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
-		if (!weap) return false;
+		if (!weap) return;
 		
-		if (GetDayZPlayerInventory().IsProcessing()) return false;
-		if (!IsRaised()) return false;
+		if (GetDayZPlayerInventory().IsProcessing()) return;
+		if (!IsRaised()) return;
 		
 		// This check is to see if a friendly happens to be in the line of fire
 		vector hitPos;
 		int contactComponent;
 		EntityAI hitPlayer;
-		//if (weap.Hitscan(hitPlayer, hitPos, contactComponent) && !PlayerIsEnemy(hitPlayer)) return false;
+		if (weap.Hitscan(hitPlayer, hitPos, contactComponent) && !PlayerIsEnemy(hitPlayer)) return;
 
-		return true;
-	}
-	
-	void FireWeapon()
-	{
-		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
-		if (weap)
-		{
-			m_MinTimeTillNextFire = GetGame().GetTime() + 500;
-			m_MinTimeTillNextFire += Math.RandomInt(0, 300);
-
-			GetWeaponManager().Fire(weap);
-		}
+		GetWeaponManager().Fire(weap);
 	}
 	
 	override void EEHitBy(TotalDamageResult damageResult, int damageType, EntityAI source, int component, string dmgZone, string ammo, vector modelPos, float speedCoef)

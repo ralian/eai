@@ -4,7 +4,8 @@ enum eAICommandCategories
 	CAT_MOVEMENT,
 	CAT_FORMATION,
 	CAT_STATUS,
-	CAT_DEBUG
+	CAT_DEBUG,
+	CAT_EMPTY
 }
 
 class eAICommandMenuItem
@@ -246,6 +247,11 @@ class eAICommandMenu extends UIScriptedMenu
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_SPAWNZOM, "Spawn Zombie", eAICommandCategories.CAT_DEBUG));
 			//gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_AIMAP, "AI Menu", eAICommandCategories.CAT_DEBUG));
 			//gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_GRPMGR, "Group Manager", eAICommandCategories.CAT_DEBUG));
+		}
+
+		if (gesture_items.Count() == 1)
+		{
+			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_EMPTY, "NULL", eAICommandCategories.CATEGORIES));
 		}
 	}
 
