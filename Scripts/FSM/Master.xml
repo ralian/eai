@@ -161,6 +161,16 @@
 				if (dist &lt; 4.0) unit.RaiseWeapon(true);
 				else unit.RaiseWeapon(false);
 
+				auto target = unit.GetTarget();
+				if (target)
+				{
+					auto hands = unit.GetHumanInventory().GetEntityInHands();
+					if (!hands || (!hands.IsWeapon() &amp;&amp; hands.IsMeleeWeapon())
+					{
+						position = target.GetPosition(unit);
+					}
+				}
+
 				return EXIT;
             </event_update>
 		</state>
@@ -200,6 +210,7 @@
 				unit.RaiseWeapon(false);
 			</event_exit>
 			<event_update>
+				unit.Notify_Melee();
 
 				return EXIT;
             </event_update>
@@ -357,9 +368,26 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
+				// we are aiming at something?
+				auto target = unit.GetTarget();
+				if (!target) return FAIL;
+
+				// they aren't directly in front of us?
+				float dist = vector.Distance(unit.GetPosition(), target.GetPosition(unit));
+				if (dist &lt; 1.0)
+				{
+					// we don't have stamina for melee
+					if (unit.CanConsumeStamina(EStaminaConsumers.MELEE_HEAVY))
+					{
+						return FAIL;
+					}
+				}
+
+				// we are holding a weapon
 				Weapon weapon;
 				if (!Class.CastTo(weapon, unit.GetItemInHands())) return FAIL;
 				
+				// this weapon has ammo?
 				int mi = weapon.GetCurrentMuzzle();
 				Magazine mag = weapon.GetMagazine(mi);
 				if (mag &amp;&amp; mag.GetAmmoCount() &lt; 1) return FAIL;
@@ -376,14 +404,17 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-				float dist = vector.Distance(unit.GetPosition(), src.position);
-				if (dist &gt; 1.0) return FAIL;
-
+				// we are targetting something?
 				auto target = unit.GetTarget();
 				if (!target) return FAIL;
 
+				// they are an entity?
 				dst.target = target.GetEntity();
 				if (!dst.target) return FAIL;
+
+				// they are within melee range
+				float dist = vector.Distance(unit.GetPosition(), target.GetPosition(unit));
+				if (dist &gt; 1.0) return FAIL;
 
 				return SUCCESS;
             </guard>
@@ -402,7 +433,7 @@
 
 				dst.position = target.GetPosition(unit);
 
-				if (vector.Distance(unit.GetPosition(), dst.position) &lt; 1.0) return FAIL;
+				if (vector.Distance(unit.GetPosition(), dst.position) &lt; 2.0) return FAIL;
 
 				return SUCCESS;
             </guard>

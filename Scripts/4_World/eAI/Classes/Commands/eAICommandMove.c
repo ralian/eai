@@ -84,6 +84,11 @@ class eAICommandMove extends eAICommandBase
 		m_TargetSpeed = pTarget;
 	}
 
+	float GetCurrentMovementSpeed()
+	{
+		return m_MovementSpeed;
+	}
+
 	void SetSpeedOverrider(bool pActive)
 	{
 		m_SpeedOverrider = pActive;

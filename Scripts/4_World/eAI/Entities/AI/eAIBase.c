@@ -41,9 +41,12 @@ class eAIBase extends PlayerBase
 	private Transport m_eAI_Transport;
 	private int m_eAI_Transport_SeatIndex;
 
+	private bool m_eAI_Melee;
+
 	private ref eAIAimingProfile m_AimingProfile;
 
 	private ref eAIActionManager m_eActionManager;
+	private ref eAIMeleeCombat m_eMeleeCombat;
 
 	// Position for aiming/looking in the world
 	private vector m_eAI_LookPosition_WorldSpace;
@@ -103,8 +106,13 @@ class eAIBase extends PlayerBase
 
 		m_AimingProfile = new eAIAimingProfile(this);
 
+		m_eMeleeCombat = new eAIMeleeCombat(this);;
+		m_MeleeCombat = m_eMeleeCombat;
+		m_MeleeFightLogic = new DayZPlayerMeleeFightLogic_LightHeavy(this);
+
 		m_eActionManager = new eAIActionManager(this);;
 		m_ActionManager = m_eActionManager;
+
 		m_WeaponManager = new eAIWeaponManager(this);
 		m_ShockHandler = new eAIShockHandler(this);
 		
@@ -199,6 +207,7 @@ class eAIBase extends PlayerBase
 		
 		if (GetDayZPlayerInventory().IsProcessing()) return;
 		if (!IsRaised()) return;
+		if (!weap.CanFire()) return;
 		
 		// This check is to see if a friendly happens to be in the line of fire
 		vector hitPos;
@@ -559,6 +568,13 @@ class eAIBase extends PlayerBase
 		m_eAI_Transport_SeatIndex = seatIndex;
 	}
 
+	void Notify_Melee()
+	{
+		//eAITrace trace(this, "Notify_Melee");
+
+		m_eAI_Melee = true;
+	}
+
 	void UseTargetting()
 	{
 		//eAITrace trace(this, "UseTargetting");
@@ -884,6 +900,31 @@ class eAIBase extends PlayerBase
 			m_eAI_Transport = null;
 		}
 		
+		if (pCurrentCommandID == DayZPlayerConstants.COMMANDID_MELEE2)
+		{
+			HumanCommandMelee2 hcm2 = GetCommand_Melee2();
+			if (hcm2)
+			{
+				if (hcm2.WasHit())
+				{
+					m_eMeleeCombat.OnHit();
+				}
+			
+				if (m_eAI_Melee)
+				{
+					m_eAI_Melee = false;
+		
+					m_eMeleeCombat.Combo(hcm2);
+				}
+			}
+		}
+		else if (m_eAI_Melee)
+		{
+			m_eAI_Melee = false;
+
+			m_eMeleeCombat.Start();
+		}
+		
 		if (pCurrentCommandID == DayZPlayerConstants.COMMANDID_SCRIPT && m_eAI_Command)
 		{
 			m_eAI_Command.SetLookDirection(m_eAI_LookDirection_ModelSpace);
@@ -909,6 +950,19 @@ class eAIBase extends PlayerBase
 				hcm.SetTargetSpeed(m_MovementSpeed);
 				hcm.SetSpeedLimit(speedLimit);
 				hcm.SetTargetDirection(m_MovementDirection);
+
+				m_SprintFull = false;
+				if (hcm.GetCurrentMovementSpeed() > 2.99)
+				{
+					m_SprintedTime += pDt;
+				}
+				else
+				{
+					m_SprintedTime = 0.0;
+				}
+
+				if (m_SprintedTime > 0.5)
+					m_SprintFull = true;
 
 				return;
 			}
