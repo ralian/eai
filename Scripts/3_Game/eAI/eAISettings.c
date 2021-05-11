@@ -18,6 +18,8 @@ class eAISettings : JsonApiStruct
 
 	private ref array<string> m_Admins = { "" };
 
+	private int m_MaxDynamicPatrols = -1;
+
 	void SetLogLevel(LogLevel logLevel)
 	{
 		m_LogLevel = logLevel;
@@ -26,6 +28,16 @@ class eAISettings : JsonApiStruct
 	static LogLevel GetLogLevel()
 	{
 		return m_Instance.m_LogLevel;
+	}
+
+	void SetMaximumDynamicPatrols(int num)
+	{
+		m_MaxDynamicPatrols = num;
+	}
+
+	static int GetMaximumDynamicPatrols()
+	{
+		return m_Instance.m_MaxDynamicPatrols;
 	}
 
 	void SetAccuracy(float accuracy)
@@ -86,6 +98,12 @@ class eAISettings : JsonApiStruct
 		{
 			m_LogLevelSavedAsString = false;
 			SetLogLevel(value);
+			return;
+		}
+
+		if (name == "MaxDynamicPatrols")
+		{
+			SetMaximumDynamicPatrols(value);
 			return;
 		}
 	}
@@ -169,6 +187,7 @@ class eAISettings : JsonApiStruct
 			StoreInteger("LogLevel", m_LogLevel);
 		}
 
+		StoreInteger("MaxDynamicPatrols", m_MaxDynamicPatrols);
 		StoreFloat("Accuracy", m_Accuracy);
 
 		if (m_LoadoutDirectoriesSavedAsArray || m_LoadoutDirectories.Count() > 1)

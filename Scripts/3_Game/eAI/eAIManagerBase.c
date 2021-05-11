@@ -1,6 +1,7 @@
 class eAIManagerBase
 {
     private bool m_IsAdmin;
+    private bool m_InGroup;
 
     void eAIManagerBase()
     {
@@ -13,14 +14,36 @@ class eAIManagerBase
 		GetRPCManager().AddRPC("eAI", "RPC_SetAdmin", this, SingeplayerExecutionType.Client);
     }
 
+    /**
+     * @note Client only
+     */
     bool IsAdmin()
     {
         return m_IsAdmin;
     }
 
+    /**
+     * @note Client only
+     */
     void SetAdmin(bool admin)
     {
         m_IsAdmin = admin;
+    }
+
+    /**
+     * @note Client only
+     */
+    bool InGroup()
+    {
+        return m_InGroup;
+    }
+
+    /**
+     * @note Client only
+     */
+    void SetInGroup(bool group)
+    {
+        m_InGroup = group;
     }
     
     void RPC_SetAdmin(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)

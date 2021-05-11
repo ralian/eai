@@ -194,14 +194,11 @@ class eAICommandMenu extends UIScriptedMenu
 	{
 		gesture_items.Clear();
 
-		DayZPlayerImplement player;
-		Class.CastTo(player, GetGame().GetPlayer());
-
 		//All categories
 		if (category == eAICommandCategories.CATEGORIES)
 		{
 			// only show if we are in a group
-			if (player && player.GetGroup())
+			if (GetDayZGame().eAIManagerGet().InGroup())
 			{
 				gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_MOVEMENT, "Movement", eAICommandCategories.CATEGORIES));
 				gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_FORMATION, "Formation", eAICommandCategories.CATEGORIES));

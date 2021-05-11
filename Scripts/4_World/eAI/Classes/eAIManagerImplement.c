@@ -12,6 +12,14 @@ class eAIManagerImplement extends eAIManagerBase
 		super.OnUpdate(doSim, timeslice);
 
 		eAIGroup.UpdateAll(timeslice);
+
+		if (GetGame().IsClient() || !GetGame().IsMultiplayer())
+		{
+			DayZPlayerImplement player;
+			Class.CastTo(player, GetGame().GetPlayer());
+
+			SetInGroup(player && player.GetGroup() != null);
+		}
 	}
 
 	/*
