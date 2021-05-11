@@ -305,6 +305,8 @@
 				Magazine mag = dst.sub_fsm.weapon.GetMagazine(mi);
 				if (mag &amp;&amp; mag.GetAmmoCount() &gt; 0) return FAIL;
 
+				if (!dst.sub_fsm.weapon.IsChamberEmpty(mi)) return FAIL;
+
 				// don't move to the state if the action manager is operating
 				if (!unit.GetActionManager() || unit.GetActionManager().GetRunningAction()) return FAIL;
 
@@ -389,8 +391,7 @@
 				
 				// this weapon has ammo?
 				int mi = weapon.GetCurrentMuzzle();
-				Magazine mag = weapon.GetMagazine(mi);
-				if (mag &amp;&amp; mag.GetAmmoCount() &lt; 1) return FAIL;
+				if (weapon.IsChamberEmpty(mi)) return FAIL;
 
 				return SUCCESS;
             </guard>
