@@ -5,15 +5,12 @@ class eAICommandMove extends eAICommandBase
 	
 	private int m_PreviousInteractionLayer;
 
-	private bool m_UseAimPosition;
-	private vector m_AimPosition;
-
 	private float m_Turn;
 	private float m_TurnTarget;
 	private float m_TurnDifference;
 	private float m_TurnTime;
-	private float m_ReevaluateTurnTime;
-	private float m_TurnDifferenceStart;
+	private float m_TurnPrevious;
+	private float m_TurnVelocity;
 	private int m_TurnState;
 
 	private vector m_Direction;
@@ -33,6 +30,12 @@ class eAICommandMove extends eAICommandBase
 	private bool m_SpeedOverrider;
 	
 	private vector m_MovementCorrection;
+
+	private PhxInteractionLayers m_CollisionLayerMask = PhxInteractionLayers.ROADWAY|PhxInteractionLayers.BUILDING|PhxInteractionLayers.FENCE|PhxInteractionLayers.VEHICLE;
+	private Object m_HitObject; //! always null and low priority fix at BI
+	private vector m_HitPosition;
+	private vector m_HitNormal;
+	private float m_HitFraction;
 			
 	void eAICommandMove(eAIBase unit, eAIAnimationST st)
 	{
@@ -63,10 +66,9 @@ class eAICommandMove extends eAICommandBase
 		m_Look = (Math.AbsFloat(m_LookLR) > 0.01) || (Math.AbsFloat(m_LookUD) > 0.01);
 	}
 
-	void SetAimPosition(bool pActive, vector pPosition = "0 0 0")
+	void SetTurnTarget(float pTarget)
 	{
-		m_UseAimPosition = pActive;
-		m_AimPosition = pPosition;
+		m_TurnTarget = pTarget;
 	}
 
 	void SetSpeedLimit(float pSpeedIdx)
@@ -109,99 +111,17 @@ class eAICommandMove extends eAICommandBase
 		#ifdef CF_DebugUI
 		CF_DebugUI_Block dbg;
 		Class.CastTo(dbg, CF.DebugUI.Get("Movement", m_Unit));
+		dbg.Clear();
 		#endif
 
-		m_SpeedUpdateTime += pDt;
-		m_MovementDirection += Math.Clamp((m_TargetMovementDirection - m_MovementDirection) * pDt, -180.0, 180.0);
-
-		m_MovementSpeed = m_TargetSpeed;
-		if (m_MovementSpeed > m_SpeedLimit && m_SpeedLimit != -1) m_MovementSpeed = m_SpeedLimit;	
-
-		m_Table.SetMovementDirection(this, m_MovementDirection);
-		m_Table.SetMovementSpeed(this, m_MovementSpeed);
-
-		m_Table.SetRaised(this, m_Raised);
-
-		m_Table.SetLook(this, m_Look);
-		m_Table.SetLookDirX(this, m_LookLR);
-		m_Table.SetLookDirY(this, m_LookUD);
-
-		if (m_MovementSpeed == 0)
-		{
-			switch (m_TurnState)
-			{
-				case TURN_STATE_NONE:
-					if (Math.AbsFloat(m_TurnDifference) > 5.0)
-					{
-						m_TurnTime = 0;
-						m_TurnDifferenceStart = m_TurnDifference;
-
-						m_ReevaluateTurnTime = (m_TurnDifferenceStart / 90.0);
-
-						m_Table.CallTurn(this);
-
-						m_TurnState = TURN_STATE_TURNING;
-					}
-					break;
-				case TURN_STATE_TURNING:
-					m_TurnTime += pDt;
-
-					if (Math.AbsFloat(m_TurnDifferenceStart - m_TurnDifference) / pDt < 0.1)
-					{
-						m_Table.CallStopTurn(this);
-						
-						m_TurnState = TURN_STATE_NONE;
-					}
-					else if (m_TurnTime > m_ReevaluateTurnTime)
-					{
-						m_Table.CallStopTurn(this);
-
-						m_TurnState = TURN_STATE_NONE;
-					}
-
-					break;
-			}
-
-			m_Table.SetTurnAmount(this, m_TurnDifference / 90.0);
-		}
-		else
-		{
-			m_TurnState = TURN_STATE_NONE;
-		}
-
-		PreAnim_SetFilteredHeading(-m_TurnTarget * Math.DEG2RAD, 0.1, 30.0);
-
-		#ifdef CF_DebugUI
-		dbg.Set("Turn State", m_TurnState);
-		dbg.Set("Turn Difference Start", m_TurnDifferenceStart);
-		dbg.Set("Turn Difference", m_TurnDifference);
-		dbg.Set("Turn Target", m_TurnTarget);
-		dbg.Set("Turn Time", m_TurnTime);
-		dbg.Set("Reevaluate Turn Time", m_ReevaluateTurnTime);
-		#endif
-	}
-
-	override void PrePhysUpdate(float pDt)
-	{
 		vector debug_points[2];
 		
-		vector translation;
-		PrePhys_GetTranslation(translation);
-		vector position = m_Unit.ModelToWorld(translation);
-		
-		vector transform[4];
-		m_Unit.GetTransform(transform);
+		vector position = m_Unit.GetPosition();
 
 		float wayPointDistance = 0.0;
 		int wayPointIndex;
 		vector wayPoint = position;
 		bool isFinal = true;
-
-		PhxInteractionLayers collisionLayerMask = PhxInteractionLayers.ROADWAY|PhxInteractionLayers.BUILDING|PhxInteractionLayers.FENCE|PhxInteractionLayers.VEHICLE;
-		Object hitObject; //! always null and low priority fix at BI
-		vector hitPosition;
-		vector hitNormal;
-		float hitFraction;
 		
 		if (m_Unit.PathCount() >= 2)
 		{
@@ -216,7 +136,7 @@ class eAICommandMove extends eAICommandBase
 #endif
 			
 			vector orig_WayPoint = wayPoint;
-			if (DayZPhysics.SphereCastBullet(wayPoint, wayPoint - Vector(0.0, 10.0, 0.0), 0.3, collisionLayerMask|PhxInteractionLayers.TERRAIN, m_Unit, hitObject, hitPosition, hitNormal, hitFraction)) wayPoint = hitPosition;
+			if (DayZPhysics.SphereCastBullet(wayPoint + Vector(0.0, 1.5, 0.0), wayPoint - Vector(0.0, 10.0, 0.0), 0.3, m_CollisionLayerMask|PhxInteractionLayers.TERRAIN, m_Unit, m_HitObject, m_HitPosition, m_HitNormal, m_HitFraction)) wayPoint = m_HitPosition;
 			
 #ifndef SERVER
 			m_Unit.AddShape(Shape.CreateSphere(0xFF0000FF, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, wayPoint, 0.05));
@@ -227,21 +147,21 @@ class eAICommandMove extends eAICommandBase
 			isFinal = wayPointIndex == m_Unit.PathCount() - 1;
 		}
 
-		float minFinal = 0.05;
+		float minFinal = 0.3;
 
-		if ((!isFinal && !m_UseAimPosition) || wayPointDistance > minFinal)
+		if (m_MovementSpeed != 0)
 		{
-			m_AimPosition = wayPoint;
+			vector pathDir = vector.Direction(position, wayPoint).Normalized();
+			m_TurnTarget = pathDir.VectorToAngles()[0];
 		}
 		
-		vector pathDir = vector.Direction(position, m_AimPosition).Normalized();
 		m_Turn = m_Unit.GetOrientation()[0];
-		m_TurnTarget = pathDir.VectorToAngles()[0];
 		if (m_Turn > 180.0) m_Turn = m_Turn - 360.0;
 		if (m_TurnTarget > 180.0) m_TurnTarget = m_TurnTarget - 360.0;
 
 		m_TurnDifference = m_TurnTarget - m_Turn;
 		if (m_TurnDifference > 180.0) m_TurnDifference = m_TurnDifference - 360.0;
+		if (m_TurnDifference < -180.0) m_TurnDifference = m_TurnDifference + 360.0;
 
 		if (isFinal && wayPointDistance < minFinal)
 		{
@@ -262,12 +182,94 @@ class eAICommandMove extends eAICommandBase
 				SetTargetSpeed(Math.Lerp(m_TargetSpeed, 3.0, pDt * 2.0));
 			}
 		}
+
+		m_SpeedUpdateTime += pDt;
+		m_MovementDirection += Math.Clamp((m_TargetMovementDirection - m_MovementDirection) * pDt, -180.0, 180.0);
+
+		m_MovementSpeed = m_TargetSpeed;
+		if (m_MovementSpeed > m_SpeedLimit && m_SpeedLimit != -1) m_MovementSpeed = m_SpeedLimit;	
+
+		m_Table.SetMovementDirection(this, m_MovementDirection);
+		m_Table.SetMovementSpeed(this, m_MovementSpeed);
+
+		m_Table.SetRaised(this, m_Raised);
+
+		m_Table.SetLook(this, m_Look);
+		m_Table.SetLookDirX(this, m_LookLR);
+		m_Table.SetLookDirY(this, m_LookUD);
 		
+		m_TurnVelocity = m_TurnPrevious - m_Turn;
+		m_TurnPrevious = m_Turn;
+		if (m_TurnVelocity > 180.0) m_TurnVelocity = m_TurnVelocity - 360.0;
+		else if (m_TurnVelocity < -180.0) m_TurnVelocity = m_TurnVelocity + 360.0;
+		
+		if (m_MovementSpeed == 0)
+		{
+			switch (m_TurnState)
+			{
+				case TURN_STATE_NONE:
+					if (Math.AbsFloat(m_TurnDifference) > 1)
+					{
+						m_TurnTime = 0;
+
+						m_Table.CallTurn(this);
+						m_Table.SetTurnAmount(this, m_TurnDifference / 90.0);
+
+						m_TurnState = TURN_STATE_TURNING;
+					}
+					break;
+				case TURN_STATE_TURNING:
+					m_TurnTime += pDt;
+				
+					if (m_TurnTime > 2.0)
+					{
+						m_Table.CallStopTurn(this);
+
+						m_TurnState = TURN_STATE_NONE;
+					}			
+					else if (Math.AbsFloat(m_TurnVelocity) < 1 * pDt)
+					{
+						m_Table.CallStopTurn(this);
+						
+						m_TurnState = TURN_STATE_NONE;
+					}
+
+					break;
+			}
+
+		}
+		else
+		{
+			m_TurnState = TURN_STATE_NONE;
+
+			PreAnim_SetFilteredHeading(-m_TurnTarget * Math.DEG2RAD, 0.1, 30.0);
+		}
+
+		#ifdef CF_DebugUI
+		dbg.Set("Turn", m_Turn);
+		dbg.Set("Turn Target", m_TurnTarget);
+		dbg.Set("Turn State", m_TurnState);
+		dbg.Set("Turn Velocity", m_TurnVelocity);
+		dbg.Set("Turn Difference", m_TurnDifference);
+		dbg.Set("Turn Time", m_TurnTime);
+		dbg.Set("Reevaluate Turn Time", m_TurnPrevious);
+		#endif
+	}
+
+	override void PrePhysUpdate(float pDt)
+	{
+		vector translation;
+		PrePhys_GetTranslation(translation);
+		vector position = m_Unit.ModelToWorld(translation);
+
+		vector transform[4];
+		m_Unit.GetTransform(transform);
+
 		// TODO: this is only temporary code and a better solution has to be found later on
 		// This fix is for when the AI is meant to be moving faster but height elevation is blocking us
 		// Reason why this is temporary; it effictively is telling the player to jump.
 		m_MovementCorrection = vector.Zero;
-					
+
 		dBodyEnableGravity(m_Unit, true);
 		if (m_MovementSpeed != 0 && translation.LengthSq() < 0.0025 * pDt)
 		{
@@ -275,9 +277,9 @@ class eAICommandMove extends eAICommandBase
 
 			int doPseudoJump = 0xFFFF0000;
 				
-			if (DayZPhysics.SphereCastBullet(checkPosition + Vector(0.0, 0.4, 0.0), checkPosition, 0.5, collisionLayerMask, m_Unit, hitObject, hitPosition, hitNormal, hitFraction)) 
+			if (DayZPhysics.SphereCastBullet(checkPosition + Vector(0.0, 0.4, 0.0), checkPosition, 0.5, m_CollisionLayerMask, m_Unit, m_HitObject, m_HitPosition, m_HitNormal, m_HitFraction)) 
 			{
-				checkPosition = hitPosition;
+				checkPosition = m_HitPosition;
 
 				doPseudoJump = 0xFF00FF00;
 

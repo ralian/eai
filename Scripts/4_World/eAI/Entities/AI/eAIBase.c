@@ -732,6 +732,7 @@ class eAIBase extends PlayerBase
 			m_DebugTargetApple.SetPosition(debugApplePosition);
 			
 			AimAtPosition(debugApplePosition);
+			LookAtPosition(debugApplePosition);
 		}
 
 		vector transform[4];
@@ -975,8 +976,12 @@ class eAIBase extends PlayerBase
 
 				hcm.SetRaised(m_WeaponRaised);
 				if (m_WeaponRaised) speedLimit = Math.Min(speedLimit, 1);
+				
+				float turnTarget = GetOrientation()[0];
+				
+				if (m_eAI_Targets.Count() > 0) turnTarget = vector.Direction(GetPosition(), m_eAI_AimPosition_WorldSpace).Normalized().VectorToAngles()[0];
 
-				hcm.SetAimPosition(m_WeaponRaised, m_eAI_AimPosition_WorldSpace);
+				hcm.SetTurnTarget(turnTarget);
 
 				if (m_StaminaHandler && !CanConsumeStamina(EStaminaConsumers.SPRINT) || !CanSprint())
 				{
