@@ -4,6 +4,9 @@
 		<actions>
 			<input name="eAICommandMenu" loc="eAI Command Menu"/>
 			<input name="eAITestInput" loc="eAI Test Input"/>
+
+			<input name="eAITestIncrease" visible="false"/>
+			<input name="eAITestDecrease" visible="false"/>
 		</actions>
 	</inputs>
 	<preset>
@@ -12,6 +15,12 @@
 		</input>
 		<input name="eAITestInput">
 			<btn name="kY"/>
+		</input>
+		<input name="eAITestIncrease">
+			<btn name="kN"/>
+		</input>
+		<input name="eAITestDecrease">
+			<btn name="kM"/>
 		</input>
 	</preset>
 </modded_inputs>

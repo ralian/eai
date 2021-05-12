@@ -245,6 +245,11 @@ class eAICommandMenu extends UIScriptedMenu
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_SPAWNALLY, "Spawn Ally", eAICommandCategories.CAT_DEBUG));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_CLEARALL, "Clear All AI", eAICommandCategories.CAT_DEBUG));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_SPAWNZOM, "Spawn Zombie", eAICommandCategories.CAT_DEBUG));
+			if (IsMissionOffline())
+			{
+				gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_TARGET_CREATE, "Create Debug Apple", eAICommandCategories.CAT_DEBUG));
+				gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_TARGET_DESTROY, "Destroy Debug Apple", eAICommandCategories.CAT_DEBUG));
+			}
 			//gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_AIMAP, "AI Menu", eAICommandCategories.CAT_DEBUG));
 			//gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_GRPMGR, "Group Manager", eAICommandCategories.CAT_DEBUG));
 		}
@@ -541,7 +546,7 @@ class eAICommandMenu extends UIScriptedMenu
 				instance.m_SelectedItem.GetUserData(selected);
 
 				if (selected)
-					DayZGame.Cast(GetGame()).GetEAICommandManager().Send(selected.GetID());
+					g_Game.eAIManagerGet().GetCommandManager().Send(selected.GetID());
 			}
 		}
 	}

@@ -1,5 +1,7 @@
 class eAIManagerBase
 {
+	protected ref eAICommandManager m_CommandManager;
+
     private bool m_IsAdmin;
     private bool m_InGroup;
 
@@ -13,6 +15,12 @@ class eAIManagerBase
         SetAdmin(false);
 		GetRPCManager().AddRPC("eAI", "RPC_SetAdmin", this, SingeplayerExecutionType.Client);
     }
+	
+	eAICommandManager GetCommandManager()
+    {
+		//eAITrace trace(this, "GetEAICommandManager");
+		return m_CommandManager;
+	}
 
     /**
      * @note Client only

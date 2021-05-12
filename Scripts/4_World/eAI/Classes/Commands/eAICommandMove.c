@@ -106,6 +106,11 @@ class eAICommandMove extends eAICommandBase
 
 	override void PreAnimUpdate(float pDt)
 	{
+		#ifdef CF_DebugUI
+		CF_DebugUI_Block dbg;
+		Class.CastTo(dbg, CF.DebugUI.Get("Movement", m_Unit));
+		#endif
+
 		m_SpeedUpdateTime += pDt;
 		m_MovementDirection += Math.Clamp((m_TargetMovementDirection - m_MovementDirection) * pDt, -180.0, 180.0);
 
@@ -165,6 +170,15 @@ class eAICommandMove extends eAICommandBase
 		}
 
 		PreAnim_SetFilteredHeading(-m_TurnTarget * Math.DEG2RAD, 0.1, 30.0);
+
+		#ifdef CF_DebugUI
+		dbg.Set("Turn State", m_TurnState);
+		dbg.Set("Turn Difference Start", m_TurnDifferenceStart);
+		dbg.Set("Turn Difference", m_TurnDifference);
+		dbg.Set("Turn Target", m_TurnTarget);
+		dbg.Set("Turn Time", m_TurnTime);
+		dbg.Set("Reevaluate Turn Time", m_ReevaluateTurnTime);
+		#endif
 	}
 
 	override void PrePhysUpdate(float pDt)
@@ -215,7 +229,7 @@ class eAICommandMove extends eAICommandBase
 
 		float minFinal = 0.05;
 
-		if (!isFinal || !m_UseAimPosition || wayPointDistance > minFinal)
+		if ((!isFinal && !m_UseAimPosition) || wayPointDistance > minFinal)
 		{
 			m_AimPosition = wayPoint;
 		}

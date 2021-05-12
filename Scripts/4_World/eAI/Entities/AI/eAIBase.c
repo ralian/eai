@@ -80,6 +80,9 @@ class eAIBase extends PlayerBase
 	private vector m_TargetPosition;
 	private eAITargetOverriding m_eAI_TargetOverriding = eAITargetOverriding.NONE;
 
+	private Apple m_DebugTargetApple;
+	private float m_DebugAngle;
+
 #ifndef SERVER
 	private autoptr array<Shape> m_DebugShapes = new array<Shape>();
 #endif
@@ -95,6 +98,11 @@ class eAIBase extends PlayerBase
 		}
 
 		m_AllAI.Insert(this);
+	}
+
+	static eAIBase Get(int index)
+	{
+		return m_AllAI[index];
 	}
 
 	override void Init()
@@ -647,6 +655,16 @@ class eAIBase extends PlayerBase
 		m_MovementDirection = pDirection;
 	}
 
+	void CreateDebugApple()
+	{
+		Class.CastTo(m_DebugTargetApple, GetGame().CreateObject("Apple", GetPosition(), true));
+	}
+
+	void DestroyDebugApple()
+	{
+		if (m_DebugTargetApple) m_DebugTargetApple.Delete();
+	}
+
 	override void CommandHandler(float pDt, int pCurrentCommandID, bool pCurrentCommandFinished) 
 	{
 		//eAITrace trace(this, "CommandHandler", pDt.ToString(), pCurrentCommandID.ToString(), pCurrentCommandFinished.ToString());
@@ -667,32 +685,53 @@ class eAIBase extends PlayerBase
 
 		int simulationPrecision = 0;
 
-		UpdateTargets();
-		PriotizeTargets();
-
 		AIWorld world = GetGame().GetWorld().GetAIWorld();
-		
-		if (m_eAI_TargetOverriding != eAITargetOverriding.PATH)
+
+		if (!m_DebugTargetApple)
+		{
+			UpdateTargets();
+			PriotizeTargets();
+			
+			if (m_eAI_TargetOverriding != eAITargetOverriding.PATH)
+			{
+				m_Path.Clear();
+				
+				if (m_PathFilter)
+				{
+					if (m_eAI_TargetOverriding != eAITargetOverriding.POSITION && m_eAI_Targets.Count() > 0)
+					{
+						eAITarget target = m_eAI_Targets[0];
+						if (target.HasInfo()) 
+							m_TargetPosition = target.GetPosition(this);
+					}
+
+					vector modifiedTargetPosition = m_TargetPosition;
+					if (vector.DistanceSq(GetPosition(), m_TargetPosition) > 10000.0)
+					{
+						modifiedTargetPosition = GetPosition() + (vector.Direction(GetPosition(), m_TargetPosition).Normalized() * 100.0);
+					}
+					
+					world.FindPath(GetPosition(), modifiedTargetPosition, m_PathFilter, m_Path);
+				}
+			}
+		}
+		else
 		{
 			m_Path.Clear();
-			
-			if (m_PathFilter)
-			{
-				if (m_eAI_TargetOverriding != eAITargetOverriding.POSITION && m_eAI_Targets.Count() > 0)
-				{
-					eAITarget target = m_eAI_Targets[0];
-					if (target.HasInfo()) 
-						m_TargetPosition = target.GetPosition(this);
-				}
 
-				vector modifiedTargetPosition = m_TargetPosition;
-				if (vector.DistanceSq(GetPosition(), m_TargetPosition) > 10000.0)
-				{
-					modifiedTargetPosition = GetPosition() + (vector.Direction(GetPosition(), m_TargetPosition).Normalized() * 100.0);
-				}
-				
-				world.FindPath(GetPosition(), modifiedTargetPosition, m_PathFilter, m_Path);
-			}
+			Input input = GetGame().GetInput();
+
+			float angleChange = 0;
+			if (input.LocalValue("eAITestIncrease", false)) angleChange = 360.0;
+			if (input.LocalValue("eAITestDecrease", false)) angleChange = -360.0;
+
+			m_DebugAngle += angleChange * pDt;
+
+			vector debugApplePosition = Vector(m_DebugAngle, 0, 0).AnglesToVector() * 5.0;
+			debugApplePosition = GetPosition() + debugApplePosition + "0 1 0";
+			m_DebugTargetApple.SetPosition(debugApplePosition);
+			
+			AimAtPosition(debugApplePosition);
 		}
 
 		vector transform[4];

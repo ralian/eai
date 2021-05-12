@@ -7,6 +7,11 @@ enum eAIProcessingState
 
 class eAIManagerImplement extends eAIManagerBase
 {
+	void eAIManagerImplement()
+	{
+		m_CommandManager = new eAICommandManagerClient();
+	}
+
 	override void OnUpdate(bool doSim, float timeslice)
     {
 		super.OnUpdate(doSim, timeslice);
