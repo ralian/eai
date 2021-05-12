@@ -13,6 +13,7 @@ class eAIMeleeCombat : DayZPlayerImplementMeleeCombat
 		m_Hands = m_AI.GetHumanInventory().GetEntityInHands();
 
 		GetMeleeTarget();
+		GetHitZone();
 		m_HitType = GetMeleeHitType();
 		m_SprintAttack = m_HitType == EMeleeHitType.SPRINT;
 		if (m_HitType == EMeleeHitType.NONE)
@@ -34,6 +35,7 @@ class eAIMeleeCombat : DayZPlayerImplementMeleeCombat
 		m_Hands = m_AI.GetHumanInventory().GetEntityInHands();
 
 		GetMeleeTarget();
+		GetHitZone();
 		m_HitType = GetMeleeHitType();
 		if (m_HitType == EMeleeHitType.NONE)
 		{
@@ -95,13 +97,29 @@ class eAIMeleeCombat : DayZPlayerImplementMeleeCombat
 		m_AllTargetObjects.Clear();
 	}
 
+	void GetHitZone()
+	{
+		vector pos = m_AI.GetPosition() + "0.0 1.5 0.0";
+		vector dir = m_AI.GetDirection();
+
+		m_RayStart = pos;
+		m_RayEnd = pos + (dir * TARGETING_RAY_DIST);
+
+		set<Object> hitObjects = new set<Object>;
+		int hitComponentIndex;
+		float hitFraction;
+		vector start, end, hitNormal, hitPosObstructed;
+
+		DayZPhysics.RaycastRV(m_RayStart, m_RayEnd, m_HitPositionWS, hitNormal, m_HitZoneIdx, hitObjects, null, m_AI, false, false, ObjIntersectIFire, TARGETING_RAY_RADIUS);
+	}
+
 	EMeleeHitType GetMeleeHitType()
 	{
 		bool isFireWeapon = m_Hands && m_Hands.IsWeapon();
 
 		if (isFireWeapon)
 		{
-			if (m_AI.CanConsumeStamina(EStaminaConsumers.MELEE_HEAVY))
+			//if (m_AI.CanConsumeStamina(EStaminaConsumers.MELEE_HEAVY))
 			{
 				if (m_Hands.HasBayonetAttached())
 				{

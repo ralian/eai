@@ -148,8 +148,7 @@
 				<position x="333" y="374" />
 				<size width="150" height="40" />
 			</editor_data>
-			<event_entry>				
-				unit.OverridePosition(position);
+			<event_entry>
 				unit.UpdateAimArbitration();
 			</event_entry>
 			<event_exit>
@@ -170,6 +169,8 @@
 						position = target.GetPosition(unit);
 					}
 				}
+
+				unit.OverridePosition(position);
 
 				return EXIT;
             </event_update>
@@ -197,6 +198,7 @@
 		</state>
 		<state name="Weapon_Melee">
 			<variables>
+				<variable name="time" type="float" />
 				<variable name="target" type="EntityAI" />
 			</variables>
 			<editor_data>
@@ -205,14 +207,29 @@
 			</editor_data>
 			<event_entry>
 				unit.RaiseWeapon(true);
+				time = 0;
 			</event_entry>
 			<event_exit>
 				unit.RaiseWeapon(false);
+				time = 0;
 			</event_exit>
 			<event_update>
-				unit.Notify_Melee();
+				if (vector.Distance(unit.GetPosition(), target.GetPosition()) &lt; 1.0)
+				{
+					time = 0;
+					unit.Notify_Melee();
+					return EXIT;
+				}
 
-				return EXIT;
+				time += DeltaTime;
+				unit.OverridePosition(target.GetPosition());
+
+				if (time > 0.5)
+				{
+					return EXIT;
+				}
+
+				return CONTINUE;
             </event_update>
 		</state>
 	</states>
@@ -414,8 +431,8 @@
 				if (!dst.target) return FAIL;
 
 				// they are within melee range
-				float dist = vector.Distance(unit.GetPosition(), target.GetPosition(unit));
-				if (dist &gt; 1.0) return FAIL;
+				float dist = vector.Distance(unit.GetPosition(), dst.target.GetPosition());
+				if (dist &gt; 2.0) return FAIL;
 
 				return SUCCESS;
             </guard>
@@ -429,10 +446,10 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-				auto target = unit.GetTarget();
+				auto target = src.target;
 				if (!target) return FAIL;
 
-				dst.position = target.GetPosition(unit);
+				dst.position = target.GetPosition();
 
 				if (vector.Distance(unit.GetPosition(), dst.position) &lt; 2.0) return FAIL;
 
@@ -441,6 +458,21 @@
 			<event name="" />
 			<from_state name="Weapon_Melee" />
 			<to_state name="Weapon_GoingToPosition" />
+		</transition>
+		<transition>
+			<editor_data>
+				<position_source x="0" y="0.7" />
+				<position_destination x="1" y="0.7" />
+			</editor_data>
+			<guard>
+				auto target = src.target;
+				if (target) return FAIL;
+
+				return SUCCESS;
+            </guard>
+			<event name="" />
+			<from_state name="Weapon_Melee" />
+			<to_state name="Idle" />
 		</transition>
 		<transition>
 			<editor_data>

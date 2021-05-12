@@ -42,6 +42,7 @@ class eAIBase extends PlayerBase
 	private int m_eAI_Transport_SeatIndex;
 
 	private bool m_eAI_Melee;
+	private bool m_eAI_MeleeDidHit;
 
 	private ref eAIAimingProfile m_AimingProfile;
 
@@ -212,21 +213,24 @@ class eAIBase extends PlayerBase
 	{
 		//eAITrace trace(this, "TryFireWeapon");
 		
-		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
-		if (!weap) return;
+		Weapon_Base weapon = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
+		if (!weapon) return;
 		
 		if (GetDayZPlayerInventory().IsProcessing()) return;
 		if (!IsRaised()) return;
-		if (!weap.CanFire()) return;
+		if (!weapon.CanFire()) return;
 		if (GetWeaponManager().IsRunning()) return;
+
+		int muzzleIndex = weapon.GetCurrentMuzzle();
+		if (!weapon.CanFire(muzzleIndex)) return;
 		
 		// This check is to see if a friendly happens to be in the line of fire
 		vector hitPos;
 		int contactComponent;
 		EntityAI hitPlayer;
-		if (weap.Hitscan(hitPlayer, hitPos, contactComponent) && !PlayerIsEnemy(hitPlayer)) return;
+		if (weapon.Hitscan(hitPlayer, hitPos, contactComponent) && !PlayerIsEnemy(hitPlayer)) return;
 
-		GetWeaponManager().Fire(weap);
+		GetWeaponManager().Fire(weapon);
 	}
 	
 	override void EEHitBy(TotalDamageResult damageResult, int damageType, EntityAI source, int component, string dmgZone, string ammo, vector modelPos, float speedCoef)
@@ -965,12 +969,14 @@ class eAIBase extends PlayerBase
 				if (hcm2.WasHit())
 				{
 					m_eMeleeCombat.OnHit();
+
+					m_eAI_MeleeDidHit = true;
 				}
 			
-				if (m_eAI_Melee)
+				if (m_eAI_Melee && m_eAI_MeleeDidHit)
 				{
 					m_eAI_Melee = false;
-		
+
 					m_eMeleeCombat.Combo(hcm2);
 				}
 			}
@@ -981,6 +987,8 @@ class eAIBase extends PlayerBase
 
 			m_eMeleeCombat.Start();
 		}
+
+		m_eAI_MeleeDidHit = false;
 		
 		if (pCurrentCommandID == DayZPlayerConstants.COMMANDID_SCRIPT && m_eAI_Command)
 		{
