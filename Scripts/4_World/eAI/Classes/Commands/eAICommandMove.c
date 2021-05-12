@@ -114,6 +114,8 @@ class eAICommandMove extends eAICommandBase
 		dbg.Clear();
 		#endif
 
+		m_SpeedUpdateTime += pDt;
+
 		vector debug_points[2];
 		
 		vector position = m_Unit.GetPosition();
@@ -167,13 +169,17 @@ class eAICommandMove extends eAICommandBase
 		{
 			SetTargetSpeed(0.0);
 		}
+		else if (Math.AbsFloat(m_TurnDifference) > 30.0)
+		{
+			SetTargetSpeed(1.0);
+		}
 		else if (!m_SpeedOverrider)
 		{
 			if (isFinal && wayPointDistance < 8.0)
 			{
 				SetTargetSpeed(1.0);
 			}
-			else if (wayPointDistance < 20.0)
+			else if (isFinal && wayPointDistance < 20.0)
 			{
 				SetTargetSpeed(2.0);
 			}
@@ -183,7 +189,6 @@ class eAICommandMove extends eAICommandBase
 			}
 		}
 
-		m_SpeedUpdateTime += pDt;
 		m_MovementDirection += Math.Clamp((m_TargetMovementDirection - m_MovementDirection) * pDt, -180.0, 180.0);
 
 		m_MovementSpeed = m_TargetSpeed;
@@ -269,6 +274,9 @@ class eAICommandMove extends eAICommandBase
 		// This fix is for when the AI is meant to be moving faster but height elevation is blocking us
 		// Reason why this is temporary; it effictively is telling the player to jump.
 		m_MovementCorrection = vector.Zero;
+		
+		//! make AI go fast for debugging navigation between large distances
+		//translation = translation * Math.Max(2.0 * m_MovementSpeed, 1);
 
 		dBodyEnableGravity(m_Unit, true);
 		if (m_MovementSpeed != 0 && translation.LengthSq() < 0.0025 * pDt)
