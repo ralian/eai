@@ -210,12 +210,15 @@ class eAIBase extends PlayerBase
 	
 	void TryFireWeapon()
 	{
+		//eAITrace trace(this, "TryFireWeapon");
+		
 		Weapon_Base weap = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
 		if (!weap) return;
 		
 		if (GetDayZPlayerInventory().IsProcessing()) return;
 		if (!IsRaised()) return;
 		if (!weap.CanFire()) return;
+		if (GetWeaponManager().IsRunning()) return;
 		
 		// This check is to see if a friendly happens to be in the line of fire
 		vector hitPos;
@@ -254,6 +257,8 @@ class eAIBase extends PlayerBase
 
 	ItemBase GetWeaponToUse(bool hasAmmo = false)
 	{
+		//eAITrace trace(this, "GetWeaponToUse", hasAmmo.ToString());
+
 		// very messy :)
 		for (int i = 0; i < m_Weapons.Count(); i++)
 		{
@@ -274,6 +279,8 @@ class eAIBase extends PlayerBase
 
 	ItemBase GetMeleeWeaponToUse()
 	{
+		//eAITrace trace(this, "GetMeleeWeaponToUse");
+
 		// very messy :)
 		for (int i = 0; i < m_MeleeWeapons.Count(); i++)
 		{
@@ -687,7 +694,7 @@ class eAIBase extends PlayerBase
 
 		AIWorld world = GetGame().GetWorld().GetAIWorld();
 
-		if (!m_DebugTargetApple)
+		//if (!m_DebugTargetApple)
 		{
 			UpdateTargets();
 			PriotizeTargets();
@@ -715,6 +722,7 @@ class eAIBase extends PlayerBase
 				}
 			}
 		}
+		/*
 		else
 		{
 			m_Path.Clear();
@@ -734,6 +742,7 @@ class eAIBase extends PlayerBase
 			AimAtPosition(debugApplePosition);
 			LookAtPosition(debugApplePosition);
 		}
+		*/
 
 		vector transform[4];
 		GetTransform(transform);
@@ -764,7 +773,15 @@ class eAIBase extends PlayerBase
 		GetHumanInventory().Update(pDt);
 		UpdateDelete();
 
+		#ifdef EAI_DEBUG_FSM
+		CF_DebugUI_Block dbg;
+		Class.CastTo(dbg, CF.DebugUI.Get("FSM", this));
+		dbg.Clear();
+		if (m_FSM) m_FSM.Debug_Update(dbg, 0, pDt, simulationPrecision);
+		#else
 		if (m_FSM) m_FSM.Update(pDt, simulationPrecision);
+		#endif
+
 
 		switch (m_AimingState)
 		{
@@ -1108,7 +1125,7 @@ class eAIBase extends PlayerBase
 		m_WeaponRaisedPrev = m_WeaponRaised;
 		m_WeaponRaisedTimer += pDt;
 
-		if (IsRaised())
+		if (IsRaised() || m_DebugTargetApple)
 		{
 			#ifndef SERVER
 			vector position;
@@ -1160,6 +1177,12 @@ class eAIBase extends PlayerBase
 			}
 
 			m_AimChangeState = !m_AimChangeState;
+		}
+
+		if (m_DebugTargetApple)
+		{
+			vector debugApplePosition = ModelToWorld(Vector(targetLR, targetUD, 0).AnglesToVector() * 1.0);
+			m_DebugTargetApple.SetPosition(debugApplePosition + "0 1 0");
 		}
 	}
 	

@@ -104,7 +104,11 @@ class eAIStateType
 
             FPrintln(file, "override int OnUpdate(float DeltaTime, int SimulationPrecision) {");
         	FPrintln(file, "//eAITrace trace(this, \"OnUpdate\", DeltaTime.ToString(), SimulationPrecision.ToString());");
+            #ifdef EAI_DEBUG_FSM
+            FPrintln(file, "if (m_SubFSM.Debug_Update(m_Debug, m_Depth + 1, DeltaTime, SimulationPrecision) == EXIT) return EXIT;");
+            #else
             FPrintln(file, "if (m_SubFSM.Update(DeltaTime, SimulationPrecision) == EXIT) return EXIT;");
+            #endif
             if (event_update.Count() > 0) FPrintln(file, event_update[0].GetContent().GetContent());
             else FPrintln(file, "return CONTINUE;");
             FPrintln(file, "}");

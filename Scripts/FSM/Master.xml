@@ -189,7 +189,7 @@
 				unit.StopAimArbitration();
 				unit.RaiseWeapon(false);
 			</event_exit>
-			<event_update>
+			<event_update>				
 				unit.TryFireWeapon();
 
 				return EXIT;
