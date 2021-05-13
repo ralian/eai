@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//    http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,7 +32,7 @@ class eAIBase extends PlayerBase
 	bool m_AimArbitration = false;
 	private Man m_CurrentArbiter = null;
 
-    // Command handling
+	// Command handling
 	private autoptr eAIAnimationST m_eAI_AnimationST;
 	private eAICommandBase m_eAI_Command;
 
@@ -74,8 +74,8 @@ class eAIBase extends PlayerBase
 
 	ref array<ItemBase> m_Weapons = {};
 	ref array<ItemBase> m_MeleeWeapons = {};
-    
-    // Path Finding
+	
+	// Path Finding
 	private ref PGFilter m_PathFilter;
 	private ref array<vector> m_Path;
 	private vector m_TargetPosition;
@@ -129,11 +129,7 @@ class eAIBase extends PlayerBase
 
 		m_PathFilter = new PGFilter();
 
-		int inFlags = PGPolyFlags.WALK | PGPolyFlags.DOOR | PGPolyFlags.INSIDE | PGPolyFlags.JUMP_OVER;
-		int exFlags = PGPolyFlags.DISABLED | PGPolyFlags.SWIM | PGPolyFlags.SWIM_SEA | PGPolyFlags.SPECIAL | PGPolyFlags.JUMP | PGPolyFlags.CLIMB | PGPolyFlags.CRAWL | PGPolyFlags.CROUCH;
-
-		m_PathFilter.SetFlags( inFlags, exFlags, PGPolyFlags.NONE );
-		m_PathFilter.SetCost( PGAreaType.WATER, 0.0 );
+		SetPathFilter();
 
 		if (IsMissionHost())
 		{
@@ -159,6 +155,14 @@ class eAIBase extends PlayerBase
 		{
 			GetGroup().RemoveMember(GetGroup().GetIndex(this));
 		}
+	}
+
+	void SetPathFilter()
+	{
+		int inFlags = PGPolyFlags.WALK | PGPolyFlags.DOOR | PGPolyFlags.INSIDE | PGPolyFlags.JUMP_OVER;
+		int exFlags = PGPolyFlags.DISABLED | PGPolyFlags.SWIM | PGPolyFlags.SWIM_SEA | PGPolyFlags.SPECIAL | PGPolyFlags.JUMP | PGPolyFlags.CLIMB | PGPolyFlags.CRAWL | PGPolyFlags.CROUCH;
+
+		m_PathFilter.SetFlags(inFlags, exFlags, PGPolyFlags.NONE);
 	}
 	
 	// Used for deciding the best aim arbiter for the AI.
@@ -239,8 +243,8 @@ class eAIBase extends PlayerBase
 		
 		if (!IsAI() || !GetGroup()) return;
 
-        ZombieBase zmb;
-        if (Class.CastTo(zmb, source))
+		ZombieBase zmb;
+		if (Class.CastTo(zmb, source))
 		{
 			if (!zmb.GetTargetInformation().IsTargetted(GetGroup()))
 			{
@@ -694,6 +698,8 @@ class eAIBase extends PlayerBase
 		
 		if (!GetGame().IsServer()) return;
 
+		SetPathFilter();
+		
 		int simulationPrecision = 0;
 
 		AIWorld world = GetGame().GetWorld().GetAIWorld();
@@ -1111,7 +1117,7 @@ class eAIBase extends PlayerBase
 		//eAITrace trace(this, "HandleWeapons", pDt.ToString(), Object.GetDebugName(pInHands));
 		
 		HumanCommandWeapons hcw = GetCommandModifier_Weapons();
-    	GetDayZPlayerInventory().HandleWeaponEvents(pDt, pExitIronSights);
+		GetDayZPlayerInventory().HandleWeaponEvents(pDt, pExitIronSights);
 		
 		Weapon_Base weapon;
 		Class.CastTo(weapon, pInHands);

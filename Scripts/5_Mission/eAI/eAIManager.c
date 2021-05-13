@@ -14,12 +14,16 @@
 
 class eAIManager extends eAIManagerImplement
 {
+	private static eAIManager m_Instance; //! weak ref
+
 	autoptr eAIAimingProfileManager m_AimingManager;
 	
 	const vector ZOMBIE_OFFSET = "20 0 0";
 	
     void eAIManager()
 	{
+		m_Instance = this;
+
 		m_AimingManager = new eAIAimingProfileManager();
 		
 		GetRPCManager().AddRPC("eAI", "SpawnAI", this, SingeplayerExecutionType.Server);
@@ -30,6 +34,11 @@ class eAIManager extends eAIManagerImplement
 		GetRPCManager().AddRPC("eAI", "ReqFormRejoin", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "ReqFormStop", this, SingeplayerExecutionType.Server);
     }
+
+	static eAIManager Get()
+	{
+		return m_Instance;
+	}
 	
 	override void OnUpdate(bool doSim, float timeslice)
 	{

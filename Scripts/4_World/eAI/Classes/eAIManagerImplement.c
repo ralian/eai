@@ -7,13 +7,18 @@ enum eAIProcessingState
 
 class eAIManagerImplement extends eAIManagerBase
 {
+	private ref eAIRoadNetwork m_Navmesh;
+
 	void eAIManagerImplement()
 	{
 		m_CommandManager = new eAICommandManagerClient();
+
+		m_Navmesh = new eAIRoadNetwork();
+		//m_Navmesh.Init();
 	}
 
 	override void OnUpdate(bool doSim, float timeslice)
-    {
+	{
 		super.OnUpdate(doSim, timeslice);
 
 		eAIGroup.UpdateAll(timeslice);
@@ -27,27 +32,32 @@ class eAIManagerImplement extends eAIManagerBase
 		}
 	}
 
+	eAIRoadNetwork GetRoadNetwork()
+	{
+		return m_Navmesh;
+	}
+
 	/*
 	// List of all eAI entities
 	private autoptr array<eAIProcessingState> m_AIStates = {};
 	private autoptr array<ref eAIPlayerHandler> m_AI = {};
 
-    private int m_ProcessingIndex = 0;
+	private int m_ProcessingIndex = 0;
 	private int m_MaxProcessingAI = 0;
 	private float m_MinimumTime = 0.5; // 0.050; // 20hz
 	private float m_ProcessingTime = 0;
 
-    override Class AddAI(DayZPlayer entity)
-    {
-        eAIPlayerHandler handler = new eAIPlayerHandler(PlayerBase.Cast(entity));
-        m_AI.Insert(handler); // insert the new handler to the back of the array
-        return handler;
-    }
+	override Class AddAI(DayZPlayer entity)
+	{
+		eAIPlayerHandler handler = new eAIPlayerHandler(PlayerBase.Cast(entity));
+		m_AI.Insert(handler); // insert the new handler to the back of the array
+		return handler;
+	}
 	
 	override void OnUpdate(bool doSim, float timeslice)
-    {
-        // don't process if we aren't the server
-        if (!GetGame().IsServer()) return;
+	{
+		// don't process if we aren't the server
+		if (!GetGame().IsServer()) return;
 
 		m_ProcessingTime += timeslice;
 		
