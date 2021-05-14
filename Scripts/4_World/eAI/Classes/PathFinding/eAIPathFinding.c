@@ -17,6 +17,11 @@ class eAIPathFinding
 	private ref PGFilter m_PathFilter;
 	private ref array<vector> m_Path;
 
+	private ref array<vector> m_RoadPath;
+	private ref array<vector> m_RoadPathSwap;
+	private bool m_RoadPathReady;
+	private bool m_IsFindingRoadPath;
+
 	private vector m_Position;
 
 	private vector m_OverridePosition;
@@ -31,6 +36,9 @@ class eAIPathFinding
 		
 		m_Path = new array<vector>();
 		m_PathFilter = new PGFilter();
+
+		m_RoadPath = new array<vector>();
+		m_RoadPathSwap = new array<vector>();
 
 		m_AIWorld = GetGame().GetWorld().GetAIWorld();
 		m_RoadNetwork = eAIManagerImplement.Get4().GetRoadNetwork();
@@ -49,7 +57,21 @@ class eAIPathFinding
 		m_PathFilter.SetCost(PGAreaType.BUILDING, 1.0);
 	}
 
-	void OnUpdate(float pDt, int pSimulationPrecision)
+	void StartRoadPath(out array<vector> path)
+	{
+		m_RoadPathSwap.Clear();
+		path = m_RoadPathSwap;
+		m_IsFindingRoadPath = true;
+	}
+
+	void FinishRoadPath(array<vector> path)
+	{
+		//m_RoadPathSwap = path;
+		m_RoadPathReady = true;
+		m_IsFindingRoadPath = false;
+	}
+
+	void OnDebug()
 	{
 		#ifdef EAI_DEBUG_PATH
 		CF_DebugUI_Block dbg;
@@ -70,8 +92,21 @@ class eAIPathFinding
 			}
 		}
 		#endif
+	}
+	
+	void OnUpdate(float pDt, int pSimulationPrecision)
+	{
+		OnDebug();
 		
 		m_Time += pDt;
+
+		if (m_RoadPathReady)
+		{
+			m_RoadPath.Clear();
+			m_RoadPath.Copy(m_RoadPathSwap);
+			m_RoadPathSwap.Clear();
+			m_RoadPathReady = false;
+		}
 
 		float reqTime = pSimulationPrecision * (pSimulationPrecision + 1) * 0.025;
 		if (m_Time < reqTime) return;
@@ -90,24 +125,25 @@ class eAIPathFinding
 				bool generatedPath = false;
 				if (vector.DistanceSq(m_Unit.GetPosition(), m_Position) > (50 * 50))
 				{
-					array<vector> path();
-					m_RoadNetwork.FindPath(m_Unit.GetPosition(), m_Position, path);
+					//Print("+eAIPathFinding::OnUpdate");
+					if (!m_IsFindingRoadPath) m_RoadNetwork.FindPath(m_Unit.GetPosition(), m_Position, this);
+					//Print("-eAIPathFinding::OnUpdate");
 
-					if (path.Count() >= 2)
+					if (m_RoadPath.Count() >= 2)
 					{
 						generatedPath = true;
 
-						vector end = path[0];
-						vector start = path[path.Count() - 2];
+						vector end = m_RoadPath[0];
+						vector start = m_RoadPath[m_RoadPath.Count() - 2];
 
 						m_AIWorld.FindPath(m_Unit.GetPosition(), start, m_PathFilter, m_Path);
-						for (int j = 1; j < path.Count(); j++)
+						for (int j = 1; j < m_RoadPath.Count(); j++)
 						{
-							m_Path.Insert(path[path.Count() - j - 1]);
+							m_Path.Insert(m_RoadPath[m_RoadPath.Count() - j - 1]);
 						}
 						m_AIWorld.FindPath(end, m_Position, m_PathFilter, m_Path);
 						
-						//m_Time = -1;
+						m_Time = -1;
 					}
 				}
 
@@ -214,7 +250,7 @@ class eAIPathFinding
 		int index = 0;
 		float minDist = 1000000000.0;
 
-		float epsilon = -0.5;
+		float epsilon = 0.5;
 		for (int i = 0; i < m_Path.Count() - 1; i++)
 		{
 			float dist = Distance(i, position);

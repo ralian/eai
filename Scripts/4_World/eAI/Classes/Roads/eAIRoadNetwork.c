@@ -338,14 +338,30 @@ class eAIRoadNetwork
 		return closest;
 	}
 
-	void FindPath(vector start, vector end, inout array<vector> path)
+	void FindPath(vector start, vector end, eAIPathFinding pathFinding)
 	{
+		//Print("+eAIRoadNetwork::FindPath");
+		thread _FindPath(start, end, pathFinding);
+		//Print("-eAIRoadNetwork::FindPath");
+	}
+
+	private void _FindPath(vector start, vector end, eAIPathFinding pathFinding)
+	{
+		//Print("+eAIRoadNetwork::_FindPath");
+		
+		Sleep(10);
+		
 		eAIRoadNode start_node = GetClosestNode(start);
 		eAIRoadNode end_node = GetClosestNode(end);
 		
-		if (!start_node) return;
-		if (!end_node) return;
-				
-		AStar.Perform(start_node, end_node, path);
+		if (start_node && end_node)
+		{
+			array<vector> path;
+			pathFinding.StartRoadPath(path);
+			AStar.Perform(start_node, end_node, path);
+			pathFinding.FinishRoadPath(path);
+		}
+		
+		//Print("-eAIRoadNetwork::_FindPath");
 	}
 };
