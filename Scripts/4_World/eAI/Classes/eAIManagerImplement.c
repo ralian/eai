@@ -7,10 +7,14 @@ enum eAIProcessingState
 
 class eAIManagerImplement extends eAIManagerBase
 {
+	private static eAIManagerImplement m_Instance; //! weak ref
+
 	private ref eAIRoadNetwork m_Navmesh;
 
 	void eAIManagerImplement()
 	{
+		m_Instance = this;
+		
 		m_CommandManager = new eAICommandManagerClient();
 
 		m_Navmesh = new eAIRoadNetwork();
@@ -30,6 +34,11 @@ class eAIManagerImplement extends eAIManagerBase
 
 			SetInGroup(player && player.GetGroup() != null);
 		}
+	}
+
+	static eAIManagerImplement Get()
+	{
+		return m_Instance;
 	}
 
 	eAIRoadNetwork GetRoadNetwork()
