@@ -548,6 +548,10 @@ class eAIBase extends PlayerBase
 			m_DebugShapes[i].Destroy();
 		m_DebugShapes.Clear();
 #endif
+
+		#ifdef CF_DebugUI
+		CF_DebugUI_Block dbg;
+		#endif
 		
 		//! handle death with high priority
 		if (HandleDeath(pCurrentCommandID))
@@ -561,6 +565,11 @@ class eAIBase extends PlayerBase
 
 		//if (!m_DebugTargetApple)
 		{
+			#ifdef EAI_DEBUG_PATH
+			Class.CastTo(dbg, CF.DebugUI.Get("PATH", this));
+			dbg.Clear();
+			#endif
+
 			UpdateTargets();
 			PriotizeTargets();
 
@@ -624,7 +633,6 @@ class eAIBase extends PlayerBase
 		UpdateDelete();
 
 		#ifdef EAI_DEBUG_FSM
-		CF_DebugUI_Block dbg;
 		Class.CastTo(dbg, CF.DebugUI.Get("FSM", this));
 		dbg.Clear();
 		if (m_FSM) m_FSM.Debug_Update(dbg, 0, pDt, simulationPrecision);

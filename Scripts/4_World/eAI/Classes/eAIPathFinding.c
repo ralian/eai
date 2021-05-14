@@ -44,6 +44,9 @@ class eAIPathFinding
 		int exFlags = PGPolyFlags.DISABLED | PGPolyFlags.SWIM | PGPolyFlags.SWIM_SEA | PGPolyFlags.SPECIAL | PGPolyFlags.JUMP | PGPolyFlags.CLIMB | PGPolyFlags.CRAWL | PGPolyFlags.CROUCH;
 
 		m_PathFilter.SetFlags(inFlags, exFlags, PGPolyFlags.NONE);
+		m_PathFilter.SetCost(PGAreaType.OBJECTS, 1.0);
+		m_PathFilter.SetCost(PGAreaType.TERRAIN, 1.0);
+		m_PathFilter.SetCost(PGAreaType.BUILDING, 1.0);
 	}
 
 	void OnUpdate(float pDt, int pSimulationPrecision)
@@ -64,22 +67,35 @@ class eAIPathFinding
 			{
 				if (m_Overriding == eAITargetOverriding.POSITION) m_Position = m_OverridePosition;
 
-				vector modifiedTargetPosition = m_OverridePosition;
-				if (vector.DistanceSq(GetPosition(), m_Position) > (50 * 50))
+				vector modifiedTargetPosition = m_Position;
+				if (vector.DistanceSq(m_Unit.GetPosition(), m_Position) > (50 * 50))
 				{
-					m_RoadNetwork.FindPath(GetPosition(), m_Position, m_Path);
+					m_RoadNetwork.FindPath(m_Unit.GetPosition(), m_Position, m_Path);
 					
 					vector start = m_Path[0];
 					vector end = m_Path[m_Path.Count() - 1];
-					m_AIWorld.FindPath(GetPosition(), start, m_PathFilter, m_Path);
+
+					m_AIWorld.FindPath(m_Unit.GetPosition(), start, m_PathFilter, m_Path);
 					m_AIWorld.FindPath(end, m_Position, m_PathFilter, m_Path);
+					
+					m_Time = -10000.0;
 				}
 				else
 				{
-					m_AIWorld.FindPath(GetPosition(), modifiedTargetPosition, m_PathFilter, m_Path);
+					m_AIWorld.FindPath(m_Unit.GetPosition(), modifiedTargetPosition, m_PathFilter, m_Path);
 				}
 			}
 		}
+
+		#ifdef EAI_DEBUG_PATH
+		CF_DebugUI_Block dbg;
+		Class.CastTo(dbg, CF.DebugUI.Get("PATH", m_Unit));
+		dbg.Clear();
+		for (int i = 0; i < m_Path.Count(); i++)
+		{
+			dbg.Set("[" + i + "]", m_Path[i]);
+		}
+		#endif
 	}
 
 	void SetPosition(vector pPosition)
@@ -177,8 +193,8 @@ class eAIPathFinding
 		int index = 0;
 		float minDist = 1000000000.0;
 
-		float epsilon = -0.5;
-		for (int i = 0; i < m_Path.Count() - 1; ++i)
+		float epsilon = 0.5;
+		for (int i = 0; i < m_Path.Count() - 1; i++)
 		{
 			float dist = Distance(i, position);
 			

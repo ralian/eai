@@ -78,13 +78,14 @@ class eAIRoadNetwork
 		int x, z, i, j;
 
 		array<ref Param3<eAIRoadNode, vector, bool>> connections();
-		for (x = 0; x < m_Width; x++)
+		//for (x = 0; x < m_Width; x++)
 		{
-			for (z = 0; z < m_Height; z++)
+			//for (z = 0; z < m_Height; z++)
 			{
 				array<Object> objects();
 				array<CargoBase> proxyCargos();
-				GetGame().GetObjectsAtPosition(Vector(x, 0, z), 1.0, objects, proxyCargos);
+
+				GetGame().GetObjectsAtPosition(m_CenterPoint, m_Width * 2.0, objects, proxyCargos);
 
 				for (i = 0; i < objects.Count(); i++)
 				{
@@ -102,22 +103,30 @@ class eAIRoadNetwork
 			}
 		}
 
+		Param3<eAIRoadNode, vector, bool> a;
+		Param3<eAIRoadNode, vector, bool> b;
+
 		for (i = 0; i < connections.Count(); i++)
 		{
-			if (connections[i].param3) continue;
+			Print(i);
+
+			a = connections[i];
+			if (a.param3) continue;
 
 			for (j = i + 1; j < connections.Count(); j++)
 			{
-				if (connections[j].param3) continue;
-				if (connections[i].param1 == connections[j].param1) continue;
+				b = connections[j];
 
-				if (vector.Distance(connections[i].param2, connections[j].param2) < 0.5)
+				if (b.param3) continue;
+				if (a.param1 == b.param1) continue;
+
+				if (vector.DistanceSq(a.param2, b.param2) < 1.0)
 				{
-					connections[i].param3 = true;
-					connections[j].param3 = true;
+					a.param3 = true;
+					b.param3 = true;
 
-					connections[i].param1.Add(connections[j].param1);
-					connections[j].param1.Add(connections[i].param1);
+					a.param1.Add(b.param1);
+					b.param1.Add(a.param1);
 				}
 			}
 		}
@@ -235,6 +244,7 @@ class eAIRoadNetwork
 	{
 		eAIRoadNode closest = GetClosestNode(start);
 		PathFilter filter = new PathFilter();
+		filter.m_Distance = 10.0;
 		AStar.Search(closest, end, filter, path);
 	}
 };

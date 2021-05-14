@@ -23,10 +23,11 @@ class eAIRoadNode extends PathNode
 
 			vector lPos = obj.ModelToWorld(obj.GetMemoryPointPos(lName));
 			vector rPos = obj.ModelToWorld(obj.GetMemoryPointPos(rName));
+			vector pos = (lPos + rPos) * 0.5;
 
-			m_Position = m_Position + lPos + rPos;
+			m_Position = m_Position + pos;
 
-			connections.Insert(new Param3<eAIRoadNode, vector, bool>(this, (lPos + rPos) * 0.5, false));
+			connections.Insert(new Param3<eAIRoadNode, vector, bool>(this, pos, false));
 			count++;
 		}
 
@@ -70,6 +71,7 @@ class eAIRoadNode extends PathNode
 		count = line_content.ToInt();
 
 		eAIRoadNodeJoinMap loadCon = new eAIRoadNodeJoinMap();
+		loadCon.node = this;
 		for (int i = 0; i < count; i++)
 		{
 			FGets(file_handle, line_content);
