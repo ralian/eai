@@ -9,6 +9,14 @@ class eAIRoadNode extends PathNode
 	};
 
 	int m_Index;
+	
+	ref array<eAIRoadSection> m_Sections = new array<eAIRoadSection>();
+
+	void InsertSection(eAIRoadSection section)
+	{
+		m_Sections.Insert(section);
+		section.m_Nodes.Insert(this);
+	}
 
 	bool Generate(Object obj, int index, out array<ref Param3<eAIRoadNode, vector, bool>> connections)
 	{

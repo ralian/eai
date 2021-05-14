@@ -5,6 +5,16 @@ class PathNode
 
 	ref array<ref PathNode> m_Neighbours = new array<ref PathNode>();
 
+	int Count()
+	{
+		return m_Neighbours.Count();
+	}
+
+	PathNode Get(int index)
+	{
+		return m_Neighbours[index];
+	}
+
 	void Add(PathNode node)
 	{
 		if (node == this) return;

@@ -15,9 +15,19 @@ class PriorityQueue<Class T>
 	T Dequeue()
 	{
 		int bestIndex = 0;
+		
+		int idx = 0;
 
 		for (int i = 0; i < elements.Count(); i++)
 		{
+			idx++;
+			
+			if (idx > 20)
+			{
+				Sleep(1);
+				idx = 0;
+			}
+			
 			if (elements[i].param2 < elements[bestIndex].param2)
 			{
 				bestIndex = i;

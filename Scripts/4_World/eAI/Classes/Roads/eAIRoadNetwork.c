@@ -5,6 +5,7 @@ class eAIRoadNetwork
 	private int m_Width;
 	private int m_Height;
 	private ref array<ref eAIRoadNode> m_Roads;
+	private ref array<ref eAIRoadSection> m_Sections;
 
 	private ref array<string> m_Directories;
 	private string m_FilePath;
@@ -19,6 +20,7 @@ class eAIRoadNetwork
 	void eAIRoadNetwork()
 	{
 		m_Roads = new array<ref eAIRoadNode>();
+		m_Sections = new array<ref eAIRoadSection>();
 		m_Directories = new array<string>();
 
 		m_WorldName = GetGame().GetWorldName();
@@ -90,8 +92,39 @@ class eAIRoadNetwork
 		#endif
 	}
 
+	void DS_SectionCreate(vector position, float radius)
+	{
+		DS_Destroy();
+
+		//#ifndef SERVER
+		array<PathNode> visited();
+		for (int i = 0; i < m_Sections.Count(); i++)
+		{
+			if (visited.Find(m_Sections[i]) != -1) continue;
+			vector p1 = m_Sections[i].m_Position;
+			p1[1] = 0;
+			position[1] = 0;
+			if (vector.Distance(p1, position) > radius) continue;
+			visited.Insert(m_Sections[i]);
+
+			m_DebugShapes.Insert(Shape.CreateSphere(0xFF0000FF, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME | ShapeFlags.NOZBUFFER, m_Sections[i].m_Position, 0.5));
+			
+			for (int j = 0; j < m_Sections[i].m_Neighbours.Count(); j++)
+			{
+				if (visited.Find(m_Sections[i].m_Neighbours[j]) != -1) continue;
+
+				vector points[2];
+				points[0] = m_Sections[i].m_Position;
+				points[1] = m_Sections[i].m_Neighbours[j].m_Position;
+				m_DebugShapes.Insert(Shape.CreateLines(0xFFFF0000, ShapeFlags.VISIBLE | ShapeFlags.NOZBUFFER, points, 2));
+			}
+		}
+		//#endif
+	}
+
 	void Init()
 	{
+		bool loaded = false;
 		foreach (string directory : m_Directories)
 		{
 			m_FilePath = directory + "/" + m_WorldName + ".roads";
@@ -99,14 +132,166 @@ class eAIRoadNetwork
 			{
 				if (Load(m_Directories[0] == directory))
 				{
-					return;
+					loaded = true;
+					break;
 				}
 			}
 		}
 
-		m_FilePath = m_Directories[0] + "/" + m_WorldName + ".roads";
-		Generate();
-		Save();
+		if (!loaded)
+		{
+			m_FilePath = m_Directories[0] + "/" + m_WorldName + ".roads";
+			Generate();
+			Save();
+		}
+
+		eAIRoadNode node1;
+		eAIRoadNode node2;
+		eAIRoadSection sectionSelf;
+		eAIRoadSection section1;
+		eAIRoadSection section2;
+
+		for (int i = 0; i < m_Roads.Count(); i++)
+		{
+			node1 = null;
+			node2 = null;
+			sectionSelf = null;
+			section1 = null;
+			section2 = null;
+
+			//! IF HELL
+			if (m_Roads[i].Count() == 2)
+			{
+				Class.CastTo(node1, m_Roads[i][0]);
+				Class.CastTo(node2, m_Roads[i][1]);
+
+				//STEPS:
+				// Already assigned a section?
+				//  Assign neighbours with the same section.
+				//  Do they already have a section assigned, check if they have no branches. If not, merge the sections
+				// Doesn't have a section
+				//  Check if either of the neighbours have a section assigned
+				//  If they have sections assigned, check to see if they have branches
+				//   If they have branches, assign this road a new section
+				//   If only one has a branch, assign this road to the neighbour without a branch. Add this section to the neighbour with a branch so they know about this
+
+				if (m_Roads[i].m_Sections.Count() != 0)
+				{
+					sectionSelf = m_Roads[i].m_Sections[0];
+
+					if (node1.m_Sections.Count() == 1) section1 = node1.m_Sections[0];
+					if (node2.m_Sections.Count() == 1) section2 = node2.m_Sections[0];
+
+					if (section1 != section2)
+					{
+						if (section1 == sectionSelf)
+						{
+							if (section2 == null)
+							{
+								node2.InsertSection(sectionSelf);
+							}
+							else
+							{
+								MergeSections(section2, sectionSelf);
+							}
+						}
+						else if (section2 == sectionSelf)
+						{
+							if (section1 == null)
+							{
+								node1.InsertSection(sectionSelf);
+							}
+							else
+							{
+								MergeSections(section1, sectionSelf);
+							}
+						}
+					}
+				}
+				else
+				{
+					if (node1.m_Sections.Count() == 1) section1 = node1.m_Sections[0];
+					if (node2.m_Sections.Count() == 1) section2 = node2.m_Sections[0];
+
+					if (section1 != section2)
+					{
+						if (section1 != null)
+						{
+							m_Roads[i].InsertSection(section1);
+
+							if (section2 != null)
+							{
+								MergeSections(section1, section2);
+							}
+						}
+						else if (section2 != null)
+						{
+							m_Roads[i].InsertSection(section2);
+						}
+						else
+						{
+							m_Roads[i].InsertSection(CreateSection());
+						}
+					}
+				}
+			}
+			else if (m_Roads[i].Count() == 1)
+			{
+				Class.CastTo(node1, m_Roads[i][0]);
+				if (m_Roads[i].m_Sections.Count() != 0)
+				{
+					sectionSelf = m_Roads[i].m_Sections[0];
+
+					if (node1.m_Sections.Count() == 1) section1 = node1.m_Sections[0];
+
+					if (sectionSelf != section1)
+					{
+						if (section1 == null)
+						{
+							node1.InsertSection(sectionSelf);
+						}
+						else
+						{
+							MergeSections(section1, sectionSelf);
+						}
+					}
+				}
+				else
+				{
+					if (node1.m_Sections.Count() == 1) section1 = node1.m_Sections[0];
+
+					if (section1 == null)
+					{
+						m_Roads[i].InsertSection(CreateSection());
+					}
+					else
+					{
+						m_Roads[i].InsertSection(section1);
+					}
+				}
+			}
+			else
+			{
+
+			}
+		}
+
+		for (i = 0; i < m_Sections.Count(); i++)
+		{
+			m_Sections[i].Init();
+		}
+	}
+
+	eAIRoadSection CreateSection()
+	{
+		eAIRoadSection section = new eAIRoadSection();
+		m_Sections.Insert(section);
+		return section;
+	}
+
+	void MergeSections(eAIRoadSection a, eAIRoadSection b)
+	{
+
 	}
 
 	private void Resize(int width, int height)
@@ -341,15 +526,18 @@ class eAIRoadNetwork
 	void FindPath(vector start, vector end, eAIPathFinding pathFinding)
 	{
 		//Print("+eAIRoadNetwork::FindPath");
-		thread _FindPath(start, end, pathFinding);
+		GetGame().GameScript.Call(this, "_FindPath", new Param3<vector, vector, eAIPathFinding>(start, end, pathFinding));
+		//thread _FindPath(start, end, pathFinding);
 		//Print("-eAIRoadNetwork::FindPath");
 	}
 
-	private void _FindPath(vector start, vector end, eAIPathFinding pathFinding)
+	void _FindPath(Param3<vector, vector, eAIPathFinding> param)
 	{
 		//Print("+eAIRoadNetwork::_FindPath");
 		
-		Sleep(10);
+		vector start = param.param1;
+		vector end = param.param2;
+		eAIPathFinding pathFinding = param.param3;
 		
 		eAIRoadNode start_node = GetClosestNode(start);
 		eAIRoadNode end_node = GetClosestNode(end);

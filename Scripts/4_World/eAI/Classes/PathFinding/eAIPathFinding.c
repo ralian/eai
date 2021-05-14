@@ -59,6 +59,7 @@ class eAIPathFinding
 
 	void StartRoadPath(out array<vector> path)
 	{
+		Print("StartRoadPath");
 		m_RoadPathSwap.Clear();
 		path = m_RoadPathSwap;
 		m_IsFindingRoadPath = true;
@@ -66,7 +67,8 @@ class eAIPathFinding
 
 	void FinishRoadPath(array<vector> path)
 	{
-		//m_RoadPathSwap = path;
+		Print("FinishRoadPath");
+		m_RoadPathSwap = path;
 		m_RoadPathReady = true;
 		m_IsFindingRoadPath = false;
 	}
@@ -96,7 +98,7 @@ class eAIPathFinding
 	
 	void OnUpdate(float pDt, int pSimulationPrecision)
 	{
-		OnDebug();
+		//OnDebug();
 		
 		m_Time += pDt;
 
@@ -126,7 +128,7 @@ class eAIPathFinding
 				if (vector.DistanceSq(m_Unit.GetPosition(), m_Position) > (50 * 50))
 				{
 					//Print("+eAIPathFinding::OnUpdate");
-					if (!m_IsFindingRoadPath) m_RoadNetwork.FindPath(m_Unit.GetPosition(), m_Position, this);
+					//if (!m_IsFindingRoadPath) m_RoadNetwork.FindPath(m_Unit.GetPosition(), m_Position, this);
 					//Print("-eAIPathFinding::OnUpdate");
 
 					if (m_RoadPath.Count() >= 2)

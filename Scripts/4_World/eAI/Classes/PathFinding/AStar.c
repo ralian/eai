@@ -17,9 +17,18 @@ class AStar
 
 		mappedPath[start] = null;
 		cost[start] = 0.0;
+		
+		int idx = 0;
 
 		while (queue.Count() > 0)
 		{
+			idx++;
+			if (idx > 5)
+			{
+				Sleep(1);
+				idx = 0;
+			}
+			
 			current = queue.Dequeue();
 
 			if (current == goal) break;
