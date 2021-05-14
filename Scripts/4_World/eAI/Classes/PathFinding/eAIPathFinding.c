@@ -101,7 +101,7 @@ class eAIPathFinding
 						vector start = path[path.Count() - 2];
 
 						m_AIWorld.FindPath(m_Unit.GetPosition(), start, m_PathFilter, m_Path);
-						for (int j = 0; j < path.Count(); j++)
+						for (int j = 1; j < path.Count(); j++)
 						{
 							m_Path.Insert(path[path.Count() - j - 1]);
 						}
@@ -214,7 +214,7 @@ class eAIPathFinding
 		int index = 0;
 		float minDist = 1000000000.0;
 
-		float epsilon = 0.5;
+		float epsilon = -0.5;
 		for (int i = 0; i < m_Path.Count() - 1; i++)
 		{
 			float dist = Distance(i, position);

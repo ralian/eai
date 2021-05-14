@@ -55,10 +55,13 @@ class eAIRoadNode extends PathNode
 		dirA[1] = 0;
 		dirB[1] = 0;
 
-		float dist = dirA.Normalize() + dirB.Normalize();
+		dirA.Normalize();
+		dirB.Normalize();
+
+		float distSq = vector.DistanceSq(a.m_Position, b.m_Position);
 
 		//! If the angle of change is too small to notice and the distance is close enough, remove this node
-		if (vector.Dot(dirA, dirB) > 0.98 && dist < 50.0)
+		if (vector.Dot(dirA, dirB) > 0.98 && distSq < (50.0 * 50.0))
 		{
 			a.Remove(this);
 			b.Remove(this);

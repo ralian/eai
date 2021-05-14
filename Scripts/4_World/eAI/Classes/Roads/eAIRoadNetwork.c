@@ -64,7 +64,7 @@ class eAIRoadNetwork
 	{
 		DS_Destroy();
 
-		//#ifndef SERVER
+		#ifndef SERVER
 		array<PathNode> visited();
 		for (int i = 0; i < m_Roads.Count(); i++)
 		{
@@ -87,7 +87,7 @@ class eAIRoadNetwork
 				m_DebugShapes.Insert(Shape.CreateLines(0xFFFF0000, ShapeFlags.VISIBLE | ShapeFlags.NOZBUFFER, points, 2));
 			}
 		}
-		//#endif
+		#endif
 	}
 
 	void Init()
@@ -166,14 +166,20 @@ class eAIRoadNetwork
 			a = connections[i];
 			if (a.param3) continue;
 
-			for (j = i + 1; j < connections.Count(); j++)
+			for (j = 0; j < connections.Count(); j++)
 			{
 				b = connections[j];
 
 				if (b.param3) continue;
 				if (a.param1 == b.param1) continue;
 
-				if (vector.DistanceSq(a.param2, b.param2) < (1.0))
+				vector aPos = a.param2;
+				vector bPos = b.param2;
+
+				aPos[1] = 0.0;
+				bPos[1] = 0.0;
+
+				if (vector.DistanceSq(aPos, bPos) < (2.0))
 				{
 					a.param3 = true;
 					b.param3 = true;
@@ -186,7 +192,7 @@ class eAIRoadNetwork
 
 		Print("Connecting Roads (Nearby)");
 
-		float nearByDist = 15.0;
+		float nearByDist = 10.0;
 		float nearByDistSq = nearByDist * nearByDist;
 
 		//! Connect roads that weren't placed properly (ADAM!!!!!!!!!!!!)

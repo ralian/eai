@@ -41,7 +41,9 @@ class AStar
 		while (mappedPath.Contains(current))
 		{
 			current = mappedPath[current];
-			path.Insert(current.m_Position);	
+			if (!current) return;
+			
+			path.Insert(current.m_Position);
 		}
 	}
 }
