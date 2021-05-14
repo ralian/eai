@@ -128,7 +128,7 @@ class eAICommandMove extends eAICommandBase
 		vector wayPoint = position;
 
 		bool isFinal = true;
-		if (m_Unit.Count() >= 2)
+		if (m_PathFinding.Count() >= 2)
 		{
 			wayPointIndex = m_PathFinding.Next(position);
 			wayPoint = m_PathFinding[wayPointIndex];
@@ -149,7 +149,7 @@ class eAICommandMove extends eAICommandBase
 			
 			wayPointDistance = vector.DistanceSq(wayPoint, position);
 
-			isFinal = wayPointIndex == m_Unit.Count() - 1;
+			isFinal = wayPointIndex == m_PathFinding.Count() - 1;
 		}
 
 		float minFinal = 0.3;

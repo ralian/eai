@@ -14,7 +14,7 @@
 
 class eAIManager extends eAIManagerImplement
 {
-	private static eAIManager m_Instance; //! weak ref
+	private static eAIManager m_Instance_5; //! weak ref
 
 	autoptr eAIAimingProfileManager m_AimingManager;
 	
@@ -22,7 +22,7 @@ class eAIManager extends eAIManagerImplement
 	
     void eAIManager()
 	{
-		m_Instance = this;
+		m_Instance_5 = this;
 
 		m_AimingManager = new eAIAimingProfileManager();
 		
@@ -35,9 +35,9 @@ class eAIManager extends eAIManagerImplement
 		GetRPCManager().AddRPC("eAI", "ReqFormStop", this, SingeplayerExecutionType.Server);
     }
 
-	static eAIManager Get()
+	static eAIManager Get5()
 	{
-		return m_Instance;
+		return m_Instance_5;
 	}
 	
 	override void OnUpdate(bool doSim, float timeslice)

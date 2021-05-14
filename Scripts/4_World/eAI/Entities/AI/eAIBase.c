@@ -464,7 +464,7 @@ class eAIBase extends PlayerBase
 	{
 		//eAITrace trace(this, "UseTargetting");
 		
-		m_eAI_TargetOverriding = eAITargetOverriding.NONE;
+		m_PathFinding.StopOverride();
 	}
 
 	/**
@@ -563,8 +563,14 @@ class eAIBase extends PlayerBase
 		{
 			UpdateTargets();
 			PriotizeTargets();
+
+			if (m_PathFinding.GetOverride() && m_eAI_Targets.Count() > 0)
+			{
+				eAITarget target = m_eAI_Targets[0];
+				if (target.HasInfo()) m_PathFinding.SetPosition(target.GetPosition(this));
+			}
 			
-			m_PathFinding.OnUpdate(pDt);
+			m_PathFinding.OnUpdate(pDt, simulationPrecision);
 		}
 		/*
 		else

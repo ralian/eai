@@ -1,5 +1,7 @@
 class eAIManagerBase
 {
+	private static eAIManagerBase m_Instance_3; //! weak ref
+
 	protected ref eAICommandManager m_CommandManager;
 
     private bool m_IsAdmin;
@@ -7,6 +9,8 @@ class eAIManagerBase
 
     void eAIManagerBase()
     {
+		m_Instance_3 = this;
+
         eAILogger.Init();
 
         // anything dependent on settings during init must be initialized first.
@@ -15,6 +19,11 @@ class eAIManagerBase
         SetAdmin(false);
 		GetRPCManager().AddRPC("eAI", "RPC_SetAdmin", this, SingeplayerExecutionType.Client);
     }
+
+	static eAIManagerBase Get3()
+	{
+		return m_Instance_3;
+	}
 	
 	eAICommandManager GetCommandManager()
     {
