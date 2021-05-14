@@ -7,31 +7,31 @@ enum eAITargetOverriding
 
 class eAIPathFinding
 {
-    private eAIBase m_Unit;
+	private eAIBase m_Unit;
 
-    private float m_Time;
+	private float m_Time;
 
-    private bool m_InVehicle;
-    private bool m_IsDriving;
+	private bool m_InVehicle;
+	private bool m_IsDriving;
 
 	private ref PGFilter m_PathFilter;
 	private ref array<vector> m_Path;
 	private vector m_TargetPosition;
 	private eAITargetOverriding m_TargetOverriding;
 
-    private AIWorld m_AIWorld;
-    private eAIRoadNetwork m_RoadNetwork;
+	private AIWorld m_AIWorld;
+	private eAIRoadNetwork m_RoadNetwork;
 
-    void eAIPathFinding()
-    {
+	void eAIPathFinding()
+	{
 		m_Path = new array<vector>();
 		m_PathFilter = new PGFilter();
 
 		m_AIWorld = GetGame().GetWorld().GetAIWorld();
-        m_RoadNetwork = eAIManagerImplement.Get().GetRoadNetwork();
+		m_RoadNetwork = eAIManagerImplement.Get().GetRoadNetwork();
 
 		SetPathFilter();
-    }
+	}
 
 	private void SetPathFilter()
 	{
@@ -41,13 +41,13 @@ class eAIPathFinding
 		m_PathFilter.SetFlags(inFlags, exFlags, PGPolyFlags.NONE);
 	}
 
-    void OnUpdate(float pDt, int pSimulationPrecision)
-    {
-        m_Time += pDt;
+	void OnUpdate(float pDt, int pSimulationPrecision)
+	{
+		m_Time += pDt;
 
-        float reqTime = pSimulationPrecision * (pSimulationPrecision + 1) * 0.025;
-        if (m_Time < reqTime) return;
-        m_Time = 0;
+		float reqTime = pSimulationPrecision * (pSimulationPrecision + 1) * 0.025;
+		if (m_Time < reqTime) return;
+		m_Time = 0;
 
 		SetPathFilter();
 
@@ -67,19 +67,19 @@ class eAIPathFinding
 				vector modifiedTargetPosition = m_TargetPosition;
 				if (vector.DistanceSq(GetPosition(), m_TargetPosition) > (50 * 50))
 				{
-                    m_RoadNetwork.Find(GetPosition(), m_TargetPosition, m_Path);
-                    vector start = m_Path[0];
-                    vector end = m_Path[m_Path.Count() - 1];
-                    world.FindPath(GetPosition(), start, m_PathFilter, m_Path);
-                    world.FindPath(end, m_TargetPosition, m_PathFilter, m_Path);
+					m_RoadNetwork.Find(GetPosition(), m_TargetPosition, m_Path);
+					vector start = m_Path[0];
+					vector end = m_Path[m_Path.Count() - 1];
+					world.FindPath(GetPosition(), start, m_PathFilter, m_Path);
+					world.FindPath(end, m_TargetPosition, m_PathFilter, m_Path);
 				}
-                else
-                {
-				    world.FindPath(GetPosition(), modifiedTargetPosition, m_PathFilter, m_Path);
-                }
+				else
+				{
+					world.FindPath(GetPosition(), modifiedTargetPosition, m_PathFilter, m_Path);
+				}
 			}
 		}
-    }
+	}
 
 	vector GetTargetPosition()
 	{
@@ -109,14 +109,9 @@ class eAIPathFinding
 		m_TargetOverriding = eAITargetOverriding.POSITION;
 		m_TargetPosition = pPosition;
 	}
-    
+	
 	float Distance(int index, vector position)
 	{
-        vector start = m_Path[index];
-        vector end = m_Path[index];
-        vector dir = vector.Direction(start, end);
-        float len = dir.Normalize(); 
-
 		vector begin = m_Path[index];
 		vector end = m_Path[index + 1] - begin;
 		vector relative = position - begin;
