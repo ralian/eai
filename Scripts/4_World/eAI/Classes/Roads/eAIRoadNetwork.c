@@ -106,7 +106,7 @@ class eAIRoadNetwork
 		{
 			if (connections[i].param3) continue;
 
-			for (j = 0; j < connections.Count(); j++)
+			for (j = i + 1; j < connections.Count(); j++)
 			{
 				if (connections[j].param3) continue;
 				if (connections[i].param1 == connections[j].param1) continue;

@@ -14,7 +14,7 @@ class eAIManagerImplement extends eAIManagerBase
 		m_CommandManager = new eAICommandManagerClient();
 
 		m_Navmesh = new eAIRoadNetwork();
-		//m_Navmesh.Init();
+		m_Navmesh.Init();
 	}
 
 	override void OnUpdate(bool doSim, float timeslice)
