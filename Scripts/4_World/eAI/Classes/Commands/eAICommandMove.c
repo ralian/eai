@@ -5,6 +5,8 @@ class eAICommandMove extends eAICommandBase
 	
 	private int m_PreviousInteractionLayer;
 
+	private eAIPathFinding m_PathFinding;
+
 	private float m_Turn;
 	private float m_TurnTarget;
 	private float m_TurnDifference;
@@ -39,6 +41,7 @@ class eAICommandMove extends eAICommandBase
 			
 	void eAICommandMove(eAIBase unit, eAIAnimationST st)
 	{
+		m_PathFinding = unit.GetPathFinding();
 	}
 	
 	void ~eAICommandMove()
@@ -123,12 +126,12 @@ class eAICommandMove extends eAICommandBase
 		float wayPointDistance = 0.0;
 		int wayPointIndex;
 		vector wayPoint = position;
+
 		bool isFinal = true;
-		
-		if (m_Unit.PathCount() >= 2)
+		if (m_Unit.Count() >= 2)
 		{
-			wayPointIndex = m_Unit.FindNext(position, wayPointDistance);
-			wayPoint = m_Unit.PathGet(wayPointIndex);
+			wayPointIndex = m_PathFinding.Next(position);
+			wayPoint = m_PathFinding[wayPointIndex];
 
 			float y = GetGame().SurfaceY(wayPoint[0], wayPoint[2]);			
 			if (y > wayPoint[1]) wayPoint[1] = y;
@@ -146,7 +149,7 @@ class eAICommandMove extends eAICommandBase
 			
 			wayPointDistance = vector.DistanceSq(wayPoint, position);
 
-			isFinal = wayPointIndex == m_Unit.PathCount() - 1;
+			isFinal = wayPointIndex == m_Unit.Count() - 1;
 		}
 
 		float minFinal = 0.3;

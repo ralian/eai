@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-enum eAITargetOverriding
-{
-	NONE,
-	POSITION,
-	PATH
-};
-
 class eAIBase extends PlayerBase
 {
 	private static autoptr array<eAIBase> m_AllAI = new array<eAIBase>();
@@ -76,10 +69,7 @@ class eAIBase extends PlayerBase
 	ref array<ItemBase> m_MeleeWeapons = {};
 	
 	// Path Finding
-	private ref PGFilter m_PathFilter;
-	private ref array<vector> m_Path;
-	private vector m_TargetPosition;
-	private eAITargetOverriding m_eAI_TargetOverriding = eAITargetOverriding.NONE;
+	private ref eAIPathFinding m_PathFinding;
 
 	private Apple m_DebugTargetApple;
 	private float m_DebugAngle;
@@ -110,7 +100,6 @@ class eAIBase extends PlayerBase
 	{
 		super.Init();
 
-		m_Path = new array<vector>();
 		m_eAI_Targets = new array<eAITarget>();
 
 		m_AimingProfile = new eAIAimingProfile(this);
@@ -127,9 +116,7 @@ class eAIBase extends PlayerBase
 		
 		m_eAI_AnimationST = new eAIAnimationST(this);
 
-		m_PathFilter = new PGFilter();
-
-		SetPathFilter();
+		m_PathFinding = new eAIPathFinding(this);
 
 		if (IsMissionHost())
 		{
@@ -155,14 +142,6 @@ class eAIBase extends PlayerBase
 		{
 			GetGroup().RemoveMember(GetGroup().GetIndex(this));
 		}
-	}
-
-	void SetPathFilter()
-	{
-		int inFlags = PGPolyFlags.WALK | PGPolyFlags.DOOR | PGPolyFlags.INSIDE | PGPolyFlags.JUMP_OVER;
-		int exFlags = PGPolyFlags.DISABLED | PGPolyFlags.SWIM | PGPolyFlags.SWIM_SEA | PGPolyFlags.SPECIAL | PGPolyFlags.JUMP | PGPolyFlags.CLIMB | PGPolyFlags.CRAWL | PGPolyFlags.CROUCH;
-
-		m_PathFilter.SetFlags(inFlags, exFlags, PGPolyFlags.NONE);
 	}
 	
 	// Used for deciding the best aim arbiter for the AI.
@@ -256,6 +235,11 @@ class eAIBase extends PlayerBase
 	override bool IsAI()
 	{
 		return true;
+	}
+
+	eAIPathFinding GetPathFinding()
+	{
+		return m_PathFinding;
 	}
 
 	eAIFSM GetFSM()
@@ -357,129 +341,7 @@ class eAIBase extends PlayerBase
 	{
 		m_DebugShapes.Insert(shape);
 	}
-#endif	
-
-	float Distance(int index, vector position)
-	{
-		vector begin = m_Path[index];
-		vector end = m_Path[index + 1] - begin;
-		vector relative = position - begin;
-		float eSize2 = end.LengthSq();
-		if (eSize2 > 0)
-		{
-			float time = (end * relative) / eSize2;
-			vector nearest = begin + Math.Clamp(time, 0, 1) * end;
-			return vector.DistanceSq(nearest, position);
-		}
-
-		return vector.DistanceSq(begin, position);
-	}
-
-	void PathClear()
-	{
-		m_Path.Clear();
-	}
-	
-	int PathCount()
-	{
-		return m_Path.Count();
-	}
-	
-	vector PathGet(int index)
-	{
-		if (index < 0 || index >= m_Path.Count()) return "0 0 0";
-		
-		return m_Path[index];
-	}
-
-	int FindNext(vector position)
-	{
-		float dist;
-		return FindNext(position, dist);
-	}
-	
-	// Checks to see if the path between the start and end is blocked
-	bool PathBlocked(vector start, vector end)
-	{
-		vector hitPos;
-		vector hitNormal;
-		
-		AIWorld world = GetGame().GetWorld().GetAIWorld();
-		
-		bool blocked = world.RaycastNavMesh(start, end, m_PathFilter, hitPos, hitNormal);
-
-#ifndef SERVER
-		int debugColour = 0xFF00FF00;
-		if (blocked) debugColour = 0xFFFF0000;
-		vector points[2];
-		points[0] = start;
-		points[1] = end;
-		if (blocked) points[1] = hitPos;
-		m_DebugShapes.Insert(Shape.CreateLines(debugColour, ShapeFlags.NOZBUFFER, points, 2));
 #endif
-
-		return blocked;
-	}
-	
-	bool IsViewOccluded(vector end) {
-		vector start = GetPosition() + "0 1.5 0";
-		vector hitPos, hitNormal;
-		return PathBlocked(start, end, hitPos, hitNormal);
-	}
-	
-	// Checks to see if the path between the start and end is blocked
-	bool PathBlocked(vector start, vector end, out vector hitPos, out vector hitNormal)
-	{
-		AIWorld world = GetGame().GetWorld().GetAIWorld();
-		
-		bool blocked = world.RaycastNavMesh(start, end, m_PathFilter, hitPos, hitNormal);
-
-#ifndef SERVER
-		int debugColour = 0xFF00FF00;
-		if (blocked) debugColour = 0xFFFF0000;
-		vector points[2];
-		points[0] = start;
-		points[1] = end;
-		if (blocked) points[1] = hitPos;
-		m_DebugShapes.Insert(Shape.CreateLines(debugColour, ShapeFlags.NOZBUFFER, points, 2));
-#endif
-
-		return blocked;
-	}
-
-	int FindNext(vector position, out float minDist)
-	{
-		int index = 0;
-
-		minDist = 1000000000.0;
-
-		float epsilon = -0.5;
-		for (int i = 0; i < m_Path.Count() - 1; ++i)
-		{
-			float dist = Distance(i, position);
-			
-			if (minDist >= dist - epsilon)
-			{
-				if (!PathBlocked(position, m_Path[i + 1]))
-				{
-					minDist = dist;
-					index = i;
-				}
-			}
-		}
-
-		return index + 1;
-	}
-
-	float AngleBetweenPoints(vector pos1, vector pos2)
-	{
-		return vector.Direction(pos1, pos2).Normalized().VectorToAngles()[0];
-	}
-
-	vector GetTargetPosition()
-	{
-		return m_TargetPosition;
-	}
 
 	float GetThreatToSelf()
 	{
@@ -612,8 +474,7 @@ class eAIBase extends PlayerBase
 	{
 		//eAITrace trace(this, "OverridePath");
 
-		m_eAI_TargetOverriding = eAITargetOverriding.PATH;
-		m_Path.Clear();
+		m_PathFinding.OverridePath();
 	}
 
 	/**
@@ -625,8 +486,7 @@ class eAIBase extends PlayerBase
 	{
 		//eAITrace trace(this, "OverridePath", pPath.ToString());
 
-		m_eAI_TargetOverriding = eAITargetOverriding.PATH;
-		pPath.Copy(m_Path);
+		m_PathFinding.OverridePath(pPath);
 	}
 
 	/**
@@ -638,8 +498,7 @@ class eAIBase extends PlayerBase
 	{
 		//eAITrace trace(this, "OverridePosition", pPosition.ToString());
 		
-		m_eAI_TargetOverriding = eAITargetOverriding.POSITION;
-		m_TargetPosition = pPosition;
+		m_PathFinding.OverridePosition(pPosition);
 	}
 
 	/**
@@ -697,40 +556,15 @@ class eAIBase extends PlayerBase
 		}
 		
 		if (!GetGame().IsServer()) return;
-
-		SetPathFilter();
 		
 		int simulationPrecision = 0;
-
-		AIWorld world = GetGame().GetWorld().GetAIWorld();
 
 		//if (!m_DebugTargetApple)
 		{
 			UpdateTargets();
 			PriotizeTargets();
 			
-			if (m_eAI_TargetOverriding != eAITargetOverriding.PATH)
-			{
-				m_Path.Clear();
-				
-				if (m_PathFilter)
-				{
-					if (m_eAI_TargetOverriding != eAITargetOverriding.POSITION && m_eAI_Targets.Count() > 0)
-					{
-						eAITarget target = m_eAI_Targets[0];
-						if (target.HasInfo()) 
-							m_TargetPosition = target.GetPosition(this);
-					}
-
-					vector modifiedTargetPosition = m_TargetPosition;
-					if (vector.DistanceSq(GetPosition(), m_TargetPosition) > 10000.0)
-					{
-						modifiedTargetPosition = GetPosition() + (vector.Direction(GetPosition(), m_TargetPosition).Normalized() * 100.0);
-					}
-					
-					world.FindPath(GetPosition(), modifiedTargetPosition, m_PathFilter, m_Path);
-				}
-			}
+			m_PathFinding.OnUpdate(pDt);
 		}
 		/*
 		else
