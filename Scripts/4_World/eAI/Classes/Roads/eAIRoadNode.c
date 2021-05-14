@@ -41,6 +41,32 @@ class eAIRoadNode extends PathNode
 		return true;
 	}
 
+	bool Optimize(inout array<ref eAIRoadNode> roads, inout array<eAIRoadNode> checked)
+	{
+		//! If we don't have 2 neighbours, then this node may be important
+		if (m_Neighbours.Count() != 2) return false;
+
+		PathNode a = m_Neighbours[0];
+		PathNode b = m_Neighbours[1];
+
+		vector dirA = vector.Direction(a.m_Position, m_Position).Normalized();
+		vector dirB = vector.Direction(m_Position, b.m_Position).Normalized();
+
+		if (vector.Dot(dirA, dirB) > 0.8)
+		{
+			a.Remove(this);
+			b.Remove(this);
+
+			a.Add(b);
+			b.Add(a);
+
+			m_Neighbours.Clear();
+			return true;
+		}
+
+		return false;
+	}
+
 	void Save(FileHandle file_handle, int version)
 	{
 		FPrintln(file_handle, m_Index);

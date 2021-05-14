@@ -73,10 +73,13 @@ class eAIRoadNetwork
 
 	private void Generate()
 	{
+		Print("Generating");
+
 		Resize(m_CenterPoint[0] * 2, m_CenterPoint[1] * 2);
 
 		int x, z, i, j;
 
+		Print("Finding Objects");
 		array<ref Param3<eAIRoadNode, vector, bool>> connections();
 		//for (x = 0; x < m_Width; x++)
 		{
@@ -85,7 +88,10 @@ class eAIRoadNetwork
 				array<Object> objects();
 				array<CargoBase> proxyCargos();
 
-				GetGame().GetObjectsAtPosition(m_CenterPoint, m_Width * 2.0, objects, proxyCargos);
+				float radius = m_Width;
+				if (radius < m_Height) radius = m_Height;
+
+				GetGame().GetObjectsAtPosition(m_CenterPoint, radius * 2.5, objects, proxyCargos);
 
 				for (i = 0; i < objects.Count(); i++)
 				{
@@ -103,13 +109,14 @@ class eAIRoadNetwork
 			}
 		}
 
+		Print("Connecting Roads (Memory Points)");
+
 		Param3<eAIRoadNode, vector, bool> a;
 		Param3<eAIRoadNode, vector, bool> b;
 
+		//! Connect roads that were placed properly
 		for (i = 0; i < connections.Count(); i++)
 		{
-			Print(i);
-
 			a = connections[i];
 			if (a.param3) continue;
 
@@ -120,7 +127,7 @@ class eAIRoadNetwork
 				if (b.param3) continue;
 				if (a.param1 == b.param1) continue;
 
-				if (vector.DistanceSq(a.param2, b.param2) < 1.0)
+				if (vector.DistanceSq(a.param2, b.param2) < (1.0))
 				{
 					a.param3 = true;
 					b.param3 = true;
@@ -130,6 +137,39 @@ class eAIRoadNetwork
 				}
 			}
 		}
+
+		Print("Connecting Roads (Nearby)");
+
+		//! Connect roads that weren't placed properly (ADAM!!!!!!!!!!!!)
+		for (i = 0; i < m_Roads.Count(); i++)
+		{
+			for (j = i + 1; j < m_Roads.Count(); j++)
+			{
+				if (vector.DistanceSq(m_Roads[i].m_Position, m_Roads[j].m_Position) < (4.0 * 4.0))
+				{
+					//! Since we are using a set, we don't have to check if they were already connected
+					//! If we for whatever reason change from a set, be bothered to check if we are connected
+					m_Roads[i].Add(m_Roads[j]);
+					m_Roads[j].Add(m_Roads[i]);
+				}
+			}
+		}
+
+		Print("Optimizing");
+
+		array<eAIRoadNode> checkedRoads();
+		for (i = m_Roads.Count() - 1; i >= 0; i--)
+		{
+			if (m_Roads[i])
+			{
+				if (m_Roads[i].Optimize(m_Roads, checkedRoads))
+				{
+					m_Roads.RemoveOrdered(i);
+				}
+			}
+		}
+
+		Print("Finished Generating");
 	}
 
 	private void Save()
@@ -229,7 +269,7 @@ class eAIRoadNetwork
 		eAIRoadNode closest = null;
 		for (int i = 0; i < m_Roads.Count(); i++)
 		{
-			float dist = vector.Distance(m_Roads[i].m_Position, position) ;
+			float dist = vector.Distance(m_Roads[i].m_Position, position);
 			if (dist < minDistance)
 			{
 				closest = m_Roads[i];
@@ -240,11 +280,14 @@ class eAIRoadNetwork
 		return closest;
 	}
 
-	void FindPath(vector start, vector end, out array<vector> path)
+	void FindPath(vector start, vector end, inout array<vector> path)
 	{
-		eAIRoadNode closest = GetClosestNode(start);
-		PathFilter filter = new PathFilter();
-		filter.m_Distance = 10.0;
-		AStar.Search(closest, end, filter, path);
+		eAIRoadNode start_node = GetClosestNode(start);
+		eAIRoadNode end_node = GetClosestNode(end);
+		
+		if (!start_node) return;
+		if (!end_node) return;
+				
+		AStar.Perform(start_node, end_node, path);
 	}
 };
