@@ -10,10 +10,10 @@ class AStar
 		PriorityQueue<PathNode> queue = new PriorityQueue<PathNode>();
 		queue.Enqueue(start, 0);
 
-		map<PathNode, PathNode> mappedPath();
-		map<PathNode, float> cost();
+		map<ref PathNode, ref PathNode> mappedPath();
+		map<ref PathNode, float> cost();
 
-		PathNode current;
+		PathNode current = null;
 
 		mappedPath[start] = null;
 		cost[start] = 0.0;
@@ -26,7 +26,7 @@ class AStar
 
 			foreach (PathNode next : current.m_Neighbours)
 			{
-				float newCost = cost[current] + vector.Distance(start.m_Position, next.m_Position);
+				float newCost = cost[current] + vector.DistanceSq(goal.m_Position, next.m_Position);
 				if ((!cost.Contains(next) || newCost < cost[next]))
 				{
 					cost[next] = newCost;
@@ -37,13 +37,11 @@ class AStar
 			}
 		}
 
-		bool success = true;
-		while (success)
+		//! By design, to ignore the goal when adding to the list
+		while (mappedPath.Contains(current))
 		{
-			path.Insert(current.m_Position);
-
 			current = mappedPath[current];
-			success = mappedPath.Contains(current);			
+			path.Insert(current.m_Position);	
 		}
 	}
 }

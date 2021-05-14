@@ -1,6 +1,6 @@
 class PriorityQueue<Class T>
 {
-	private ref array<ref Param2<T, float>> elements = new array<ref Param2<T, float>>();
+	private ref array<ref Param2<ref T, float>> elements = new array<ref Param2<ref T, float>>();
 
 	int Count()
 	{
@@ -9,7 +9,7 @@ class PriorityQueue<Class T>
 
 	void Enqueue(T item, float priority)
 	{
-		elements.Insert(new Param2<T, float>(item, priority));
+		elements.Insert(new Param2<ref T, float>(item, priority));
 	}
 
 	T Dequeue()

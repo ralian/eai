@@ -51,7 +51,7 @@ class eAIPathFinding
 
 	void OnUpdate(float pDt, int pSimulationPrecision)
 	{
-		//#ifdef EAI_DEBUG_PATH
+		#ifdef EAI_DEBUG_PATH
 		CF_DebugUI_Block dbg;
 		Class.CastTo(dbg, CF.DebugUI.Get("PATH", m_Unit));
 		dbg.Clear();
@@ -61,15 +61,15 @@ class eAIPathFinding
 
 			if (i != m_Path.Count() - 1)
 			{
-				//#ifndef SERVER
+				#ifndef SERVER
 				vector points[2];
 				points[0] = m_Path[i];
 				points[1] = m_Path[i + 1];
 				m_Unit.AddShape(Shape.CreateLines(0xFFFF0000, ShapeFlags.VISIBLE | ShapeFlags.NOZBUFFER, points, 2));
-				//#endif
+				#endif
 			}
 		}
-		//#endif
+		#endif
 		
 		m_Time += pDt;
 
@@ -87,27 +87,33 @@ class eAIPathFinding
 			{
 				if (m_Overriding == eAITargetOverriding.POSITION) m_Position = m_OverridePosition;
 
-				vector modifiedTargetPosition = m_Position;
+				bool generatedPath = false;
 				if (vector.DistanceSq(m_Unit.GetPosition(), m_Position) > (50 * 50))
 				{
 					array<vector> path();
 					m_RoadNetwork.FindPath(m_Unit.GetPosition(), m_Position, path);
-					
-					vector end = path[0];
-					vector start = path[path.Count() - 1];
 
-					//m_AIWorld.FindPath(m_Unit.GetPosition(), start, m_PathFilter, m_Path);
-					for (int j = 0; j <path.Count(); j++)
+					if (path.Count() >= 2)
 					{
-						m_Path.Insert(path[path.Count() - j - 1]);
+						generatedPath = true;
+
+						vector end = path[0];
+						vector start = path[path.Count() - 2];
+
+						m_AIWorld.FindPath(m_Unit.GetPosition(), start, m_PathFilter, m_Path);
+						for (int j = 0; j < path.Count(); j++)
+						{
+							m_Path.Insert(path[path.Count() - j - 1]);
+						}
+						m_AIWorld.FindPath(end, m_Position, m_PathFilter, m_Path);
+						
+						//m_Time = -1;
 					}
-					//m_AIWorld.FindPath(end, m_Position, m_PathFilter, m_Path);
-					
-					m_Time = -1;
 				}
-				else
+
+				if (!generatedPath)
 				{
-					m_AIWorld.FindPath(m_Unit.GetPosition(), modifiedTargetPosition, m_PathFilter, m_Path);
+					m_AIWorld.FindPath(m_Unit.GetPosition(), m_Position, m_PathFilter, m_Path);
 				}
 			}
 		}

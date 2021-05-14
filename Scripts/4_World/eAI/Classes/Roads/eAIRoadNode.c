@@ -41,7 +41,7 @@ class eAIRoadNode extends PathNode
 		return true;
 	}
 
-	bool Optimize(inout array<ref eAIRoadNode> roads, inout array<eAIRoadNode> checked)
+	bool Optimize()
 	{
 		//! If we don't have 2 neighbours, then this node may be important
 		if (m_Neighbours.Count() != 2) return false;
@@ -49,10 +49,16 @@ class eAIRoadNode extends PathNode
 		PathNode a = m_Neighbours[0];
 		PathNode b = m_Neighbours[1];
 
-		vector dirA = vector.Direction(a.m_Position, m_Position).Normalized();
-		vector dirB = vector.Direction(m_Position, b.m_Position).Normalized();
+		vector dirA = vector.Direction(a.m_Position, m_Position);
+		vector dirB = vector.Direction(m_Position, b.m_Position);
 
-		if (vector.Dot(dirA, dirB) > 0.8)
+		dirA[1] = 0;
+		dirB[1] = 0;
+
+		float dist = dirA.Normalize() + dirB.Normalize();
+
+		//! If the angle of change is too small to notice and the distance is close enough, remove this node
+		if (vector.Dot(dirA, dirB) > 0.98 && dist < 50.0)
 		{
 			a.Remove(this);
 			b.Remove(this);

@@ -140,15 +140,18 @@ class eAIRoadNetwork
 
 		Print("Connecting Roads (Nearby)");
 
+		float nearByDist = 5.0;
+		float nearByDistSq = nearByDist * nearByDist;
+
 		//! Connect roads that weren't placed properly (ADAM!!!!!!!!!!!!)
 		for (i = 0; i < m_Roads.Count(); i++)
 		{
-			for (j = i + 1; j < m_Roads.Count(); j++)
+			for (j = 0; j < m_Roads.Count(); j++)
 			{
-				if (vector.DistanceSq(m_Roads[i].m_Position, m_Roads[j].m_Position) < (4.0 * 4.0))
+				if (m_Roads[i] == m_Roads[j]) continue;
+
+				if (vector.DistanceSq(m_Roads[i].m_Position, m_Roads[j].m_Position) < nearByDistSq)
 				{
-					//! Since we are using a set, we don't have to check if they were already connected
-					//! If we for whatever reason change from a set, be bothered to check if we are connected
 					m_Roads[i].Add(m_Roads[j]);
 					m_Roads[j].Add(m_Roads[i]);
 				}
@@ -157,16 +160,19 @@ class eAIRoadNetwork
 
 		Print("Optimizing");
 
-		array<eAIRoadNode> checkedRoads();
 		for (i = m_Roads.Count() - 1; i >= 0; i--)
 		{
-			if (m_Roads[i])
+			if (!m_Roads[i] || (m_Roads[i] && m_Roads[i].Optimize()))
 			{
-				if (m_Roads[i].Optimize(m_Roads, checkedRoads))
-				{
-					m_Roads.RemoveOrdered(i);
-				}
+				m_Roads.RemoveOrdered(i);
 			}
+		}
+
+		Print("Fixing indices");
+
+		for (i = 0; i < m_Roads.Count(); i++)
+		{
+			m_Roads[i].m_Index = i;
 		}
 
 		Print("Finished Generating");
