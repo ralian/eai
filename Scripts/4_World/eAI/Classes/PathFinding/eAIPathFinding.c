@@ -65,7 +65,7 @@ class eAIPathFinding
 				vector points[2];
 				points[0] = m_Path[i];
 				points[1] = m_Path[i + 1];
-				m_Unit.AddShape(Shape.CreateLines(0xFFFF0000, ShapeFlags.VISIBLE | ShapeFlags.NOZBUFFER, points, 2));
+				m_Unit.AddShape(Shape.CreateLines(0xFF00FF00, ShapeFlags.VISIBLE | ShapeFlags.NOZBUFFER, points, 2));
 				#endif
 			}
 		}

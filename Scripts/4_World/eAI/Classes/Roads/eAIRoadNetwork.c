@@ -12,6 +12,10 @@ class eAIRoadNetwork
 	private string m_WorldName;
 	private vector m_CenterPoint;
 
+	#ifndef SERVER
+	private ref array<Shape> m_DebugShapes = new array<Shape>();
+	#endif
+
 	void eAIRoadNetwork()
 	{
 		m_Roads = new array<ref eAIRoadNode>();
@@ -42,6 +46,48 @@ class eAIRoadNetwork
 
 	void ~eAIRoadNetwork()
 	{
+		DS_Destroy();
+	}
+
+	void DS_Destroy()
+	{
+		#ifndef SERVER
+		for (int i = 0; i < m_DebugShapes.Count(); i++)
+		{
+			m_DebugShapes[i].Destroy();
+		}
+		m_DebugShapes.Clear();
+		#endif
+	}
+
+	void DS_Create(vector position, float radius)
+	{
+		DS_Destroy();
+
+		//#ifndef SERVER
+		array<PathNode> visited();
+		for (int i = 0; i < m_Roads.Count(); i++)
+		{
+			if (visited.Find(m_Roads[i]) != -1) continue;
+			vector p1 = m_Roads[i].m_Position;
+			p1[1] = 0;
+			position[1] = 0;
+			if (vector.Distance(p1, position) > radius) continue;
+			visited.Insert(m_Roads[i]);
+
+			m_DebugShapes.Insert(Shape.CreateSphere(0xFF0000FF, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, m_Roads[i].m_Position, 0.5));
+			
+			for (int j = 0; j < m_Roads[i].m_Neighbours.Count(); j++)
+			{
+				if (visited.Find(m_Roads[i].m_Neighbours[j]) != -1) continue;
+
+				vector points[2];
+				points[0] = m_Roads[i].m_Position;
+				points[1] = m_Roads[i].m_Neighbours[j].m_Position;
+				m_DebugShapes.Insert(Shape.CreateLines(0xFFFF0000, ShapeFlags.VISIBLE | ShapeFlags.NOZBUFFER, points, 2));
+			}
+		}
+		//#endif
 	}
 
 	void Init()
@@ -140,7 +186,7 @@ class eAIRoadNetwork
 
 		Print("Connecting Roads (Nearby)");
 
-		float nearByDist = 5.0;
+		float nearByDist = 15.0;
 		float nearByDistSq = nearByDist * nearByDist;
 
 		//! Connect roads that weren't placed properly (ADAM!!!!!!!!!!!!)
