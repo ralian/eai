@@ -29,17 +29,8 @@ class PathNode
 	{
 		if (node == this) return;
 		
-		int idx = m_Neighbours.Find(node);
-		if (idx == -1)
-		{
-			m_Neighbours.Insert(node);
-		}
-
-		idx = node.m_Neighbours.Find(this);
-		if (idx == -1)
-		{
-			node.m_Neighbours.Insert(this);
-		}
+		m_Neighbours.Insert(node);
+		node.m_Neighbours.Insert(this);
 	}
 
 	void Remove(PathNode node)

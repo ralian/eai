@@ -9,7 +9,10 @@ class eAIManagerImplement extends eAIManagerBase
 {
 	private static eAIManagerImplement m_Instance_4; //! weak ref
 
-	private ref eAIRoadNetwork m_Navmesh;
+	private ref eAIRoadNetwork m_Network;
+	private bool m_NetworkGenerate;
+	private vector m_NetworkPosition;
+	private float m_NetworkRadius;
 
 	void eAIManagerImplement()
 	{
@@ -17,8 +20,8 @@ class eAIManagerImplement extends eAIManagerBase
 		
 		m_CommandManager = new eAICommandManagerClient();
 
-		m_Navmesh = new eAIRoadNetwork();
-		m_Navmesh.Init();
+		m_Network = new eAIRoadNetwork();
+		m_Network.Init();
 	}
 
 	override void OnUpdate(bool doSim, float timeslice)
@@ -34,6 +37,23 @@ class eAIManagerImplement extends eAIManagerBase
 
 			SetInGroup(player && player.GetGroup() != null);
 		}
+
+		if (m_NetworkGenerate)
+		{
+			m_NetworkGenerate = false;
+
+			m_Network.NotifyGenerate(m_NetworkPosition, m_NetworkRadius);
+		}
+		
+		if (GetGame().GetInput().LocalPress("UAFire"))
+		{			
+			vector pos = GetGame().GetCurrentCameraPosition();
+			float radius = 500;
+			
+			eAIManagerImplement.Get4().GetRoadNetwork().DS_Destroy();
+			
+			eAIManagerImplement.Get4().GenerateRoadNetwork(pos, radius);
+		}
 	}
 
 	static eAIManagerImplement Get4()
@@ -41,9 +61,16 @@ class eAIManagerImplement extends eAIManagerBase
 		return m_Instance_4;
 	}
 
+	void GenerateRoadNetwork(vector position, float radius)
+	{
+		m_NetworkGenerate = true;
+		m_NetworkPosition = position;
+		m_NetworkRadius = radius;
+	}
+
 	eAIRoadNetwork GetRoadNetwork()
 	{
-		return m_Navmesh;
+		return m_Network;
 	}
 
 	/*
