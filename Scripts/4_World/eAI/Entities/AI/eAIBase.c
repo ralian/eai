@@ -432,7 +432,6 @@ class eAIBase extends PlayerBase
 		return cmd;
 	}
 
-/*
 	eAICommandVehicle GetCommand_VehicleAI()
 	{
 		return eAICommandVehicle.Cast(GetCommand_Script());
@@ -445,7 +444,8 @@ class eAIBase extends PlayerBase
 		m_eAI_Command = cmd;
 		return cmd;
 	}
-*/
+
+/*
 	HumanCommandVehicle GetCommand_VehicleAI()
 	{
 		return GetCommand_Vehicle();
@@ -455,6 +455,7 @@ class eAIBase extends PlayerBase
 	{
 		return StartCommand_Vehicle(vehicle, seatIdx, seat_anim, fromUnconscious);
 	}
+*/
 
 	void Notify_Transport(Transport vehicle, int seatIndex)
 	{
@@ -552,6 +553,12 @@ class eAIBase extends PlayerBase
 
 	override void CommandHandler(float pDt, int pCurrentCommandID, bool pCurrentCommandFinished) 
 	{
+		//CarScript car;
+		//if (Class.CastTo(car, GetParent()))
+		//{
+		//	car.Control(pDt);
+		//}
+
 		//eAITrace trace(this, "CommandHandler", pDt.ToString(), pCurrentCommandID.ToString(), pCurrentCommandFinished.ToString());
 		
 #ifndef SERVER
@@ -742,6 +749,8 @@ class eAIBase extends PlayerBase
 			}
 
 			StartCommand_MoveAI();
+
+			return;
 		}
 
 		// taken from vanilla DayZPlayerImplement
@@ -808,6 +817,18 @@ class eAIBase extends PlayerBase
 		
 		if (HandleDamageHit(pCurrentCommandID))
 		{
+			return;
+		}
+
+		if (pCurrentCommandID == DayZPlayerConstants.COMMANDID_VEHICLE)
+		{
+			HumanCommandVehicle hcv = GetCommand_Vehicle();
+			if( hcv.WasGearChange() )
+			{
+				GearChangeActionCallback cb = GearChangeActionCallback.Cast(AddCommandModifier_Action(DayZPlayerConstants.CMD_ACTIONMOD_SHIFTGEAR, GearChangeActionCallback));
+				cb.SetVehicleCommand(hcv);
+			}
+			
 			return;
 		}
 		
