@@ -5,7 +5,7 @@ class eAIRoadNetwork
 	private int m_Width;
 	private int m_Height;
 	private ref array<ref eAIRoadNode> m_Roads;
-	private ref array<ref eAIRoadSection> m_Sections;
+	private ref set<ref eAIRoadSection> m_Sections;
 
 	private ref array<string> m_Directories;
 	private string m_FilePath;
@@ -20,7 +20,7 @@ class eAIRoadNetwork
 	void eAIRoadNetwork()
 	{
 		m_Roads = new array<ref eAIRoadNode>();
-		m_Sections = new array<ref eAIRoadSection>();
+		m_Sections = new set<ref eAIRoadSection>();
 		m_Directories = new array<string>();
 
 		m_WorldName = GetGame().GetWorldName();
@@ -64,8 +64,6 @@ class eAIRoadNetwork
 
 	void DS_Create(vector position, float radius)
 	{
-		DS_Destroy();
-
 		#ifndef SERVER
 		array<PathNode> visited();
 		for (int i = 0; i < m_Roads.Count(); i++)
@@ -94,29 +92,36 @@ class eAIRoadNetwork
 
 	void DS_SectionCreate(vector position, float radius)
 	{
-		DS_Destroy();
-
 		#ifndef SERVER
 		array<PathNode> visited();
 		for (int i = 0; i < m_Sections.Count(); i++)
 		{
+			if (m_Sections[i] == null) continue;
 			if (visited.Find(m_Sections[i]) != -1) continue;
 			vector p1 = m_Sections[i].m_Position;
 			p1[1] = 0;
 			position[1] = 0;
 			if (vector.Distance(p1, position) > radius) continue;
 			visited.Insert(m_Sections[i]);
-
-			m_DebugShapes.Insert(Shape.CreateSphere(0xFF0000FF, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME | ShapeFlags.NOZBUFFER, m_Sections[i].m_Position, 0.5));
 			
-			for (int j = 0; j < m_Sections[i].m_Neighbours.Count(); j++)
+			//Print(i);
+
+			m_DebugShapes.Insert(Shape.CreateSphere(0xFF00FFFF, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME | ShapeFlags.NOZBUFFER, m_Sections[i].m_Position, 0.5));
+			//m_DebugShapes.Insert(Shape.CreateSphere(0xFFFFFFFF, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME, m_Sections[i].m_Position, m_Sections[i].m_Radius));
+			
+			//Print(m_Sections[i].m_Neighbours.Count());
+			
+			PathNode s = m_Sections[i].m_Head;
+			PathNode e = m_Sections[i].m_Tail;
+			
+			//for (int j = 0; j < m_Sections[i].m_Neighbours.Count(); j++)
 			{
-				if (visited.Find(m_Sections[i].m_Neighbours[j]) != -1) continue;
+				//if (visited.Find(m_Sections[i].m_Neighbours[j]) != -1) continue;
 
 				vector points[2];
-				points[0] = m_Sections[i].m_Position;
-				points[1] = m_Sections[i].m_Neighbours[j].m_Position;
-				m_DebugShapes.Insert(Shape.CreateLines(0xFFFF0000, ShapeFlags.VISIBLE | ShapeFlags.NOZBUFFER, points, 2));
+				points[0] = s.m_Position + "0 0.1 0";
+				points[1] = e.m_Position + "0 0.1 0";
+				m_DebugShapes.Insert(Shape.CreateLines(0xFFFFFF00, ShapeFlags.VISIBLE | ShapeFlags.NOZBUFFER, points, 2));
 			}
 		}
 		#endif
@@ -145,141 +150,65 @@ class eAIRoadNetwork
 			Save();
 		}
 
-		eAIRoadNode node1;
-		eAIRoadNode node2;
-		eAIRoadSection sectionSelf;
-		eAIRoadSection section1;
-		eAIRoadSection section2;
+		GenerateSections();
+	}
 
-		for (int i = 0; i < m_Roads.Count(); i++)
+	void GenerateSections()
+	{
+		int i;
+		int j;
+		int k;
+
+		// Generate a section for every node that has only two connecting neighbours
+		Print("Generating new sections for each road");
+		for (i = 0; i < m_Roads.Count(); i++)
 		{
-			node1 = null;
-			node2 = null;
-			sectionSelf = null;
-			section1 = null;
-			section2 = null;
+			m_Roads[i].ClearSections();
+			if (m_Roads[i].Count() != 2) continue;
 
-			//! IF HELL
-			if (m_Roads[i].Count() == 2)
+			m_Roads[i].InsertSection(CreateSection());
+		}
+
+		// Connect the unconnected sections
+		Print("Connecting section pieces");
+		for (i = 0; i < m_Roads.Count(); i++)
+		{
+			if (m_Roads[i].Count() != 2) continue;
+
+			for (j = 0; j < m_Roads[i].Count(); j++)
 			{
-				Class.CastTo(node1, m_Roads[i][0]);
-				Class.CastTo(node2, m_Roads[i][1]);
+				if (m_Roads[i][j].Count() != 2) continue;
+				if (m_Roads[i].GetSection(0) == eAIRoadNode.Cast(m_Roads[i][j]).GetSection(0)) continue;
 
-				//STEPS:
-				// Already assigned a section?
-				//  Assign neighbours with the same section.
-				//  Do they already have a section assigned, check if they have no branches. If not, merge the sections
-				// Doesn't have a section
-				//  Check if either of the neighbours have a section assigned
-				//  If they have sections assigned, check to see if they have branches
-				//   If they have branches, assign this road a new section
-				//   If only one has a branch, assign this road to the neighbour without a branch. Add this section to the neighbour with a branch so they know about this
-
-				if (m_Roads[i].m_Sections.Count() != 0)
-				{
-					sectionSelf = m_Roads[i].m_Sections[0];
-
-					if (node1.m_Sections.Count() == 1) section1 = node1.m_Sections[0];
-					if (node2.m_Sections.Count() == 1) section2 = node2.m_Sections[0];
-
-					if (section1 != section2)
-					{
-						if (section1 == sectionSelf)
-						{
-							if (section2 == null)
-							{
-								node2.InsertSection(sectionSelf);
-							}
-							else
-							{
-								MergeSections(section2, sectionSelf);
-							}
-						}
-						else if (section2 == sectionSelf)
-						{
-							if (section1 == null)
-							{
-								node1.InsertSection(sectionSelf);
-							}
-							else
-							{
-								MergeSections(section1, sectionSelf);
-							}
-						}
-					}
-				}
-				else
-				{
-					if (node1.m_Sections.Count() == 1) section1 = node1.m_Sections[0];
-					if (node2.m_Sections.Count() == 1) section2 = node2.m_Sections[0];
-
-					if (section1 != section2)
-					{
-						if (section1 != null)
-						{
-							m_Roads[i].InsertSection(section1);
-
-							if (section2 != null)
-							{
-								MergeSections(section1, section2);
-							}
-						}
-						else if (section2 != null)
-						{
-							m_Roads[i].InsertSection(section2);
-						}
-						else
-						{
-							m_Roads[i].InsertSection(CreateSection());
-						}
-					}
-				}
-			}
-			else if (m_Roads[i].Count() == 1)
-			{
-				Class.CastTo(node1, m_Roads[i][0]);
-				if (m_Roads[i].m_Sections.Count() != 0)
-				{
-					sectionSelf = m_Roads[i].m_Sections[0];
-
-					if (node1.m_Sections.Count() == 1) section1 = node1.m_Sections[0];
-
-					if (sectionSelf != section1)
-					{
-						if (section1 == null)
-						{
-							node1.InsertSection(sectionSelf);
-						}
-						else
-						{
-							MergeSections(section1, sectionSelf);
-						}
-					}
-				}
-				else
-				{
-					if (node1.m_Sections.Count() == 1) section1 = node1.m_Sections[0];
-
-					if (section1 == null)
-					{
-						m_Roads[i].InsertSection(CreateSection());
-					}
-					else
-					{
-						m_Roads[i].InsertSection(section1);
-					}
-				}
-			}
-			else
-			{
-
+				MergeSections(eAIRoadNode.Cast(m_Roads[i][j]).GetSection(0), m_Roads[i].GetSection(0));
 			}
 		}
 
-		for (i = 0; i < m_Sections.Count(); i++)
+		// Connect the unconnected sections
+		Print("Connecting sections into nodes of neighbours");
+		for (i = 0; i < m_Roads.Count(); i++)
 		{
+			if (m_Roads[i].Count() == 2) continue;
+			
+			for (j = 0; j < m_Roads[i].Count(); j++)
+			{
+				m_Roads[i].InsertSection(eAIRoadNode.Cast(m_Roads[i][j]).GetSection(0));
+			}
+		}
+
+		Print("Initializing sections");
+		for (i = m_Sections.Count();i  >= 0; i--)
+		{
+			if (m_Sections[i] == null)
+			{
+				m_Sections.Remove(i);
+				continue;
+			}
+			
 			m_Sections[i].Init();
 		}
+
+		Print("Finished generating sections");
 	}
 
 	eAIRoadSection CreateSection()
@@ -291,7 +220,13 @@ class eAIRoadNetwork
 
 	void MergeSections(eAIRoadSection a, eAIRoadSection b)
 	{
+		for (int i = 0; i < a.m_Nodes.Count(); i++)
+		{
+			a.m_Nodes[i].RemoveSection(a);
+			a.m_Nodes[i].InsertSection(b);
+		}
 
+		delete a;
 	}
 
 	private void Resize(int width, int height)
@@ -311,7 +246,7 @@ class eAIRoadNetwork
 		int x, z, i, j;
 
 		Print("Finding Objects");
-		array<ref Param3<eAIRoadNode, vector, bool>> connections();
+		array<ref eAIRoadConnection> connections();
 		//for (x = 0; x < m_Width; x++)
 		{
 			//for (z = 0; z < m_Height; z++)
@@ -342,56 +277,109 @@ class eAIRoadNetwork
 
 		Print("Connecting Roads (Memory Points)");
 
-		Param3<eAIRoadNode, vector, bool> a;
-		Param3<eAIRoadNode, vector, bool> b;
+		eAIRoadConnection a;
+		eAIRoadConnection b;
+
+		int best;
+		float dist;
+		float minDistBest;
 
 		//! Connect roads that were placed properly
-		for (i = 0; i < connections.Count(); i++)
+		for (i = connections.Count() - 1; i >= 0; i--)
 		{
 			a = connections[i];
-			if (a.param3) continue;
+			//if (a.m_Completed) continue;
 
-			for (j = 0; j < connections.Count(); j++)
+			best = 0;
+			minDistBest = (3.0 * 3.0);
+
+			for (j = connections.Count() - 1; j >= 0; j--)
 			{
 				b = connections[j];
 
-				if (b.param3) continue;
-				if (a.param1 == b.param1) continue;
+				//if (b.m_Completed) continue;
+				if (a.m_Node == b.m_Node) continue;
 
-				vector aPos = a.param2;
-				vector bPos = b.param2;
+				vector aPos = a.m_Position;
+				vector bPos = b.m_Position;
 
 				aPos[1] = 0.0;
 				bPos[1] = 0.0;
 
-				if (vector.DistanceSq(aPos, bPos) < (2.0))
+				dist = vector.DistanceSq(aPos, bPos);
+				if (dist >= 0.0 && dist < minDistBest)
 				{
-					a.param3 = true;
-					b.param3 = true;
+					minDistBest = dist;
+					//best = j;
 
-					a.param1.Add(b.param1);
-					b.param1.Add(a.param1);
+					a.m_Completed = true;
+					b.m_Completed = true;
+
+					a.m_Node.Add(b.m_Node);
+
+					connections.RemoveOrdered(i);
+					connections.RemoveOrdered(j);
+					if (j < i) best++;
 				}
 			}
+
+			i -= best;
 		}
 
 		Print("Connecting Roads (Nearby)");
 
-		float nearByDist = 10.0;
-		float nearByDistSq = nearByDist * nearByDist;
-
 		//! Connect roads that weren't placed properly (ADAM!!!!!!!!!!!!)
 		for (i = 0; i < m_Roads.Count(); i++)
 		{
+			//! we have more than 1 neighbour, we are probably fine
+			if (m_Roads[i].Count() > 1) continue;
+
+			best = -1;
+			minDistBest = 15.0 * 15.0;
+
 			for (j = 0; j < m_Roads.Count(); j++)
 			{
 				if (m_Roads[i] == m_Roads[j]) continue;
 
-				if (vector.DistanceSq(m_Roads[i].m_Position, m_Roads[j].m_Position) < nearByDistSq)
+				// check if the road was already added
+				if (m_Roads[i].Contains(m_Roads[j])) continue;
+
+				dist = vector.DistanceSq(m_Roads[i].m_Position, m_Roads[j].m_Position);
+				if (dist >= 0 && dist < minDistBest)
 				{
-					m_Roads[i].Add(m_Roads[j]);
-					m_Roads[j].Add(m_Roads[i]);
+					minDistBest = dist;
+					best = j;
 				}
+			}
+
+			if (best != -1)
+			{
+				m_Roads[i].Add(m_Roads[best]);
+			}
+		}
+
+		Print("Fixing missing links");
+
+		for (i = m_Roads.Count() - 1; i >= 0; i--)
+		{
+			if (m_Roads[i].Count() == 2) continue;
+
+			for (j = m_Roads[i].Count() - 1; j >= 0; j--)
+			{
+				if (m_Roads[i][j].Count() <= 2) continue;
+
+				PathNode nodeA = m_Roads[i];
+				PathNode nodeB = m_Roads[i][j];
+				vector nPos = (nodeA.m_Position + nodeB.m_Position) * 0.5;
+
+				nodeA.Remove(nodeB);
+
+				eAIRoadNode nodeC = new eAIRoadNode();
+				m_Roads.Insert(nodeC);
+				nodeC.m_Position = nPos;
+
+				nodeB.Add(nodeC);
+				nodeA.Add(nodeC);
 			}
 		}
 

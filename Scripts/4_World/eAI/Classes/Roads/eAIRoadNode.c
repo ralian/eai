@@ -10,15 +10,49 @@ class eAIRoadNode extends PathNode
 
 	int m_Index;
 	
-	ref array<eAIRoadSection> m_Sections = new array<eAIRoadSection>();
+	ref set<eAIRoadSection> m_Sections = new set<eAIRoadSection>();
 
 	void InsertSection(eAIRoadSection section)
 	{
+		if (section == null) return;
+
+		for (int i = 0; i < m_Sections.Count(); i++)
+		{
+			section.Add(m_Sections[i]);
+			m_Sections[i].Add(section);
+		}
+
 		m_Sections.Insert(section);
 		section.m_Nodes.Insert(this);
 	}
 
-	bool Generate(Object obj, int index, out array<ref Param3<eAIRoadNode, vector, bool>> connections)
+	void RemoveSection(eAIRoadSection section)
+	{
+		int idx = m_Sections.Find(section);
+		if (idx != -1) m_Sections.Remove(idx);
+	}
+
+	int CountSection()
+	{
+		return m_Sections.Count();
+	}
+
+	eAIRoadSection GetSection(int index)
+	{
+		return m_Sections[index];
+	}
+
+	bool ContainsSection(eAIRoadSection section)
+	{
+		return m_Sections.Find(section) != -1;
+	}
+
+	void ClearSections()
+	{
+		m_Sections.Clear();
+	}
+
+	bool Generate(Object obj, int index, inout array<ref eAIRoadConnection> connections)
 	{
 		int count = 0;
 
@@ -34,8 +68,12 @@ class eAIRoadNode extends PathNode
 			vector pos = (lPos + rPos) * 0.5;
 
 			m_Position = m_Position + pos;
+			
+			eAIRoadConnection connection = new eAIRoadConnection();
+			connection.m_Node = this;
+			connection.m_Position = pos;
+			connections.Insert(connection);
 
-			connections.Insert(new Param3<eAIRoadNode, vector, bool>(this, pos, false));
 			count++;
 		}
 
@@ -57,6 +95,9 @@ class eAIRoadNode extends PathNode
 		PathNode a = m_Neighbours[0];
 		PathNode b = m_Neighbours[1];
 
+		if (a.m_Neighbours.Count() != 2) return false;
+		if (b.m_Neighbours.Count() != 2) return false;
+
 		vector dirA = vector.Direction(a.m_Position, m_Position);
 		vector dirB = vector.Direction(m_Position, b.m_Position);
 
@@ -66,16 +107,17 @@ class eAIRoadNode extends PathNode
 		dirA.Normalize();
 		dirB.Normalize();
 
+		float minDist = 50.0;
+
 		float distSq = vector.DistanceSq(a.m_Position, b.m_Position);
 
 		//! If the angle of change is too small to notice and the distance is close enough, remove this node
-		if (vector.Dot(dirA, dirB) > 0.98 && distSq < (50.0 * 50.0))
+		if (vector.Dot(dirA, dirB) > 0.985 && distSq < (minDist * minDist))
 		{
 			a.Remove(this);
 			b.Remove(this);
 
 			a.Add(b);
-			b.Add(a);
 
 			m_Neighbours.Clear();
 			return true;

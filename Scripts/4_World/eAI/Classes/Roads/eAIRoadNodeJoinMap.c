@@ -8,3 +8,10 @@ class eAIRoadNodeJoinMap
 		indices.Insert(index);
 	}
 };
+
+class eAIRoadConnection
+{
+	eAIRoadNode m_Node;
+	vector m_Position;
+	bool m_Completed;
+};
