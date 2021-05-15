@@ -432,6 +432,7 @@ class eAIBase extends PlayerBase
 		return cmd;
 	}
 
+/*
 	eAICommandVehicle GetCommand_VehicleAI()
 	{
 		return eAICommandVehicle.Cast(GetCommand_Script());
@@ -443,6 +444,16 @@ class eAIBase extends PlayerBase
 		StartCommand_Script(cmd);
 		m_eAI_Command = cmd;
 		return cmd;
+	}
+*/
+	HumanCommandVehicle GetCommand_VehicleAI()
+	{
+		return GetCommand_Vehicle();
+	}
+
+	HumanCommandVehicle StartCommand_VehicleAI(Transport vehicle, int seatIdx, int seat_anim, bool fromUnconscious = false)
+	{
+		return StartCommand_Vehicle(vehicle, seatIdx, seat_anim, fromUnconscious);
 	}
 
 	void Notify_Transport(Transport vehicle, int seatIndex)
@@ -683,7 +694,7 @@ class eAIBase extends PlayerBase
 					m_LastCommandBeforeUnconscious = pCurrentCommandID;
 					m_eAI_UnconsciousVehicle = false;
 
-					eAICommandVehicle vehCmd = GetCommand_VehicleAI();
+					auto vehCmd = GetCommand_VehicleAI();
 					if (vehCmd)
 					{
 						m_eAI_UnconsciousVehicle = true;
@@ -1141,7 +1152,7 @@ class eAIBase extends PlayerBase
 		if ( itemOnHead && itemOnHead.GetCompEM() )
 			itemOnHead.GetCompEM().SwitchOff();
 		
-		eAICommandVehicle hcv = GetCommand_VehicleAI();
+		auto hcv = GetCommand_VehicleAI();
 		if ( hcv && hcv.GetVehicleSeat() == DayZPlayerConstants.VEHICLESEAT_DRIVER )
 			OnVehicleSeatDriverEnter();
 	}

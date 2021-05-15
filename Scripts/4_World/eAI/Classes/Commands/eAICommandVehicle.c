@@ -15,7 +15,7 @@ class eAICommandVehicle extends eAICommandBase
 	const float TIME_SWITCH_SEAT = 1.0;
 
 	private Transport m_Vehicle;
-	private Car m_Car;
+	private CarScript m_Car;
 
 	private int m_SeatIndex;
 	private int m_SeatAnim;
@@ -46,7 +46,7 @@ class eAICommandVehicle extends eAICommandBase
 	void eAICommandVehicle(eAIBase unit, eAIAnimationST st, Transport vehicle, int seatIdx, int seat_anim, bool fromUnconscious)
 	{
 		m_Vehicle = vehicle;
-		m_Car = Car.Cast(m_Vehicle);
+		Class.CastTo(m_Car, m_Vehicle);
 
 		m_SeatIndex = seatIdx;
 		m_SeatAnim = seat_anim;
@@ -146,6 +146,8 @@ class eAICommandVehicle extends eAICommandBase
 	override void PreAnimUpdate(float pDt)
 	{
 		PreAnim_SetFilteredHeading(0, 0.3, 180);
+		
+		m_Car.Control(pDt);
 
 		m_Table.SetLook(this, m_Look);
 		m_Table.SetLookDirX(this, m_LookLR);
@@ -198,6 +200,8 @@ class eAICommandVehicle extends eAICommandBase
 
 	override void PrePhysUpdate(float pDt)
 	{
+		m_Car.Control(pDt);
+
 		if (m_State == STATE_JUMPED_OUT)
 		{
 			return;
@@ -235,6 +239,8 @@ class eAICommandVehicle extends eAICommandBase
 
 	override bool PostPhysUpdate(float pDt)
 	{
+		m_Car.Control(pDt);
+
 		m_Time += pDt;
 
 		switch (m_State)
