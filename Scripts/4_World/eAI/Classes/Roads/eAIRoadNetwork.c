@@ -96,7 +96,7 @@ class eAIRoadNetwork
 	{
 		DS_Destroy();
 
-		//#ifndef SERVER
+		#ifndef SERVER
 		array<PathNode> visited();
 		for (int i = 0; i < m_Sections.Count(); i++)
 		{
@@ -119,7 +119,7 @@ class eAIRoadNetwork
 				m_DebugShapes.Insert(Shape.CreateLines(0xFFFF0000, ShapeFlags.VISIBLE | ShapeFlags.NOZBUFFER, points, 2));
 			}
 		}
-		//#endif
+		#endif
 	}
 
 	void Init()
