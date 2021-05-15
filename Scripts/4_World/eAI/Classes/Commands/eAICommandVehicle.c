@@ -147,7 +147,7 @@ class eAICommandVehicle extends eAICommandBase
 	{
 		PreAnim_SetFilteredHeading(0, 0.3, 180);
 		
-		m_Car.Control(pDt);
+		//m_Car.Control(pDt);
 
 		m_Table.SetLook(this, m_Look);
 		m_Table.SetLookDirX(this, m_LookLR);
@@ -200,7 +200,7 @@ class eAICommandVehicle extends eAICommandBase
 
 	override void PrePhysUpdate(float pDt)
 	{
-		m_Car.Control(pDt);
+		//m_Car.Control(pDt);
 
 		if (m_State == STATE_JUMPED_OUT)
 		{
@@ -239,7 +239,7 @@ class eAICommandVehicle extends eAICommandBase
 
 	override bool PostPhysUpdate(float pDt)
 	{
-		m_Car.Control(pDt);
+		//m_Car.Control(pDt);
 
 		m_Time += pDt;
 
