@@ -104,7 +104,7 @@ modded class DayZPlayerImplement
         {
             // joined group
 
-            m_eAI_Group = eAIGroup.GetGroupByID(m_eAI_GroupID);
+            m_eAI_Group = eAIGroup.GetGroupByID(m_eAI_GroupID, true);
 
             m_eAI_Group.Client_SetMemberIndex(this, m_eAI_GroupMemberIndexSynch);
         }
