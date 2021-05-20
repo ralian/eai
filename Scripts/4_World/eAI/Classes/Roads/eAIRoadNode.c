@@ -1,4 +1,4 @@
-class eAIRoadNode extends PathNode
+class eAIRoadNode extends eAIRoadNodeBase
 {
 	static ref array<string> ROAD_MEMORY_POINT_PAIRS =
 	{
@@ -9,8 +9,8 @@ class eAIRoadNode extends PathNode
 	};
 
 	int m_Index;
-	
-	ref set<eAIRoadSection> m_Sections = new set<eAIRoadSection>();
+
+	eAIRoadNodeSection m_SectionNode;
 
 	void InsertSection(eAIRoadSection section)
 	{
@@ -52,6 +52,34 @@ class eAIRoadNode extends PathNode
 		m_Sections.Clear();
 	}
 
+	void PathTo(PathNode target, inout array<PathNode> path)
+	{
+		PathNode current = this;
+
+		while (current != target)
+		{
+			if (path.Find(current[0]) == -1) current = current[0];
+			else if (path.Find(current[1]) == -1) current = current[1];
+			else return;
+
+			if (current == null) return;
+
+			path.InsertAt(current, 0);
+
+			if (current.Count() != 2) return;
+		}
+	}
+
+	bool CanConnectToTarget(PathNode target)
+	{
+		array<PathNode> path();
+		PathTo(target, path);
+
+		if (path.Find(target) != -1) return false;
+
+		return true;
+	}
+
 	bool RoadAlreadyConnectedWithin(eAIRoadNode node, vector position, float radius, eAIRoadNode parent = null)
 	{
 		if (vector.Distance(Vector(m_Position[0], 0, m_Position[2]), position) > radius) return false;
@@ -74,11 +102,11 @@ class eAIRoadNode extends PathNode
 		int count = 0;
 		eAIRoadConnection connection;
 		
-		int colours[] = {0x1F1F001F, 0x1FF1001F, 0x1F1F00F1, 0x1FF100F1};
+		int colours[] = {0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFF000000, 0xFFFFFFFF};
 		
-		bool flipI = true;
-		if (vector.Dot(obj.GetDirection(), "0 0 1") > 0) flipI = false;
-		if (vector.Dot(obj.GetDirection(), "1 0 0") > 0) flipI = false;
+		//m_Position = obj.GetPosition();
+		
+		array<ref Param2<int, vector>> debugs();
 
 		for (int i = 0; i < 4; i++)
 		{
@@ -97,72 +125,88 @@ class eAIRoadNode extends PathNode
 			connection.m_Node = this;
 			connection.m_Position = pos;
 			connections.Insert(connection);
+						
+			debugs.Insert(new Param2<int, vector>(i, connection.m_Position));
 			
-			int dbgI = i;
-			if (flipI)
-			switch (dbgI)
-			{
-				case 0:
-					dbgI = 1;
-					break;
-				case 1:
-					dbgI = 0;
-					break;
-				case 2:
-					dbgI = 3;
-					break;
-				case 3:
-					dbgI = 2;
-					break;
-			}
-			
-			eAIRoadNetwork.DS_Add(Shape.CreateSphere(colours[dbgI], ShapeFlags.VISIBLE | ShapeFlags.TRANSP | ShapeFlags.WIREFRAME | ShapeFlags.NOZBUFFER, connection.m_Position + Vector(0, dbgI, 0), 0.25));
-
 			count++;
 		}
+
+		vector min_max[2];
+		float radius = obj.ClippingInfo(min_max);
+		m_Radius = (Math.AbsFloat(min_max[0][0]) + Math.AbsFloat(min_max[1][0])) * 0.5;
 
 		//! The object doesn't have any valid memory points, it can't be a road
 		if (count == 0)
 		{
-			//return false;
 			m_Position = obj.GetPosition();
-
-			vector min_max[2];
-			float radius = obj.ClippingInfo(min_max);
-
+				
+			//float tempRadius = (Math.AbsFloat(min_max[0][2]) + Math.AbsFloat(min_max[1][2])) * 0.1;
+			//if (tempRadius > m_Radius) m_Radius = tempRadius;
+			
 			connection = new eAIRoadConnection();
 			connection.m_Node = this;
 			connection.m_Position = obj.ModelToWorld(Vector(0, 0, min_max[0][2]));
 			connections.Insert(connection);
-			eAIRoadNetwork.DS_Add(Shape.CreateSphere(0x1FFF00FF, ShapeFlags.VISIBLE | ShapeFlags.TRANSP | ShapeFlags.WIREFRAME | ShapeFlags.NOZBUFFER, connection.m_Position, 0.25));
-
+			debugs.Insert(new Param2<int, vector>(0, connection.m_Position));
+			
 			connection = new eAIRoadConnection();
 			connection.m_Node = this;
 			connection.m_Position = obj.ModelToWorld(Vector(0, 0, min_max[1][2]));
 			connections.Insert(connection);
-			eAIRoadNetwork.DS_Add(Shape.CreateSphere(0x1FFF00FF, ShapeFlags.VISIBLE | ShapeFlags.TRANSP | ShapeFlags.WIREFRAME | ShapeFlags.NOZBUFFER, connection.m_Position, 0.25));
-
+			debugs.Insert(new Param2<int, vector>(1, connection.m_Position));
 			
+			/*
 			connection = new eAIRoadConnection();
 			connection.m_Node = this;
 			connection.m_Position = obj.ModelToWorld(Vector(min_max[0][0], 0, 0));
 			connections.Insert(connection);
-			eAIRoadNetwork.DS_Add(Shape.CreateSphere(0x1FFF00FF, ShapeFlags.VISIBLE | ShapeFlags.TRANSP | ShapeFlags.WIREFRAME | ShapeFlags.NOZBUFFER, connection.m_Position, 0.25));
-
+			debugs.Insert(new Param2<int, vector>(2, connection.m_Position));
+			
 			connection = new eAIRoadConnection();
 			connection.m_Node = this;
 			connection.m_Position = obj.ModelToWorld(Vector(min_max[1][0], 0, 0));
 			connections.Insert(connection);
-			eAIRoadNetwork.DS_Add(Shape.CreateSphere(0x1FFF00FF, ShapeFlags.VISIBLE | ShapeFlags.TRANSP | ShapeFlags.WIREFRAME | ShapeFlags.NOZBUFFER, connection.m_Position, 0.25));
-			
-			
-			return true;
+			debugs.Insert(new Param2<int, vector>(3, connection.m_Position));
+			*/
 		}
+		else
+		{
+			//! The position is derived from the average of all the valid snapping memory points
+			if (count >= 2) count = 2;
+			m_Position = m_Position * (1.0 / count);
+			
+			if (count == 2)
+			{
+				connection = new eAIRoadConnection();
+				connection.m_Node = this;
+				connection.m_Position = obj.ModelToWorld(Vector(min_max[0][0], 0, 0));
+				connection.m_Completed = true;
+				connections.Insert(connection);
+				debugs.Insert(new Param2<int, vector>(2, connection.m_Position));
+				
+				connection = new eAIRoadConnection();
+				connection.m_Node = this;
+				connection.m_Position = obj.ModelToWorld(Vector(min_max[1][0], 0, 0));
+				connection.m_Completed = true;
+				connections.Insert(connection);
+				debugs.Insert(new Param2<int, vector>(3, connection.m_Position));
+			}
+		}
+		
+		//eAIRoadNetwork.DS_Add(Shape.CreateSphere(colours[4], ShapeFlags.VISIBLE | ShapeFlags.TRANSP | ShapeFlags.WIREFRAME | ShapeFlags.NOZBUFFER, m_Position + "0 2.0 0", 0.3));
 
-		//! The position is derived from the average of all the valid snapping memory points
-		if (count >= 2) count = 2;
-		m_Position = m_Position * (1.0 / count);
-
+		for (i = 0; i < debugs.Count(); i++)
+		{
+			vector debugLines[2];
+			debugLines[0] = m_Position + "0 2.0 0";
+			debugLines[1] = debugs[i].param2 + "0 2.0 0";
+			
+			//eAIRoadNetwork.DS_Add(Shape.CreateLines(0xFFFF00FF, ShapeFlags.VISIBLE | ShapeFlags.TRANSP | ShapeFlags.NOZBUFFER, debugLines, 2));
+		
+			//eAIRoadNetwork.DS_Add(Shape.CreateSphere(colours[debugs[i].param1], ShapeFlags.VISIBLE | ShapeFlags.TRANSP | ShapeFlags.WIREFRAME | ShapeFlags.NOZBUFFER, debugs[i].param2 + "0 2.0 0", (0.25 * (i + 1))));
+		}
+		
+		
 		return true;
 	}
 
@@ -268,7 +312,8 @@ class eAIRoadNode extends PathNode
 		for (int i = 0; i < count; i++)
 		{
 			FGets(file_handle, line_content);
-			loadCon.Add(line_content.ToInt());
+			int conIdx = line_content.ToInt();
+			if (conIdx != m_Index) loadCon.Add(conIdx);
 		}
 
 		connections.Insert(loadCon);

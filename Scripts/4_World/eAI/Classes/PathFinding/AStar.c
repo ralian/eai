@@ -5,13 +5,13 @@ class AStar
 		return Math.AbsFloat(a[0] - b[0]) + Math.AbsFloat(a[1] - b[1]) + Math.AbsFloat(a[2] - b[2]);
 	}
 
-	static void Perform(PathNode start, PathNode goal, inout array<vector> path)
+	static void Perform(PathNode start, PathNode goal, inout array<PathNode> path)
 	{
 		PriorityQueue<PathNode> queue = new PriorityQueue<PathNode>();
 		queue.Enqueue(start, 0);
 
-		map<ref PathNode, ref PathNode> mappedPath();
-		map<ref PathNode, float> cost();
+		map<PathNode, PathNode> mappedPath();
+		map<PathNode, float> cost();
 
 		PathNode current = null;
 
@@ -19,6 +19,9 @@ class AStar
 		cost[start] = 0.0;
 		
 		int idx = 0;
+		
+		//Print(start);
+		//Print(goal);
 
 		while (queue.Count() > 0)
 		{
@@ -31,10 +34,13 @@ class AStar
 			
 			current = queue.Dequeue();
 
+			//Print(current);
+
 			if (current == goal) break;
 
 			foreach (PathNode next : current.m_Neighbours)
 			{
+				//Print(next);
 				float newCost = cost[current] + vector.DistanceSq(goal.m_Position, next.m_Position);
 				if ((!cost.Contains(next) || newCost < cost[next]))
 				{
@@ -46,13 +52,11 @@ class AStar
 			}
 		}
 
-		//! By design, to ignore the goal when adding to the list
-		while (mappedPath.Contains(current))
+		while (current)
 		{
-			current = mappedPath[current];
-			if (!current) return;
+			path.Insert(current);
 			
-			path.Insert(current.m_Position);
+			if (!Class.CastTo(current, mappedPath[current])) return;
 		}
 	}
-}
+};

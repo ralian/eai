@@ -8,6 +8,7 @@ class eAIRoadNetwork
 	private int m_Height;
 	private ref array<ref eAIRoadNode> m_Roads;
 	private ref set<ref eAIRoadSection> m_Sections;
+	private ref array<ref eAIRoadNodeSection> m_SectionEnds;
 
 	private ref array<string> m_Directories;
 	private string m_FilePath;
@@ -25,6 +26,7 @@ class eAIRoadNetwork
 		
 		m_Roads = new array<ref eAIRoadNode>();
 		m_Sections = new set<ref eAIRoadSection>();
+		m_SectionEnds = new array<ref eAIRoadNodeSection>();
 		m_Directories = new array<string>();
 
 		m_WorldName = GetGame().GetWorldName();
@@ -103,7 +105,7 @@ class eAIRoadNetwork
 
 	void DS_SectionCreate(vector position, float radius)
 	{
-		#ifndef SERVER
+		//#ifndef SERVER
 		for (int i = 0; i < m_Sections.Count(); i++)
 		{
 			if (m_Sections[i] == null) continue;
@@ -115,7 +117,7 @@ class eAIRoadNetwork
 			if (vector.Distance(p1, position) > radius) continue;
 			
 			m_DebugShapes.Insert(Shape.CreateSphere(0xFF00FFFF, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME | ShapeFlags.NOZBUFFER, m_Sections[i].m_Position + "0 0.5 0", 0.5));
-			//m_DebugShapes.Insert(Shape.CreateSphere(0xFFFFFFFF, ShapeFlags.NOCULL | ShapeFlags.TRANSP | ShapeFlags.NOZWRITE | ShapeFlags.DOUBLESIDE | ShapeFlags.WIREFRAME, m_Sections[i].m_Position, m_Sections[i].m_Radius));
+			m_DebugShapes.Insert(Shape.CreateSphere(0xFFFFFFFF, ShapeFlags.NOCULL | ShapeFlags.TRANSP | ShapeFlags.NOZWRITE | ShapeFlags.DOUBLESIDE | ShapeFlags.WIREFRAME, m_Sections[i].m_Position, m_Sections[i].m_Radius));
 
 			PathNode s = m_Sections[i].m_Head;
 			PathNode e = m_Sections[i].m_Tail;
@@ -125,7 +127,35 @@ class eAIRoadNetwork
 			points[1] = e.m_Position + "0 0.1 0";
 			m_DebugShapes.Insert(Shape.CreateLines(0xFFFFFF00, ShapeFlags.VISIBLE | ShapeFlags.NOZBUFFER, points, 2));
 		}
-		#endif
+		//#endif
+	}
+
+	void DS_SectionEndsCreate(vector position, float radius)
+	{
+		//#ifndef SERVER
+		array<PathNode> visited();
+		for (int i = 0; i < m_SectionEnds.Count(); i++)
+		{
+			if (visited.Find(m_SectionEnds[i]) != -1) continue;
+			vector p1 = m_SectionEnds[i].m_Position;
+			p1[1] = 0;
+			position[1] = 0;
+			if (vector.Distance(p1, position) > radius) continue;
+			visited.Insert(m_SectionEnds[i]);
+
+			m_DebugShapes.Insert(Shape.CreateSphere(0xFFFF00FF, ShapeFlags.VISIBLE | ShapeFlags.WIREFRAME | ShapeFlags.NOZBUFFER, m_SectionEnds[i].m_Position, 0.5));
+			
+			for (int j = 0; j < m_SectionEnds[i].m_Neighbours.Count(); j++)
+			{
+				if (visited.Find(m_SectionEnds[i].m_Neighbours[j]) != -1) continue;
+
+				vector points[2];
+				points[0] = m_SectionEnds[i].m_Position;
+				points[1] = m_SectionEnds[i].m_Neighbours[j].m_Position;
+				m_DebugShapes.Insert(Shape.CreateLines(0xFFFFFF00, ShapeFlags.VISIBLE | ShapeFlags.NOZBUFFER, points, 2));
+			}
+		}
+		//#endif
 	}
 
 	void Init()
@@ -151,7 +181,7 @@ class eAIRoadNetwork
 			Save();
 		}
 
-		GenerateSections();
+		//GenerateSections();
 	}
 
 	void GenerateSections()
@@ -159,6 +189,8 @@ class eAIRoadNetwork
 		int i;
 		int j;
 		int k;
+
+		eAIRoadSection section;
 
 		// Generate a section for every node that has only two connecting neighbours
 		Print("Generating new sections for each road");
@@ -191,22 +223,50 @@ class eAIRoadNetwork
 		{
 			if (m_Roads[i].Count() == 2) continue;
 			
+			eAIRoadNodeSection roadNodeSection = new eAIRoadNodeSection();
+			m_SectionEnds.Insert(roadNodeSection);
+
+			roadNodeSection.m_Radius = 0.0;
+			roadNodeSection.m_Position = m_Roads[i].m_Position;
+			m_Roads[i].m_SectionNode = roadNodeSection;
+
 			for (j = 0; j < m_Roads[i].Count(); j++)
 			{
-				m_Roads[i].InsertSection(eAIRoadNode.Cast(m_Roads[i][j]).GetSection(0));
+				if (m_Roads[i][j].Count() != 2) 
+				{
+					Error("Expected 2 connecting nodes");
+				}
+
+				section = eAIRoadNode.Cast(m_Roads[i][j]).GetSection(0);
+				roadNodeSection.m_Sections.Insert(section);
+				m_Roads[i].InsertSection(section);
 			}
 		}
 
 		Print("Initializing sections");
-		for (i = m_Sections.Count();i  >= 0; i--)
+		for (i = m_Sections.Count(); i >= 0; i--)
 		{
+			Print("INITIALIZING");
+			Print("  INDEX: " + i);
 			if (m_Sections[i] == null)
 			{
+				Print("  REMOVING");
 				m_Sections.Remove(i);
 				continue;
 			}
 			
 			m_Sections[i].Init();
+		}
+
+		for (i = 0; i < m_Roads.Count(); i++)
+		{
+			if (m_Roads[i].Count() == 2) continue;
+
+			for (j = 0; j < m_Roads[i].Count(); j++)
+			{
+				section = eAIRoadNode.Cast(m_Roads[i][j]).GetSection(0);
+				if (section.m_Radius > m_Roads[i].m_SectionNode.m_Radius) m_Roads[i].m_SectionNode.m_Radius = section.m_Radius;
+			}
 		}
 
 		Print("Finished generating sections");
@@ -234,6 +294,7 @@ class eAIRoadNetwork
 	{
 		m_Roads.Clear();
 		m_Sections.Clear();
+		m_SectionEnds.Clear();
 
 		m_Width = width;
 		m_Height = height;
@@ -245,8 +306,8 @@ class eAIRoadNetwork
 
 		GenerateSections();
 
-		DS_SectionCreate(position, radius);
 		DS_Create(position, radius);
+		DS_SectionCreate(position, radius);
 	}
 
 	private void Generate()
@@ -277,7 +338,7 @@ class eAIRoadNetwork
 		//pathFilter.SetCost(PGAreaType.OBJECTS, 1.0);
 		//pathFilter.SetCost(PGAreaType.BUILDING, 1.0);
 
-		int x, z, i, j;
+		int x, z, i, j, k;
 
 		Print("Finding Objects");
 		array<ref eAIRoadConnection> connections();
@@ -312,14 +373,9 @@ class eAIRoadNetwork
 		eAIRoadConnection b;
 
 		int best;
-		int best2;
-		int removed;
 		float dist;
-		float dist2;
 		float minDistBest;
-		float minDistBest2;
 		float connectionRadius;
-		float connectionRadius2;
 		
 		PathNode nodeA;
 		PathNode nodeB;
@@ -327,25 +383,28 @@ class eAIRoadNetwork
 		//if (false)
 		{
 			Print("Connecting Roads (Memory Points)");
-			connectionRadius = 4.0;
-			connectionRadius2 = 20.0;
+			connectionRadius = 1.0;
 	
 			//! Connect roads that were placed properly
 			for (i = connections.Count() - 1; i >= 0; i--)
 			{
 				a = connections[i];
+				
+				if (a.m_Completed) continue;
+				a.m_Completed = true;
 	
-				best = -1;
-				best2 = -1;
-				removed = 0;
-				minDistBest = (connectionRadius * connectionRadius);
-				minDistBest2 = (connectionRadius2 * connectionRadius2);
+				minDistBest = (a.m_Node.m_Radius * a.m_Node.m_Radius) * 1.5;
 	
 				for (j = connections.Count() - 1; j >= 0; j--)
 				{
 					b = connections[j];
 	
+					if (b.m_Completed) continue;
 					if (a.m_Node == b.m_Node) continue;
+					if (!b.m_Node.CanConnectToTarget(a.m_Node)) continue;
+					
+					if (aiWorld.RaycastNavMesh(a.m_Node.m_Position, b.m_Node.m_Position, pathFilter, nmHitPos, nmHitNormal)) continue;
+					
 	
 					vector aPos = a.m_Position;
 					vector bPos = b.m_Position;
@@ -356,36 +415,126 @@ class eAIRoadNetwork
 					dist = vector.DistanceSq(aPos, bPos);
 					if (dist < 0.0) continue;
 					
-					//if (aiWorld.RaycastNavMesh(a.m_Position, b.m_Position, pathFilter, nmHitPos, nmHitNormal)) continue;
+					if (dist < minDistBest)
+					{
+						b.m_Completed = true;
+						a.m_Node.Add(b.m_Node);
+					}
+				}
+			}
+		}
+		
+		//if (false)
+		{
+			Print("Connecting Roads (Far)");
+			
+			connectionRadius = 20.0;
+			
+			for (i = connections.Count() - 1; i >= 0; i--)
+			{
+				a = connections[i];
+				
+				if (a.m_Node.Count() > 1) continue;
+	
+				best = -1;
+				connectionRadius = a.m_Node.m_Radius * 15.0;
+				minDistBest = connectionRadius * connectionRadius;
+	
+				for (j = connections.Count() - 1; j >= 0; j--)
+				{
+					b = connections[j];
+	
+					if (a.m_Node == b.m_Node) continue;
+					//if (b.m_Node.Count() > 1) continue;
+					if (!b.m_Node.CanConnectToTarget(a.m_Node)) continue;
+	
+					aPos = a.m_Position;
+					bPos = b.m_Position;
+	
+					aPos[1] = 0.0;
+					bPos[1] = 0.0;
+	
+					dist = vector.DistanceSq(aPos, bPos);
+					if (dist < 0.0) continue;
 					
 					if (dist < minDistBest)
 					{
-						//minDistBest = dist;
-	
-						a.m_Node.Add(b.m_Node);
-						
-						connections.RemoveOrdered(j);
-						if (j < i) removed++;
-					}
-					else if (dist < minDistBest2)
-					{
-						minDistBest2 = dist;
-						best2 = j;
+						minDistBest = dist;
+						best = j;
 					}
 				}
 				
-				if (removed == 0 && best2 != -1)
+				if (best != -1)
 				{
-					b = connections[best2];
-					
+					b = connections[best];
 					a.m_Node.Add(b.m_Node);
-	
-					//connections.RemoveOrdered(best2);
-					//if (best2 < i) removed++;
 				}
+			}
+		}
+
+		if (false)
+		{
+			Print("Connecting Roads (Remaining unconnected)");
+			
+			Print(connections.Count());
+			for (i = connections.Count() - 1; i >= 0; i--)
+			{
+				a = connections[i];
 				
-				connections.RemoveOrdered(i);
-				i -= removed;
+				if (a.m_Node.Count() > 1) continue;
+
+				nodeA = null;
+				nodeB = null;
+
+				best = -1;
+				minDistBest = (connectionRadius * connectionRadius);
+
+				float minDistA = 10.0;
+				float minDistB = minDistA;
+				float distA;
+				float distB;
+	
+				PathNode temp_nodeA;
+				PathNode temp_nodeB;
+
+				for (j = 0; j < m_Roads.Count(); j++)
+				{
+					distA = vector.Distance(m_Roads[j].m_Position, a.m_Position);
+					if (distA > minDistA) continue;
+
+					temp_nodeA = m_Roads[j];
+					temp_nodeB = null;
+					
+					for (k = 0; k < m_Roads[j].Count(); k++)
+					{
+						distB = vector.Distance(m_Roads[j][k].m_Position, a.m_Position);
+						if (distB > minDistB) continue;
+						minDistB = distB;
+
+						temp_nodeB = m_Roads[j][k];
+					}
+
+					if (temp_nodeB)
+					{
+						minDistA = distA;
+						nodeA = temp_nodeA;
+						nodeB = temp_nodeB;
+					}
+				}
+
+				if (!nodeA || !nodeB) continue;
+
+				nodeA.Remove(nodeB);
+				nodeB.Remove(nodeA);
+
+				road = new eAIRoadNode();
+				m_Roads.Insert(road);
+				
+				road.m_Position = (nodeA.m_Position + nodeB.m_Position) * 0.5;
+				
+				road.Add(nodeA);
+				road.Add(nodeB);
+				road.Add(a.m_Node);
 			}
 		}
 
@@ -395,7 +544,7 @@ class eAIRoadNetwork
 	
 			connectionRadius = 10.0;
 	
-			//! Connect roads that weren't placed properly (ADAM!!!!!!!!!!!!)
+			//! Connect roads that weren't placed properly
 			for (i = 0; i < m_Roads.Count(); i++)
 			{
 				//! we have more than 1 neighbour, we are probably fine
@@ -410,6 +559,8 @@ class eAIRoadNetwork
 	
 					// check if the road was already added
 					if (m_Roads[i].Contains(m_Roads[j])) continue;
+
+					if (!m_Roads[i].CanConnectToTarget(m_Roads[j])) continue;
 					
 					if (m_Roads[i].RoadAlreadyConnectedWithin(m_Roads[j], aPos, connectionRadius)) continue;
 	
@@ -610,6 +761,40 @@ class eAIRoadNetwork
 		return closest;
 	}
 
+	Param2<eAIRoadNode, eAIRoadNodeSection> _GetClosestNode(vector position)
+	{
+		Param2<eAIRoadNode, eAIRoadNodeSection> closest = new Param2<eAIRoadNode, eAIRoadNodeSection>(null, null);
+
+		array<eAIRoadNode> nodes();
+
+		float minDistance = m_CenterPoint.Length() * 4.0;
+		for (int i = 0; i < m_SectionEnds.Count(); i++)
+		{
+			float dist = vector.Distance(m_SectionEnds[i].m_Position, position);
+			if (dist > (m_SectionEnds[i].m_Radius)) continue;
+			
+			set<eAIRoadSection> sections = m_SectionEnds[i].m_Sections;
+			for (int j = 0; j < sections.Count(); j++)
+			{
+				if (sections[j]) sections[j].UpdateNodeClosest(position, nodes);
+			}
+		}
+
+		minDistance = m_CenterPoint.Length() * 4.0;
+		for (i = 0; i < nodes.Count(); i++)
+		{
+			dist = vector.Distance(nodes[i].m_Position, position);
+			if (dist < minDistance) 
+			{
+				minDistance = dist;
+				closest.param1 = nodes[i];
+				closest.param2 = nodes[i].m_Sections[0].m_Head.m_SectionNode;
+			}
+		}
+
+		return closest;
+	}
+
 	void FindPath(vector start, vector end, eAIPathFinding pathFinding)
 	{
 		//Print("+eAIRoadNetwork::FindPath");
@@ -626,16 +811,47 @@ class eAIRoadNetwork
 		vector end = param.param2;
 		eAIPathFinding pathFinding = param.param3;
 		
-		eAIRoadNode start_node = GetClosestNode(start);
-		eAIRoadNode end_node = GetClosestNode(end);
+		Param2<eAIRoadNode, eAIRoadNodeSection> start_node = _GetClosestNode(start);
+		Param2<eAIRoadNode, eAIRoadNodeSection> end_node = _GetClosestNode(end);
+
+		//Print(end_node);
+		//Print(start_node.param1);
+		//Print(start_node.param2);
+
+		//Print(end_node);
+		//Print(end_node.param1);
+		//Print(end_node.param2);
 		
-		if (start_node && end_node)
+		if (!start_node.param1) return;
+		if (!start_node.param2) return;
+		if (!end_node.param1) return;
+		if (!end_node.param2) return;
+		
+		array<vector> pathVec;
+		pathFinding.StartRoadPath(pathVec);
+			
+		array<PathNode> path();
+		AStar.Perform(start_node.param2, end_node.param2, path);
+
+		array<PathNode> nodePath();
+		if (path.Count() != 0)
 		{
-			array<vector> path;
-			pathFinding.StartRoadPath(path);
-			AStar.Perform(start_node, end_node, path);
-			pathFinding.FinishRoadPath(path);
+			eAIRoadNodeSection node0;
+			eAIRoadNodeSection node1;
+							
+			for (int i = path.Count() - 1; i > 0; i--)
+			{
+				node0 = eAIRoadNodeSection.Cast(path[i]);
+				node1 = eAIRoadNodeSection.Cast(path[i - 1]);
+
+				node0.PathTo(node1, nodePath);
+			}
 		}
+		
+		for (i = 0; i < nodePath.Count(); i++) pathVec.Insert(nodePath[i].m_Position);
+		//for (i = nodePath.Count() - 1; i >= 0; i--) pathVec.Insert(nodePath[i].m_Position);
+			
+		pathFinding.FinishRoadPath(pathVec, path);
 		
 		//Print("-eAIRoadNetwork::_FindPath");
 	}

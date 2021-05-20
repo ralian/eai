@@ -1,6 +1,7 @@
 class PathNode
 {
 	vector m_Position;
+	float m_Radius;
 	bool m_Valid;
 
 	ref set<PathNode> m_Neighbours = new set<PathNode>();
