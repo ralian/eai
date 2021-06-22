@@ -230,6 +230,16 @@ class eAIBase extends PlayerBase
 				zmb.GetTargetInformation().AddAI(this);
 			}
 		}
+
+		PlayerBase player;
+		if (Class.CastTo(player, source))
+		{
+			if (!player.GetTargetInformation().IsTargetted(GetGroup()))
+			{
+				//! target the attacking player for upto 2 minutes
+				player.GetTargetInformation().AddAI(this, 1200000);
+			}
+		}
 	}
 	
 	override bool IsAI()
