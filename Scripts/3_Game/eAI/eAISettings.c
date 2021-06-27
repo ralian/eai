@@ -8,7 +8,7 @@ class eAISettings : JsonApiStruct
 
 	private string m_LoadingArray;
 
-	private LogLevel m_LogLevel = LogLevel.INFO;
+	private eAILogLevel m_LogLevel = eAILogLevel.INFO;
 	private bool m_LogLevelSavedAsString = true;
 
 	private float m_Accuracy = 0.5;
@@ -20,12 +20,12 @@ class eAISettings : JsonApiStruct
 
 	private int m_MaxDynamicPatrols = -1;
 
-	void SetLogLevel(LogLevel logLevel)
+	void SetLogLevel(eAILogLevel logLevel)
 	{
 		m_LogLevel = logLevel;
 	}
 
-	static LogLevel GetLogLevel()
+	static eAILogLevel GetLogLevel()
 	{
 		return m_Instance.m_LogLevel;
 	}
@@ -94,7 +94,7 @@ class eAISettings : JsonApiStruct
 
 	override void OnInteger(string name, int value)
 	{
-		if (name == "LogLevel")
+		if (name == "eAILogLevel")
 		{
 			m_LogLevelSavedAsString = false;
 			SetLogLevel(value);
@@ -110,15 +110,15 @@ class eAISettings : JsonApiStruct
 
 	override void OnString(string name, string value)
 	{
-		if (name == "LogLevel")
+		if (name == "eAILogLevel")
 		{
 			m_LogLevelSavedAsString = true;
-			if (value == "TRACE") SetLogLevel(LogLevel.TRACE);
-			if (value == "DEBUG") SetLogLevel(LogLevel.DEBUG);
-			if (value == "INFO") SetLogLevel(LogLevel.INFO);
-			if (value == "WARNING") SetLogLevel(LogLevel.WARNING);
-			if (value == "ERROR") SetLogLevel(LogLevel.ERROR);
-			if (value == "NONE") SetLogLevel(LogLevel.NONE);
+			if (value == "TRACE") SetLogLevel(eAILogLevel.TRACE);
+			if (value == "DEBUG") SetLogLevel(eAILogLevel.DEBUG);
+			if (value == "INFO") SetLogLevel(eAILogLevel.INFO);
+			if (value == "WARNING") SetLogLevel(eAILogLevel.WARNING);
+			if (value == "ERROR") SetLogLevel(eAILogLevel.ERROR);
+			if (value == "NONE") SetLogLevel(eAILogLevel.NONE);
 			return;
 		}
 
@@ -180,11 +180,11 @@ class eAISettings : JsonApiStruct
 	{
 		if (m_LogLevelSavedAsString)
 		{
-			StoreString("LogLevel", typename.EnumToString(LogLevel, m_LogLevel));
+			StoreString("eAILogLevel", typename.EnumToString(eAILogLevel, m_LogLevel));
 		}
 		else
 		{
-			StoreInteger("LogLevel", m_LogLevel);
+			StoreInteger("eAILogLevel", m_LogLevel);
 		}
 
 		StoreInteger("MaxDynamicPatrols", m_MaxDynamicPatrols);

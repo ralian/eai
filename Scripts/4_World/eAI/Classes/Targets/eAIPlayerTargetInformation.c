@@ -1,6 +1,6 @@
 class eAIPlayerTargetInformation extends eAIEntityTargetInformation
 {
-	private const float DISTANCE_COEF = 0.0001;
+	private const float DISTANCE_COEF = 0.00001;
 
     private DayZPlayerImplement m_Player;
 
@@ -15,12 +15,29 @@ class eAIPlayerTargetInformation extends eAIEntityTargetInformation
 
 		if (ai)
 		{
-			// the further away the zombie, the less likely it will be a threat
 			float distance = GetDistance(ai) * DISTANCE_COEF;
 			if (distance > 1.0) levelFactor = levelFactor / distance;
+
+            vector direction = vector.Direction(ai.GetPosition(), GetPosition(ai));
+
+			float dot = vector.Dot(ai.GetDirection(), direction);
+            dot += 1.0;
+            dot *= 0.5;
+            dot -= 0.33;
+            dot *= 2.0;
+            dot *= dot * (dot + 0.9) * dot;
+            dot += 0.07;
+            dot = Math.Clamp(dot, 0, 1);
+            
+			levelFactor = levelFactor * dot;
 		}
 
         return Math.Clamp(levelFactor, 0.0, 1.0 / DISTANCE_COEF);
+    }
+
+    override bool ShouldRemove(eAIBase ai = null)
+    {
+        return GetThreat(ai) <= 0.1;
     }
 
     override vector GetAimOffset(eAIBase ai = null)

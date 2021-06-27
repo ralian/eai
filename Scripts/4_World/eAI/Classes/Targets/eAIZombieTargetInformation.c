@@ -26,6 +26,8 @@ class eAIZombieTargetInformation extends eAIEntityTargetInformation
     {
 		float levelFactor = 0;
 
+		if (m_Zombie.GetHealth("", "") <= 0.0) return 0.0;
+
 		//TODO: check to see if ::GetMindState() returns int of 0->4
 		int level = m_DIIP.GetMindState();
 		switch (level)
@@ -58,5 +60,10 @@ class eAIZombieTargetInformation extends eAIEntityTargetInformation
 		}
 
         return Math.Clamp(levelFactor, 0.0, 1.0 / DISTANCE_COEF);
+    }
+
+    override bool ShouldRemove(eAIBase ai = null)
+    {
+        return GetThreat(ai) <= 0.1;
     }
 };

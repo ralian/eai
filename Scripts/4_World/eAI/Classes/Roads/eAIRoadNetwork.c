@@ -4,6 +4,8 @@ class eAIRoadNetwork
 	
 	private static eAIRoadNetwork INSTANCE;
 
+	private bool m_IsEnabled;
+
 	private int m_Width;
 	private int m_Height;
 	private ref array<ref eAIRoadNode> m_Roads;
@@ -23,6 +25,8 @@ class eAIRoadNetwork
 	void eAIRoadNetwork()
 	{
 		INSTANCE = this;
+
+		m_IsEnabled = false;
 		
 		m_Roads = new array<ref eAIRoadNode>();
 		m_Sections = new set<ref eAIRoadSection>();
@@ -105,7 +109,7 @@ class eAIRoadNetwork
 
 	void DS_SectionCreate(vector position, float radius)
 	{
-		//#ifndef SERVER
+		#ifndef SERVER
 		for (int i = 0; i < m_Sections.Count(); i++)
 		{
 			if (m_Sections[i] == null) continue;
@@ -127,12 +131,12 @@ class eAIRoadNetwork
 			points[1] = e.m_Position + "0 0.1 0";
 			m_DebugShapes.Insert(Shape.CreateLines(0xFFFFFF00, ShapeFlags.VISIBLE | ShapeFlags.NOZBUFFER, points, 2));
 		}
-		//#endif
+		#endif
 	}
 
 	void DS_SectionEndsCreate(vector position, float radius)
 	{
-		//#ifndef SERVER
+		#ifndef SERVER
 		array<PathNode> visited();
 		for (int i = 0; i < m_SectionEnds.Count(); i++)
 		{
@@ -155,11 +159,13 @@ class eAIRoadNetwork
 				m_DebugShapes.Insert(Shape.CreateLines(0xFFFFFF00, ShapeFlags.VISIBLE | ShapeFlags.NOZBUFFER, points, 2));
 			}
 		}
-		//#endif
+		#endif
 	}
 
 	void Init()
 	{
+		m_IsEnabled = true;
+
 		bool loaded = false;
 		foreach (string directory : m_Directories)
 		{
@@ -302,6 +308,8 @@ class eAIRoadNetwork
 
 	void NotifyGenerate(vector position, float radius)
 	{
+		if (!m_IsEnabled) return;
+
 		_Generate(position, radius);
 
 		GenerateSections();
@@ -797,6 +805,8 @@ class eAIRoadNetwork
 
 	void FindPath(vector start, vector end, eAIPathFinding pathFinding)
 	{
+		if (!m_IsEnabled) return;
+
 		//Print("+eAIRoadNetwork::FindPath");
 		GetGame().GameScript.Call(this, "_FindPath", new Param3<vector, vector, eAIPathFinding>(start, end, pathFinding));
 		//thread _FindPath(start, end, pathFinding);
@@ -805,6 +815,8 @@ class eAIRoadNetwork
 
 	void _FindPath(Param3<vector, vector, eAIPathFinding> param)
 	{
+		if (!m_IsEnabled) return;
+		
 		//Print("+eAIRoadNetwork::_FindPath");
 		
 		vector start = param.param1;

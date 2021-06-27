@@ -70,6 +70,11 @@ class eAITarget
         return info.GetThreat(ai);
     }
 
+    float ShouldRemove(eAIBase ai = null)
+    {
+        return info.ShouldRemove(ai);
+    }
+
     float GetDistance(eAIBase ai)
     {
         return info.GetDistance(ai);

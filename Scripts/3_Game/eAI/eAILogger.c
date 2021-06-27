@@ -60,9 +60,19 @@ class eAITrace
 	}
 };
 
+enum eAILogLevel
+{
+	TRACE = 0,
+	DEBUG,
+	INFO,
+	WARNING,
+	ERROR,
+	NONE
+};
+
 class eAILogger
 {
-	private static LogLevel m_LogLevel = LogLevel.NONE;
+	private static eAILogLevel m_LogLevel = eAILogLevel.NONE;
 
 	static void Init()
 	{
@@ -76,35 +86,35 @@ class eAILogger
 
 	static void Trace(string message, string param1 = "", string param2 = "", string param3 = "", string param4 = "", string param5 = "", string param6 = "", string param7 = "", string param8 = "", string param9 = "")
 	{
-		if (m_LogLevel > LogLevel.TRACE) return;
+		if (m_LogLevel > eAILogLevel.TRACE) return;
 
 		PrintFormat("[TRACE] %1", string.Format(message, param1, param2, param3, param4, param5, param6, param7, param8, param9));
 	}
 
 	static void Debug(string message, string param1 = "", string param2 = "", string param3 = "", string param4 = "", string param5 = "", string param6 = "", string param7 = "", string param8 = "", string param9 = "")
 	{
-		if (m_LogLevel > LogLevel.DEBUG) return;
+		if (m_LogLevel > eAILogLevel.DEBUG) return;
 
 		PrintFormat("[DEBUG] %1", string.Format(message, param1, param2, param3, param4, param5, param6, param7, param8, param9));
 	}
 
 	static void Info(string message, string param1 = "", string param2 = "", string param3 = "", string param4 = "", string param5 = "", string param6 = "", string param7 = "", string param8 = "", string param9 = "")
 	{
-		if (m_LogLevel > LogLevel.INFO) return;
+		if (m_LogLevel > eAILogLevel.INFO) return;
 
 		PrintFormat("[INFO] %1", string.Format(message, param1, param2, param3, param4, param5, param6, param7, param8, param9));
 	}
 
 	static void Warn(string message, string param1 = "", string param2 = "", string param3 = "", string param4 = "", string param5 = "", string param6 = "", string param7 = "", string param8 = "", string param9 = "")
 	{
-		if (m_LogLevel > LogLevel.WARNING) return;
+		if (m_LogLevel > eAILogLevel.WARNING) return;
 
 		PrintFormat("[WARNING] %1", string.Format(message, param1, param2, param3, param4, param5, param6, param7, param8, param9));
 	}
 
 	static void Error(string message, string param1 = "", string param2 = "", string param3 = "", string param4 = "", string param5 = "", string param6 = "", string param7 = "", string param8 = "", string param9 = "")
 	{
-		if (m_LogLevel > LogLevel.ERROR) return;
+		if (m_LogLevel > eAILogLevel.ERROR) return;
 
 		PrintFormat("[ERROR] %1", string.Format(message, param1, param2, param3, param4, param5, param6, param7, param8, param9));
 	}

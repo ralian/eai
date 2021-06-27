@@ -135,7 +135,7 @@ class eAIPathFinding
 		if (m_Time < reqTime) return;
 		m_Time = 0;
 
-		SetPathFilter();
+		//SetPathFilter();
 
 		if (m_Overriding != eAITargetOverriding.PATH)
 		{
@@ -145,8 +145,12 @@ class eAIPathFinding
 			{
 				if (m_Overriding == eAITargetOverriding.POSITION) m_Position = m_OverridePosition;
 
+				m_AIWorld.FindPath(m_Unit.GetPosition(), m_Position, m_PathFilter, m_Path);
+
+/*
 				bool generatedPath = false;
-				if (vector.DistanceSq(m_Unit.GetPosition(), m_Position) > (10 * 10))
+				const float maxNavMeshFindDistance = 50.0;
+				if (vector.DistanceSq(m_Unit.GetPosition(), m_Position) > (maxNavMeshFindDistance * maxNavMeshFindDistance))
 				{
 					//Print("+eAIPathFinding::OnUpdate");
 					if (!m_IsFindingRoadPath) m_RoadNetwork.FindPath(m_Unit.GetPosition(), m_Position, this);
@@ -166,14 +170,17 @@ class eAIPathFinding
 						}
 						//m_AIWorld.FindPath(end, m_Position, m_PathFilter, m_Path);
 					}
-						
-					//m_Time = -1;
-				}
 
+					//vector direction = vector.Direction(m_Unit.GetPosition(), m_Position).Normalized();
+					//m_Position = m_Unit.GetPosition() + (direction * maxNavMeshFindDistance);
+
+					m_Time = -1;
+				}
 				if (!generatedPath)
 				{
 					m_AIWorld.FindPath(m_Unit.GetPosition(), m_Position, m_PathFilter, m_Path);
 				}
+*/
 			}
 		}
 	}

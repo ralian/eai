@@ -21,7 +21,7 @@ class eAIManagerImplement extends eAIManagerBase
 		m_CommandManager = new eAICommandManagerClient();
 
 		m_Network = new eAIRoadNetwork();
-		m_Network.Init();
+		//m_Network.Init();
 	}
 
 	override void OnUpdate(bool doSim, float timeslice)
@@ -38,6 +38,7 @@ class eAIManagerImplement extends eAIManagerBase
 			SetInGroup(player && player.GetGroup() != null);
 		}
 
+/*
 		if (m_NetworkGenerate)
 		{
 			m_NetworkGenerate = false;
@@ -50,10 +51,11 @@ class eAIManagerImplement extends eAIManagerBase
 			vector pos = GetGame().GetCurrentCameraPosition();
 			float radius = 500;
 			
-			eAIManagerImplement.Get4().GetRoadNetwork().DS_Destroy();
+			m_Network.DS_Destroy();
 			
-			eAIManagerImplement.Get4().GenerateRoadNetwork(pos, radius);
+			GenerateRoadNetwork(pos, radius);
 		}
+*/
 	}
 
 	static eAIManagerImplement Get4()

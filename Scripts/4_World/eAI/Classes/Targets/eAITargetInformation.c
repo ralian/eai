@@ -81,6 +81,11 @@ class eAITargetInformation
         return 0;
     }
 
+    bool ShouldRemove(eAIBase ai = null)
+    {
+        return 0;
+    }
+
 	/**
 	 * @brief Abstract function. Get the distance to the target.  
 	 *

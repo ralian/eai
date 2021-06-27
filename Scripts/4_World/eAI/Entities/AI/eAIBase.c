@@ -192,9 +192,13 @@ class eAIBase extends PlayerBase
 		return true;
 	}
 	
+	int m_MinTimeTillNextFire;
 	void TryFireWeapon()
 	{
 		//eAITrace trace(this, "TryFireWeapon");
+
+		if (GetGame().GetTime() < m_MinTimeTillNextFire) return;
+		m_MinTimeTillNextFire = GetGame().GetTime() + 250.0;
 		
 		Weapon_Base weapon = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
 		if (!weapon) return;
@@ -387,7 +391,7 @@ class eAIBase extends PlayerBase
 			if (!target.IsActive()) continue;
 
 			float threatLevel = target.GetThreat(this);
-			if (threatLevel == 0.0) continue;
+			if (target.ShouldRemove()) continue;
 
 			int num_ai_in_group_targetting = 0;
 			if (target.IsTargetted(GetGroup(), num_ai_in_group_targetting))
@@ -402,15 +406,16 @@ class eAIBase extends PlayerBase
 		}
 	}
 
-	void PriotizeTargets()
+	//TODO: Use CF_PriorityQueue<T>
+	void PrioritizeTargets()
 	{
-		//eAITrace trace(this, "PriotizeTargets");
+		//eAITrace trace(this, "PrioritizeTargets");
 		
 		// sorting the targets so the highest the threat is indexed lowest
 
 		for (int i = m_eAI_Targets.Count() - 1; i >= 0; i--) 
 		{
-			if (m_eAI_Targets[i] == null) m_eAI_Targets.Remove(i);
+			if (m_eAI_Targets[i] == null || m_eAI_Targets[i].ShouldRemove(this)) m_eAI_Targets.Remove(i);
 			//eAILogger.Debug("m_eAI_Targets[" + i + "] entity = " + m_eAI_Targets[i].GetEntity() + " threat = " + m_eAI_Targets[i].GetThreat(this));
 		}
 		
@@ -599,7 +604,7 @@ class eAIBase extends PlayerBase
 			#endif
 
 			UpdateTargets();
-			PriotizeTargets();
+			PrioritizeTargets();
 
 			if (m_PathFinding.GetOverride() && m_eAI_Targets.Count() > 0)
 			{
