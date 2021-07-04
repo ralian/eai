@@ -551,8 +551,7 @@
 				<position_destination x="1" y="0.7" />
 			</editor_data>
 			<guard>
-				auto target = src.target;
-				if (target) return FAIL;
+                if (unit.GetThreatToSelf() &gt; 0.2) return FAIL;
 
 				return SUCCESS;
             </guard>

@@ -60,22 +60,22 @@ class eAIPathFinding
 	void StartRoadPath(out array<vector> path)
 	{
 		//Print("StartRoadPath");
-		m_RoadPathSwap.Clear();
-		path = m_RoadPathSwap;
-		m_IsFindingRoadPath = true;
+		//m_RoadPathSwap.Clear();
+		//path = m_RoadPathSwap;
+		//m_IsFindingRoadPath = true;
 	}
 
 	//! temp var
-	ref array<PathNode> m_RoadNodes = new array<PathNode>();
+	//ref array<PathNode> m_RoadNodes = new array<PathNode>();
 	void FinishRoadPath(array<vector> path, array<PathNode> nodes)
 	{		
-		//Print("FinishRoadPath");
-		m_RoadPathSwap = path;
-		m_RoadPathReady = true;
-		m_IsFindingRoadPath = false;
-		
-		m_RoadNodes.Clear();
-		m_RoadNodes.Copy(nodes);
+	//	//Print("FinishRoadPath");
+	//	m_RoadPathSwap = path;
+	//	m_RoadPathReady = true;
+	//	m_IsFindingRoadPath = false;
+	//	
+	//	m_RoadNodes.Clear();
+	//	m_RoadNodes.Copy(nodes);
 	}
 
 	void OnDebug()
@@ -123,13 +123,13 @@ class eAIPathFinding
 		
 		m_Time += pDt;
 
-		if (m_RoadPathReady)
-		{
-			m_RoadPath.Clear();
-			m_RoadPath.Copy(m_RoadPathSwap);
-			m_RoadPathSwap.Clear();
-			m_RoadPathReady = false;
-		}
+		//if (m_RoadPathReady)
+		//{
+		//	m_RoadPath.Clear();
+		//	m_RoadPath.Copy(m_RoadPathSwap);
+		//	m_RoadPathSwap.Clear();
+		//	m_RoadPathReady = false;
+		//}
 
 		float reqTime = pSimulationPrecision * (pSimulationPrecision + 1) * 0.025;
 		if (m_Time < reqTime) return;
