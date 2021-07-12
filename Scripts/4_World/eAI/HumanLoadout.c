@@ -1,9 +1,9 @@
 class HumanLoadout {	
-	ref TStringArray Shirts = {"HikingJacket_Blue"};
+	ref TStringArray Shirts = {"eAIShirt"};
 	ref TStringArray Pants = {"SlacksPants_Blue"}; 							
 	ref TStringArray Shoes = {"HikingBootsLow_Blue"};			
 	ref TStringArray BackPacks = {"TaloonBag_Blue"};					
-	ref TStringArray Vests = {"PressVest_Blue"};		
+	ref TStringArray Vests = {"SmershVest"};		
 	ref TStringArray Headgear = {"BaseballCap_Blue"};
 	ref TStringArray Gloves = {"SurgicalGloves_Blue"};	
 	ref TStringArray Misc = {"CivilianBelt"};																			
@@ -17,7 +17,7 @@ class HumanLoadout {
 	ref TIntArray	 WeaponHandgunMagCount = {1,3}; 	
 	ref TIntArray	 WeaponHealth = {75,100}; 						//Weapon health given. 75%->100%
 
-	ref TStringArray Loot = {"SodaCan_Cola"};  						//These are added always
+	ref TStringArray Loot = {"SodaCan_Cola", "Screwdriver", "ChernarusMap", "NailBox", "PeachesCan", "Pot", "Potato", "Pliers"}; //These are added always
 	ref TStringArray LootRandom = {"Screwdriver"};  				//Added with a LootRandomChance%
 //	ref TIntSet	 	 LootRandomChance = {30};						//Add item from Loot array
 	ref TIntArray	 LootHealth = {75,100}; 						//Item health given. 75%->100%
@@ -40,6 +40,8 @@ class HumanLoadout {
 	
 	static void Apply(PlayerBase h, string LoadoutFile) 
 	{
+		if (h.GetIdentity() != null) return; // We don't want to apply to players under any circumstances
+
 //		static string LoadoutSave = "SoldierLoadout.json";
 	
 		HumanLoadout Loadout = LoadData(LoadoutFile);
@@ -49,6 +51,10 @@ class HumanLoadout {
 //		HumanLoadout.AddWeapon(h, weapon);
 		HumanLoadout.AddWeapon(h, weapon, Loadout.WeaponHealth[0], Loadout.WeaponHealth[1]);
 		HumanLoadout.AddMagazine(h, weapon, Loadout.WeaponRifleMagCount[0], Loadout.WeaponRifleMagCount[1]);
+		
+		for (int i = 0; i < 2; i++) {
+			EntityAI item = h.GetInventory().CreateInInventory(Loadout.Loot.GetRandomElement());
+		}
 	}
 
 	//----------------------------------------------------------------

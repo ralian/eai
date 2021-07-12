@@ -20,6 +20,8 @@ class eAIGame {
 	// Server side list of weapon data 
 	autoptr eAIServerAimProfileManager m_ServerAimMngr;
 	
+	autoptr array<string> adminIDs = {};
+	
 	vector debug_offset = "8 0 0"; // Offset from player to spawn a new AI entity at when debug called
 	vector debug_offset_2 = "20 0 0"; // Electric bugaloo
 	
@@ -40,6 +42,7 @@ class eAIGame {
 			GetRPCManager().AddRPC("eAI", "eAIAimDetails", m_ServerAimMngr, SingeplayerExecutionType.Server);
 		}
 		
+		GetRPCManager().AddRPC("eAI", "ReqDebugMenu", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "SpawnEntity", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "DebugFire", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "DebugParticle", this, SingeplayerExecutionType.Server);
@@ -51,6 +54,26 @@ class eAIGame {
 		GetRPCManager().AddRPC("eAI", "ReqFormStop", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "DayZPlayerInventory_OnEventForRemoteWeaponAICallback", this, SingeplayerExecutionType.Server);
     }
+	
+	void ReqDebugMenu(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target) {
+		Param1<string> data;
+        if (!ctx.Read(data)) return;
+		if(type == CallType.Server) {
+			Print("eAI: Debug menu request");
+			string id = sender.GetPlainId();
+			if (adminIDs.Find(id) > -1) {
+				GetRPCManager().SendRPC("eAI", "ReqDebugMenu", new Param1<string>(id), true, sender);
+				Print("Access granted to " + sender.GetPlainId() + " ("+sender.GetName()+")");
+			} else Print("Access denied to " + sender.GetPlainId() + " ("+sender.GetName()+")");
+		} else {
+			Print("Accessing Debug Menu for " + data.param1 + " as " + GetGame().GetPlayer().GetIdentity().GetPlainId());
+			if (data.param1.ToInt() > 0) {
+				Print("Access Granted");
+				if (!eAICommandMenu.instance) new eAICommandMenu();
+				GetGame().GetUIManager().ShowScriptedMenu(eAICommandMenu.instance, null);
+			}
+		}
+	}
 	
 	// return the group owned by leader, otherwise create a new one.
 	eAIGroup GetGroupByLeader(PlayerBase leader, bool createIfNoneExists = true) {
@@ -205,8 +228,8 @@ class eAIGame {
 		Param2<vector, vector> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Client ) {
-			Particle p = Particle.PlayInWorld(ParticleList.DEBUG_DOT, data.param1);
-			p.SetOrientation(data.param2);			
+			//Particle p = Particle.PlayInWorld(ParticleList.DEBUG_DOT, data.param1);
+			//p.SetOrientation(data.param2);			
 		}
 	}
 	
@@ -345,6 +368,9 @@ modded class MissionServer
 		if (!FileExist("$profile:eAI/eAISettings.json")) JsonFileLoader<eAISettings>.JsonSaveFile("$profile:eAI/eAISettings.json", g_eAISettings);
 		JsonFileLoader<eAISettings>.JsonLoadFile("$profile:eAI/eAISettings.json", g_eAISettings);
 		
+		if (!FileExist("$profile:eAI/eAIAdmins.json")) JsonFileLoader<array<string>>.JsonSaveFile("$profile:eAI/eAIAdmins.json", m_eaiGame.adminIDs);
+		JsonFileLoader<array<string>>.JsonLoadFile("$profile:eAI/eAIAdmins.json", m_eaiGame.adminIDs);
+		
 		// load a default loadout, just to save the default if not exist
 		HumanLoadout Loadout = HumanLoadout.LoadData("SoldierLoadout.json");
     }
@@ -390,15 +416,16 @@ modded class MissionGameplay
 	
 	override void OnUpdate(float timeslice) {
 		super.OnUpdate(timeslice);
-
+		
 		// If we want to open the command menu, and nothing else is open
 		if (m_eAIRadialKey.LocalPress() && !GetGame().GetUIManager().GetMenu()) {
-			if (!eAICommandMenu.instance) new eAICommandMenu();
-			GetUIManager().ShowScriptedMenu(eAICommandMenu.instance, null);
+			// check to see if we are an admin
+			GetRPCManager().SendRPC("eAI", "ReqDebugMenu", new Param1<string>("0"), true, NULL);
+	
 		}
 		
 		// If we want to close the command menu, and our menu is open
-		if (m_eAIRadialKey.LocalRelease() && GetGame().GetUIManager().GetMenu() == eAICommandMenu.instance) {
+		if (m_eAIRadialKey.LocalRelease() && GetGame().GetUIManager().GetMenu() && GetGame().GetUIManager().GetMenu() == eAICommandMenu.instance) {
 			eAICommandMenu.instance.OnMenuRelease();
 			GetUIManager().Back();
 		}

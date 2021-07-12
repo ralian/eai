@@ -31,4 +31,23 @@ modded class DayZGame
 	eAICommandManager GetEAICommandManager() {
 		return m_eAI_CommandManager;
 	}
+	
+	override void GlobalsInit()
+    {
+        super.GlobalsInit();
+
+		string path = "cfgVehicles";
+		string child_name = "";
+		Print("eAI: Filtering " + m_CharClassNames.Count() + " classnames");
+        for (int i = m_CharClassNames.Count() - 1; i >= 0; i--)
+		{
+            child_name = m_CharClassNames[i];
+			Print("eAI: Reading config class " + child_name);
+			if (child_name.Contains("eAI"))
+            {
+			    Print("eAI: Purged config class " + child_name);
+				m_CharClassNames.RemoveOrdered(i);
+            }
+		}
+    }
 };

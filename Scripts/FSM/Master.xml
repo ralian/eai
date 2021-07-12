@@ -69,12 +69,14 @@
 		<state name="Combat">
 			<variables>
 				<variable name="time" type="float" />
+				<variable name="melee" type="bool" />
 			</variables>
 			<editor_data>
 				<position x="333" y="374" />
 				<size width="150" height="40" />
 			</editor_data>
 			<event_entry>
+				melee = false
 				// we assume the targets have been cleaned and sorted in the transition
 				if (!unit.ReloadingInADS) {
 					unit.RaiseWeapon(true);
@@ -83,7 +85,7 @@
 				} else unit.ReloadingInADS = false; // if we just came from an ADS reload
 			</event_entry>
 			<event_exit>
-				if (!unit.ReloadingInADS) {
+				if (!unit.ReloadingInADS && !melee) {
 					unit.StopAimArbitration();
 					unit.RaiseWeapon(false);
 				}
@@ -95,15 +97,38 @@
 				} time = 0;
 
 				if (unit.threats.Count() &lt; 1) return EXIT;
-				
-				EntityAI mag, weap; // these are unused here
-				if (unit.ShouldReload(mag, weap)) {
-					unit.ReloadingInADS = true;
-					return EXIT;
-				}
 
-				if (unit.ShouldFire())
-					unit.FireHeldWeapon();
+				if (false){//vector.Distance(unit.threats[0].GetPosition(), unit.GetPosition()) &lt; 2.0) {
+	
+					if (!melee) {
+						melee = true
+						unit.StopAimArbitration();
+						unit.RaiseWeapon(false);
+						unit.DelayPunching(1500, 0);
+					} else {
+						unit.TryPunching(unit.threats[0])
+							//target.DecreaseHealth(0.25);
+					}
+
+				} else {
+				
+					if (melee) {
+						melee = false
+						unit.RaiseWeapon(true);
+						unit.RefreshAimArbitration();
+						unit.DelayFiring(1000, 2000);
+					}
+	
+					EntityAI mag, weap; // these are unused here
+					if (unit.ShouldReload(mag, weap)) {
+						unit.ReloadingInADS = true;
+						return EXIT;
+					}
+	
+					if (unit.ShouldFire())
+						unit.FireHeldWeapon();
+	
+				}
 
 				return CONTINUE;
             </event_update>

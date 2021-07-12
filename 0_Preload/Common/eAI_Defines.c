@@ -1,0 +1,4 @@
+#define ENFUSION_AI_PROJECT
+#define EAI
+#define EAI_STABLE
+#define EAI_VERSION 0.12

@@ -4,6 +4,9 @@ class eAIDynamicPatrol {
 	float m_minR, m_maxR, m_despawnR;
 	int m_count;
 	string m_loadout;
+	int m_respawnT;
+	
+	int deletionTime = -1;
 	
 	eAIGroup m_activeGroup = null;
 	
@@ -15,7 +18,8 @@ class eAIDynamicPatrol {
 	// @param minR minimum radius a player can be away from the spawn point, if a player teleports or spawns right on top of it, they won't 
 	// @param maxR distance at which an incoming player will spawn the patrol 
 	// @param despawnR the distance away that a player must run to despawn the patrol
-	void eAIDynamicPatrol(vector pos, array<vector> waypoints, string loadout = "SoldierLoadout.json", int count = 1, float minR = 300, float maxR = 800, float despawnR = 1000) {
+	// @param respawnT time between patrols respawning, and body cleanup.
+	void eAIDynamicPatrol(vector pos, array<vector> waypoints, string loadout = "SoldierLoadout.json", int count = 1, float minR = 300, float maxR = 800, float despawnR = 1000, int respawnT = 60) {
 		m_pos = pos;
 		m_waypoints = waypoints;
 		m_minR = minR;
@@ -23,6 +27,7 @@ class eAIDynamicPatrol {
 		m_despawnR = despawnR;
 		m_count = count;
 		m_loadout = loadout;
+		m_respawnT = respawnT;
 	}
 	
 	eAIGroup SpawnPatrol() {
@@ -40,19 +45,22 @@ class eAIDynamicPatrol {
 	}
 	
 	void UpdateTriggers() {
+		
 		//Print("Patrol at " + m_pos + " updating triggers");
-		bool shouldSpawn = false, shouldDespawn = true;
+		bool shouldSpawn = false, shouldDespawn = true, playerTooClose = false;
 		autoptr array<Man> players = {};
 		GetGame().GetPlayers(players);
 		vector patrolPos = m_pos;
 		if (m_activeGroup && m_activeGroup.GetLeader())
 			patrolPos = m_activeGroup.GetLeader().GetPosition();
+		
 		foreach (PlayerBase p : players) {
 			float dist = vector.Distance(patrolPos, p.GetPosition());
 			if (dist < m_despawnR) shouldDespawn = false;
 			if (dist < m_maxR) shouldSpawn = true;
-			if (dist < m_minR) shouldSpawn = false;
+			if (dist < m_minR) playerTooClose = true;
 		}
+		
 		if (m_activeGroup) {
 			bool groupIsObsolete = true;
 			for (int i = 0; i < m_activeGroup.Count(); i++) {
@@ -60,14 +68,21 @@ class eAIDynamicPatrol {
 					groupIsObsolete = false;
 			}
 			
-			if ((groupIsObsolete && shouldSpawn) || shouldDespawn) {
+			if (shouldDespawn || (deletionTime > 0 && GetGame().GetTime() > deletionTime)) {
+				// Now we can actually clear the bodies - before they would disappear almost instantly.
 				m_activeGroup.DeleteMembers();
 				delete m_activeGroup;
 				m_activeGroup = null;
 				Print("Deleted patrol at " + m_pos);
+				deletionTime = -1;
+			}
+			
+			if (groupIsObsolete && deletionTime < 0) { // If all the AI are killed
+				deletionTime = GetGame().GetTime() + (m_respawnT * 1000); // add the time until despawn, converted to ms
+				Print("Scheduling a patrol for deletion at" + deletionTime);
 			}
 		} else { // If the trigger is not active
-			if (shouldSpawn) SpawnPatrol();
+			if (shouldSpawn && !playerTooClose) SpawnPatrol();
 		}
 		
 		// Call this function 15 seconds in the future, plus a random interval to spread out computation of a bunch of patrols

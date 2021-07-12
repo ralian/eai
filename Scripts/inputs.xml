@@ -3,15 +3,11 @@
 	<inputs>
 		<actions>
 			<input name="eAICommandMenu" loc="eAI Command Menu"/>
-			<input name="eAITestInput" loc="eAI Test Input"/>
 		</actions>
 	</inputs>
 	<preset>
 		<input name="eAICommandMenu">
 			<btn name="kT"/>
-		</input>
-		<input name="eAITestInput">
-			<btn name="kY"/>
 		</input>
 	</preset>
 </modded_inputs>

@@ -210,13 +210,26 @@ modded class PlayerBase
 		}
 		
 		// for now we just check the raw aim errors
-		if (m_AimDeltaX < 1.0 && m_AimDeltaY < 1.0) {
+		float allowedError = 1/(g_eAISettings.eAIAccuracy + 0.2);
+		if (m_AimDeltaX < allowedError && m_AimDeltaY < allowedError) {
 			DelayFiring(500, 300);
 			return true;
 		}
 		
 		return false;
 	
+	}
+	
+	int m_AllowedPunchTime = -1;
+	void DelayPunching(int time_ms, int randomAdditionalTime) {
+		m_AllowedPunchTime = GetGame().GetTime() + time_ms;
+		if (randomAdditionalTime > 0) m_AllowedPunchTime += Math.RandomInt(0, randomAdditionalTime);
+	}
+	bool TryPunching(EntityAI pTarget) {
+		if (m_AllowedPunchTime > GetGame().GetTime()) return false;
+		DelayPunching(1000, 0);
+		StartCommand_Melee(pTarget)
+		return true;
 	}
 	
 	// Keep the unit from firing until time_ms from now.
@@ -871,7 +884,7 @@ modded class PlayerBase
 				lastdY = m_AimDeltaY;
 			} else { // Aim along the x axis normally
 				// could save time on like 2/10 updates by moving calculations in here
-				pInputs.OverrideAimChangeX(true, m_AimDeltaX * (1/500.0));
+				pInputs.OverrideAimChangeX(true, m_AimDeltaX * (1/500.0) * (g_eAISettings.eAIAccuracy + 0.2));
 				pInputs.OverrideAimChangeY(false, 0);
 				lastdX = m_AimDeltaX;
 			}

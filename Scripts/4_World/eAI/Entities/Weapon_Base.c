@@ -26,7 +26,8 @@ bool DayZPlayerInventory_OnEventForRemoteWeaponAI (int packedType, DayZPlayer pl
 	PlayerBase pb = PlayerBase.Cast(player);
 	
 	if (!pb) {
-		Print("DayZPlayerInventory_OnEventForRemoteWeaponAI Callback for null PlayerBase! I am giving up, some inventory will be out of sync!");
+		if (g_eAISettings.eAIDebug > 1)
+			Print("DayZPlayerInventory_OnEventForRemoteWeaponAI Callback for null PlayerBase! I am giving up, some inventory will be out of sync!");
 		return false;
 	}
 	
@@ -185,6 +186,8 @@ modded class Weapon_Base {
 		if (GetGame().IsServer() && PlayerBase.Cast(e.m_player).IsAI()) {
 			// Write the ctx that would normally be sent to the server... note we need to skip writing INPUT_UDT_WEAPON_REMOTE_EVENT
 			// since this would normally be Read() and stripped away by the server before calling OnEventForRemoteWeapon
+			
+			if (e.m_player == null) return false;
 			
 			// also wait, I think everyone is meant to execute this
 			ScriptRemoteInputUserData ctx = new ScriptRemoteInputUserData;
