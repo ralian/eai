@@ -34,9 +34,11 @@ class eAITargetInformation
 	 *
 	 * @return string
 	 */
-	string DebugString()
+	override string GetDebugName()
 	{
-		return "";
+		string str = super.GetDebugName();
+		
+		return str;
 	}
 
 	/**
