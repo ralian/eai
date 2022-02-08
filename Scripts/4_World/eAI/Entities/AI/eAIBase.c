@@ -63,8 +63,6 @@ class eAIBase extends PlayerBase
 	private bool m_WeaponRaisedPrev;
 	private float m_WeaponRaisedTimer;
 
-	private bool m_AimChangeState;
-
 	ref array<ItemBase> m_Weapons = {};
 	ref array<ItemBase> m_MeleeWeapons = {};
 	
@@ -72,7 +70,7 @@ class eAIBase extends PlayerBase
 	private ref eAIPathFinding m_PathFinding;
 
 	private Apple m_DebugTargetApple;
-	private float m_DebugAngle;
+	private vector m_DebugTargetOrientation;
 
 #ifndef SERVER
 	private autoptr array<Shape> m_DebugShapes = new array<Shape>();
@@ -82,6 +80,10 @@ class eAIBase extends PlayerBase
 	{
 		#ifdef EAI_TRACE
 		auto trace = CF_Trace_0(this, "eAIBase");
+		#endif
+
+		#ifdef CF_DEBUG
+		CF_Debug.Create(this);
 		#endif
 
 		if (IsMissionHost())
@@ -130,7 +132,7 @@ class eAIBase extends PlayerBase
 
 		m_PathFinding = new eAIPathFinding(this);
 
-		if (IsMissionHost())
+		if (GetGame().IsServer())
 		{
 			SetGroup(eAIGroup.CreateGroup());
 
@@ -150,6 +152,10 @@ class eAIBase extends PlayerBase
 	{
 		#ifdef EAI_TRACE
 		auto trace = CF_Trace_0(this, "~eAIBase");
+		#endif
+
+		#ifdef CF_DEBUG
+		CF_Debug.Destroy(this);
 		#endif
 
 		m_AllAI.RemoveItem(this);
@@ -652,7 +658,7 @@ class eAIBase extends PlayerBase
 		
 		int simulationPrecision = 0;
 
-		//if (!m_DebugTargetApple)
+		if (!m_DebugTargetApple)
 		{
 			UpdateTargets();
 			PrioritizeTargets();
@@ -665,27 +671,31 @@ class eAIBase extends PlayerBase
 			
 			m_PathFinding.OnUpdate(pDt, simulationPrecision);
 		}
-		/*
 		else
 		{
-			m_Path.Clear();
+			/*
+			m_PathFinding.Clear();
 
 			Input input = GetGame().GetInput();
 
-			float angleChange = 0;
-			if (input.LocalValue("eAITestIncrease", false)) angleChange = 360.0;
-			if (input.LocalValue("eAITestDecrease", false)) angleChange = -360.0;
+			float xAngleChange = 0;
+			float yAngleChange = 0;
+			if (input.LocalValue_ID(eAITestLRIncrease, false)) xAngleChange = 360.0;
+			if (input.LocalValue_ID(eAITestLRDecrease, false)) xAngleChange = -360.0;
+			if (input.LocalValue_ID(eAITestUDIncrease, false)) yAngleChange = 360.0;
+			if (input.LocalValue_ID(eAITestUDDecrease, false)) yAngleChange = -360.0;
 
-			m_DebugAngle += angleChange * pDt;
+			m_DebugTargetOrientation[0] = m_DebugTargetOrientation[0] + (xAngleChange * pDt);
+			m_DebugTargetOrientation[1] = m_DebugTargetOrientation[1] + (yAngleChange * pDt);
 
-			vector debugApplePosition = Vector(m_DebugAngle, 0, 0).AnglesToVector() * 5.0;
+			vector debugApplePosition = m_DebugTargetOrientation.AnglesToVector() * 5.0;
 			debugApplePosition = GetPosition() + debugApplePosition + "0 1 0";
 			m_DebugTargetApple.SetPosition(debugApplePosition);
 			
 			AimAtPosition(debugApplePosition);
-			LookAtPosition(debugApplePosition);
+			//LookAtPosition(debugApplePosition);
+			*/
 		}
-		*/
 
 		vector transform[4];
 		GetTransform(transform);
@@ -944,7 +954,6 @@ class eAIBase extends PlayerBase
 			{
 				float speedLimit = 3;
 
-				hcm.SetRaised(m_WeaponRaised);
 				if (m_WeaponRaised) speedLimit = Math.Min(speedLimit, 1);
 				
 				float turnTarget = GetOrientation()[0];
@@ -1051,6 +1060,16 @@ class eAIBase extends PlayerBase
 		return true;
 	}
 	
+	#ifdef CF_DEBUG
+	override bool CF_OnDebugUpdate(CF_Debug instance, CF_DebugUI_Type type)
+	{
+		super.CF_OnDebugUpdate(instance, type);
+
+
+		return true;
+	}
+	#endif
+
 	override void HandleWeapons(float pDt, Entity pInHands, HumanInputController pInputs, out bool pExitIronSights)
 	{
 		#ifdef EAI_TRACE
@@ -1063,15 +1082,6 @@ class eAIBase extends PlayerBase
 		Weapon_Base weapon;
 		Class.CastTo(weapon, pInHands);
 		
-		float currentLR = hcw.GetBaseAimingAngleLR();
-		float currentUD = hcw.GetBaseAimingAngleUD();
-
-		float targetLR = 0.0;
-		float targetUD = 0.0;
-		
-		float offsetLR = 0.0;
-		float offsetUD = 0.0;
-
 		if (m_WeaponRaised && m_WeaponRaised != m_WeaponRaisedPrev)
 		{
 			m_WeaponRaisedTimer = 0.0;
@@ -1080,7 +1090,9 @@ class eAIBase extends PlayerBase
 		m_WeaponRaisedPrev = m_WeaponRaised;
 		m_WeaponRaisedTimer += pDt;
 
-		if (IsRaised() || m_DebugTargetApple)
+		AnimSetBool(m_eAI_AnimationST.m_VAR_Raised, m_WeaponRaised || m_DebugTargetApple != null);
+	
+		if (m_WeaponRaised || m_DebugTargetApple)
 		{
 			#ifndef SERVER
 			vector position;
@@ -1095,57 +1107,24 @@ class eAIBase extends PlayerBase
 			#endif
 
 			vector aimOrientation = m_eAI_AimDirection_ModelSpace.VectorToAngles();
-
-			targetLR = aimOrientation[0];// + (pInputs.GetHeadingAngle() * Math.RAD2DEG);
-			targetUD = aimOrientation[1];
 			
 			float dist = vector.Distance(GetPosition() + "0 1.5 0", m_eAI_AimPosition_WorldSpace);
 			dist = Math.Clamp(dist, 1.0, 360.0);
 			
-			offsetLR = -45.0 / dist;
-			offsetUD = 0.0;
-		}
+			aimOrientation[0] = aimOrientation[0] + (-45.0 / dist);
+			aimOrientation[1] = aimOrientation[1];
+
+			if (aimOrientation[0] > 180.0) aimOrientation[0] = aimOrientation[0] - 360.0;
+			if (aimOrientation[1] > 180.0) aimOrientation[1] = aimOrientation[1] - 360.0;
 		
-		if (targetLR > 180.0) targetLR = targetLR - 360.0;
-		if (targetUD > 180.0) targetUD = targetUD - 360.0;
-		
-		targetLR += offsetLR;
-		targetUD += offsetUD;
+			aimOrientation[0] = Math.Clamp(aimOrientation[0], -90.0, 90.0);
+			aimOrientation[1] = Math.Clamp(aimOrientation[1], -90.0, 90.0);
 
-		targetLR = Math.Clamp(targetLR, -90.0, 90.0);
-		targetUD = Math.Clamp(targetUD, -90.0, 90.0);
-
-		float deltaLR = (targetLR - currentLR) * pDt * 0.1;
-		float deltaUD = (targetUD - currentUD) * pDt * 0.1;
-
-		if (IsRaised())
-		{
-			/*
-			if (m_AimChangeState)
-			{
-				pInputs.OverrideAimChangeX(true, deltaUD);
-				pInputs.OverrideAimChangeY(true, 0.01);
-			}
-			else
-			{
-				pInputs.OverrideAimChangeX(true, deltaLR);
-				pInputs.OverrideAimChangeY(false, 0.0);
-			}
-			*/
-
-			AnimSetFloat(m_eAI_AnimationST.m_VAR_AimX, targetLR);
-			AnimSetFloat(m_eAI_AnimationST.m_VAR_AimY, targetUD);
-
-			m_AimChangeState = !m_AimChangeState;
-		}
-
-		if (m_DebugTargetApple)
-		{
-			vector debugApplePosition = ModelToWorld(Vector(targetLR, targetUD, 0).AnglesToVector() * 1.0);
-			m_DebugTargetApple.SetPosition(debugApplePosition + "0 1 0");
+			AnimSetFloat(m_eAI_AnimationST.m_VAR_AimX, aimOrientation[0]);
+			AnimSetFloat(m_eAI_AnimationST.m_VAR_AimY, aimOrientation[1]);
 		}
 	}
-	
+
 	// As with many things we do, this is an almagomation of the client and server code
 	override void CheckLiftWeapon()
 	{		

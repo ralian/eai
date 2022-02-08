@@ -1,0 +1,548 @@
+$AnimGraph 7 {
+	#AnimSetTemplate "{F0C651DE8E24A5DE}DZ/anims/workspaces/player/player_main/player_main.ast"
+	#AnimSyncTable "{8F89313B7FBB0B66}DZ/anims/workspaces/player/Player_SyncTable.asy"
+	$Controls {
+		$Commands {
+			 CMD_Weapon_Hide -1
+			 CMD_Weapon_Show -1
+			 CMD_Action -1
+			 CMD_InternalAction -1
+			 CMD_FullBodyAction -1
+			 CMD_VehicleAction -1
+			 CMD_GunShoulder -1
+			 CMD_GunShoulderOut -1
+			 CMD_Expression -1
+			 CMD_Expression_Blink -1
+			 CMD_Roll -1
+			 CMD_Jump -1
+			 CMD_JumpFall -1
+			 CMD_Climb -1
+			 CMD_ClimbOver -1
+			 CMD_Fall -1
+			 CMD_FallCancel -1
+			 CMD_Land -1
+			 CMD_LandImmediate -1
+			 CMD_Reload_Magazine -1
+			 CMD_Reload_BoltAction -1
+			 CMD_Reload_Chambering -1
+			 CMD_Reload_ChamberingFast -1
+			 CMD_Reload_Exit -1
+			 CMD_Reload_Clip -1
+			 CMD_Death -1
+			 CMD_Swim -1
+			 CMD_Surrender -1
+			 CMD_Restrain -1
+			 CMD_Restrain_Self -1
+			 CMD_Restrain_Instant -1
+			 CMD_Restrained_Struggle -1
+			 CMD_Restrained_Fall -1
+			 CMD_Ladder_Enter -1
+			 CMD_Ladder_Exit -1
+			 CMD_Ladder_Exit_Left -1
+			 CMD_Ladder_Exit_Right -1
+			 CMD_InternalAttack -1
+			 CMD_ItemDrop -1
+			 CMD_Throwing -1
+			 CMD_ItemRoll -1
+			 CMD_Modifier_Additive -1
+			 CMD_Vehicle_GetIn -1
+			 CMD_Vehicle_SwitchSeat -1
+			 CMD_Vehicle_GetOut -1
+			 CMD_Vehicle_ClimbOut -1
+			 CMD_Vehicle_CrawlOut -1
+			 CMD_Vehicle_JumpOut -1
+			 CMD_Weapon_Jam -1
+			 CMD_Weapon_Interrupt -1
+			 CMD_WeaponFire -1
+			 CMD_Weapon_Obstruction -1
+			 CMD_Melee_Attack -1
+			 CMD_Melee_Attack2 -1
+			 CMD_Melee_Stealth -1
+			 CMD_Melee_Combo -1
+			 CMD_Melee_Exit -1
+			 CMD_Melee_Weapon -1
+			 CMD_Melee_Evade -1
+			 CMD_Damage -1
+			 CMD_DamageHeavy -1
+			 CMD_Turn -1
+			 CMD_StopTurn -1
+			 CMD_SlidingPose -1
+			 CMD_Unconscious -1
+			 CMD_Unconscious_Exit -1
+			 CMD_PulledOut -1
+			 CMD_TRAILER_WALK_AWAY -1
+		}
+		$Vars {
+			#Var MovementSpeed float 0.0 0.0 3.0 ""
+			#Var MovementDirection float 0.0 -180.0 180.0 ""
+			#Var Stance int 0 0 2 ""
+			#Var TurnAmount float 0.0 -2.0 2.0 ""
+			#Var Look bool 0 ""
+			#Var LookDirY float 0.0 -85.0 85.0 ""
+			#Var LookDirX float 0.0 -180.0 180.0 ""
+			#Var Injured float 0.0 0.0 1.0 ""
+			#Var Exhaustion float 0.0 0.0 1.0 ""
+			#Var Raised bool 0 ""
+			#Var ADS bool 0 ""
+			#Var MeleeBlock bool 0 ""
+			#Var AimY float 0.0 -85.0 85.0 ""
+			#Var AimX float 0.0 -180.0 180.0 ""
+			#Var AimIKX float 0.0 -180.0 180.0 ""
+			#Var RaiseTime float 0.4 0.0 2.0 ""
+			#Var LowerTime float 0.4 0.0 2.0 ""
+			#Var LeanForward float 0.0 -90.0 90.0 ""
+			#Var Lean float 0.0 -1.0 1.0 ""
+			#Var WaterLevel float 0.0 0.0 1.0 ""
+			#Var DamageDirection float 0.0 -180.0 180.0 ""
+			#Var LadderMovement int 0 -2 2 ""
+			#Var VehicleType int -1 -1 10 ""
+			#Var VehicleSteering float 0.0 -1.0 1.0 ""
+			#Var VehicleThrottle float 0.0 0.0 1.0 ""
+			#Var VehicleClutch float 0.0 0.0 1.0 ""
+			#Var VehicleBrake bool 0 ""
+			#Var VehicleAccelerationFB float 0.0 -1.0 1.0 ""
+			#Var VehicleAccelerationLR float 0.0 -1.0 1.0 ""
+			#Var WeaponType int 1 0 10 ""
+			#Var MovementAngleX float 0.0 -35.0 35.0 ""
+			#Var WeaponChamberType int 0 0 4 ""
+			#Var ArmIK int 0 0 7 ""
+			#Var Talking bool 0 ""
+			#Var TestFloat float 0.0 0.0 1.0 ""
+			#Var ActionProgress float 0.0 0.0 1.0 ""
+			#Var ActionProgressEnd float 1.0 0.0 1.0 ""
+			#Var eAI_AimY float 0.0 -85.0 85.0 ""
+			#Var eAI_AimX float 0.0 -180.0 180.0 ""
+			#Var eAI_AimIKX float 0.0 -180.0 180.0 ""
+		}
+		$Expressions {
+		}
+		$DebugControls {
+			
+			#DCtrl 2 "Ladder" "EnterGround" "" "CMD_Ladder_Enter" 0.0 0
+			
+			#DCtrl 2 "Ladder" "EnterRoof" "" "CMD_Ladder_Enter" 0.0 1
+			
+			#DCtrl 2 "Ladder" "ExitGround" "" "CMD_Ladder_Exit" 0.0 0
+			
+			#DCtrl 2 "Ladder" "ExitRoof" "" "CMD_Ladder_Exit" 0.0 1
+			
+			#DCtrl 2 "Ladder" "LadderExitLeft" "" "CMD_Ladder_Exit_Left" 0.0 0
+			
+			#DCtrl 2 "Ladder" "LadderExitRight" "" "CMD_Ladder_Exit_Right" 0.0 0
+			
+			#DCtrl 2 "Vehicles" "EnterDriver" "" "CMD_Vehicle_GetIn" 0.0 0
+			
+			#DCtrl 2 "Vehicles" "EnterCodriver" "" "CMD_Vehicle_GetIn" 0.0 1
+			
+			#DCtrl 2 "Vehicles" "EnterPassengerL" "" "CMD_Vehicle_GetIn" 0.0 2
+			
+			#DCtrl 2 "Vehicles" "EnterPassengerR" "" "CMD_Vehicle_GetIn" 0.0 3
+			
+			#DCtrl 2 "Vehicles" "Exit" "" "CMD_Vehicle_GetOut" 0.0 0
+			
+			#DCtrl 2 "Vehicles" "ExitJumpOut" "" "CMD_Vehicle_GetOut" 1.0 0
+			
+			#DCtrl 2 "Vehicles" "ExitClimbOutL" "" "CMD_Vehicle_GetOut" 0.0 90
+			
+			#DCtrl 2 "Vehicles" "ExitClimbOutR" "" "CMD_Vehicle_GetOut" 0.0 -90
+			
+			#DCtrl 2 "Vehicles" "ExitCrawlOut" "" "CMD_Vehicle_GetOut" 0.0 180
+			
+			#DCtrl 2 "Vehicles" "SwitchSeat" "" "CMD_Vehicle_SwitchSeat" 0.0 0
+			
+			#DCtrl 2 "Vehicles" "OpenDoor" "" "CMD_Action" 0.0 301
+			
+			#DCtrl 2 "Vehicles" "CloseDoor" "" "CMD_Action" 0.0 300
+			
+			#DCtrl 2 "Vehicles" "Start Engine" "" "CMD_Action" 0.0 402
+			
+			#DCtrl 2 "Vehicles" "Stop Engine" "" "CMD_Action" 0.0 302
+			
+			#DCtrl 2 "Vehicles" "Stop Actions" "" "CMD_InternalAction" 0.0 0
+			
+			#DCtrl 2 "Falling" "LandImmediate" "" "CMD_LandImmediate" 0.0 0
+			
+			#DCtrl 2 "Full Body Gestures" "Dance" "" "CMD_FullBodyAction" 0.0 1100
+			
+			#DCtrl 2 "Full Body Gestures" "MilitarySalute" "" "CMD_FullBodyAction" 0.0 1000
+			
+			#DCtrl 2 "Full Body Gestures" "Campfire" "" "CMD_FullBodyAction" 0.0 1001
+			
+			#DCtrl 2 "Full Body Gestures" "LyingDown" "" "CMD_FullBodyAction" 0.0 1002
+			
+			#DCtrl 2 "Full Body Gestures" "SOS" "" "CMD_FullBodyAction" 0.0 1003
+			
+			#DCtrl 2 "Full Body Gestures" "SitA" "" "CMD_FullBodyAction" 0.0 1004
+			
+			#DCtrl 2 "Full Body Gestures" "SitB" "" "CMD_FullBodyAction" 0.0 1005
+			
+			#DCtrl 2 "Full Body Gestures" "Dabbing" "" "CMD_FullBodyAction" 0.0 1006
+			
+			#DCtrl 2 "Full Body Gestures" "EndGesture" "" "CMD_InternalAction" 0.0 0
+			
+			#DCtrl 2 "Full Body Gestures" "HardEndGesture" "" "CMD_InternalAction" 0.0 -2
+			
+			#DCtrl 2 "Gestures Once" "CutThroat" "" "CMD_Action" 0.0 1100
+			
+			#DCtrl 2 "Gestures Once" "Clap" "" "CMD_Action" 0.0 1101
+			
+			#DCtrl 2 "Gestures Once" "Dabbing" "" "CMD_Action" 0.0 1102
+			
+			#DCtrl 2 "Gestures Once" "Move" "" "CMD_Action" 0.0 1103
+			
+			#DCtrl 2 "Gestures Once" "Down" "" "CMD_Action" 0.0 1104
+			
+			#DCtrl 2 "Gestures Once" "Come" "" "CMD_Action" 0.0 1105
+			
+			#DCtrl 2 "Gestures Once" "Taunt Kiss" "" "CMD_Action" 0.0 1106
+			
+			#DCtrl 2 "Gestures Once" "Taunt Elbow" "" "CMD_Action" 0.0 1107
+			
+			#DCtrl 2 "Gestures Once" "Taunt Think" "" "CMD_Action" 0.0 1108
+			
+			#DCtrl 2 "Gestures" "Greetings" "" "CMD_Action" 0.0 1000
+			
+			#DCtrl 2 "Gestures" "Point" "" "CMD_Action" 0.0 1001
+			
+			#DCtrl 2 "Gestures" "ThumbUp" "" "CMD_Action" 0.0 1002
+			
+			#DCtrl 2 "Gestures" "ThumbDown" "" "CMD_Action" 0.0 1003
+			
+			#DCtrl 2 "Gestures" "Silence" "" "CMD_Action" 0.0 1004
+			
+			#DCtrl 2 "Gestures" "Taunt Finger" "" "CMD_Action" 0.0 1005
+			
+			#DCtrl 2 "Gestures" "TimeOut" "" "CMD_Action" 0.0 1006
+			
+			#DCtrl 2 "Gestures" "Heart" "" "CMD_Action" 0.0 1007
+			
+			#DCtrl 2 "Gestures" "Facepalm" "" "CMD_Action" 0.0 1008
+			
+			#DCtrl 2 "Gestures" "Watching" "" "CMD_Action" 0.0 1009
+			
+			#DCtrl 2 "Gestures" "Hold" "" "CMD_Action" 0.0 1010
+			
+			#DCtrl 2 "Gestures" "Listening" "" "CMD_Action" 0.0 1011
+			
+			#DCtrl 2 "Gestures" "Point to Self" "" "CMD_Action" 0.0 1012
+			
+			#DCtrl 2 "Gestures" "Look At Me" "" "CMD_Action" 0.0 1013
+			
+			#DCtrl 2 "RockPaperScissors" "RPS_Start" "" "CMD_Action" 0.0 10000
+			
+			#DCtrl 2 "RockPaperScissors" "RPS_Rock" "" "CMD_InternalAction" 0.0 10
+			
+			#DCtrl 2 "RockPaperScissors" "RPS_Paper" "" "CMD_InternalAction" 0.0 11
+			
+			#DCtrl 2 "RockPaperScissors" "RPS_Scissor" "" "CMD_InternalAction" 0.0 12
+			
+			#DCtrl 2 "RockPaperScissors" "RPS_Cancel" "" "CMD_InternalAction" 0.0 0
+			
+			#DCtrl 2 "Gestures" "GunOnShoulder" "" "CMD_GunShoulder" 0.0 0
+			
+			#DCtrl 2 "Gestures" "GunOffShoulder" "" "CMD_GunShoulderOut" 0.0 0
+			
+			#DCtrl 2 "Gestures" "SwitchGesture" "" "CMD_InternalAction" 0.0 1
+			
+			#DCtrl 2 "Gestures" "EndGesture" "" "CMD_InternalAction" 0.0 0
+			
+			#DCtrl 2 "Gestures" "HardEndGesture" "" "CMD_InternalAction" 0.0 -2
+			
+			#DCtrl 2 "Full Body Actions" "DrinkPond" "" "CMD_FullBodyAction" 0.0 0
+			
+			#DCtrl 2 "Full Body Actions" "DrinkWell" "" "CMD_FullBodyAction" 0.0 1
+			
+			#DCtrl 2 "Full Body Actions" "FillBottleWell" "" "CMD_FullBodyAction" 0.0 2
+			
+			#DCtrl 2 "Full Body Actions" "FireExtinguisher" "" "CMD_FullBodyAction" 0.0 3
+			
+			#DCtrl 2 "Full Body Actions" "WringCloth" "" "CMD_FullBodyAction" 0.0 4
+			
+			#DCtrl 2 "Full Body Actions" "GatherBerries" "" "CMD_FullBodyAction" 0.0 5
+			
+			#DCtrl 2 "Full Body Actions" "ChopTree" "" "CMD_FullBodyAction" 0.0 6
+			
+			#DCtrl 2 "Full Body Actions" "DigShovel" "" "CMD_FullBodyAction" 0.0 7
+			
+			#DCtrl 2 "Full Body Actions" "DigHoe" "" "CMD_FullBodyAction" 0.0 8
+			
+			#DCtrl 2 "Full Body Actions" "Fishing" "" "CMD_FullBodyAction" 0.0 9
+			
+			#DCtrl 2 "Full Body Actions" "CPR" "" "CMD_FullBodyAction" 0.0 10
+			
+			#DCtrl 2 "Full Body Actions" "Bandage" "" "CMD_FullBodyAction" 0.0 11
+			
+			#DCtrl 2 "Full Body Actions" "Crafting" "" "CMD_FullBodyAction" 0.0 12
+			
+			#DCtrl 2 "Full Body Actions" "Interact Player" "" "CMD_FullBodyAction" 0.0 13
+			
+			#DCtrl 2 "Full Body Actions" "Drink Cannister" "" "CMD_FullBodyAction" 0.0 14
+			
+			#DCtrl 2 "Full Body Actions" "Force Feed" "" "CMD_FullBodyAction" 0.0 15
+			
+			#DCtrl 2 "Full Body Actions" "Bandage Target" "" "CMD_FullBodyAction" 0.0 16
+			
+			#DCtrl 2 "Full Body Actions" "Disinfect Target" "" "CMD_FullBodyAction" 0.0 17
+			
+			#DCtrl 2 "Full Body Actions" "Deploy" "" "CMD_FullBodyAction" 0.0 18
+			
+			#DCtrl 2 "Full Body Actions" "Start Fire Match" "" "CMD_FullBodyAction" 0.0 19
+			
+			#DCtrl 2 "Full Body Actions" "Animal Skinning" "" "CMD_FullBodyAction" 0.0 20
+			
+			#DCtrl 2 "Full Body Actions" "Wash Hands Well" "" "CMD_FullBodyAction" 0.0 21
+			
+			#DCtrl 2 "Full Body Actions" "Wash Hands Pond" "" "CMD_FullBodyAction" 0.0 22
+			
+			#DCtrl 2 "Full Body Actions" "Saline/Blood Bag Target" "" "CMD_FullBodyAction" 0.0 23
+			
+			#DCtrl 2 "Full Body Actions" "Saline/Blood Bag" "" "CMD_FullBodyAction" 0.0 24
+			
+			#DCtrl 2 "Full Body Actions" "Stitch Self Up" "" "CMD_FullBodyAction" 0.0 25
+			
+			#DCtrl 2 "Full Body Actions" "Vomiting" "" "CMD_FullBodyAction" 0.0 26
+			
+			#DCtrl 2 "Full Body Actions" "CutTies" "" "CMD_FullBodyAction" 0.0 27
+			
+			#DCtrl 2 "Full Body Actions" "Tie up target" "" "CMD_FullBodyAction" 0.0 28
+			
+			#DCtrl 2 "Full Body Actions" "Light Fire w Torch" "" "CMD_FullBodyAction" 0.0 29
+			
+			#DCtrl 2 "Full Body Actions" "Check Pulse" "" "CMD_FullBodyAction" 0.0 30
+			
+			#DCtrl 2 "Full Body Actions" "Empty Seeds Pack" "" "CMD_FullBodyAction" 0.0 31
+			
+			#DCtrl 2 "Full Body Actions" "Clean Wounds Target" "" "CMD_FullBodyAction" 0.0 32
+			
+			#DCtrl 2 "Full Body Actions" "Light Fire w Handdrill" "" "CMD_FullBodyAction" 0.0 33
+			
+			#DCtrl 2 "Full Body Actions" "Light Fire w Lighter" "" "CMD_FullBodyAction" 0.0 34
+			
+			#DCtrl 2 "Full Body Actions" "Collect Blood Self" "" "CMD_FullBodyAction" 0.0 35
+			
+			#DCtrl 2 "Full Body Actions" "EndAction" "" "CMD_InternalAction" 0.0 0
+			
+			#DCtrl 2 "Full Body Actions" "AltEndAction" "" "CMD_InternalAction" 0.0 -1
+			
+			#DCtrl 2 "Full Body Actions" "HardEndAction" "" "CMD_InternalAction" 0.0 -2
+			
+			#DCtrl 2 "Full Body Actions Once" "Handcuff Taget" "" "CMD_FullBodyAction" 0.0 100
+			
+			#DCtrl 2 "Full Body Actions Once" "Morphine Self" "" "CMD_FullBodyAction" 0.0 101
+			
+			#DCtrl 2 "Full Body Actions Once" "Inject Self" "" "CMD_FullBodyAction" 0.0 102
+			
+			#DCtrl 2 "Full Body Actions Once" "Inject Target" "" "CMD_FullBodyAction" 0.0 103
+			
+			#DCtrl 2 "Actions" "Drink" "" "CMD_Action" 0.0 0
+			
+			#DCtrl 2 "Actions" "Eat" "" "CMD_Action" 0.0 1
+			
+			#DCtrl 2 "Actions" "Empty Cannister" "" "CMD_Action" 0.0 2
+			
+			#DCtrl 2 "Actions" "Catch Rain" "" "CMD_Action" 0.0 3
+			
+			#DCtrl 2 "Actions" "Eat Pills" "" "CMD_Action" 0.0 4
+			
+			#DCtrl 2 "Actions" "Eat Tablets" "" "CMD_Action" 0.0 5
+			
+			#DCtrl 2 "Actions" "Empty Bottle" "" "CMD_Action" 0.0 6
+			
+			#DCtrl 2 "Actions" "Compass" "" "CMD_Action" 0.0 7
+			
+			#DCtrl 2 "Actions" "Drink Can" "" "CMD_Action" 0.0 8
+			
+			#DCtrl 2 "Actions" "Walkie Talkie Tune Down" "" "CMD_Action" 0.0 9
+			
+			#DCtrl 2 "Actions" "Give Left Item" "" "CMD_Action" 0.0 10
+			
+			#DCtrl 2 "Actions" "Give Right Item" "" "CMD_Action" 0.0 11
+			
+			#DCtrl 2 "Actions" "Shave" "" "CMD_Action" 0.0 12
+			
+			#DCtrl 2 "Actions" "Fill Magazine" "" "CMD_Action" 0.0 13
+			
+			#DCtrl 2 "Actions" "Empty Magazine" "" "CMD_Action" 0.0 14
+			
+			#DCtrl 2 "Actions" "Drink Pot" "" "CMD_Action" 0.0 15
+			
+			#DCtrl 2 "Actions" "Empty Pot" "" "CMD_Action" 0.0 16
+			
+			#DCtrl 2 "Actions Once" "LickBattery" "" "CMD_Action" 0.0 100
+			
+			#DCtrl 2 "Actions Once" "PickupItem" "" "CMD_Action" 0.0 101
+			
+			#DCtrl 2 "Actions Once" "Flare" "" "CMD_Action" 0.0 102
+			
+			#DCtrl 2 "Actions Once" "Chemlight" "" "CMD_Action" 0.0 103
+			
+			#DCtrl 2 "Actions Once" "UnpinGrenade" "" "CMD_Action" 0.0 104
+			
+			#DCtrl 2 "Actions Once" "OpenDoorForward" "" "CMD_Action" 0.0 105
+			
+			#DCtrl 2 "Actions Once" "OpenDoorBackward" "" "CMD_Action" 0.0 106
+			
+			#DCtrl 2 "Actions Once" "CloseSwipeLDoor" "" "CMD_Action" 0.0 107
+			
+			#DCtrl 2 "Actions Once" "CloseSwipeRDoor" "" "CMD_Action" 0.0 108
+			
+			#DCtrl 2 "Actions Once" "OpenLid" "" "CMD_Action" 0.0 109
+			
+			#DCtrl 2 "Actions Once" "CloseLid" "" "CMD_Action" 0.0 110
+			
+			#DCtrl 2 "Actions Once" "Walkie Talkie On" "" "CMD_Action" 0.0 111
+			
+			#DCtrl 2 "Actions Once" "Walkie Talkie Off" "" "CMD_Action" 0.0 112
+			
+			#DCtrl 2 "Actions Once" "Baton Extend" "" "CMD_Action" 0.0 113
+			
+			#DCtrl 2 "Actions Once" "Baton Retract" "" "CMD_Action" 0.0 114
+			
+			#DCtrl 2 "Actions Once" "Unlock Handcuff Target" "" "CMD_Action" 0.0 115
+			
+			#DCtrl 2 "Actions Once" "Fishing Rod Extend" "" "CMD_Action" 0.0 116
+			
+			#DCtrl 2 "Actions Once" "Fishing Rod Retract" "" "CMD_Action" 0.0 117
+			
+			#DCtrl 2 "Actions Once" "Take Item" "" "CMD_Action" 0.0 115
+			
+			#DCtrl 2 "Actions Once" "Hide Item" "" "CMD_Action" 0.0 113
+			
+			#DCtrl 2 "Actions" "EndAction" "" "CMD_InternalAction" 0.0 0
+			
+			#DCtrl 2 "Actions" "AltEndAction" "" "CMD_InternalAction" 0.0 -1
+			
+			#DCtrl 2 "Actions" "HardEndAction" "" "CMD_InternalAction" 0.0 -2
+			
+			#DCtrl 2 "Actions Once" "HardEndAction" "" "CMD_InternalAction" 0.0 -2
+			
+			#DCtrl 2 "Falling" "FallForward" "" "CMD_Fall" 0.0 0
+			
+			#DCtrl 2 "Falling" "FallBackwards" "" "CMD_Fall" 0.0 3
+			
+			#DCtrl 2 "Falling" "LandLight" "" "CMD_Land" 0.0 0
+			
+			#DCtrl 2 "Falling" "LandMedium" "" "CMD_Land" 0.0 1
+			
+			#DCtrl 2 "Falling" "LandHard" "" "CMD_Land" 0.0 2
+			
+			#DCtrl 2 "Weapons" "Fire" "" "CMD_WeaponFire" 0.0 0
+			
+			#DCtrl 2 "Weapons" "Fire Last" "" "CMD_WeaponFire" 0.0 1
+			
+			#DCtrl 2 "Weapons" "Fire Empty Cocked" "" "CMD_WeaponFire" 0.0 2
+			
+			#DCtrl 2 "Weapons" "Fire Empty Uncocked" "" "CMD_WeaponFire" 0.0 3
+			
+			#DCtrl 2 "Weapons" "Fire Empty Automatic" "" "CMD_WeaponFire" 0.0 4
+			
+			#DCtrl 2 "Weapons" "End Fire" "" "CMD_WeaponFire" 0.0 -1
+			
+			#DCtrl 2 "Weapons" "Arm" "" "CMD_Arm" 0.0 0
+			
+			#DCtrl 2 "Weapons" "Disarm" "" "CMD_Disarm" 0.0 0
+			
+			#DCtrl 2 "Weapons" "Reload_BoltAction_OpenBolt" "" "CMD_Reload_BoltAction" 0.0 0
+			
+			#DCtrl 2 "Weapons" "Reload_BoltAction_ClosedBolt" "" "CMD_Reload_BoltAction" 0.0 1
+			
+			#DCtrl 2 "Weapons" "Reload_BoltAction_Special" "" "CMD_Reload_BoltAction" 0.0 2
+			
+			#DCtrl 2 "Weapons" "Reload_Magazine_Bullet" "" "CMD_Reload_Magazine" 0.0 0
+			
+			#DCtrl 2 "Weapons" "Reload_NoMagazine_Bullet" "" "CMD_Reload_Magazine" 0.0 1
+			
+			#DCtrl 2 "Weapons" "Reload_Magazine_NoBullet" "" "CMD_Reload_Magazine" 0.0 2
+			
+			#DCtrl 2 "Weapons" "Reload_NoMagazine_NoBullet" "" "Reload_NoMagazine_Bullet" 0.0 3
+			
+			#DCtrl 2 "Weapons" "Reload_ChamberingFast" "" "CMD_Reload_ChamberingFast" 0.0 0
+			
+			#DCtrl 2 "Weapons" "Reload_Chambering_OpenBolt" "" "CMD_Reload_Chambering" 0.0 0
+			
+			#DCtrl 2 "Weapons" "Reload_Chambering_ClosedBolt" "" "CMD_Reload_Chambering" 0.0 1
+			
+			#DCtrl 2 "Weapons" "Reload_Chambering_Look" "" "CMD_Reload_Chambering" 0.0 2
+			
+			#DCtrl 2 "Weapons" "Reload_Chambering_End" "" "Reload_Chambering_ClosedBolt" 0.0 3
+			
+			#DCtrl 2 "Suicide" "1HD" "" "CMD_FullBodyAction" 0.0 2000
+			
+			#DCtrl 2 "Suicide" "FireAxe" "" "CMD_FullBodyAction" 0.0 2001
+			
+			#DCtrl 2 "Suicide" "Pitchfork" "" "CMD_FullBodyAction" 0.0 2002
+			
+			#DCtrl 2 "Suicide" "Pistol" "" "CMD_FullBodyAction" 0.0 2003
+			
+			#DCtrl 2 "Suicide" "Rifle" "" "CMD_FullBodyAction" 0.0 2004
+			
+			#DCtrl 2 "Suicide" "Sword" "" "CMD_FullBodyAction" 0.0 2005
+			
+			#DCtrl 2 "Suicide" "Unarmed" "" "CMD_FullBodyAction" 0.0 2006
+			
+			#DCtrl 2 "Suicide" "WoodAxe" "" "CMD_FullBodyAction" 0.0 2007
+			
+			#DCtrl 2 "Suicide" "Spear" "" "CMD_FullBodyAction" 0.0 2008
+			
+			#DCtrl 2 "Suicide" "Cancel" "" "CMD_InternalAction" 0.0 0
+			
+			#DCtrl 2 "Suicide" "Commit" "" "CMD_InternalAction" 0.0 -1
+			
+			#DCtrl 2 "Surrender Restrained" "Surrender In" "" "CMD_Surrender" 0.0 1
+			
+			#DCtrl 2 "Surrender Restrained" "Surrender Out" "" "CMD_Surrender" 0.0 0
+			
+			#DCtrl 2 "Surrender Restrained" "Restrain" "" "CMD_Restrain" 0.0 1
+			
+			#DCtrl 2 "Surrender Restrained" "Restrain Out" "" "CMD_Restrain" 0.0 0
+			
+			#DCtrl 2 "Surrender Restrained" "Restrained Struggle" "" "CMD_RestrainedStruggle" 0.0 0
+			
+			#DCtrl 2 "Surrender Restrained" "Restrain Sneaky" "" "CMD_RestrainSneaky" 0.0 0
+			
+			#DCtrl 2 "Surrender Restrained" "Restrain Self Rope" "" "CMD_RestrainSelf" 0.0 0
+			
+			#DCtrl 2 "Surrender Restrained" "Restrain Self Rope Cancel" "" "CMD_RestrainSelf" 0.0 -1
+			
+			#DCtrl 2 "Surrender Restrained" "Restrain Self Handcuffs" "" "CMD_RestrainSelf" 0.0 1
+			
+			#DCtrl 2 "Movement" "EvadeRollR" "" "CMD_Roll" 0.0 1
+			
+			#DCtrl 2 "Movement" "EvadeRollL" "" "CMD_Roll" 0.0 0
+			
+			#DCtrl 2 "Combat" "ChargeAttack" "" "CMD_Attack" 0.0 0
+			
+			#DCtrl 2 "Combat" "Attack" "" "CMD_InternalAttack" 0.0 1
+			
+			#DCtrl 2 "Combat" "Cancel" "" "CMD_InternalAttack" 0.0 0
+			
+			#DCtrl 2 "Combat" "Chamber" "" "CMD_Attack" 0.0 1
+			
+			#DCtrl 2 "Combat" "Reload" "" "CMD_Attack" 0.0 2
+			
+			#DCtrl 2 "Combat" "CancelReload" "" "CMD_InternalAttack" 0.0 2
+			
+			#DCtrl 2 "Combat" "Bayonet" "" "CMD_Attack" 0.0 1
+			
+			#DCtrl 2 "Combat" "Buttstock" "" "CMD_Attack" 0.0 2
+			
+			#DCtrl 2 "Combat" "Shove" "" "CMD_Attack" 0.0 3
+			
+			#DCtrl 2 "Combat" "Hit Light" "" "CMD_Hit" 0.0 0
+			
+			#DCtrl 2 "Unconscious" "Fast" "" "CMD_Unconscious" 0.0 0
+			
+			#DCtrl 2 "Unconscious" "Slow" "" "CMD_Unconscious" 0.0 1
+		}
+	}
+	$Files {
+		 "eai/Animations/Locomotion.agr"
+		 "eai/Animations/Combat.agr"
+		 "eai/Animations/Weapons.agr"
+		 "eai/Animations/Gestures.agr"
+		 "eai/Animations/Vehicles.agr"
+		 "eai/Animations/Actions.agr"
+		 "eai/Animations/Master.agr"
+		 "eai/Animations/Tests.agr"
+	}
+}

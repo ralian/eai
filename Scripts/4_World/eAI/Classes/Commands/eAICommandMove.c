@@ -23,8 +23,6 @@ class eAICommandMove extends eAICommandBase
 	private float m_LookLR;
 	private float m_LookUD;
 	
-	private bool m_Raised;
-	
 	private float m_SpeedUpdateTime;
 	private float m_MovementSpeed;
 	private float m_TargetSpeed;
@@ -102,11 +100,6 @@ class eAICommandMove extends eAICommandBase
 	void SetTargetDirection(float pTarget)
 	{
 		m_TargetMovementDirection = pTarget;
-	}
-	
-	void SetRaised(bool pActive)
-	{
-		m_Raised = pActive;
 	}
 
 	override void PreAnimUpdate(float pDt)
@@ -193,8 +186,6 @@ class eAICommandMove extends eAICommandBase
 
 		m_Table.SetMovementDirection(this, m_MovementDirection);
 		m_Table.SetMovementSpeed(this, m_MovementSpeed);
-
-		m_Table.SetRaised(this, m_Raised);
 
 		m_Table.SetLook(this, m_Look);
 		m_Table.SetLookDirX(this, m_LookLR);

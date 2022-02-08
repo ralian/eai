@@ -81,8 +81,8 @@ class eAIAnimationST
 		m_VAR_LookDirX = hai.BindVariableFloat( "LookDirX" );
 		m_VAR_LookDirY = hai.BindVariableFloat( "LookDirY" );
 
-		m_VAR_AimX = hai.BindVariableFloat( "AimX" );
-		m_VAR_AimY = hai.BindVariableFloat( "AimY" );
+		m_VAR_AimX = hai.BindVariableFloat( "eAI_AimX" );
+		m_VAR_AimY = hai.BindVariableFloat( "eAI_AimY" );
 
 		m_VAR_Raised = hai.BindVariableBool( "Raised" );
 	}

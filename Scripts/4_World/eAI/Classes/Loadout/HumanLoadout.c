@@ -10,7 +10,7 @@ class HumanLoadout {
 	ref TIntArray	 ClothesHealth = {10,100}; 						//Item health given. 10%->100%
 	
 	ref TStringArray WeaponMelee = {"MeleeBat"}; 	
-	ref TStringArray WeaponRifle = {"Ruger1022"}; 	
+	ref TStringArray WeaponRifle = {"AKM"}; 	
 	ref TIntArray	 WeaponRifleMagCount = {1,3};
 	
 	ref TStringArray WeaponHandgun = {"MakarovIJ70"}; 		

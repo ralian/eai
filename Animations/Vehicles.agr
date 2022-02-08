@@ -1,0 +1,1853 @@
+$AnimGraph 7 {
+	$Sheet "Vehicles" {
+		$Node AnimNodeStateMachine {
+			 "BrakeSTM" ""
+			$States 2 {
+				$State {
+					 "Break" "" "DriverBreakAnim" "true" "realtime" 0
+					$EditorData {
+						#EditorPos 6.8000002 26.3999996
+					}
+				}
+				$State {
+					 "Out" "" "Out" "false" "notime" 0
+					$EditorData {
+						#EditorPos 9.4000006 26.3999996
+					}
+				}
+			}
+			$Transitions 1 {
+				$Transition {
+					 "Break" "Out" "!VehicleBrake" "0.1" "" 0 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 6.4000001 27.7000008
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "Bus_01ActionG" "" "VehicleTalkingT" "VehicleActions" "Bus_01"
+			$EditorData {
+				#EditorPos 6.0 34.6000023
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "Bus_01G" "" "Bus_01ActionG" "Vehicle" "Bus_01"
+			$EditorData {
+				#EditorPos 6.0 35.2999992
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "CivilianSedanActionG" "" "VehicleTalkingT" "VehicleActions" "CivilianSedan"
+			$EditorData {
+				#EditorPos 0.1 34.6000023
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "CivilianSedanG" "" "CivilianSedanActionG" "Vehicle" "CivilianSedan"
+			$EditorData {
+				#EditorPos 0.1 35.2999992
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "ClimbOutBackStateMachine" ""
+			$States 2 {
+				$State {
+					 "ClimbOutL" "" "PassengerLClimbOut" "GetCommandI(CMD_Vehicle_ClimbOut) == 2" "realtime" 1
+					$EditorData {
+						#EditorPos 46.2999992 -1.5
+					}
+				}
+				$State {
+					 "ClimbOutR" "" "PassengerRClimbOut" "GetCommandI(CMD_Vehicle_ClimbOut) == 3" "realtime" 1
+					$EditorData {
+						#EditorPos 48.9000015 -1.5
+					}
+				}
+			}
+			$Transitions 0 {
+			}
+			$EditorData {
+				#EditorPos 45.9000015 -0.3
+			}
+		}
+		$Node AnimNodeSource {
+			 "ClimbOutCoDriver" "" "Vehicle.CoDriverClimbOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 12.3000002 -3.3
+			}
+		}
+		$Node AnimNodeSource {
+			 "ClimbOutDriver" "" "Vehicle.DriverClimbOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 9.6999998 -3.3
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "ClimbOutFrontStateMachine" ""
+			$States 2 {
+				$State {
+					 "DriverClimbOut" "" "ClimbOutDriver" "GetCommandI(CMD_Vehicle_ClimbOut) == 0" "realtime" 1
+					$EditorData {
+						#EditorPos 9.6999998 -1.6
+					}
+				}
+				$State {
+					 "CoDriverClimbOut" "" "ClimbOutCoDriver" "GetCommandI(CMD_Vehicle_ClimbOut) == 1" "realtime" 1
+					$EditorData {
+						#EditorPos 12.3000002 -1.6
+					}
+				}
+			}
+			$Transitions 0 {
+			}
+			$EditorData {
+				#EditorPos 9.3000002 -0.4
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "CoDriverAimT" "" "CodriverLookBlend" "CodriverLookAimBlend" "" "" "Raised" 0.3 "S" 3
+			$EditorData {
+				#EditorPos 17.8999996 -4.3000002
+			}
+		}
+		$Node AnimNodeSource {
+			 "CoDriverDeathAnim" "" "Vehicle.CoDriverDeath" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 27.8000011 0.4
+			}
+		}
+		$Node AnimNodeBlend {
+			 "CoDriverFacialB" "" "0.0" "CodriverLookBlend" "FacialMovementAnim" 0
+			$EditorData {
+				#EditorPos 17.8999996 -3.2
+			}
+		}
+		$Node AnimNodeSource {
+			 "CoDriverIdleAnim" "" "Vehicle.CoDriverIdle" "loop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 16.8000011 -6.0999999
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "CoDriverIdleStateMachine" "TagVehicleIdle"
+			$States 2 {
+				$State {
+					 "Idle" "" "CoDriverFacialB" "true" "realtime" 0
+					$EditorData {
+						#EditorPos 17.8999996 -1.4
+					}
+				}
+				$State {
+					 "Unconscious" "TagUnconscious" "CoDriverUnconFacialT" "false" "notime" 0
+					$EditorData {
+						#EditorPos 23.2000008 -1.4
+					}
+				}
+			}
+			$Transitions 2 {
+				$Transition {
+					 "Idle" "Unconscious" "IsCommand(CMD_Unconscious)" "0.2" "" 0 "S"
+				}
+				$Transition {
+					 "Unconscious" "Idle" "RemainingTimeLess(0.01)" "" "" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 16.7000008 -0.2
+			}
+		}
+		$Node AnimNodeSource {
+			 "CoDriverUnconDeath" "" "Vehicle.CoDriverUnconsciousDeath" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 25.7000008 0.4
+			}
+		}
+		$Node AnimNodeBlendTAdd {
+			 "CoDriverUnconFacialT" "" "CoDriverUnconsciousStateMachine" "FacialUnconsciousAnim" "True" "IsCommand(CMD_Unconscious_Exit)" "" 0.5 "S" 0
+			$EditorData {
+				#EditorPos 23.2000008 -3.3
+			}
+		}
+		$Node AnimNodeSource {
+			 "CoDriverUnconsciousIdle" "" "Vehicle.CoDriverUnconsciousIdle" "loop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 26.0 -7.7000003
+			}
+		}
+		$Node AnimNodeSource {
+			 "CoDriverUnconsciousIn" "" "Vehicle.CoDriverUnconsciousIn" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 23.6000004 -7.2000003
+			}
+		}
+		$Node AnimNodeSource {
+			 "CoDriverUnconsciousOut" "" "Vehicle.CoDriverUnconsciousOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 28.3999996 -7.2000003
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "CoDriverUnconsciousStateMachine" "TagUnconscious"
+			$States 3 {
+				$State {
+					 "In" "" "CoDriverUnconsciousIn" "" "realtime" 0
+					$EditorData {
+						#EditorPos 23.6000004 -5.5
+					}
+				}
+				$State {
+					 "Idle" "" "CoDriverUnconsciousIdle" "" "realtime" 0
+					$EditorData {
+						#EditorPos 26.0 -5.5
+					}
+				}
+				$State {
+					 "Out" "" "CoDriverUnconsciousOut" "" "realtime" 1
+					$EditorData {
+						#EditorPos 28.3999996 -5.5
+					}
+				}
+			}
+			$Transitions 2 {
+				$Transition {
+					 "In" "Idle" "RemainingTimeLess(0.01)" "" "" 1 "S"
+				}
+				$Transition {
+					 "Idle" "Out" "IsCommand(CMD_Unconscious_Exit)" "0.2" "" 0 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 23.2000008 -4.3000002
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "CoDriverVehicle" ""
+			$States 10 {
+				$State {
+					 "Get In" "TagVehicleGetIn" "GetInCoDriver" "IsCommand(CMD_Vehicle_GetIn)" "realtime" 0
+					$EditorData {
+						#EditorPos 15.3000002 2.3
+					}
+				}
+				$State {
+					 "Idle" "" "CoDriverIdleStateMachine" "!IsCommand(CMD_Vehicle_GetIn)" "notime" 0
+					$EditorData {
+						#EditorPos 16.7000008 3.2
+					}
+				}
+				$State {
+					 "Get Out" "TagVehicleGetOut" "GetOutCoDriver" "" "realtime" 1
+					$EditorData {
+						#EditorPos 19.0 2.3
+					}
+				}
+				$State {
+					 "Jump Out" "TagVehicleGetOut" "JumpOutCoDriver" "" "realtime" 1
+					$EditorData {
+						#EditorPos 23.6000004 2.3
+					}
+				}
+				$State {
+					 "Climb Out" "" "ClimbOutFrontStateMachine" "" "notime" 1
+					$EditorData {
+						#EditorPos 12.1999998 3.2
+					}
+				}
+				$State {
+					 "Crawl Out" "TagVehicleGetOut" "CrawlOutCoDriver" "" "realtime" 1
+					$EditorData {
+						#EditorPos 21.3999996 2.3
+					}
+				}
+				$State {
+					 "Death" "" "CoDriverDeathAnim" "" "realtime" 0
+					$EditorData {
+						#EditorPos 26.3999996 3.2
+					}
+				}
+				$State {
+					 "UnconsciousDeath" "" "CoDriverUnconDeath" "" "realtime" 0
+					$EditorData {
+						#EditorPos 24.2000008 3.2
+					}
+				}
+				$State {
+					 "PulledOut" "" "PulledOutCoDriver" "" "realtime" 0
+					$EditorData {
+						#EditorPos 25.8000011 2.2
+					}
+				}
+				$State {
+					 "GettinginDeath" "" "DeathErcG" "" "realtime" 0
+					$EditorData {
+						#EditorPos 13.0 2.3
+					}
+				}
+			}
+			$Transitions 10 {
+				$Transition {
+					 "Get In" "Idle" "RemainingTimeLess(0.01)" "" "" 1 "S"
+				}
+				$Transition {
+					 "Idle" "Crawl Out" "IsCommand(CMD_Vehicle_CrawlOut)" "0.2" "" 0 "S"
+				}
+				$Transition {
+					 "Idle" "Jump Out" "IsCommand(CMD_Vehicle_JumpOut)" "0.2" "" 0 "S"
+				}
+				$Transition {
+					 "Idle" "Climb Out" "IsCommand(CMD_Vehicle_ClimbOut)" "" "" 0 "S"
+				}
+				$Transition {
+					 "Idle" "Get Out" "IsCommand(CMD_Vehicle_GetOut)" "0.2" "" 0 "S"
+				}
+				$Transition {
+					 "Idle" "UnconsciousDeath" "IsCommand(CMD_Death) && IsTag(\"TagUnconscious\")" "0.1" "" 1 "S"
+				}
+				$Transition {
+					 "" "Death" "IsCommand(CMD_Death) && !IsTag(\"TagVehicleGetIn\")" "0.2" "" 1 "S"
+				}
+				$Transition {
+					 "UnconsciousDeath" "PulledOut" "IsCommand(CMD_PulledOut)" "" "" 1 "S"
+				}
+				$Transition {
+					 "Death" "PulledOut" "IsCommand(CMD_PulledOut)" "" "" 1 "S"
+				}
+				$Transition {
+					 "Get In" "GettinginDeath" "IsCommand(CMD_Death)" "0.2" "" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 11.6999998 4.4000001
+			}
+		}
+		$Node AnimNodeBlend {
+			 "CodriverAimBlend" "" "1.0" "CodriverAimIdle" "CodriverAimPose" 1
+			$EditorData {
+				#EditorPos 19.1000004 -6.0999999
+			}
+		}
+		$Node AnimNodeSource {
+			 "CodriverAimIdle" "" "Vehicle.CoDriverAimIdle" "loop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 18.0 -7.0
+			}
+		}
+		$Node AnimNodePose2 {
+			 "CodriverAimPose" "" "Vehicle.CoDriverAim" "eAI_AimY" "eAI_AimX" "Y(-90):   	X(-90) = 0, X(0) = 1, X(90) = 2
+Y(0): 	X(-90) = 3, X(0) = 4, X(90) = 5
+Y(90): 	X(-90) = 6, X(0) = 7, X(90) = 8"
+			$EditorData {
+				#EditorPos 20.2000008 -7.0
+			}
+		}
+		$Node AnimNodeBlend {
+			 "CodriverLookAimBlend" "" "1.0" "CodriverAimBlend" "MoveLookPose" 1
+			$EditorData {
+				#EditorPos 19.1000004 -5.0999999
+			}
+		}
+		$Node AnimNodeBlend {
+			 "CodriverLookBlend" "" "1.0" "CoDriverIdleAnim" "MoveLookPose" 1
+			$EditorData {
+				#EditorPos 16.8000011 -5.0999999
+			}
+		}
+		$Node AnimNodeSource {
+			 "CodriverSwitchSeat" "" "Vehicle.CoDriverSwitchSeat" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 7.0999999 5.3000002
+			}
+		}
+		$Node AnimNodeSource {
+			 "CrawlOutCoDriver" "" "Vehicle.PassengerLCrawlOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 21.3999996 0.4
+			}
+		}
+		$Node AnimNodeSource {
+			 "CrawlOutDriver" "" "Vehicle.DriverCrawlOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 3.0 0.4
+			}
+		}
+		$Node AnimNodeSource {
+			 "CrawlOutPassengerL" "" "Vehicle.CoDriverCrawlOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 35.7999992 -0.3
+			}
+		}
+		$Node AnimNodeSource {
+			 "CrawlOutPassengerR" "" "Vehicle.PassengerRCrawlOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 51.6000023 0.4
+			}
+		}
+		$Node AnimNodeSource {
+			 "DriverBreakAnim" "" "Vehicle.DriverBreak" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 6.8000002 24.7000008
+			}
+		}
+		$Node AnimNodeBlend {
+			 "DriverClutchPB" "" "0.0" "DriverIdleAddAnim" "VehicleClutchP" 0
+			$EditorData {
+				#EditorPos -2.5 -15.6000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "DriverDeathAnim" "" "Vehicle.DriverDeath" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -10.9000006 0.3
+			}
+		}
+		$Node AnimNodeBlendTAdd {
+			 "DriverFacialT" "" "DriverIdleBlend" "FacialMovementAnim" "" "" "True" 0.3 "S" 0
+			$EditorData {
+				#EditorPos -3.8 -7.2000003
+			}
+		}
+		$Node AnimNodeSource {
+			 "DriverIdleAddAnim" "" "Vehicle.DriverIdle" "loop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -3.6000001 -16.3000011
+			}
+		}
+		$Node AnimNodeBlend {
+			 "DriverIdleBlend" "" "1.0" "SteeringSTM" "MoveLookPose" 0
+			$EditorData {
+				#EditorPos -3.9000001 -8.6000004
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "DriverIdleStateMachine" "TagVehicleIdle"
+			$States 2 {
+				$State {
+					 "Idle" "" "DriverFacialT" "true" "realtime" 0
+					$EditorData {
+						#EditorPos -3.9000001 -5.5
+					}
+				}
+				$State {
+					 "Unconcious" "TagUnconscious" "DriverUnconFacialT" "false" "notime" 0
+					$EditorData {
+						#EditorPos 4.4000001 -5.5
+					}
+				}
+			}
+			$Transitions 2 {
+				$Transition {
+					 "Idle" "Unconcious" "IsCommand(CMD_Unconscious)" "0.2" "" 0 "S"
+				}
+				$Transition {
+					 "Unconcious" "Idle" "RemainingTimeLess(0.01)" "0.2" "" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos -1.6 -4.3000002
+			}
+		}
+		$Node AnimNodeSource {
+			 "DriverSwitchSeat" "" "Vehicle.DriverSwitchSeat" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 9.5 5.3000002
+			}
+		}
+		$Node AnimNodePose {
+			 "DriverThrottleP" "" "Vehicle.DriverThrottle" "VehicleThrottle"
+			$EditorData {
+				#EditorPos -0.3 -15.6000004
+			}
+		}
+		$Node AnimNodeBlend {
+			 "DriverThrottlePB" "" "0.0" "DriverClutchPB" "DriverThrottleP" 0
+			$EditorData {
+				#EditorPos -1.4 -14.8000002
+			}
+		}
+		$Node AnimNodeSource {
+			 "DriverUnconDeathAnim" "" "Vehicle.DriverUnconsciousDeath" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -8.4000006 0.3
+			}
+		}
+		$Node AnimNodeBlendTAdd {
+			 "DriverUnconFacialT" "" "DriverUnconsciousStateMachine" "FacialUnconsciousAnim" "True" "IsCommand(CMD_Unconscious_Exit)" "" 0.5 "S" 0
+			$EditorData {
+				#EditorPos 4.5 -7.4000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "DriverUnconsciousIdle" "" "Vehicle.DriverUnconsciousIdle" "loop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 7.4000001 -12.0
+			}
+		}
+		$Node AnimNodeSource {
+			 "DriverUnconsciousIn" "" "Vehicle.DriverUnconsciousIn" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 4.8000002 -12.0
+			}
+		}
+		$Node AnimNodeSource {
+			 "DriverUnconsciousOut" "" "Vehicle.DriverUnconsciousOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 10.0 -12.0
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "DriverUnconsciousStateMachine" "TagUnconscious"
+			$States 3 {
+				$State {
+					 "In" "" "DriverUnconsciousIn" "" "realtime" 0
+					$EditorData {
+						#EditorPos 4.8000002 -10.1999998
+					}
+				}
+				$State {
+					 "Idle" "" "DriverUnconsciousIdle" "" "realtime" 0
+					$EditorData {
+						#EditorPos 7.4000001 -10.1999998
+					}
+				}
+				$State {
+					 "Out" "" "DriverUnconsciousOut" "" "realtime" 1
+					$EditorData {
+						#EditorPos 10.0 -10.1999998
+					}
+				}
+			}
+			$Transitions 2 {
+				$Transition {
+					 "In" "Idle" "RemainingTimeLess(0.01)" "" "" 1 "S"
+				}
+				$Transition {
+					 "Idle" "Out" "IsCommand(CMD_Unconscious_Exit)" "0.2" "" 0 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 4.4000001 -9.0
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "DriverVehicle" ""
+			$States 10 {
+				$State {
+					 "Get In" "TagVehicleGetIn" "GetInDriver" "IsCommand(CMD_Vehicle_GetIn)" "realtime" 0
+					$EditorData {
+						#EditorPos -4.2000003 2.3
+					}
+				}
+				$State {
+					 "Idle" "" "DriverIdleStateMachine" "!IsCommand(CMD_Vehicle_GetIn)" "notime" 0
+					$EditorData {
+						#EditorPos -1.6 3.2
+					}
+				}
+				$State {
+					 "Jump Out" "TagVehicleGetOut" "JumpOutDriver" "false" "realtime" 1
+					$EditorData {
+						#EditorPos 5.5 2.3
+					}
+				}
+				$State {
+					 "Get Out" "TagVehicleGetOut" "GetOutDriver" "false" "realtime" 1
+					$EditorData {
+						#EditorPos 0.5 2.3
+					}
+				}
+				$State {
+					 "Climb Out" "" "ClimbOutFrontStateMachine" "false" "notime" 1
+					$EditorData {
+						#EditorPos 7.7000003 3.2
+					}
+				}
+				$State {
+					 "CrawlOut" "TagVehicleGetOut" "CrawlOutDriver" "false" "realtime" 1
+					$EditorData {
+						#EditorPos 3.0 2.3
+					}
+				}
+				$State {
+					 "Death" "" "DriverDeathAnim" "" "realtime" 0
+					$EditorData {
+						#EditorPos -10.9000006 3.2
+					}
+				}
+				$State {
+					 "UnconsciousDeath" "" "DriverUnconDeathAnim" "" "realtime" 0
+					$EditorData {
+						#EditorPos -8.4000006 3.2
+					}
+				}
+				$State {
+					 "PulledOut" "" "PulledOutDriver" "" "realtime" 0
+					$EditorData {
+						#EditorPos -9.6999998 2.2
+					}
+				}
+				$State {
+					 "GettingInDeath" "" "DeathErcG" "" "realtime" 0
+					$EditorData {
+						#EditorPos -6.5999999 2.3
+					}
+				}
+			}
+			$Transitions 10 {
+				$Transition {
+					 "Get In" "Idle" "RemainingTimeLess(0.1)" "0.2" "" 1 "S"
+				}
+				$Transition {
+					 "Idle" "Jump Out" "IsCommand(CMD_Vehicle_JumpOut)" "0.2" "" 0 "S"
+				}
+				$Transition {
+					 "Idle" "CrawlOut" "IsCommand(CMD_Vehicle_CrawlOut)" "0.2" "" 0 "S"
+				}
+				$Transition {
+					 "Idle" "Climb Out" "IsCommand(CMD_Vehicle_ClimbOut)" "" "" 0 "S"
+				}
+				$Transition {
+					 "Idle" "Get Out" "IsCommand(CMD_Vehicle_GetOut)" "0.2" "" 0 "S"
+				}
+				$Transition {
+					 "Idle" "UnconsciousDeath" "IsCommand(CMD_Death) && IsTag(\"TagUnconscious\")" "0.1" "" 1 "S"
+				}
+				$Transition {
+					 "" "Death" "IsCommand(CMD_Death) && !IsTag(\"TagVehicleGetIn\")" "0.1" "" 1 "S"
+				}
+				$Transition {
+					 "Death" "PulledOut" "IsCommand(CMD_PulledOut)" "" "" 1 "S"
+				}
+				$Transition {
+					 "UnconsciousDeath" "PulledOut" "IsCommand(CMD_PulledOut)" "" "" 1 "S"
+				}
+				$Transition {
+					 "Get In" "GettingInDeath" "IsCommand(CMD_Death)" "0.1" "" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 4.7000003 4.4000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "GetInCoDriver" "" "Vehicle.CoDriverGetIn" "noloop"
+			$Predictions {
+				$Prediction {
+					 "PredictionVehicleGetIn" "EntityPosition" "" 1.0 7
+				}
+			}
+			$EditorData {
+				#EditorPos 15.3000002 0.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "GetInDriver" "" "Vehicle.DriverGetIn" "noloop"
+			$Predictions {
+				$Prediction {
+					 "PredictionVehicleGetIn" "EntityPosition" "" 1.0 7
+				}
+			}
+			$EditorData {
+				#EditorPos -4.2000003 0.4
+			}
+		}
+		$Node AnimNodeSource {
+			 "GetInPassengerL" "" "Vehicle.PassengerLGetIn" "noloop"
+			$Predictions {
+				$Prediction {
+					 "PredictionVehicleGetIn" "EntityPosition" "" 1.0 7
+				}
+			}
+			$EditorData {
+				#EditorPos 41.7000008 -0.3
+			}
+		}
+		$Node AnimNodeSource {
+			 "GetInPassengerR" "" "Vehicle.PassengerRGetIn" "noloop"
+			$Predictions {
+				$Prediction {
+					 "PredictionVehicleGetIn" "EntityPosition" "" 1.0 7
+				}
+			}
+			$EditorData {
+				#EditorPos 57.0 0.4
+			}
+		}
+		$Node AnimNodeSource {
+			 "GetOutCoDriver" "" "Vehicle.CoDriverGetOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 19.0 0.4
+			}
+		}
+		$Node AnimNodeSource {
+			 "GetOutDriver" "" "Vehicle.DriverGetOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 0.5 0.4
+			}
+		}
+		$Node AnimNodeSource {
+			 "GetOutPassengerL" "" "Vehicle.PassengerLGetOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 38.1000023 -0.3
+			}
+		}
+		$Node AnimNodeSource {
+			 "GetOutPassengerR" "" "Vehicle.PassengerRGetOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 54.1000023 0.4
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "Hatchback_02ActionG" "" "VehicleTalkingT" "VehicleActions" "Hatchback_02"
+			$EditorData {
+				#EditorPos 15.6000004 34.6000023
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "Hatchback_02G" "" "Hatchback_02ActionG" "Vehicle" "Hatchback_02"
+			$EditorData {
+				#EditorPos 15.6000004 35.2999992
+			}
+		}
+		$Node AnimNodeSource {
+			 "IdlePassenger" "" "Vehicle.PassengerLIdle" "loop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 37.9000015 -10.6000004
+			}
+		}
+		$Node AnimNodeBlend {
+			 "IdlePassengerLLookBlend" "" "1.0" "IdlePassenger" "MoveLookPose" 1
+			$EditorData {
+				#EditorPos 37.9000015 -9.6000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "JumpOutCoDriver" "" "Vehicle.CoDriverJumpOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 23.6000004 0.4
+			}
+		}
+		$Node AnimNodeSource {
+			 "JumpOutDriver" "" "Vehicle.DriverJumpOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 5.5 0.4
+			}
+		}
+		$Node AnimNodeSource {
+			 "JumpOutPassengerL" "" "Vehicle.PassengerLJumpOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 33.5 -0.3
+			}
+		}
+		$Node AnimNodeSource {
+			 "JumpOutPassengerR" "" "Vehicle.PassengerRJumpOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 49.2999992 0.4
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "OffroadHatchbackActionG" "" "VehicleTalkingT" "VehicleActions" "OffroadHatchback"
+			$EditorData {
+				#EditorPos 2.8 34.6000023
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "OffroadHatchbackG" "" "OffroadHatchbackActionG" "Vehicle" "OffroadHatchback"
+			$EditorData {
+				#EditorPos 2.8 35.2999992
+			}
+		}
+		$Node AnimNodePose {
+			 "Out" "" "Vehicle.DriverBreak" "0.0"
+			$EditorData {
+				#EditorPos 9.4000006 24.7000008
+			}
+		}
+		$Node AnimNodeBlend {
+			 "PassengerLAimBlend" "" "1.0" "PassengerLAimIdleSrc" "PassengerLAimPose" 1
+			$EditorData {
+				#EditorPos 40.7000008 -10.6000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "PassengerLAimIdleSrc" "" "Vehicle.PassengerLAimIdle" "loop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 39.5 -11.5
+			}
+		}
+		$Node AnimNodeBlend {
+			 "PassengerLAimLookBlend" "" "1.0" "PassengerLAimBlend" "MoveLookPose" 1
+			$EditorData {
+				#EditorPos 40.7000008 -9.6000004
+			}
+		}
+		$Node AnimNodePose2 {
+			 "PassengerLAimPose" "" "Vehicle.PassengerLAim" "eAI_AimY" "eAI_AimX" "Y(-90):   	X(-90) = 0, X(0) = 1, X(90) = 2
+Y(0): 	X(-90) = 3, X(0) = 4, X(90) = 5
+Y(90): 	X(-90) = 6, X(0) = 7, X(90) = 8"
+			$EditorData {
+				#EditorPos 41.9000015 -11.5
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "PassengerLAimT" "" "IdlePassengerLLookBlend" "PassengerLAimLookBlend" "" "" "Raised" 0.3 "S" 3
+			$EditorData {
+				#EditorPos 39.2000008 -8.6000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "PassengerLClimbOut" "" "Vehicle.PassengerLClimbOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 46.2999992 -3.3
+			}
+		}
+		$Node AnimNodeSource {
+			 "PassengerLDeathAnim" "" "Vehicle.PassengerLDeath" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 30.1000004 -0.2
+			}
+		}
+		$Node AnimNodeBlend {
+			 "PassengerLFacialB" "" "0.0" "IdlePassengerLLookBlend" "FacialMovementAnim" 0
+			$EditorData {
+				#EditorPos 39.2000008 -7.5
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "PassengerLIdleStateMachine" "TagVehicleIdle"
+			$States 2 {
+				$State {
+					 "Idle" "" "PassengerLFacialB" "true" "realtime" 0
+					$EditorData {
+						#EditorPos 39.2000008 -5.4000001
+					}
+				}
+				$State {
+					 "Unconscious" "TagUnconscious" "PassengerLUnconFacialT" "" "notime" 0
+					$EditorData {
+						#EditorPos 44.2999992 -5.4000001
+					}
+				}
+			}
+			$Transitions 2 {
+				$Transition {
+					 "Idle" "Unconscious" "IsCommand(CMD_Unconscious)" "0.2" "" 0 "S"
+				}
+				$Transition {
+					 "Unconscious" "Idle" "RemainingTimeLess(0.11)" "0.1" "" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 39.5 -4.0999999
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "PassengerLStateMachine" ""
+			$States 10 {
+				$State {
+					 "Get In" "TagVehicleGetIn" "GetInPassengerL" "IsCommand(CMD_Vehicle_GetIn)" "realtime" 0
+					$EditorData {
+						#EditorPos 41.7000008 2.3
+					}
+				}
+				$State {
+					 "Idle" "" "PassengerLIdleStateMachine" "!IsCommand(CMD_Vehicle_GetIn)" "notime" 0
+					$EditorData {
+						#EditorPos 39.5 3.2
+					}
+				}
+				$State {
+					 "Get Out" "TagVehicleGetOut" "GetOutPassengerL" "" "realtime" 1
+					$EditorData {
+						#EditorPos 38.1000023 2.3
+					}
+				}
+				$State {
+					 "Jump Out" "TagVehicleGetOut" "JumpOutPassengerL" "" "realtime" 1
+					$EditorData {
+						#EditorPos 33.5 2.3
+					}
+				}
+				$State {
+					 "Climb Out" "" "ClimbOutBackStateMachine" "" "notime" 0
+					$EditorData {
+						#EditorPos 43.6000023 3.2
+					}
+				}
+				$State {
+					 "CrawlOut" "TagVehicleGetOut" "CrawlOutPassengerL" "" "realtime" 1
+					$EditorData {
+						#EditorPos 35.7999992 2.3
+					}
+				}
+				$State {
+					 "Death" "" "PassengerLDeathAnim" "" "realtime" 0
+					$EditorData {
+						#EditorPos 30.1000004 3.2
+					}
+				}
+				$State {
+					 "UnconsciousDeath" "" "PassengerLUnconDeathAnim" "" "realtime" 0
+					$EditorData {
+						#EditorPos 32.2000008 3.2
+					}
+				}
+				$State {
+					 "PulledOut" "" "PulledOutPassengerL" "" "realtime" 0
+					$EditorData {
+						#EditorPos 31.2000008 2.1000001
+					}
+				}
+				$State {
+					 "GettingInDeath" "" "DeathErcG" "" "realtime" 0
+					$EditorData {
+						#EditorPos 43.1000023 1.5
+					}
+				}
+			}
+			$Transitions 10 {
+				$Transition {
+					 "Get In" "Idle" "RemainingTimeLess(0.01)" "" "" 1 "S"
+				}
+				$Transition {
+					 "Idle" "CrawlOut" "IsCommand(CMD_Vehicle_CrawlOut)" "0.2" "" 0 "S"
+				}
+				$Transition {
+					 "Idle" "Jump Out" "IsCommand(CMD_Vehicle_JumpOut)" "0.2" "" 0 "S"
+				}
+				$Transition {
+					 "Idle" "Climb Out" "IsCommand(CMD_Vehicle_ClimbOut)" "0.2" "" 0 "S"
+				}
+				$Transition {
+					 "Idle" "Get Out" "IsCommand(CMD_Vehicle_GetOut)" "0.2" "" 0 "S"
+				}
+				$Transition {
+					 "Idle" "UnconsciousDeath" "IsCommand(CMD_Death) && IsTag(\"TagUnconscious\")" "0.1" "" 1 "S"
+				}
+				$Transition {
+					 "" "Death" "IsCommand(CMD_Death) && !IsTag(\"TagVehicleGetIn\")" "0.1" "" 1 "S"
+				}
+				$Transition {
+					 "Death" "PulledOut" "IsCommand(CMD_PulledOut)" "" "" 1 "S"
+				}
+				$Transition {
+					 "UnconsciousDeath" "PulledOut" "IsCommand(CMD_PulledOut)" "" "" 1 "S"
+				}
+				$Transition {
+					 "Get In" "GettingInDeath" "IsCommand(CMD_Death) && !IsTag(\"TagVehicleGetIn\")" "0.1" "" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 40.6000023 4.4000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "PassengerLSwitchSeat" "" "Vehicle.PassengerLSwitchSeat" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 43.1000023 5.4000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "PassengerLUnconDeathAnim" "" "Vehicle.PassengerLUnconsciousDeath" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 32.2999992 -1.6
+			}
+		}
+		$Node AnimNodeBlendTAdd {
+			 "PassengerLUnconFacialT" "" "PassengerLUnconsciousSTM" "FacialUnconsciousAnim" "True" "IsCommand(CMD_Unconscious_Exit)" "" 0.5 "S" 0
+			$EditorData {
+				#EditorPos 44.4000015 -7.2000003
+			}
+		}
+		$Node AnimNodeSource {
+			 "PassengerLUnconsciousIdleAnim" "" "Vehicle.PassengerLUnconsciousIdle" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 47.2000008 -11.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "PassengerLUnconsciousInAnim" "" "Vehicle.PassengerLUnconsciousIn" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 44.7000008 -11.6999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "PassengerLUnconsciousOutAnim" "" "Vehicle.PassengerLUnconsciousOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 49.7000008 -11.6999998
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "PassengerLUnconsciousSTM" "TagUnconscious"
+			$States 3 {
+				$State {
+					 "In" "" "PassengerLUnconsciousInAnim" "true" "realtime" 0
+					$EditorData {
+						#EditorPos 44.7000008 -9.5
+					}
+				}
+				$State {
+					 "Loop" "" "PassengerLUnconsciousIdleAnim" "false" "realtime" 0
+					$EditorData {
+						#EditorPos 47.2000008 -9.5
+					}
+				}
+				$State {
+					 "Out" "" "PassengerLUnconsciousOutAnim" "false" "realtime" 1
+					$EditorData {
+						#EditorPos 49.7000008 -9.5
+					}
+				}
+			}
+			$Transitions 2 {
+				$Transition {
+					 "In" "Loop" "RemainingTimeLess(0.1)" "0.1" "" 1 "S"
+				}
+				$Transition {
+					 "Loop" "Out" "IsCommand(CMD_Unconscious_Exit)" "0.1" "" 0 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 44.2999992 -8.3000002
+			}
+		}
+		$Node AnimNodeBlend {
+			 "PassengerRAimBlend" "" "1.0" "PassengerRAimIdleSrc" "PassengerRAimPose" 1
+			$EditorData {
+				#EditorPos 57.2000008 -6.9000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "PassengerRAimIdleSrc" "" "Vehicle.PassengerRAimIdle" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 56.0 -7.7000003
+			}
+		}
+		$Node AnimNodeBlend {
+			 "PassengerRAimLookBlend" "" "1.0" "PassengerRAimBlend" "MoveLookPose" 1
+			$EditorData {
+				#EditorPos 57.2000008 -5.9000001
+			}
+		}
+		$Node AnimNodePose2 {
+			 "PassengerRAimPose" "" "Vehicle.PassengerRAim" "eAI_AimY" "eAI_AimX" "Y(-90):   	X(-90) = 0, X(0) = 1, X(90) = 2
+Y(0): 	X(-90) = 3, X(0) = 4, X(90) = 5
+Y(90): 	X(-90) = 6, X(0) = 7, X(90) = 8"
+			$EditorData {
+				#EditorPos 58.4000015 -7.7000003
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "PassengerRAimT" "" "PassengerRIdleLookBlend" "PassengerRAimLookBlend" "" "" "Raised" 0.3 "S" 3
+			$EditorData {
+				#EditorPos 55.7999992 -5.0
+			}
+		}
+		$Node AnimNodeSource {
+			 "PassengerRClimbOut" "" "Vehicle.PassengerRClimbOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 48.9000015 -3.3
+			}
+		}
+		$Node AnimNodeSource {
+			 "PassengerRDeathAnim" "" "Vehicle.PassengerRDeath" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 64.3000031 0.4
+			}
+		}
+		$Node AnimNodeBlend {
+			 "PassengerRFacialB" "" "0.0" "PassengerRIdleLookBlend" "FacialMovementAnim" 0
+			$EditorData {
+				#EditorPos 55.7999992 -3.6000001
+			}
+		}
+		$Node AnimNodeBlend {
+			 "PassengerRIdleLookBlend" "" "1.0" "PassengerRIdleSrc" "MoveLookPose" 1
+			$EditorData {
+				#EditorPos 54.4000015 -5.9000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "PassengerRIdleSrc" "" "Vehicle.PassengerRIdle" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 54.4000015 -6.9000001
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "PassengerRIdleStateMachine" "TagVehicleIdle"
+			$States 2 {
+				$State {
+					 "Idle" "" "PassengerRFacialB" "True" "realtime" 0
+					$EditorData {
+						#EditorPos 55.7999992 -1.6
+					}
+				}
+				$State {
+					 "Unconscious" "TagUnconscious" "PassengerRUnconFacialT" "" "notime" 0
+					$EditorData {
+						#EditorPos 60.9000015 -1.6
+					}
+				}
+			}
+			$Transitions 2 {
+				$Transition {
+					 "Idle" "Unconscious" "IsCommand(CMD_Unconscious)" "0.2" "" 0 "S"
+				}
+				$Transition {
+					 "Unconscious" "Idle" "RemainingTimeLess(0.11)" "0.1" "" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 55.4000015 -0.4
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "PassengerRStateMachine" ""
+			$States 10 {
+				$State {
+					 "Get In" "TagVehicleGetIn" "GetInPassengerR" "IsCommand(CMD_Vehicle_GetIn)" "realtime" 0
+					$EditorData {
+						#EditorPos 57.0 2.1000001
+					}
+				}
+				$State {
+					 "Idle" "" "PassengerRIdleStateMachine" "!IsCommand(CMD_Vehicle_GetIn)" "notime" 0
+					$EditorData {
+						#EditorPos 55.4000015 3.2
+					}
+				}
+				$State {
+					 "Get Out" "TagVehicleGetOut" "GetOutPassengerR" "" "realtime" 1
+					$EditorData {
+						#EditorPos 54.1000023 2.1000001
+					}
+				}
+				$State {
+					 "Jump Out" "TagVehicleGetOut" "JumpOutPassengerR" "" "realtime" 1
+					$EditorData {
+						#EditorPos 49.2999992 2.6000001
+					}
+				}
+				$State {
+					 "Climb Out" "" "ClimbOutBackStateMachine" "" "notime" 0
+					$EditorData {
+						#EditorPos 48.1000023 3.2
+					}
+				}
+				$State {
+					 "Crawl Out" "TagVehicleGetOut" "CrawlOutPassengerR" "" "realtime" 1
+					$EditorData {
+						#EditorPos 51.6000023 2.2
+					}
+				}
+				$State {
+					 "Death" "" "PassengerRDeathAnim" "" "realtime" 0
+					$EditorData {
+						#EditorPos 64.3000031 3.2
+					}
+				}
+				$State {
+					 "UnconsciousDeath" "" "PassengerRUnconDeathAnim" "" "realtime" 0
+					$EditorData {
+						#EditorPos 61.7999992 3.2
+					}
+				}
+				$State {
+					 "PulledOut" "" "PulledOutPassengerR" "" "realtime" 0
+					$EditorData {
+						#EditorPos 63.2000008 2.3
+					}
+				}
+				$State {
+					 "GettingInDeath" "" "DeathErcG" "" "realtime" 0
+					$EditorData {
+						#EditorPos 59.5 2.1000001
+					}
+				}
+			}
+			$Transitions 10 {
+				$Transition {
+					 "Get In" "Idle" "RemainingTimeLess(0.01)" "" "" 1 "S"
+				}
+				$Transition {
+					 "Idle" "Crawl Out" "IsCommand(CMD_Vehicle_CrawlOut)" "0.2" "" 0 "S"
+				}
+				$Transition {
+					 "Idle" "Jump Out" "IsCommand(CMD_Vehicle_JumpOut)" "0.2" "" 0 "S"
+				}
+				$Transition {
+					 "Idle" "Climb Out" "IsCommand(CMD_Vehicle_ClimbOut)" "0.2" "" 0 "S"
+				}
+				$Transition {
+					 "Idle" "Get Out" "IsCommand(CMD_Vehicle_GetOut)" "0.2" "" 0 "S"
+				}
+				$Transition {
+					 "Idle" "UnconsciousDeath" "IsCommand(CMD_Death) && IsTag(\"TagUnconscious\")" "0.1" "" 1 "S"
+				}
+				$Transition {
+					 "" "Death" "IsCommand(CMD_Death) && !IsTag(\"TagVehicleGetIn\")" "0.1" "" 1 "S"
+				}
+				$Transition {
+					 "UnconsciousDeath" "PulledOut" "IsCommand(CMD_PulledOut)" "" "" 1 "S"
+				}
+				$Transition {
+					 "Death" "PulledOut" "IsCommand(CMD_PulledOut)" "" "" 1 "S"
+				}
+				$Transition {
+					 "Get In" "GettingInDeath" "IsCommand(CMD_Death)" "0.1" "" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 48.2999992 4.4000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "PassengerRSwitchSeat" "" "Vehicle.PassengerRSwitchSeat" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 45.5 5.4000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "PassengerRUnconDeathAnim" "" "Vehicle.PassengerRUnconsciousDeath" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 61.7999992 0.4
+			}
+		}
+		$Node AnimNodeBlendTAdd {
+			 "PassengerRUnconFacialT" "" "PassengerRUnconsciousSTM" "FacialUnconsciousAnim" "True" "IsCommand(CMD_Unconscious_Exit)" "" 0.5 "S" 0
+			$EditorData {
+				#EditorPos 60.9000015 -3.3
+			}
+		}
+		$Node AnimNodeSource {
+			 "PassengerRUnconsciousIdleAnim" "" "Vehicle.PassengerRUnconsciousIdle" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 63.5 -7.3000002
+			}
+		}
+		$Node AnimNodeSource {
+			 "PassengerRUnconsciousInAnim" "" "Vehicle.PassengerRUnconsciousIn" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 61.0 -7.3000002
+			}
+		}
+		$Node AnimNodeSource {
+			 "PassengerRUnconsciousOutAnim" "" "Vehicle.PassengerRUnconsciousOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 65.9000015 -7.3000002
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "PassengerRUnconsciousSTM" "TagUnconscious"
+			$States 3 {
+				$State {
+					 "In" "" "PassengerRUnconsciousInAnim" "true" "realtime" 0
+					$EditorData {
+						#EditorPos 61.0 -5.5999999
+					}
+				}
+				$State {
+					 "Loop" "" "PassengerRUnconsciousIdleAnim" "false" "realtime" 0
+					$EditorData {
+						#EditorPos 63.5 -5.5999999
+					}
+				}
+				$State {
+					 "Out" "" "PassengerRUnconsciousOutAnim" "false" "realtime" 1
+					$EditorData {
+						#EditorPos 65.9000015 -5.5999999
+					}
+				}
+			}
+			$Transitions 2 {
+				$Transition {
+					 "Loop" "Out" "IsCommand(CMD_Unconscious_Exit)" "0.1" "" 0 "S"
+				}
+				$Transition {
+					 "In" "Loop" "RemainingTimeLess(0.1)" "0.1" "" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 60.9000015 -4.3000002
+			}
+		}
+		$Node AnimNodeSource {
+			 "PulledOutCoDriver" "" "Vehicle.CoDriverPulledOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 27.1000004 -0.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "PulledOutDriver" "" "Vehicle.DriverPulledOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -9.6999998 -0.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "PulledOutPassengerL" "" "Vehicle.PassengerLPulledOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 31.2000008 -0.9
+			}
+		}
+		$Node AnimNodeSource {
+			 "PulledOutPassengerR" "" "Vehicle.PassengerRPulledOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 63.2000008 -0.2
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "Sedan_02ActionG" "" "VehicleTalkingT" "VehicleActions" "Sedan_02"
+			$EditorData {
+				#EditorPos 9.0 34.6000023
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "Sedan_02G" "" "Sedan_02ActionG" "Vehicle" "Sedan_02"
+			$EditorData {
+				#EditorPos 9.0 35.2999992
+			}
+		}
+		$Node AnimNodeBlend {
+			 "SteeringExtremeB" "" "0.0" "DriverThrottlePB" "SteeringExtremeIKT" 2
+			$EditorData {
+				#EditorPos 0.7 -13.1000004
+			}
+		}
+		$Node AnimNodeIK2Target {
+			 "SteeringExtremeIKT" "" "SteeringExtremePose" "LHandIKTarget = LeftArm, LeftArmRoll, LeftForeArm, LeftForeArmRoll, LeftHand
+RHandIKTarget = RightArm, RightArmRoll, RightForeArm, RightForeArmRoll, RightHand"
+			$EditorData {
+				#EditorPos 0.7 -14.1000004
+			}
+		}
+		$Node AnimNodePose {
+			 "SteeringExtremePose" "" "Vehicle.DriverSteeringExtreme" "(VehicleSteering*0.5)+0.5"
+			$EditorData {
+				#EditorPos 0.7 -14.8000002
+			}
+		}
+		$Node AnimNodeBlend {
+			 "SteeringMainB" "" "0.0" "DriverThrottlePB" "SteeringMainIKT" 2
+			$EditorData {
+				#EditorPos -3.5 -13.1000004
+			}
+		}
+		$Node AnimNodeIK2Target {
+			 "SteeringMainIKT" "" "SteeringMainPose" "LHandIKTarget = LeftArm, LeftArmRoll, LeftForeArm, LeftForeArmRoll, LeftHand
+RHandIKTarget = RightArm, RightArmRoll, RightForeArm, RightForeArmRoll, RightHand"
+			$EditorData {
+				#EditorPos -3.5 -14.0
+			}
+		}
+		$Node AnimNodePose {
+			 "SteeringMainPose" "" "Vehicle.DriverSteeringMain" "(VehicleSteering*0.5)+0.5"
+			$EditorData {
+				#EditorPos -3.5 -14.8000002
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "SteeringSTM" ""
+			$States 2 {
+				$State {
+					 "SteeringMain" "" "SteeringMainB" "true" "notime" 0
+					$EditorData {
+						#EditorPos -3.5 -11.4000006
+					}
+				}
+				$State {
+					 "SteeringExtremeB" "" "SteeringExtremeB" "false" "notime" 0
+					$EditorData {
+						#EditorPos 0.7 -11.4000006
+					}
+				}
+			}
+			$Transitions 2 {
+				$Transition {
+					 "SteeringMain" "SteeringExtremeB" "VehicleSteering == -1 || VehicleSteering == 1" "0.05" "" 0 "S"
+				}
+				$Transition {
+					 "SteeringExtremeB" "SteeringMain" "inRange(VehicleSteering, -0.05, 0.05)" "0.05" "" 0 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos -3.9000001 -10.1999998
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "Truck_01_cargoG" "" "Truck_01_cargo_ActionG" "Vehicle" "Truck_01_cargo"
+			$EditorData {
+				#EditorPos -2.8 35.2999992
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "Truck_01_cargo_ActionG" "" "VehicleTalkingT" "VehicleActions" "Truck_01_cargo"
+			$EditorData {
+				#EditorPos -2.8 34.6000023
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "Truck_02ActionG" "" "VehicleTalkingT" "VehicleActions" "Truck_02"
+			$EditorData {
+				#EditorPos 12.4000006 34.6000023
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "Truck_02G" "" "Truck_02ActionG" "Vehicle" "Truck_02"
+			$EditorData {
+				#EditorPos 12.4000006 35.2999992
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "Van_01ActionG" "" "VehicleTalkingT" "VehicleActions" "Van_01"
+			$EditorData {
+				#EditorPos -5.7000003 34.6000023
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "Van_01G" "" "Van_01ActionG" "Vehicle" "Van_01"
+			$EditorData {
+				#EditorPos -5.7000003 35.2999992
+			}
+		}
+		$Node AnimNodeBlend {
+			 "VehicleAccelerationB" "" "1.0" "VehicleIKT" "VehicleAccelerationDir" 0
+			$EditorData {
+				#EditorPos 4.5 21.6000004
+			}
+		}
+		$Node AnimNodePose2 {
+			 "VehicleAccelerationDir" "" "Vehicle.Bus_01.AccelerationSpine" "VehicleAccelerationFB" "VehicleAccelerationLR" "Y(-1):   	X(-1) = 0, X(0) = 1, X(1) = 2
+Y(0): 	X(-1) = 3, X(0) = 4, X(1) = 5
+Y(1): 	X(-1) = 6, X(0) = 7, X(1) = 8"
+			$EditorData {
+				#EditorPos 5.9000001 20.3000011
+			}
+		}
+		$Node AnimNodeRot {
+			 "VehicleActionSpineFix" "" "ActionMaster" "1.0"
+			$rotitems 6 {
+				$ri {
+					 "Spine" "zmr" -0.1
+				}
+				$ri {
+					 "Spine1" "zmr" -0.1
+				}
+				$ri {
+					 "Spine2" "zmr" -0.1
+				}
+				$ri {
+					 "Spine" "xmr" -0.1
+				}
+				$ri {
+					 "Spine1" "xmr" -0.2
+				}
+				$ri {
+					 "Spine2" "xmr" 0.0
+				}
+			}
+			$EditorData {
+				#EditorPos 5.5999999 12.6999998
+			}
+		}
+		$Node AnimNodeQueue {
+			 "VehicleBrakeT" "" "VehicleIK"
+			$items 1 {
+				$item {
+					 "BrakeSTM" "VehicleBrake" "!VehicleBrake" "" 0.1 0.2 0 1
+				}
+			}
+			$EditorData {
+				#EditorPos 4.5 28.7000008
+			}
+		}
+		$Node AnimNodePose {
+			 "VehicleClutchP" "" "Vehicle.DriverClutch" "VehicleClutch"
+			$EditorData {
+				#EditorPos -1.4 -16.3000011
+			}
+		}
+		$Node AnimNodeIK2 {
+			 "VehicleIK" "" "VehicleAccelerationB" "//! global values
+weight = 1.0
+
+LHandIKTarget 
+chain = LeftArm, LeftArmRoll, LeftForeArm, LeftForeArmRoll, LeftHand
+chainAxis = +x
+
+RHandIKTarget 
+chain = RightArm, RightArmRoll, RightForeArm, RightForeArmRoll, RightHand
+chainAxis = -x"
+			$EditorData {
+				#EditorPos 4.5 22.5
+			}
+		}
+		$Node AnimNodeIK2Target {
+			 "VehicleIKT" "" "VehicleModifierQ" "LHandIKTarget = LeftArm, LeftArmRoll, LeftForeArm, LeftForeArmRoll, LeftHand
+RHandIKTarget = RightArm, RightArmRoll, RightForeArm, RightForeArmRoll, RightHand"
+			$EditorData {
+				#EditorPos 4.5 19.5
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "VehicleMaster" "TagVehicle"
+			$States 8 {
+				$State {
+					 "Van_01" "" "Van_01G" "VehicleType == 0" "notime" 1
+					$EditorData {
+						#EditorPos -5.7000003 37.1000023
+					}
+				}
+				$State {
+					 "Truck_01_cargo" "" "Truck_01_cargoG" "VehicleType == 1" "notime" 1
+					$EditorData {
+						#EditorPos -2.8 37.1000023
+					}
+				}
+				$State {
+					 "CivilianSedan" "" "CivilianSedanG" "VehicleType == 2" "notime" 1
+					$EditorData {
+						#EditorPos 0.1 37.1000023
+					}
+				}
+				$State {
+					 "OffroadHatchback" "" "OffroadHatchbackG" "VehicleType == 3" "notime" 1
+					$EditorData {
+						#EditorPos 2.8 37.1000023
+					}
+				}
+				$State {
+					 "Bus_01" "" "Bus_01G" "VehicleType == 4" "notime" 1
+					$EditorData {
+						#EditorPos 6.0 37.1000023
+					}
+				}
+				$State {
+					 "Sedan_02" "" "Sedan_02G" "VehicleType == 5" "notime" 1
+					$EditorData {
+						#EditorPos 9.0 37.1000023
+					}
+				}
+				$State {
+					 "Truck_02" "" "Truck_02G" "VehicleType == 6" "notime" 1
+					$EditorData {
+						#EditorPos 12.4000006 37.1000023
+					}
+				}
+				$State {
+					 "Hatchback_02" "" "Hatchback_02G" "VehicleType == 7" "notime" 1
+					$EditorData {
+						#EditorPos 15.6000004 37.1000023
+					}
+				}
+			}
+			$Transitions 0 {
+			}
+			$EditorData {
+				#EditorPos 4.4000001 38.2999992
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "VehicleModifierG" "" "VehicleModifierSTM" "Locomotion" "Erc"
+			$EditorData {
+				#EditorPos 9.4000006 16.2000008
+			}
+		}
+		$Node AnimNodeQueue {
+			 "VehicleModifierQ" "" "VehicleQ"
+			$items 1 {
+				$item {
+					 "VehicleModifierG" "IsCommand(CMD_Modifier_Additive)" "GetCommandI(CMD_Modifier_Additive) == -1" "" 0.7 0.8 0 1
+				}
+			}
+			$EditorData {
+				#EditorPos 4.5 17.8999996
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "VehicleModifierSTM" ""
+			$States 4 {
+				$State {
+					 "Sneeze" "TagModifier" "SickSneezeAnim" "GetCommandI(CMD_Modifier_Additive) == 0" "realtime" 1
+					$EditorData {
+						#EditorPos 9.6000004 14.0
+					}
+				}
+				$State {
+					 "Cough" "TagModifier" "SickCoughAnim" "GetCommandI(CMD_Modifier_Additive) == 1" "realtime" 1
+					$EditorData {
+						#EditorPos 12.5 14.0
+					}
+				}
+				$State {
+					 "Cold" "TagModifierFullBody" "SickColdAnim" "GetCommandI(CMD_Modifier_Additive) == 2" "realtime" 1
+					$EditorData {
+						#EditorPos 9.6000004 13.0
+					}
+				}
+				$State {
+					 "Hot" "TagModifierFullBody" "SickHotAnim" "GetCommandI(CMD_Modifier_Additive) == 3" "realtime" 1
+					$EditorData {
+						#EditorPos 12.5 13.0
+					}
+				}
+			}
+			$Transitions 0 {
+			}
+			$EditorData {
+				#EditorPos 9.4000006 15.1999998
+			}
+		}
+		$Node AnimNodeQueue {
+			 "VehicleQ" "" "VehicleSTM"
+			$items 2 {
+				$item {
+					 "ActionMaster" "IsCommand(CMD_Action) && (GetCommandI(CMD_Action) >= 300 && GetCommandI(CMD_Action) < 500)" "GetCommandI(CMD_InternalAction) == -2" "0.0" 0.2 0.3 1 0
+				}
+				$item {
+					 "VehicleActionSpineFix" "IsCommand(CMD_Action) && (GetCommandI(CMD_Action) < 300 || GetCommandI(CMD_Action) >= 500)" "GetCommandI(CMD_InternalAction) == -2" "0.0" 0.2 0.5 1 0
+				}
+			}
+			$EditorData {
+				#EditorPos 4.5 13.6999998
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "VehicleSTM" ""
+			$States 8 {
+				$State {
+					 "Driver" "" "DriverVehicle" "GetCommandI(CMD_Vehicle_GetIn) == 0" "notime" 1
+					$EditorData {
+						#EditorPos 4.7000003 8.4000006
+					}
+				}
+				$State {
+					 "CoDriver" "" "CoDriverVehicle" "GetCommandI(CMD_Vehicle_GetIn) == 1" "notime" 1
+					$EditorData {
+						#EditorPos 11.6999998 7.0
+					}
+				}
+				$State {
+					 "Driver Switch Seat" "TagVehicleSwitchSeat" "DriverSwitchSeat" "" "realtime" 0
+					$EditorData {
+						#EditorPos 9.5 8.4000006
+					}
+				}
+				$State {
+					 "Codriver Switch Seat" "TagVehicleSwitchSeat" "CodriverSwitchSeat" "" "realtime" 0
+					$EditorData {
+						#EditorPos 7.0999999 7.0
+					}
+				}
+				$State {
+					 "PassengerL" "" "PassengerLStateMachine" "GetCommandI(CMD_Vehicle_GetIn) == 2" "notime" 1
+					$EditorData {
+						#EditorPos 40.6000023 7.0
+					}
+				}
+				$State {
+					 "PassengerR" "" "PassengerRStateMachine" "GetCommandI(CMD_Vehicle_GetIn) == 3" "notime" 1
+					$EditorData {
+						#EditorPos 48.2999992 8.4000006
+					}
+				}
+				$State {
+					 "PassengerL Switch Seat " "TagVehicleSwitchSeat" "PassengerLSwitchSeat" "" "realtime" 0
+					$EditorData {
+						#EditorPos 43.1000023 8.4000006
+					}
+				}
+				$State {
+					 "PassengerR Switch Seat" "TagVehicleSwitchSeat" "PassengerRSwitchSeat" "" "realtime" 0
+					$EditorData {
+						#EditorPos 45.5 7.0
+					}
+				}
+			}
+			$Transitions 12 {
+				$Transition {
+					 "Driver" "Driver Switch Seat" "IsCommand(CMD_Vehicle_SwitchSeat)" "0.1" "" 0 "S"
+				}
+				$Transition {
+					 "Driver Switch Seat" "CoDriver" "RemainingTimeLess(0.01)" "0.01" "" 1 "S"
+				}
+				$Transition {
+					 "CoDriver" "Codriver Switch Seat" "IsCommand(CMD_Vehicle_SwitchSeat)" "0.1" "" 0 "S"
+				}
+				$Transition {
+					 "Codriver Switch Seat" "Driver" "RemainingTimeLess(0.01)" "0.01" "" 1 "S"
+				}
+				$Transition {
+					 "PassengerL" "PassengerL Switch Seat " "IsCommand(CMD_Vehicle_SwitchSeat)" "0.1" "" 0 "S"
+				}
+				$Transition {
+					 "PassengerL Switch Seat " "PassengerR" "RemainingTimeLess(0.01)" "0.01" "" 1 "S"
+				}
+				$Transition {
+					 "PassengerR" "PassengerR Switch Seat" "IsCommand(CMD_Vehicle_SwitchSeat)" "0.1" "" 0 "S"
+				}
+				$Transition {
+					 "PassengerR Switch Seat" "PassengerL" "RemainingTimeLess(0.01)" "0.01" "" 1 "S"
+				}
+				$Transition {
+					 "Driver Switch Seat" "Codriver Switch Seat" "IsCommand(CMD_Vehicle_SwitchSeat) && GetLowerTime() > 0.1" "0.2" "GetRemainingTime()" 1 "S"
+				}
+				$Transition {
+					 "Codriver Switch Seat" "Driver Switch Seat" "IsCommand(CMD_Vehicle_SwitchSeat) && GetLowerTime() > 0.1" "0.3" "GetRemainingTime()" 1 "S"
+				}
+				$Transition {
+					 "PassengerR Switch Seat" "PassengerL Switch Seat " "IsCommand(CMD_Vehicle_SwitchSeat) && GetLowerTime() > 0.1" "0.3" "GetRemainingTime()" 1 "S"
+				}
+				$Transition {
+					 "PassengerL Switch Seat " "PassengerR Switch Seat" "IsCommand(CMD_Vehicle_SwitchSeat) && GetLowerTime() > 0.1" "0.3" "GetRemainingTime()" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 4.3000002 9.6000004
+			}
+		}
+		$Node AnimNodeBlendTAdd {
+			 "VehicleTalkingT" "" "VehicleBrakeT" "FacialTalkingAnim" "" "" "Talking" 0.3 "S" 0
+			$EditorData {
+				#EditorPos 4.5 32.2999992
+			}
+		}
+		$Node AnimNodeWeaponIK {
+			 "VehicleWeaponIK" "" "VehicleIK" "isbitset(ArmIK, 0)" "isbitset(ArmIK, 2)" "isbitset(ArmIK, 2)" 0.3 0.24 "eAI_AimIKX" "eAI_AimY" "WeaponIKTest" "// ik pose anim
+// (root - means RightHand - but right hand is not exported)
+//   |- RightHand_Dummy (where Weapon is)
+//   |                |-  LeftHandIKTarget  (where left hand is on weapon)
+//   |- RightHandOrigin ( inverse transform where hand originally was)
+
+// basic setup - 
+// hand - bone which represents hand holding weapon
+// weapon - bone which represents weapon node in hand
+// weaponrotator - bone - around which weapon rotates
+hand = RightHand
+weapon = RightHand_Dummy
+weaponrotator = RightArm 
+weaponaxis= -x
+
+chain = RightArm, RightArmRoll, RightForeArm, RightForeArmRoll, RightHand
+chainaxis=-x
+secchain = LeftArm, LeftArmRoll, LeftForeArm, LeftForeArmRoll, LeftHand
+secchainaxis=+x
+
+ikpose_chainoffset = RightHandOrigin              			// bone in ikpose specifying where was 
+ikpose_weaponoffset = RightHand_Dummy      			// weapon offset from RHand 
+ikpose_secchainoffset = LeftHandIKTarget      			// secondary chain ik target offset (relative to weapon)
+ikpose_chainmiddledir = RightForeArmDirection			// hand to elbow direction (from hand)
+ikpose_chainmiddlediro = RightHandOrigin,RightForeArmDirectionOrigin	// original hand to elbow direction (from hand)
+ikpose_secchainmiddledir = LeftForeArmDirection			// sec hand to elbow direction (from ikpose_secchainoffset)
+ikpose_secchainmiddlediro = LeftHandOrigin,LeftForeArmDirectionOrigin	// original sec hand to elbow direction (from ikpose_secchainoffset)
+
+"
+			$EditorData {
+				#EditorPos 2.2 23.5
+			}
+		}
+	}
+}
