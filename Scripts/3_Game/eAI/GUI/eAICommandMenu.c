@@ -6,7 +6,7 @@ enum eAICommandCategories
 	CAT_STATUS,
 	CAT_DEBUG,
 	CAT_EMPTY
-}
+};
 
 class eAICommandMenuItem
 {
@@ -48,7 +48,7 @@ class eAICommandMenuItem
 	{
 		m_RadialMenuItemCard = widget;
 	}
-}
+};
 
 class eAICommandMenu extends UIScriptedMenu
 {
@@ -119,26 +119,26 @@ class eAICommandMenu extends UIScriptedMenu
 		super.OnShow();
 
 		if (GetGame().GetUIManager())
-	        GetGame().GetUIManager().ShowCursor(true);
+			GetGame().GetUIManager().ShowCursor(true);
 	
-	    if (GetGame().GetMission())// thanks Wardog
-	        GetGame().GetMission().PlayerControlDisable(INPUT_EXCLUDE_MOUSE_RADIAL);
+		if (GetGame().GetMission())// thanks Wardog
+			GetGame().GetMission().PlayerControlDisable(INPUT_EXCLUDE_MOUSE_RADIAL);
 		
 		m_IsMenuClosing = false;
 	}
 	
 	override void OnHide()
 	{
-	    super.OnHide();
+		super.OnHide();
 	
-	    if (GetParentMenu()) // check if we're a child menu, we shouldn't give control back yet
-	        return;
+		if (GetParentMenu()) // check if we're a child menu, we shouldn't give control back yet
+			return;
 	
-	    if (GetGame().GetUIManager())
-	        GetGame().GetUIManager().ShowCursor(false);
+		if (GetGame().GetUIManager())
+			GetGame().GetUIManager().ShowCursor(false);
 	
-	    if (GetGame().GetMission())
-	        GetGame().GetMission().PlayerControlEnable(true);
+		if (GetGame().GetMission())
+			GetGame().GetMission().PlayerControlEnable(true);
 		
 		m_IsMenuClosing = true;
 	}
@@ -560,4 +560,4 @@ class eAICommandMenu extends UIScriptedMenu
 	{
 		m_IsMenuClosing = state;
 	}
-}
+};

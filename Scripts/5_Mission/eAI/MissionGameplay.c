@@ -45,7 +45,7 @@ modded class MissionGameplay
 
 		super.OnUpdate(timeslice);
 
-    	//TODO: move to 5_Mission/eAIManager
+		//TODO: move to 5_Mission/eAIManager
 
 		DayZPlayerImplement player;
 		Class.CastTo(player, GetGame().GetPlayer());

@@ -13,99 +13,99 @@ class eAISettings : JsonApiStruct
 
 	private float m_Accuracy = 0.5;
 
-	private ref array<string> m_LoadoutDirectories = { "$profile:" };
+	private ref array<string> m_LoadoutDirectories = {"$profile:"};
 	private bool m_LoadoutDirectoriesSavedAsArray = false;
 
-	private ref array<string> m_Admins = { };
+	private ref array<string> m_Admins = {};
 
 	private int m_MaxDynamicPatrols = -1;
 
 	void SetLogLevel(CF_LogLevel logLevel)
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_1(this, "SetLogLevel").Add(logLevel);
-        #endif
-		
+#endif
+
 		m_LogLevel = logLevel;
 	}
 
 	static CF_LogLevel GetLogLevel()
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_0("eAISettings", "GetLogLevel");
-        #endif
-		
+#endif
+
 		return m_Instance.m_LogLevel;
 	}
 
 	void SetMaximumDynamicPatrols(int num)
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_1(this, "SetMaximumDynamicPatrols").Add(num);
-        #endif
-		
+#endif
+
 		m_MaxDynamicPatrols = num;
 	}
 
 	static int GetMaximumDynamicPatrols()
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_0("eAISettings", "GetMaximumDynamicPatrols");
-        #endif
-		
+#endif
+
 		return m_Instance.m_MaxDynamicPatrols;
 	}
 
 	void SetAccuracy(float accuracy)
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_1(this, "SetAccuracy").Add(accuracy);
-        #endif
-		
+#endif
+
 		m_Accuracy = accuracy;
 	}
 
 	static float GetAccuracy()
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_0("eAISettings", "GetAccuracy");
-        #endif
-		
+#endif
+
 		return m_Instance.m_Accuracy;
 	}
 
 	void AddLoadoutDirectory(string path)
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_1(this, "AddLoadoutDirectory").Add(path);
-        #endif
-		
+#endif
+
 		m_LoadoutDirectories.Insert(path);
 	}
-	
+
 	void ClearLoadoutDirectories()
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_0(this, "ClearLoadoutDirectories");
-        #endif
-		
+#endif
+
 		m_LoadoutDirectories.Clear();
 	}
 
 	static array<string> GetLoadoutDirectories()
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_0("eAISettings", "GetLoadoutDirectories");
-        #endif
-		
+#endif
+
 		return m_Instance.m_LoadoutDirectories;
 	}
 
 	void AddAdmin(string admin)
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_1(this, "AddAdmin").Add(admin);
-        #endif
+#endif
 
 		m_Admins.Insert(admin);
 
@@ -115,16 +115,16 @@ class eAISettings : JsonApiStruct
 		{
 			if (identity.GetPlainId() == admin)
 			{
-        		GetRPCManager().SendRPC("eAI", "RPC_SetAdmin", new Param1<bool>(true), true, identity);
+				GetRPCManager().SendRPC("eAI", "RPC_SetAdmin", new Param1<bool>(true), true, identity);
 			}
 		}
 	}
-	
+
 	void ClearAdmins()
 	{
 		m_Admins.Clear();
 
-        GetRPCManager().SendRPC("eAI", "RPC_SetAdmin", new Param1<bool>(false), true, null);
+		GetRPCManager().SendRPC("eAI", "RPC_SetAdmin", new Param1<bool>(false), true, null);
 	}
 
 	static array<string> GetAdmins()
@@ -134,17 +134,17 @@ class eAISettings : JsonApiStruct
 
 	override void OnObject(string name)
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_1(this, "OnObject").Add(name);
-        #endif
+#endif
 	}
 
 	override void OnInteger(string name, int value)
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_2(this, "OnInteger").Add(name).Add(value);
-        #endif
-		
+#endif
+
 		if (name == "eAILogLevel")
 		{
 			m_LogLevelSavedAsString = false;
@@ -161,19 +161,25 @@ class eAISettings : JsonApiStruct
 
 	override void OnString(string name, string value)
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_2(this, "OnString").Add(name).Add(value);
-        #endif
-		
+#endif
+
 		if (name == "eAILogLevel")
 		{
 			m_LogLevelSavedAsString = true;
-			if (value == "TRACE") SetLogLevel(CF_LogLevel.TRACE);
-			if (value == "DEBUG") SetLogLevel(CF_LogLevel.DEBUG);
-			if (value == "INFO") SetLogLevel(CF_LogLevel.INFO);
-			if (value == "WARNING") SetLogLevel(CF_LogLevel.WARNING);
-			if (value == "ERROR") SetLogLevel(CF_LogLevel.ERROR);
-			if (value == "NONE") SetLogLevel(CF_LogLevel.NONE);
+			if (value == "TRACE")
+				SetLogLevel(CF_LogLevel.TRACE);
+			if (value == "DEBUG")
+				SetLogLevel(CF_LogLevel.DEBUG);
+			if (value == "INFO")
+				SetLogLevel(CF_LogLevel.INFO);
+			if (value == "WARNING")
+				SetLogLevel(CF_LogLevel.WARNING);
+			if (value == "ERROR")
+				SetLogLevel(CF_LogLevel.ERROR);
+			if (value == "NONE")
+				SetLogLevel(CF_LogLevel.NONE);
 			return;
 		}
 
@@ -187,10 +193,10 @@ class eAISettings : JsonApiStruct
 
 	override void OnFloat(string name, float value)
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_2(this, "OnFloat").Add(name).Add(value);
-        #endif
-		
+#endif
+
 		if (name == "Accuracy")
 		{
 			SetAccuracy(value);
@@ -200,18 +206,18 @@ class eAISettings : JsonApiStruct
 
 	override void OnStartArray(string name)
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_1(this, "OnStartArray").Add(name);
-        #endif
-		
+#endif
+
 		m_LoadingArray = name;
-		
+
 		if (m_LoadingArray == "LoadoutDirectories")
 		{
 			ClearLoadoutDirectories();
 			return;
 		}
-		
+
 		if (m_LoadingArray == "Admins")
 		{
 			ClearAdmins();
@@ -221,19 +227,19 @@ class eAISettings : JsonApiStruct
 
 	override void OnEndArray(int itemCount)
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_1(this, "OnEndArray").Add(itemCount);
-        #endif
-		
+#endif
+
 		m_LoadingArray = "";
 	}
 
 	override void OnItemString(int index, string value)
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_2(this, "OnItemString").Add(index).Add(value);
-        #endif
-		
+#endif
+
 		if (m_LoadingArray == "LoadoutDirectories")
 		{
 			AddLoadoutDirectory(value);
@@ -249,10 +255,10 @@ class eAISettings : JsonApiStruct
 
 	override void OnPack()
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_0(this, "OnPack");
-        #endif
-		
+#endif
+
 		if (m_LogLevelSavedAsString)
 		{
 			StoreString("eAILogLevel", typename.EnumToString(CF_LogLevel, m_LogLevel));
@@ -289,28 +295,29 @@ class eAISettings : JsonApiStruct
 
 	override void OnSuccess(int errorCode)
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_1(this, "OnSuccess").Add(errorCode);
-        #endif
-		
+#endif
+
 		ON_UPDATE.Invoke();
 	}
 
 	override void OnError(int errorCode)
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_1(this, "OnError").Add(errorCode);
-		
+#endif
+
 		Print(errorCode);
 		ON_UPDATE.Invoke();
 	}
 
 	static void Init()
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_0("eAISettings", "Init");
-        #endif
-		
+#endif
+
 		if (!GetJsonApi())
 		{
 			CreateJsonApi();
@@ -328,10 +335,10 @@ class eAISettings : JsonApiStruct
 
 	static eAISettings Get()
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_0("eAISettings", "Get");
-        #endif
-		
+#endif
+
 		return m_Instance;
 	}
 
@@ -339,10 +346,10 @@ class eAISettings : JsonApiStruct
 
 	void Load()
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_0(this, "Load");
-        #endif
-		
+#endif
+
 		FileHandle file_handle = OpenFile(PATH, FileMode.READ);
 		string content;
 		string line_content;
@@ -358,10 +365,10 @@ class eAISettings : JsonApiStruct
 
 	void Save()
 	{
-		#ifdef EAI_TRACE
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_0(this, "Save");
-        #endif
-		
+#endif
+
 		InstantPack();
 		SaveToFile(PATH);
 	}

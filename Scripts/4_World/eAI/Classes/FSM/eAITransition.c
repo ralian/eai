@@ -1,43 +1,43 @@
 class eAITransition
 {
-    static const int FAIL = 0;
-    static const int SUCCESS = 1; 
+	static const int FAIL = 0;
+	static const int SUCCESS = 1; 
 
-    protected string m_ClassName;
+	protected string m_ClassName;
 	
-    /* STATE VARIABLES */
-    protected eAIBase unit;
+	/* STATE VARIABLES */
+	protected eAIBase unit;
 
-    void eAITransition(eAIFSM _fsm, eAIBase _unit)
-    {
-        unit = _unit;
-    }
+	void eAITransition(eAIFSM _fsm, eAIBase _unit)
+	{
+		unit = _unit;
+	}
 
-    eAIState GetSource()
-    {
-        return null;
-    }
+	eAIState GetSource()
+	{
+		return null;
+	}
 
-    eAIState GetDestination()
-    {
-        return null;
-    }
+	eAIState GetDestination()
+	{
+		return null;
+	}
 
-    string GetEvent()
-    {
-        return "";
-    }
+	string GetEvent()
+	{
+		return "";
+	}
 
-    int Guard()
-    {
-        return SUCCESS;
-    }
+	int Guard()
+	{
+		return SUCCESS;
+	}
 
 	#ifdef EAI_DEBUG_FSM
-    //! Current active debug block
-    CF_DebugUI_Block m_Debug;
+	//! Current active debug block
+	CF_DebugUI_Block m_Debug;
 	int m_Depth;
-    int m_Index;
+	int m_Index;
 
 	private string Debug_Prefix()
 	{
@@ -49,9 +49,9 @@ class eAITransition
 			depth--;
 		}
 
-        str += "[T_" + m_Index + "]";
-        if (m_Index < 10) depth = 2;
-        else if (m_Index < 100) depth = 1;
+		str += "[T_" + m_Index + "]";
+		if (m_Index < 10) depth = 2;
+		else if (m_Index < 100) depth = 1;
 
 		while (depth > 0)
 		{
@@ -91,30 +91,30 @@ class eAITransition
 		m_Debug.Set(Debug_Prefix() + key, text);
 	}
 
-    int Debug_Guard(Class dbg, int depth, int index)
-    {
-        Class.CastTo(m_Debug, dbg);
-        m_Depth = depth;
-        m_Index = index;
+	int Debug_Guard(Class dbg, int depth, int index)
+	{
+		Class.CastTo(m_Debug, dbg);
+		m_Depth = depth;
+		m_Index = index;
 
 		Debug_Set("Source", GetSource());
 		Debug_Set("Destination", GetDestination());
-        int ret = Guard();
-        switch (ret)
-        {
-            case FAIL:
-                Debug_Set("Status", "FAIL");
-                break;
-            case SUCCESS:
-                Debug_Set("Status", "SUCCESS");
-                break;
-            default:
-                Debug_Set("Status", "UNKNOWN");
-                break;
-        }
-        return ret;
-    }
-    #else
+		int ret = Guard();
+		switch (ret)
+		{
+			case FAIL:
+				Debug_Set("Status", "FAIL");
+				break;
+			case SUCCESS:
+				Debug_Set("Status", "SUCCESS");
+				break;
+			default:
+				Debug_Set("Status", "UNKNOWN");
+				break;
+		}
+		return ret;
+	}
+	#else
 	void Debug_Set(string key, int text)
 	{
 	}
@@ -139,9 +139,9 @@ class eAITransition
 	{
 	}
 
-    int Debug_Guard(Class dbg, int depth, int index)
-    {
-        return Guard();
-    }
+	int Debug_Guard(Class dbg, int depth, int index)
+	{
+		return Guard();
+	}
 	#endif
 };

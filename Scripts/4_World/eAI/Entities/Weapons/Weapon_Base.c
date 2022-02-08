@@ -79,10 +79,11 @@ modded class Weapon_Base
 		}
 	}
 	
-	/**@fn	ProcessWeaponEvent
+	/**
+	 * @fn	ProcessWeaponEvent
 	 * @brief	weapon's fsm handling of events
 	 * @NOTE: warning: ProcessWeaponEvent can be called only within DayZPlayer::HandleWeapons (or ::CommandHandler)
-	 **/
+	 */
 	override bool ProcessWeaponEvent(WeaponEventBase e)
 	{
 		#ifdef EAI_TRACE

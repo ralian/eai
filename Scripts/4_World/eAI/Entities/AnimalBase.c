@@ -1,45 +1,45 @@
 modded class AnimalBase
 {
-    private autoptr eAITargetInformation m_TargetInformation;
+	private autoptr eAITargetInformation m_TargetInformation;
 
-    void AnimalBase()
-    {
-		#ifdef EAI_TRACE
+	void AnimalBase()
+	{
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_0(this, "AnimalBase");
-        #endif
+#endif
 
-        m_TargetInformation = CreateTargetInformation();
-    }
+		m_TargetInformation = CreateTargetInformation();
+	}
 
-    protected eAITargetInformation CreateTargetInformation()
-    {
-		#ifdef EAI_TRACE
+	protected eAITargetInformation CreateTargetInformation()
+	{
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_0(this, "CreateTargetInformation");
-        #endif
+#endif
 
-        return new eAIEntityTargetInformation(this);
-    }
+		return new eAIEntityTargetInformation(this);
+	}
 
-    eAITargetInformation GetTargetInformation()
-    {
-		#ifdef EAI_TRACE
+	eAITargetInformation GetTargetInformation()
+	{
+#ifdef EAI_TRACE
 		auto trace = CF_Trace_0(this, "UpdateTargets");
-        #endif
+#endif
 
-        return m_TargetInformation;
-    }
+		return m_TargetInformation;
+	}
 
 	override void EEKilled(Object killer)
 	{
-        m_TargetInformation.OnDeath();
+		m_TargetInformation.OnDeath();
 
-        super.EEKilled(killer);
-    }
+		super.EEKilled(killer);
+	}
 
 	override void EEHitBy(TotalDamageResult damageResult, int damageType, EntityAI source, int component, string dmgZone, string ammo, vector modelPos, float speedCoef)
 	{
-        m_TargetInformation.OnHit();
+		m_TargetInformation.OnHit();
 
 		super.EEHitBy(damageResult, damageType, source, component, dmgZone, ammo, modelPos, speedCoef);
-    }
+	}
 };
