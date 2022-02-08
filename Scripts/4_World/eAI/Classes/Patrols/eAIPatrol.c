@@ -29,7 +29,7 @@ class eAIPatrol : Managed
 	/**
 	 * @brief Privated destructor to prevent calling/storing in ref. The instance is managed through 'Create(X)Patrol' and 'DeletePatrol'
 	 */
-	private void ~eAIPatrol()
+	/*private*/ void ~eAIPatrol()
 	{
         //eAITrace trace(this, "~eAIPatrol");
 		int idx = m_AllPatrols.Find(this);

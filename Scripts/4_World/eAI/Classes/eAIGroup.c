@@ -100,7 +100,7 @@ class eAIGroup
 		s_AllGroups.Insert(this);
 	}
 
-	private void ~eAIGroup()
+	/*private*/ void ~eAIGroup()
 	{
         //eAITrace trace(this, "~eAIGroup");
 
