@@ -32,6 +32,10 @@ class eAIPathFinding
 
 	void eAIPathFinding(eAIBase unit)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "eAIPathFinding").Add(unit);
+		#endif
+
 		m_Unit = unit;
 		
 		m_Path = new array<vector>();
@@ -48,6 +52,10 @@ class eAIPathFinding
 
 	private void SetPathFilter()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "SetPathFilter");
+		#endif
+
 		int inFlags = PGPolyFlags.WALK | PGPolyFlags.DOOR | PGPolyFlags.INSIDE | PGPolyFlags.JUMP_OVER;
 		int exFlags = PGPolyFlags.DISABLED | PGPolyFlags.SWIM | PGPolyFlags.SWIM_SEA | PGPolyFlags.SPECIAL | PGPolyFlags.JUMP | PGPolyFlags.CLIMB | PGPolyFlags.CRAWL | PGPolyFlags.CROUCH;
 
@@ -59,6 +67,10 @@ class eAIPathFinding
 
 	void StartRoadPath(out array<vector> path)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "StartRoadPath");
+		#endif
+
 		//Print("StartRoadPath");
 		//m_RoadPathSwap.Clear();
 		//path = m_RoadPathSwap;
@@ -68,7 +80,11 @@ class eAIPathFinding
 	//! temp var
 	//ref array<PathNode> m_RoadNodes = new array<PathNode>();
 	void FinishRoadPath(array<vector> path, array<PathNode> nodes)
-	{		
+	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "FinishRoadPath").Add(path).Add(nodes);
+		#endif
+
 	//	//Print("FinishRoadPath");
 	//	m_RoadPathSwap = path;
 	//	m_RoadPathReady = true;
@@ -80,6 +96,10 @@ class eAIPathFinding
 
 	void OnDebug()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "OnDebug");
+		#endif
+
 		#ifdef EAI_DEBUG_PATH
 		//CF_DebugUI_Block dbg;
 		//Class.CastTo(dbg, CF.DebugUI.Get("PATH", m_Unit));
@@ -119,6 +139,10 @@ class eAIPathFinding
 	
 	void OnUpdate(float pDt, int pSimulationPrecision)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "OnUpdate").Add(pDt).Add(pSimulationPrecision);
+		#endif
+
 		OnDebug();
 		
 		m_Time += pDt;
@@ -187,29 +211,45 @@ class eAIPathFinding
 
 	void SetPosition(vector pPosition)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "SetPosition").Add(pPosition);
+		#endif
+
 		m_Position = pPosition;
 	}
 
 	vector GetPosition()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "GetPosition");
+		#endif
+
 		return m_Position;
 	}
 
 	eAITargetOverriding GetOverride()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "GetOverride");
+		#endif
+
 		return m_Overriding;
 	}
 
 	void StopOverride()
 	{
-		//auto trace = CF_Trace_0(this, "StopOverride");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "StopOverride");
+		#endif
 		
 		m_Overriding = eAITargetOverriding.NONE;
 	}
 
 	void OverridePath()
 	{
-		//auto trace = CF_Trace_0(this, "OverridePath");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "OverridePath");
+		#endif
 
 		m_Overriding = eAITargetOverriding.PATH;
 		m_Path.Clear();
@@ -217,7 +257,9 @@ class eAIPathFinding
 
 	void OverridePath(array<vector> pPath)
 	{
-		//auto trace = CF_Trace_1(this, "OverridePath").Add(pPath);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "OverridePath").Add(pPath);
+		#endif
 
 		m_Overriding = eAITargetOverriding.PATH;
 		pPath.Copy(m_Path);
@@ -225,7 +267,9 @@ class eAIPathFinding
 
 	void OverridePosition(vector pPosition)
 	{
-		//auto trace = CF_Trace_1(this, "OverridePosition").Add(pPosition);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "OverridePosition").Add(pPosition);
+		#endif
 		
 		m_Overriding = eAITargetOverriding.POSITION;
 		m_OverridePosition = pPosition;
@@ -233,6 +277,10 @@ class eAIPathFinding
 	
 	float Distance(int index, vector position)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "Distance").Add(index).Add(position);
+		#endif
+
 		vector begin = m_Path[index];
 		vector end = m_Path[index + 1] - begin;
 		vector relative = position - begin;
@@ -249,21 +297,37 @@ class eAIPathFinding
 
 	void Clear()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "Clear");
+		#endif
+
 		m_Path.Clear();
 	}
 	
 	int Count()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "Count");
+		#endif
+
 		return m_Path.Count();
 	}
 	
 	vector Get(int index)
 	{		
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "Get").Add(index);
+		#endif
+
 		return m_Path[index];
 	}
 	
 	bool IsBlocked(vector start, vector end)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "IsBlocked").Add(start).Add(end);
+		#endif
+
 		vector hitPos;
 		vector hitNormal;
 		
@@ -272,11 +336,19 @@ class eAIPathFinding
 	
 	bool IsBlocked(vector start, vector end, out vector hitPos, out vector hitNormal)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "IsBlocked").Add(start).Add(end);
+		#endif
+
 		return m_AIWorld.RaycastNavMesh(start, end, m_PathFilter, hitPos, hitNormal);
 	}
 
 	int Next(vector position)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "Next").Add(position);
+		#endif
+
 		int index = 0;
 		float minDist = 1000000000.0;
 

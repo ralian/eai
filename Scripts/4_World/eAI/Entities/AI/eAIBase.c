@@ -80,6 +80,10 @@ class eAIBase extends PlayerBase
 
 	void eAIBase()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "eAIBase");
+		#endif
+
 		if (IsMissionHost())
 		{
 			if (eAIGlobal_HeadlessClient && eAIGlobal_HeadlessClient.GetIdentity())
@@ -93,11 +97,19 @@ class eAIBase extends PlayerBase
 
 	static eAIBase Get(int index)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1("eAIBase", "Get").Add(index);
+		#endif
+
 		return m_AllAI[index];
 	}
 
 	override void Init()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "Init");
+		#endif
+
 		super.Init();
 
 		m_eAI_Targets = new array<eAITarget>();
@@ -136,6 +148,10 @@ class eAIBase extends PlayerBase
 
 	void ~eAIBase()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "~eAIBase");
+		#endif
+
 		m_AllAI.RemoveItem(this);
 
 		if (IsAI() && GetGroup())
@@ -147,6 +163,10 @@ class eAIBase extends PlayerBase
 	// Used for deciding the best aim arbiter for the AI.
 	// TODO: particle system
 	Man GetNearestPlayer() {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "GetNearestPlayer");
+		#endif
+
 		autoptr array<Man> players = {};
 		GetGame().GetPlayers(players);
 		float min = 999999.0;
@@ -164,16 +184,28 @@ class eAIBase extends PlayerBase
 	
 	void StopAimArbitration()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "StopAimArbitration");
+		#endif
+
 		m_AimingState = eAIAimingState.INACTIVE;
 	}
 	
 	void UpdateAimArbitration()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "UpdateAimArbitration");
+		#endif
+
 		m_AimingState = eAIAimingState.ACTIVE;
 	}
 	
 	bool PlayerIsEnemy(EntityAI other)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "PlayerIsEnemy").Add(other);
+		#endif
+
 		PlayerBase player = PlayerBase.Cast(other);
 		if (!player) return true;
 		
@@ -195,7 +227,9 @@ class eAIBase extends PlayerBase
 	int m_MinTimeTillNextFire;
 	void TryFireWeapon()
 	{
-		//auto trace = CF_Trace_0(this, "TryFireWeapon");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "TryFireWeapon");
+		#endif
 
 		if (GetGame().GetTime() < m_MinTimeTillNextFire) return;
 		m_MinTimeTillNextFire = GetGame().GetTime() + 250.0;
@@ -263,7 +297,9 @@ class eAIBase extends PlayerBase
 
 	ItemBase GetWeaponToUse(bool hasAmmo = false)
 	{
-		//auto trace = CF_Trace_1(this, "GetWeaponToUse").Add(hasAmmo);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "GetWeaponToUse").Add(hasAmmo);
+		#endif
 
 		// very messy :)
 		for (int i = 0; i < m_Weapons.Count(); i++)
@@ -285,7 +321,9 @@ class eAIBase extends PlayerBase
 
 	ItemBase GetMeleeWeaponToUse()
 	{
-		//auto trace = CF_Trace_0(this, "GetMeleeWeaponToUse");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "GetMeleeWeaponToUse");
+		#endif
 
 		// very messy :)
 		for (int i = 0; i < m_MeleeWeapons.Count(); i++)
@@ -366,7 +404,9 @@ class eAIBase extends PlayerBase
 
 	void UpdateTargets()
 	{
-		//auto trace = CF_Trace_0(this, "UpdateTargets");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "UpdateTargets");
+		#endif
 		
 		//TODO: use particle system instead
 
@@ -409,7 +449,9 @@ class eAIBase extends PlayerBase
 	//TODO: Use CF_PriorityQueue<T>
 	void PrioritizeTargets()
 	{
-		//auto trace = CF_Trace_0(this, "PrioritizeTargets");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "PrioritizeTargets");
+		#endif
 		
 		// sorting the targets so the highest the threat is indexed lowest
 
@@ -474,7 +516,9 @@ class eAIBase extends PlayerBase
 
 	void Notify_Transport(Transport vehicle, int seatIndex)
 	{
-		//auto trace = CF_Trace_2(this, "Notify_Transport").Add(vehicle).Add(seatIndex);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "Notify_Transport").Add(vehicle).Add(seatIndex);
+		#endif
 		
 		m_eAI_Transport = vehicle;
 		m_eAI_Transport_SeatIndex = seatIndex;
@@ -482,14 +526,18 @@ class eAIBase extends PlayerBase
 
 	void Notify_Melee()
 	{
-		//auto trace = CF_Trace_0(this, "Notify_Melee");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "Notify_Melee");
+		#endif
 
 		m_eAI_Melee = true;
 	}
 
 	void UseTargetting()
 	{
-		//auto trace = CF_Trace_0(this, "UseTargetting");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "UseTargetting");
+		#endif
 		
 		m_PathFinding.StopOverride();
 	}
@@ -499,7 +547,9 @@ class eAIBase extends PlayerBase
 	 */
 	void OverridePath()
 	{
-		//auto trace = CF_Trace_0(this, "OverridePath");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "OverridePath");
+		#endif
 
 		m_PathFinding.OverridePath();
 	}
@@ -511,7 +561,9 @@ class eAIBase extends PlayerBase
 	 */
 	void OverridePath(array<vector> pPath)
 	{
-		//auto trace = CF_Trace_1(this, "OverridePath").Add(pPath);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "OverridePath").Add(pPath);
+		#endif
 
 		m_PathFinding.OverridePath(pPath);
 	}
@@ -523,7 +575,9 @@ class eAIBase extends PlayerBase
 	 */
 	void OverridePosition(vector pPosition)
 	{
-		//auto trace = CF_Trace_1(this, "OverridePosition").Add(pPosition);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "OverridePosition").Add(pPosition);
+		#endif
 		
 		m_PathFinding.OverridePosition(pPosition);
 	}
@@ -536,7 +590,9 @@ class eAIBase extends PlayerBase
 	 */
 	void OverrideMovementSpeed(bool pActive, int pSpeed)
 	{
-		//auto trace = CF_Trace_2(this, "OverrideMovementSpeed").Add(pActive).Add(pSpeed);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "OverrideMovementSpeed").Add(pActive).Add(pSpeed);
+		#endif
 		
 		m_MovementSpeedActive = pActive;
 		m_MovementSpeed = pSpeed;
@@ -550,7 +606,9 @@ class eAIBase extends PlayerBase
 	 */
 	void OverrideMovementDirection(bool pActive, float pDirection)
 	{
-		//auto trace = CF_Trace_2(this, "OverrideMovementDirection").Add(pActive).Add(pDirection);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "OverrideMovementDirection").Add(pActive).Add(pDirection);
+		#endif
 		
 		m_MovementDirectionActive = pActive;
 		m_MovementDirection = pDirection;
@@ -568,7 +626,9 @@ class eAIBase extends PlayerBase
 
 	override void CommandHandler(float pDt, int pCurrentCommandID, bool pCurrentCommandFinished) 
 	{
-		//auto trace = CF_Trace_3(this, "OverrideMovementDirection").Add(pDt).Add(pCurrentCommandID).Add(pCurrentCommandFinished);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_3(this, "OverrideMovementDirection").Add(pDt).Add(pCurrentCommandID).Add(pCurrentCommandFinished);
+		#endif
 
 		//CarScript car;
 		//if (Class.CastTo(car, GetParent()))
@@ -1009,7 +1069,9 @@ class eAIBase extends PlayerBase
 	
 	override void HandleWeapons(float pDt, Entity pInHands, HumanInputController pInputs, out bool pExitIronSights)
 	{
-		//auto trace = CF_Trace_3(this, "HandleWeapons").Add(pDt).Add(pInHands).Add(pInputs);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_3(this, "HandleWeapons").Add(pDt).Add(pInHands).Add(pInputs);
+		#endif
 		
 		HumanCommandWeapons hcw = GetCommandModifier_Weapons();
 		GetDayZPlayerInventory().HandleWeaponEvents(pDt, pExitIronSights);

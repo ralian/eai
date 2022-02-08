@@ -9,6 +9,10 @@ class eAIManagerBase
 
     void eAIManagerBase()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "eAIManagerBase");
+        #endif
+
 		m_Instance_3 = this;
 
         // anything dependent on settings during init must be initialized first.
@@ -20,12 +24,19 @@ class eAIManagerBase
 
 	static eAIManagerBase Get3()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0("eAIManagerBase", "RPC_SetAdmin");
+        #endif
+        
 		return m_Instance_3;
 	}
 	
 	eAICommandManager GetCommandManager()
     {
-		//auto trace = CF_Trace_0(this, "GetEAICommandManager");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "GetCommandManager");
+        #endif
+
 		return m_CommandManager;
 	}
 
@@ -34,6 +45,10 @@ class eAIManagerBase
      */
     bool IsAdmin()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "IsAdmin");
+        #endif
+        
         return m_IsAdmin;
     }
 
@@ -42,6 +57,10 @@ class eAIManagerBase
      */
     void SetAdmin(bool admin)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "SetAdmin");
+        #endif
+        
         m_IsAdmin = admin;
     }
 
@@ -50,6 +69,10 @@ class eAIManagerBase
      */
     bool InGroup()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "InGroup");
+        #endif
+        
         return m_InGroup;
     }
 
@@ -58,12 +81,18 @@ class eAIManagerBase
      */
     void SetInGroup(bool group)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "SetInGroup");
+        #endif
+
         m_InGroup = group;
     }
     
     void RPC_SetAdmin(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
-		//auto trace = CF_Trace_0(this, "RPC_SetAdmin");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "RPC_SetAdmin");
+        #endif
 
 		Param1<bool> data;
         if (!ctx.Read(data)) return;
@@ -77,7 +106,9 @@ class eAIManagerBase
 
 	void InvokeOnConnect(DayZPlayer player, PlayerIdentity identity)
 	{
-		//auto trace = CF_Trace_0(this, "InvokeOnConnect");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "InvokeOnConnect");
+        #endif
 
         string guid = identity.GetPlainId();
         int idx = eAISettings.GetAdmins().Find(guid);

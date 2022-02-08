@@ -9,7 +9,11 @@ modded class DayZPlayerImplement
 
     void DayZPlayerImplement()
     {
-        m_TargetInformation = CreateTargetInformation();
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "DayZPlayerImplement");
+        #endif
+
+        //m_TargetInformation = CreateTargetInformation();
 
         RegisterNetSyncVariableInt("m_eAI_GroupID");
         RegisterNetSyncVariableInt("m_eAI_GroupMemberIndexSynch");
@@ -21,25 +25,36 @@ modded class DayZPlayerImplement
 
     protected eAITargetInformation CreateTargetInformation()
     {
-		//auto trace = CF_Trace_0(this, "CreateTargetInformation");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "CreateTargetInformation");
+        #endif
+
         return new eAIPlayerTargetInformation(this);
     }
 
     eAITargetInformation GetTargetInformation()
     {
-		//auto trace = CF_Trace_0(this, "GetTargetInformation");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "GetTargetInformation");
+        #endif
+
         return m_TargetInformation;
     }
 
     bool IsAI()
     {
-		//auto trace = CF_Trace_0(this, "IsAI");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "IsAI");
+        #endif
+
         return false;
     }
 
 	void SetGroup(eAIGroup group)
     {
-		//auto trace = CF_Trace_1(this, "SetGroup").Add(group);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "SetGroup").Add(group);
+        #endif
 
         if (m_eAI_Group == group) return;
 
@@ -64,19 +79,27 @@ modded class DayZPlayerImplement
 
 	eAIGroup GetGroup()
 	{
-		//auto trace = CF_Trace_0(this, "GetGroup");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "GetGroup");
+        #endif
+
 		return m_eAI_Group;
 	}
 
     int GetGroupID()
     {
-		//auto trace = CF_Trace_0(this, "GetGroupID");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "GetGroupID");
+        #endif
+
 		return m_eAI_GroupID;
     }
 
     void SetGroupMemberIndex(int index)
     {
-		//auto trace = CF_Trace_1(this, "SetGroupMemberIndex").Add(index);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "SetGroupMemberIndex").Add(index);
+        #endif
 		
         m_eAI_GroupMemberIndex = index;
         m_eAI_GroupMemberIndexSynch = index;
@@ -86,6 +109,10 @@ modded class DayZPlayerImplement
 
     override void OnVariablesSynchronized()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "OnVariablesSynchronized");
+		#endif
+
         super.OnVariablesSynchronized();
 
         if (GetGame().IsServer()) return;

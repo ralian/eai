@@ -10,11 +10,19 @@ class eAITargetInformation
 
     void eAITargetInformation()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "eAITargetInformation");
+        #endif
+
         m_Groups = new map<int, ref eAITarget>();
     }
 
     void ~eAITargetInformation()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "~eAITargetInformation");
+        #endif
+
         foreach (int id, eAITarget info : m_Groups) Remove(id);
     }
 
@@ -35,6 +43,10 @@ class eAITargetInformation
 	 */
     EntityAI GetEntity()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "GetEntity");
+        #endif
+        
         return null;
     }
 
@@ -45,6 +57,10 @@ class eAITargetInformation
 	 */
     bool IsActive()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "IsActive");
+        #endif
+        
         return true;
     }
 
@@ -56,6 +72,10 @@ class eAITargetInformation
 	 */
     vector GetPosition(eAIBase ai = null)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "GetPosition").Add(ai);
+        #endif
+        
         return "0 0 0";
     }
 
@@ -67,6 +87,10 @@ class eAITargetInformation
 	 */
     vector GetAimOffset(eAIBase ai = null)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "GetAimOffset").Add(ai);
+        #endif
+        
         return "0 0 0";
     }
 
@@ -78,11 +102,19 @@ class eAITargetInformation
 	 */
     float GetThreat(eAIBase ai = null)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "GetThreat").Add(ai);
+        #endif
+        
         return 0;
     }
 
     bool ShouldRemove(eAIBase ai = null)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "ShouldRemove").Add(ai);
+        #endif
+        
         return 0;
     }
 
@@ -94,6 +126,10 @@ class eAITargetInformation
 	 */
     float GetDistance(eAIBase ai)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "GetDistance").Add(ai);
+        #endif
+
         return 0;
     }
 
@@ -104,7 +140,9 @@ class eAITargetInformation
 	 */
     void Process(int group_id)
     {
-        //auto trace = CF_Trace_1(this, "Process").Add(group_id);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "Process").Add(group_id);
+        #endif
 
         eAITarget target;
         if (!m_Groups.Find(group_id, target))
@@ -127,7 +165,9 @@ class eAITargetInformation
      */
     void Update(eAIGroup group, int max_time = -2147483647 /*-int.MIN*/)
     {
-        //auto trace = CF_Trace_2(this, "Update").Add(group).Add(max_time);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "Update").Add(group).Add(max_time);
+        #endif
 
         eAITarget target;
         if (!m_Groups.Find(group.GetID(), target)) return;
@@ -143,7 +183,9 @@ class eAITargetInformation
 	 */
     eAITarget Insert(notnull eAIGroup group, int max_time = -2147483647 /*-int.MIN*/)
     {
-        //auto trace = CF_Trace_2(this, "Insert").Add(group).Add(max_time);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "Insert").Add(group).Add(max_time);
+        #endif
 
         eAITarget target;
         target = new eAITarget(group, GetGame().GetTime(), max_time, this);
@@ -162,7 +204,9 @@ class eAITargetInformation
 	 */
     eAITarget Insert(eAIBase ai, int max_time = -2147483647 /*-int.MIN*/)
     {
-        //auto trace = CF_Trace_2(this, "Insert").Add(ai).Add(max_time);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "Insert").Add(ai).Add(max_time);
+        #endif
 
         eAITarget target;
         target = Insert(ai.GetGroup(), max_time);
@@ -180,7 +224,9 @@ class eAITargetInformation
 	 */
     eAITarget AddAI(eAIBase ai, int max_time = -2147483647 /*-int.MIN*/)
     {
-        //auto trace = CF_Trace_2(this, "AddAI").Add(ai).Add(max_time);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "AddAI").Add(ai).Add(max_time);
+        #endif
 
         eAITarget target;
         int group_id = ai.GetGroup().GetID();
@@ -200,7 +246,9 @@ class eAITargetInformation
      */
     bool RemoveAI(eAIBase ai)
     {
-        //auto trace = CF_Trace_1(this, "RemoveAI").Add(ai);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "RemoveAI").Add(ai);
+        #endif
 
         eAITarget target;
         int group_id = ai.GetGroup().GetID();
@@ -227,7 +275,9 @@ class eAITargetInformation
      */
     void Remove(int group_id)
     {
-        //auto trace = CF_Trace_1(this, "Remove").Add(group_id);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "Remove").Add(group_id);
+        #endif
 
         eAITarget target;
         if (!m_Groups.Find(group_id, target)) return;
@@ -251,7 +301,10 @@ class eAITargetInformation
      */
     void Remove(eAIGroup group)
     {
-        //auto trace = CF_Trace_1(this, "Remove").Add(group);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "Remove").Add(group);
+        #endif
+
         int group_id = group.GetID();
         
         Remove(group_id);
@@ -259,7 +312,10 @@ class eAITargetInformation
 
     void RemoveFromAll()
     {
-        //auto trace = CF_Trace_0(this, "RemoveFromAll");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "RemoveFromAll");
+        #endif
+
         foreach (int id, eAITarget target : m_Groups) Remove(id);
     }
 
@@ -270,7 +326,10 @@ class eAITargetInformation
      */
     bool IsTargetted()
     {
-        //auto trace = CF_Trace_0(this, "IsTargetted");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "IsTargetted");
+        #endif
+
         return m_Groups.Count() > 0;
     }
 
@@ -282,7 +341,10 @@ class eAITargetInformation
      */
     bool IsTargetted(int group_id)
     {
-        //auto trace = CF_Trace_1(this, "IsTargetted").Add(group_id);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "IsTargetted").Add(group_id);
+        #endif
+
         return m_Groups.Contains(group_id);
     }
 
@@ -294,7 +356,10 @@ class eAITargetInformation
      */
     bool IsTargetted(notnull eAIGroup group)
     {
-        //auto trace = CF_Trace_1(this, "IsTargetted").Add(group);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "IsTargetted").Add(group);
+        #endif
+
         return m_Groups.Contains(group.GetID());
     }
 
@@ -306,7 +371,10 @@ class eAITargetInformation
      */
     bool IsTargetted(int group_id, out int num_ai)
     {
-        //auto trace = CF_Trace_1(this, "IsTargetted").Add(group_id);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "IsTargetted").Add(group_id);
+        #endif
+
         eAITarget target;
         if (!m_Groups.Find(group_id, target)) return false;
 
@@ -323,7 +391,10 @@ class eAITargetInformation
      */
     bool IsTargetted(notnull eAIGroup group, out int num_ai)
     {
-        //auto trace = CF_Trace_1(this, "IsTargetted").Add(group);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "IsTargetted").Add(group);
+        #endif
+
         eAITarget target;
         if (!m_Groups.Find(group.GetID(), target)) return false;
 
@@ -340,7 +411,10 @@ class eAITargetInformation
      */
     bool IsTargettedBy(eAIBase ai)
     {
-        //auto trace = CF_Trace_1(this, "IsTargettedBy").Add(ai);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "IsTargettedBy").Add(ai);
+        #endif
+
         eAITarget target;
         if (!m_Groups.Find(ai.GetGroup().GetID(), target)) return false;
 

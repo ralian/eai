@@ -22,51 +22,91 @@ class eAISettings : JsonApiStruct
 
 	void SetLogLevel(CF_LogLevel logLevel)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "SetLogLevel").Add(logLevel);
+        #endif
+		
 		m_LogLevel = logLevel;
 	}
 
 	static CF_LogLevel GetLogLevel()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0("eAISettings", "GetLogLevel");
+        #endif
+		
 		return m_Instance.m_LogLevel;
 	}
 
 	void SetMaximumDynamicPatrols(int num)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "SetMaximumDynamicPatrols").Add(num);
+        #endif
+		
 		m_MaxDynamicPatrols = num;
 	}
 
 	static int GetMaximumDynamicPatrols()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0("eAISettings", "GetMaximumDynamicPatrols");
+        #endif
+		
 		return m_Instance.m_MaxDynamicPatrols;
 	}
 
 	void SetAccuracy(float accuracy)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "SetAccuracy").Add(accuracy);
+        #endif
+		
 		m_Accuracy = accuracy;
 	}
 
 	static float GetAccuracy()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0("eAISettings", "GetAccuracy");
+        #endif
+		
 		return m_Instance.m_Accuracy;
 	}
 
 	void AddLoadoutDirectory(string path)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "AddLoadoutDirectory").Add(path);
+        #endif
+		
 		m_LoadoutDirectories.Insert(path);
 	}
 	
 	void ClearLoadoutDirectories()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "ClearLoadoutDirectories");
+        #endif
+		
 		m_LoadoutDirectories.Clear();
 	}
 
 	static array<string> GetLoadoutDirectories()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0("eAISettings", "GetLoadoutDirectories");
+        #endif
+		
 		return m_Instance.m_LoadoutDirectories;
 	}
 
 	void AddAdmin(string admin)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "AddAdmin").Add(admin);
+        #endif
+
 		m_Admins.Insert(admin);
 
 		array<PlayerIdentity> identities();
@@ -92,8 +132,19 @@ class eAISettings : JsonApiStruct
 		return m_Instance.m_Admins;
 	}
 
+	override void OnObject(string name)
+	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "OnObject").Add(name);
+        #endif
+	}
+
 	override void OnInteger(string name, int value)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "OnInteger").Add(name).Add(value);
+        #endif
+		
 		if (name == "eAILogLevel")
 		{
 			m_LogLevelSavedAsString = false;
@@ -110,6 +161,10 @@ class eAISettings : JsonApiStruct
 
 	override void OnString(string name, string value)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "OnString").Add(name).Add(value);
+        #endif
+		
 		if (name == "eAILogLevel")
 		{
 			m_LogLevelSavedAsString = true;
@@ -132,6 +187,10 @@ class eAISettings : JsonApiStruct
 
 	override void OnFloat(string name, float value)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "OnFloat").Add(name).Add(value);
+        #endif
+		
 		if (name == "Accuracy")
 		{
 			SetAccuracy(value);
@@ -141,6 +200,10 @@ class eAISettings : JsonApiStruct
 
 	override void OnStartArray(string name)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "OnStartArray").Add(name);
+        #endif
+		
 		m_LoadingArray = name;
 		
 		if (m_LoadingArray == "LoadoutDirectories")
@@ -158,11 +221,19 @@ class eAISettings : JsonApiStruct
 
 	override void OnEndArray(int itemCount)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "OnEndArray").Add(itemCount);
+        #endif
+		
 		m_LoadingArray = "";
 	}
 
 	override void OnItemString(int index, string value)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "OnItemString").Add(index).Add(value);
+        #endif
+		
 		if (m_LoadingArray == "LoadoutDirectories")
 		{
 			AddLoadoutDirectory(value);
@@ -178,6 +249,10 @@ class eAISettings : JsonApiStruct
 
 	override void OnPack()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "OnPack");
+        #endif
+		
 		if (m_LogLevelSavedAsString)
 		{
 			StoreString("eAILogLevel", typename.EnumToString(CF_LogLevel, m_LogLevel));
@@ -214,17 +289,28 @@ class eAISettings : JsonApiStruct
 
 	override void OnSuccess(int errorCode)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "OnSuccess").Add(errorCode);
+        #endif
+		
 		ON_UPDATE.Invoke();
 	}
 
 	override void OnError(int errorCode)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "OnError").Add(errorCode);
+		
 		Print(errorCode);
 		ON_UPDATE.Invoke();
 	}
 
 	static void Init()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0("eAISettings", "Init");
+        #endif
+		
 		if (!GetJsonApi())
 		{
 			CreateJsonApi();
@@ -242,6 +328,10 @@ class eAISettings : JsonApiStruct
 
 	static eAISettings Get()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0("eAISettings", "Get");
+        #endif
+		
 		return m_Instance;
 	}
 
@@ -249,6 +339,10 @@ class eAISettings : JsonApiStruct
 
 	void Load()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "Load");
+        #endif
+		
 		FileHandle file_handle = OpenFile(PATH, FileMode.READ);
 		string content;
 		string line_content;
@@ -264,6 +358,10 @@ class eAISettings : JsonApiStruct
 
 	void Save()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "Save");
+        #endif
+		
 		InstantPack();
 		SaveToFile(PATH);
 	}

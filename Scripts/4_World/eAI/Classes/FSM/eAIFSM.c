@@ -16,6 +16,10 @@ class eAIFSM
 
     void eAIFSM(eAIBase unit, eAIState parentState)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "eAIFSM").Add(unit).Add(parentState);
+		#endif
+
         m_Unit = unit;
         m_ParentState = parentState;
 
@@ -25,42 +29,74 @@ class eAIFSM
 
     string GetName()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "GetName");
+		#endif
+
         return m_Name;
     }
 
     eAIBase GetUnit()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "GetUnit");
+		#endif
+
         return m_Unit;
     }
 
     eAIState GetParent()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "GetParent");
+		#endif
+
         return m_ParentState;
     }
 
     void AddState(eAIState state)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "AddState").Add(state);
+		#endif
+
         m_States.Insert(state);
     }
 
     void AddTransition(eAITransition transition)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "AddTransition").Add(transition);
+		#endif
+
         m_Transitions.Insert(transition);
     }
 
     void SortTransitions()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "SortTransitions");
+		#endif
+
         //TODO: if the source transition is null, push to the back of the array
         //TODO: if the destination transition is null, remove from the array
     }
 	
 	eAIState GetState()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "GetState");
+		#endif
+
         return m_CurrentState;
     }
 
     eAIState GetState(string type)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "GetState").Add(type);
+		#endif
+
         for (int i = 0; i < m_States.Count(); i++) if (m_States[i].ClassName() == type) return m_States[i];
 
         return null;
@@ -68,6 +104,10 @@ class eAIFSM
 
     eAIState GetState(typename type)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "GetState").Add(type.ToString());
+		#endif
+
         for (int i = 0; i < m_States.Count(); i++) if (m_States[i].Type() == type) return m_States[i];
 
         return null;
@@ -75,7 +115,9 @@ class eAIFSM
 	
 	bool StartDefault()
 	{
-        //auto trace = CF_Trace_0(this, "StartDefault");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "StartDefault");
+		#endif
 
         if (m_DefaultState == "") return Start();
 
@@ -104,7 +146,9 @@ class eAIFSM
 
     bool Start(string e = "")
     {
-        //auto trace = CF_Trace_1(this, "Start").Add(e);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "Start").Add(e);
+		#endif
 
         Param2<eAIState, bool> new_state = FindSuitableTransition(m_CurrentState, "");
 
@@ -140,7 +184,9 @@ class eAIFSM
 
     bool Abort(string e = "")
     {
-        //auto trace = CF_Trace_1(this, "Abort").Add(e);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "Abort").Add(e);
+		#endif
 
         if (m_Running && m_CurrentState)
         {
@@ -158,7 +204,9 @@ class eAIFSM
      */
     int Update(float pDt, int pSimulationPrecision)
     {
-        //auto trace = CF_Trace_2(this, "Update").Add(pDt).Add(pSimulationPrecision);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "Update").Add(pDt).Add(pSimulationPrecision);
+		#endif
 
         //CF_Log.Debug("m_CurrentState: %1", "" + m_CurrentState);
 
@@ -197,7 +245,9 @@ class eAIFSM
 	
 	Param2<eAIState, bool> FindSuitableTransition(eAIState s, string e = "")
 	{
-        //auto trace = CF_Trace_2(this, "FindSuitableTransition").Add(s).Add(e);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "FindSuitableTransition").Add(s).Add(e);
+		#endif
 
         // returns tuple as a valid destination can still be null
 

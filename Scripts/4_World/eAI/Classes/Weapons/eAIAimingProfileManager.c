@@ -6,7 +6,9 @@ class eAIAimingProfileManager
 
 	void eAIAimingProfileManager()
 	{
-        //auto trace = CF_Trace_0(this, "eAIAimingProfileManager");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "eAIAimingProfileManager");
+        #endif
 
 		GetRPCManager().AddRPC("eAIAimingProfileManager", "OnStart", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAIAimingProfileManager", "OnEnd", this, SingeplayerExecutionType.Client);
@@ -16,7 +18,9 @@ class eAIAimingProfileManager
 
 	void AddAI(eAIBase ai)
 	{
-        //auto trace = CF_Trace_0(this, "AddAI");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "AddAI").Add(ai);
+        #endif
 
 		if (GetGame().IsServer()) return;
 
@@ -30,7 +34,9 @@ class eAIAimingProfileManager
 
 	void RemoveAI(eAIBase ai)
 	{
-        //auto trace = CF_Trace_0(this, "RemoveAI");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "RemoveAI").Add(ai);
+        #endif
 		
 		if (GetGame().IsServer()) return;
 
@@ -44,7 +50,9 @@ class eAIAimingProfileManager
 
 	void Update(float pDt)
 	{
-        //auto trace = CF_Trace_0(this, "Update");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "Update").Add(pDt);
+        #endif
 
 		m_Time += pDt;
 		//if (m_Time < 0.5) return;
@@ -68,7 +76,9 @@ class eAIAimingProfileManager
 
 	void OnStart(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
-        //auto trace = CF_Trace_0(this, "OnStart");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "OnStart");
+        #endif
 
 		eAIBase ai;
 		if (!Class.CastTo(ai, target)) return;
@@ -80,7 +90,9 @@ class eAIAimingProfileManager
 
 	void OnEnd(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
-        //auto trace = CF_Trace_0(this, "OnEnd");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "OnEnd");
+        #endif
 
 		eAIBase ai;
 		if (!Class.CastTo(ai, target)) return;
@@ -92,7 +104,9 @@ class eAIAimingProfileManager
 
 	void OnSync(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
-        //auto trace = CF_Trace_0(this, "OnSync");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "OnSync");
+        #endif
 
 		eAIBase ai;
 		if (!Class.CastTo(ai, target)) return;

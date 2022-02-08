@@ -4,6 +4,10 @@ modded class MissionGameplay
 
 	void MissionGameplay()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "MissionGameplay");
+		#endif
+
 		m_eAIRadialKey = GetUApi().GetInputByName("eAICommandMenu");
 
 		GetDayZGame().eAICreateManager();
@@ -13,6 +17,10 @@ modded class MissionGameplay
 
 	override void OnMissionStart()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "OnMissionStart");
+		#endif
+
 		super.OnMissionStart();
 
 		if (IsMissionOffline()) GetDayZGame().eAIManagerGet().SetAdmin(true);
@@ -20,6 +28,10 @@ modded class MissionGameplay
 
 	override void OnMissionFinish()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "OnMissionFinish");
+		#endif
+
 		super.OnMissionFinish();
 
 		GetDayZGame().eAIManagerGet().SetAdmin(false);
@@ -27,6 +39,10 @@ modded class MissionGameplay
 
 	override void OnUpdate(float timeslice)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "OnUpdate").Add(timeslice);
+		#endif
+
 		super.OnUpdate(timeslice);
 
     	//TODO: move to 5_Mission/eAIManager

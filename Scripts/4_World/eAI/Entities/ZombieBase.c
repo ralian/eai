@@ -4,18 +4,28 @@ modded class ZombieBase
 
     void ZombieBase()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "ZombieBase");
+		#endif
+
 		Class.CastTo(m_TargetInformation, CreateTargetInformation());
     }
 
     protected eAITargetInformation CreateTargetInformation()
     {
-		//auto trace = CF_Trace_0(this, "CreateTargetInformation");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "CreateTargetInformation");
+		#endif
+
         return new eAIZombieTargetInformation(this);
     }
 
     eAIZombieTargetInformation GetTargetInformation()
     {
-		//auto trace = CF_Trace_0(this, "GetTargetInformation");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "GetTargetInformation");
+		#endif
+
         return m_TargetInformation;
     }
 

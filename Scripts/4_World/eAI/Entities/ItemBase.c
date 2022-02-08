@@ -4,18 +4,28 @@ modded class ItemBase
 
     void ItemBase()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "ItemBase");
+		#endif
+
         m_TargetInformation = CreateTargetInformation();
     }
 
     protected eAITargetInformation CreateTargetInformation()
     {
-		//auto trace = CF_Trace_0(this, "CreateTargetInformation");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "CreateTargetInformation");
+		#endif
+
         return new eAIEntityTargetInformation(this);
     }
 
     eAITargetInformation GetTargetInformation()
     {
-		//auto trace = CF_Trace_0(this, "GetTargetInformation");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "GetTargetInformation");
+		#endif
+
         return m_TargetInformation;
     }
 

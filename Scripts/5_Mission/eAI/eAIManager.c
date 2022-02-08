@@ -22,6 +22,10 @@ class eAIManager extends eAIManagerImplement
 	
     void eAIManager()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "eAIManager");
+		#endif
+
 		m_Instance_5 = this;
 
 		m_AimingManager = new eAIAimingProfileManager();
@@ -37,6 +41,10 @@ class eAIManager extends eAIManagerImplement
 
 	static eAIManager Get5()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0("eAIManager", "Get5");
+		#endif
+		
 		return m_Instance_5;
 	}
 	
@@ -52,7 +60,9 @@ class eAIManager extends eAIManagerImplement
 	//! @param formOffset Where should this AI follow relative to the formation?
 	eAIBase SpawnAI_Helper(PlayerBase owner, string loadout = "SoldierLoadout.json")
 	{
-		//auto trace = CF_Trace_0(this, "SpawnAI_Helper");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "SpawnAI_Helper");
+		#endif
 
 		eAIBase ai;
 		if (!Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), owner.GetPosition()))) return null;
@@ -66,7 +76,9 @@ class eAIManager extends eAIManagerImplement
 	
 	eAIBase SpawnAI_Sentry(vector pos, string loadout = "SoldierLoadout.json")
 	{
-		//auto trace = CF_Trace_0(this, "SpawnAI_Sentry");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "SpawnAI_Sentry");
+		#endif
 
 		eAIBase ai;
 		if (!Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), pos))) return null;
@@ -78,7 +90,9 @@ class eAIManager extends eAIManagerImplement
 	
 	eAIBase SpawnAI_Patrol(vector pos, string loadout = "SoldierLoadout.json")
 	{
-		//auto trace = CF_Trace_0(this, "SpawnAI_Patrol");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "SpawnAI_Patrol");
+		#endif
 
 		eAIBase ai;
 		if (!Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), pos))) return null;
@@ -91,7 +105,9 @@ class eAIManager extends eAIManagerImplement
 	// Server Side: This RPC spawns a helper AI next to the player, and tells them to join the player's formation.
 	void SpawnAI(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
-		//auto trace = CF_Trace_0(this, "SpawnAI");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "SpawnAI");
+		#endif
 
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
@@ -115,7 +131,9 @@ class eAIManager extends eAIManagerImplement
 	// Client Side: Link the given AI
 	void HCLinkObject(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
-		//auto trace = CF_Trace_0(this, "HCLinkObject");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "HCLinkObject");
+		#endif
 
 		Param1<PlayerBase> data;
         if ( !ctx.Read( data ) ) return;
@@ -128,7 +146,9 @@ class eAIManager extends eAIManagerImplement
 	// Client Side: Link the given AI
 	void HCUnlinkObject(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
-		//auto trace = CF_Trace_0(this, "HCUnlinkObject");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "HCUnlinkObject");
+		#endif
 
 		Param1<PlayerBase> data;
         if ( !ctx.Read( data ) ) return;
@@ -142,7 +162,9 @@ class eAIManager extends eAIManagerImplement
 	// BUG: this has sometimes crashed us before. Not sure why yet.
 	void SpawnZombie(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
-		//auto trace = CF_Trace_0(this, "SpawnZombie");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "SpawnZombie");
+		#endif
 
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
@@ -165,7 +187,9 @@ class eAIManager extends eAIManagerImplement
 	// Server Side: Delete AI.
 	void ClearAllAI(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
-		//auto trace = CF_Trace_0(this, "ClearAllAI");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "ClearAllAI");
+		#endif
 
 		Param1<PlayerBase> data;
         if (!ctx.Read(data)) return;
@@ -188,7 +212,9 @@ class eAIManager extends eAIManagerImplement
 	
 	void ReqFormRejoin(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
-		//auto trace = CF_Trace_0(this, "ReqFormRejoin");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "ReqFormRejoin");
+		#endif
 
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
@@ -204,7 +230,9 @@ class eAIManager extends eAIManagerImplement
 	
 	void ReqFormStop(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
-		//auto trace = CF_Trace_0(this, "ReqFormStop");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "ReqFormStop");
+		#endif
 
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
@@ -220,7 +248,9 @@ class eAIManager extends eAIManagerImplement
 	
 	void ReqFormationChange(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
-		//auto trace = CF_Trace_0(this, "ReqFormationChange");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "ReqFormationChange");
+		#endif
 
 		Param2<DayZPlayer, int> data;
         if (!ctx.Read(data)) return;

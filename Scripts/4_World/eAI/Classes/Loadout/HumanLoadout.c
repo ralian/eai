@@ -35,7 +35,10 @@ class HumanLoadout {
 	
 	static void Apply(PlayerBase h, string LoadoutFile) 
 	{
-        //auto trace = CF_Trace_0("HumanLoadout", "Apply");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0("HumanLoadout", "Apply");
+		#endif
+
 //		static string LoadoutSave = "SoldierLoadout.json";
 	
 		HumanLoadout Loadout = LoadData(LoadoutFile);
@@ -53,7 +56,9 @@ class HumanLoadout {
 	//	Adds a clothes to.
 	
 	static void AddClothes(PlayerBase h, HumanLoadout Loadout) {
-        //auto trace = CF_Trace_0("HumanLoadout", "HumanLoadout::AddClothes");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0("HumanLoadout", "AddClothes");
+		#endif
 
 		EntityAI item;
 		int minhealth = Loadout.ClothesHealth[0];
@@ -96,7 +101,9 @@ class HumanLoadout {
 	//	       HumanLoadout.AddWeapon(pb_AI, "AKM", 10, 80);	//An AKM with 10%-80% health
 
 	static void AddWeapon(PlayerBase h, string weapon, int minhealth = 100, int maxhealth = 100) {
-        //auto trace = CF_Trace_0("HumanLoadout", "AddWeapon");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0("HumanLoadout", "AddWeapon");
+		#endif
 
 		EntityAI gun = h.GetHumanInventory().CreateInHands(weapon);
 		float HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
@@ -113,7 +120,9 @@ class HumanLoadout {
 	//	       HumanLoadout.AddMagazine(pb_AI, "AKM", 1, 4);	//1 to 4 random AKM magazines are added
 
 	static void AddMagazine(PlayerBase h, string weapon, int mincount = 1, int maxcount = 0) {
-        //auto trace = CF_Trace_0("HumanLoadout", "AddMagazine");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0("HumanLoadout", "AddMagazine");
+		#endif
 
         TStringArray magazines = {};
         GetGame().ConfigGetTextArray("CfgWeapons " + weapon + " magazines", magazines);		
@@ -148,7 +157,9 @@ class HumanLoadout {
 
 	static HumanLoadout LoadData(string fileName)
     {
-        //auto trace = CF_Trace_0("HumanLoadout", "LoadData");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0("HumanLoadout", "LoadData");
+		#endif
 
         HumanLoadout data = new HumanLoadout;
 
@@ -186,7 +197,9 @@ class HumanLoadout {
 	
     static void SaveData(string loadoutPath, HumanLoadout data)
     {
-        //auto trace = CF_Trace_1("HumanLoadout", "SaveData").Add(loadoutPath);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1("HumanLoadout", "SaveData").Add(loadoutPath);
+		#endif
 		
 		CF_Log.Info("HumanLoadout: Saving '" + loadoutPath + "'.");
         JsonFileLoader<HumanLoadout>.JsonSaveFile(loadoutPath, data);

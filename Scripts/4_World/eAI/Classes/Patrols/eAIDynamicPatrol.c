@@ -34,6 +34,10 @@ class eAIDynamicPatrol : eAIPatrol
 	 */
 	static eAIDynamicPatrol Create(vector pos, array<vector> waypoints, eAIWaypointBehavior behaviour, string loadout = "SoldierLoadout.json", int count = 1, int respawnTime = 600, eAIFaction faction = null, bool autoStart = true, float minR = 300, float maxR = 800)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0("eAIDynamicPatrol", "Create");
+		#endif
+
 		eAIDynamicPatrol patrol;
 		Class.CastTo(patrol, ((typename)eAIDynamicPatrol).Spawn());
 		patrol.m_Position = pos;
@@ -54,7 +58,10 @@ class eAIDynamicPatrol : eAIPatrol
 
 	private eAIBase SpawnAI(vector pos)
 	{
-        //auto trace = CF_Trace_0(this, "SpawnAI");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "SpawnAI");
+		#endif
+
 		eAIBase ai;
 		if (!Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), pos))) return null;
 
@@ -67,7 +74,10 @@ class eAIDynamicPatrol : eAIPatrol
 
 	private bool IsGroupDestroyed()
 	{
-        //auto trace = CF_Trace_0(this, "IsGroupDestroyed");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "IsGroupDestroyed");
+		#endif
+
 		for (int i = 0; i < m_Group.Count(); i++)
 		{
 			DayZPlayerImplement member = m_Group.GetMember(i);
@@ -82,7 +92,10 @@ class eAIDynamicPatrol : eAIPatrol
 
 	void Spawn()
 	{
-        //auto trace = CF_Trace_0(this, "Spawn");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "Spawn");
+		#endif
+
 		if (m_Group) return;
 
 		m_LastSpawn = 0;
@@ -107,7 +120,10 @@ class eAIDynamicPatrol : eAIPatrol
 
 	void Despawn()
 	{
-        //auto trace = CF_Trace_0(this, "Despawn");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "Despawn");
+		#endif
+
 		if (!m_Group) return;
 
 		m_Group.RemoveAllMembers();
@@ -120,7 +136,10 @@ class eAIDynamicPatrol : eAIPatrol
 
 	override void OnUpdate()
 	{
-        //auto trace = CF_Trace_0(this, "OnUpdate");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "OnUpdate");
+		#endif
+
 		super.OnUpdate();
 
 		vector patrolPos = m_Position;

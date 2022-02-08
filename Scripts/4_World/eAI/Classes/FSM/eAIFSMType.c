@@ -12,6 +12,10 @@ class eAIFSMType
 
     void eAIFSMType()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "eAIFSMType");
+		#endif
+        
         m_Variables = new array<string>();
         m_States = new array<ref eAIStateType>();
         m_Transitions = new array<ref eAITransitionType>();
@@ -19,26 +23,46 @@ class eAIFSMType
 
     static bool Contains(string name)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1("eAIFSMType", "Contains").Add(name);
+		#endif
+        
         return m_SpawnableTypes.Contains(name);
     }
     
     static void AddSpawnable(string name, eAIFSMType type)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2("eAIFSMType", "AddSpawnable").Add(name).Add(type);
+		#endif
+        
         m_SpawnableTypes.Insert(name, type);
     }
 
     static void Add(eAIFSMType type)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1("eAIFSMType", "Add").Add(type);
+		#endif
+        
         m_Types.Insert(type);
     }
 
     static eAIFSMType Get(string type)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1("eAIFSMType", "Get").Add(type);
+		#endif
+        
         return m_SpawnableTypes[type];
     }
 
     eAIFSM Spawn(eAIBase unit, eAIState parentState)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2(this, "Spawn").Add(unit).Add(parentState);
+		#endif
+        
         eAIFSM retValue = null;
         m_Module.CallFunctionParams(null, "Create_" + m_ClassName, retValue, new Param2<eAIBase, eAIState>(unit, parentState));
         return retValue;
@@ -46,12 +70,18 @@ class eAIFSMType
 
     static eAIFSM Spawn(string type, eAIBase unit, eAIState parentState)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_3("eAIFSMType", "Spawn").Add(type).Add(unit).Add(parentState);
+		#endif
+        
         return m_SpawnableTypes[type].Spawn(unit, parentState);
     }
     
     static eAIFSMType LoadXML(string path, string fileName)
     {
-        //auto trace = CF_Trace_2("eAIFSMType", "LoadXML").Add(path).Add(fileName);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2("eAIFSMType", "LoadXML").Add(path).Add(fileName);
+		#endif
 
         if (eAIFSMType.Contains(fileName)) return eAIFSMType.Get(fileName);
 
@@ -79,7 +109,9 @@ class eAIFSMType
 
     static eAIFSMType LoadXML(string path, string fileName, FileHandle file)
     {
-		//auto trace = CF_Trace_3("eAIFSMType", "LoadXML").Add(path).Add(fileName).Add("FileHandle");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_3("eAIFSMType", "LoadXML").Add(path).Add(fileName).Add("FileHandle");
+		#endif
 
         string actualFilePath = path + "/" + fileName + ".xml";
         CF_Log.Debug(actualFilePath);
@@ -161,7 +193,7 @@ class eAIFSMType
         FPrintln(file, "}");
 
         FPrintln(file, "void Setup() {");
-        FPrintln(file, "//auto trace = CF_Trace_0(this, \"Setup\");");
+        FPrintln(file, "auto trace = CF_Trace_0(this, \"Setup\");");
 
 	    foreach (auto stateType0 : new_type.m_States)
         {    

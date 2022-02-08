@@ -4,18 +4,28 @@ modded class AnimalBase
 
     void AnimalBase()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "AnimalBase");
+        #endif
+
         m_TargetInformation = CreateTargetInformation();
     }
 
     protected eAITargetInformation CreateTargetInformation()
     {
-		//auto trace = CF_Trace_0(this, "CreateTargetInformation");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "CreateTargetInformation");
+        #endif
+
         return new eAIEntityTargetInformation(this);
     }
 
     eAITargetInformation GetTargetInformation()
     {
-		//auto trace = CF_Trace_0(this, "UpdateTargets");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "UpdateTargets");
+        #endif
+
         return m_TargetInformation;
     }
 

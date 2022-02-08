@@ -7,27 +7,45 @@ class eAIStateType
 
     void eAIStateType()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "eAIStateType");
+		#endif
+        
         m_Variables = new array<string>();
     }
 
     static bool Contains(string name)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1("eAIStateType", "Contains").Add(name);
+		#endif
+        
         return m_Types.Contains(name);
     }
 
     static void Add(eAIStateType type)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1("eAIStateType", "Add").Add(type);
+		#endif
+        
         m_Types.Insert(type.m_ClassName, type);
     }
 
     static eAIStateType Get(string type)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1("eAIStateType", "Get").Add(type);
+		#endif
+        
         return m_Types[type];
     }
 
     static eAIStateType LoadXML(string fsmName, CF_XML_Tag xml_root_tag, FileHandle file)
     {
-		//auto trace = CF_Trace_2("eAIStateType", "LoadXML").Add(fsmName).Add(xml_root_tag);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_2("eAIStateType", "LoadXML").Add(fsmName).Add(xml_root_tag);
+		#endif
 
         string name = xml_root_tag.GetAttribute("name").ValueAsString();
         string child_fsm;
@@ -90,20 +108,20 @@ class eAIStateType
         if (child_fsm != "")
         {
             FPrintln(file, "override void OnEntry(string Event, eAIState From) {");
-        	FPrintln(file, "//auto trace = CF_Trace_2(this, \"OnEntry\").Add(Event).Add(From);");
+        	FPrintln(file, "auto trace = CF_Trace_2(this, \"OnEntry\").Add(Event).Add(From);");
             FPrintln(file, "if (Event != \""+"\") m_SubFSM.Start(Event);");
             FPrintln(file, "else m_SubFSM.StartDefault();");
             if (event_entry.Count() > 0) FPrintln(file, event_entry[0].GetContent().GetContent());
             FPrintln(file, "}");
 
             FPrintln(file, "override void OnExit(string Event, bool Aborted, eAIState To) {");
-        	FPrintln(file, "//auto trace = CF_Trace_3(this, \"OnExit\").Add(Event).Add(Aborted).Add(To);");
+        	FPrintln(file, "auto trace = CF_Trace_3(this, \"OnExit\").Add(Event).Add(Aborted).Add(To);");
             FPrintln(file, "if (Aborted) m_SubFSM.Abort(Event);");
             if (event_exit.Count() > 0) FPrintln(file, event_exit[0].GetContent().GetContent());
             FPrintln(file, "}");
 
             FPrintln(file, "override int OnUpdate(float DeltaTime, int SimulationPrecision) {");
-        	FPrintln(file, "//auto trace = CF_Trace_3(this, \"OnUpdate\").Add(DeltaTime).Add(SimulationPrecision);");
+        	FPrintln(file, "auto trace = CF_Trace_3(this, \"OnUpdate\").Add(DeltaTime).Add(SimulationPrecision);");
             #ifdef EAI_DEBUG_FSM
             FPrintln(file, "if (m_SubFSM.Debug_Update(m_Debug, m_Depth + 1, DeltaTime, SimulationPrecision) == EXIT) return EXIT;");
             #else
@@ -118,7 +136,7 @@ class eAIStateType
             if (event_entry.Count() > 0)
             {
                 FPrintln(file, "override void OnEntry(string Event, eAIState From) {");
-        		FPrintln(file, "//auto trace = CF_Trace_2(this, \"OnEntry\").Add(Event).Add(From);");
+        		FPrintln(file, "auto trace = CF_Trace_2(this, \"OnEntry\").Add(Event).Add(From);");
                 FPrintln(file, event_entry[0].GetContent().GetContent());
                 FPrintln(file, "}");
             }
@@ -126,7 +144,7 @@ class eAIStateType
             if (event_exit.Count() > 0)
             {
                 FPrintln(file, "override void OnExit(string Event, bool Aborted, eAIState To) {");
-        		FPrintln(file, "//auto trace = CF_Trace_2(this, \"OnExit\").Add(Event).Add(Aborted).Add(To);");
+        		FPrintln(file, "auto trace = CF_Trace_2(this, \"OnExit\").Add(Event).Add(Aborted).Add(To);");
                 FPrintln(file, event_exit[0].GetContent().GetContent());
                 FPrintln(file, "}");
             }
@@ -134,7 +152,7 @@ class eAIStateType
             if (event_update.Count() > 0)
             {
                 FPrintln(file, "override int OnUpdate(float DeltaTime, int SimulationPrecision) {");
-        		FPrintln(file, "//auto trace = CF_Trace_2(this, \"OnUpdate\").Add(DeltaTime).Add(SimulationPrecision);");
+        		FPrintln(file, "auto trace = CF_Trace_2(this, \"OnUpdate\").Add(DeltaTime).Add(SimulationPrecision);");
                 FPrintln(file, event_update[0].GetContent().GetContent());
                 FPrintln(file, "}");
             }

@@ -6,26 +6,44 @@ class eAITransitionType
 
     void eAITransitionType()
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "eAITransitionType");
+		#endif
+        
     }
 
     static bool Contains(string name)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1("eAITransitionType", "Contains").Add(name);
+		#endif
+        
         return m_Types.Contains(name);
     }
 
     static void Add(eAITransitionType type)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1("eAITransitionType", "Add").Add(type);
+		#endif
+        
         m_Types.Insert(type.m_ClassName, type);
     }
 
     static eAITransitionType Get(string type)
     {
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1("eAITransitionType", "Get").Add(type);
+		#endif
+        
         return m_Types[type];
     }
 
     static eAITransitionType LoadXML(string fsmName, CF_XML_Tag xml_root_tag, FileHandle file)
     {
-		//auto trace = CF_Trace_1(null, "eAITransitionType::LoadXML").Add(fsmName);
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1("eAITransitionType", "LoadXML").Add(fsmName);
+		#endif
 
         string from_state_name;
         auto from_state = xml_root_tag.GetTag("from_state");
@@ -70,7 +88,7 @@ class eAITransitionType
         if (guard.Count() > 0)
         {
             FPrintln(file, "override int Guard() {");
-        	FPrintln(file, "//auto trace = CF_Trace_0(this, \"Guard\");");
+        	FPrintln(file, "auto trace = CF_Trace_0(this, \"Guard\");");
             FPrintln(file, guard[0].GetContent().GetContent());
             FPrintln(file, "}");
         }

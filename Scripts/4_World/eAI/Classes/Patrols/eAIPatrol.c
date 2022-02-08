@@ -13,6 +13,10 @@ class eAIPatrol : Managed
 	 */
 	static void DeletePatrol(eAIPatrol patrol)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1("eAIPatrol", "DeletePatrol").Add(patrol);
+		#endif
+
 		int index = m_AllPatrols.Find(patrol);
 		m_AllPatrols.Remove(index);
 	}
@@ -22,7 +26,10 @@ class eAIPatrol : Managed
 	 */
 	private void eAIPatrol()
 	{
-        //auto trace = CF_Trace_0(this, "eAIPatrol");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "eAIPatrol");
+		#endif
+
 		m_AllPatrols.Insert(this);
 	}
 
@@ -31,7 +38,10 @@ class eAIPatrol : Managed
 	 */
 	/*private*/ void ~eAIPatrol()
 	{
-        //auto trace = CF_Trace_0(this, "~eAIPatrol");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "~eAIPatrol");
+		#endif
+
 		int idx = m_AllPatrols.Find(this);
 		if (idx != -1) m_AllPatrols.RemoveOrdered(idx);
 
@@ -43,7 +53,10 @@ class eAIPatrol : Managed
 	 */
 	void Delete()
 	{
-        //auto trace = CF_Trace_0(this, "Delete");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "Delete");
+		#endif
+
 		m_IsBeingDestroyed = true;
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(DeletePatrol, this);
 	}
@@ -53,7 +66,10 @@ class eAIPatrol : Managed
 	 */
 	bool IsBeingDestroyed()
 	{
-        //auto trace = CF_Trace_0(this, "IsBeingDestroyed");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "IsBeingDestroyed");
+		#endif
+
 		return m_IsBeingDestroyed;
 	}
 
@@ -62,7 +78,10 @@ class eAIPatrol : Managed
 	 */
 	void Start()
 	{
-        //auto trace = CF_Trace_0(this, "Start");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "Start");
+		#endif
+
 		//DelayedStart();
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.DelayedStart, Math.RandomInt(1, 1000), false);
 
@@ -71,7 +90,10 @@ class eAIPatrol : Managed
 
 	private void DelayedStart()
 	{
-        //auto trace = CF_Trace_0(this, "DelayedStart");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "DelayedStart");
+		#endif
+
 		if (!m_Timer) m_Timer = new Timer(CALL_CATEGORY_GAMEPLAY);
 		m_Timer.Run(UPDATE_RATE_IN_SECONDS, this, "OnUpdate", null, true);
 	}
@@ -81,7 +103,10 @@ class eAIPatrol : Managed
 	 */
 	void Stop()
 	{
-        //auto trace = CF_Trace_0(this, "Stop");
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "Stop");
+		#endif
+
 		if (m_Timer && m_Timer.IsRunning()) m_Timer.Stop();
 	}
 
