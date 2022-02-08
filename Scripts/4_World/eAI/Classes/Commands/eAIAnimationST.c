@@ -1,45 +1,45 @@
 class eAIAnimationST
 {
-	private int m_CMD_Fall;
-	private int m_CMD_Jump;
-	private int m_CMD_Land;
+	int m_CMD_Fall;
+	int m_CMD_Jump;
+	int m_CMD_Land;
 
-	private int m_CMD_Turn;
-	private int m_CMD_StopTurn;
+	int m_CMD_Turn;
+	int m_CMD_StopTurn;
 
-	private int m_CMD_Vehicle_GetIn;
-	private int m_CMD_Vehicle_SwitchSeat;
-	private int m_CMD_Vehicle_GetOut;
-	private int m_CMD_Vehicle_ClimbOut;
-	private int m_CMD_Vehicle_CrawlOut;
-	private int m_CMD_Vehicle_JumpOut;
+	int m_CMD_Vehicle_GetIn;
+	int m_CMD_Vehicle_SwitchSeat;
+	int m_CMD_Vehicle_GetOut;
+	int m_CMD_Vehicle_ClimbOut;
+	int m_CMD_Vehicle_CrawlOut;
+	int m_CMD_Vehicle_JumpOut;
 
-	private int m_VAR_MovementSpeed;
-	private int m_VAR_MovementDirection;
+	int m_VAR_MovementSpeed;
+	int m_VAR_MovementDirection;
 
-	private int m_VAR_TurnAmount;
+	int m_VAR_TurnAmount;
 
-	private int m_EVT_LandEarlyExit;
+	int m_EVT_LandEarlyExit;
 
-	private int m_VAR_VehicleType;
-	private int m_VAR_VehicleSteering;
-	private int m_VAR_VehicleThrottle;
-	private int m_VAR_VehicleClutch;
-	private int m_VAR_VehicleBrake;
-	private int m_VAR_VehicleAccelerationFB;
-	private int m_VAR_VehicleAccelerationLR;
+	int m_VAR_VehicleType;
+	int m_VAR_VehicleSteering;
+	int m_VAR_VehicleThrottle;
+	int m_VAR_VehicleClutch;
+	int m_VAR_VehicleBrake;
+	int m_VAR_VehicleAccelerationFB;
+	int m_VAR_VehicleAccelerationLR;
 
-	private int m_EVT_LeaveVehicle;
-	private int m_EVT_LandVehicle;
+	int m_EVT_LeaveVehicle;
+	int m_EVT_LandVehicle;
 
-	private int m_VAR_Look;
-	private int m_VAR_LookDirX;
-	private int m_VAR_LookDirY;
+	int m_VAR_Look;
+	int m_VAR_LookDirX;
+	int m_VAR_LookDirY;
 
-	private int m_VAR_AimX;
-	private int m_VAR_AimY;
+	int m_VAR_AimX;
+	int m_VAR_AimY;
 
-	private int m_VAR_Raised;
+	int m_VAR_Raised;
 
 	void eAIAnimationST( Human human )
 	{

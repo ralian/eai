@@ -104,7 +104,7 @@ class eAITargetInformation
 	 */
     void Process(int group_id)
     {
-        //eAITrace trace(this, "Process", group_id.ToString());
+        //auto trace = CF_Trace_1(this, "Process").Add(group_id);
 
         eAITarget target;
         if (!m_Groups.Find(group_id, target))
@@ -127,7 +127,7 @@ class eAITargetInformation
      */
     void Update(eAIGroup group, int max_time = -2147483647 /*-int.MIN*/)
     {
-        //eAITrace trace(this, "Update", group.GetID().ToString(), max_time.ToString());
+        //auto trace = CF_Trace_2(this, "Update").Add(group).Add(max_time);
 
         eAITarget target;
         if (!m_Groups.Find(group.GetID(), target)) return;
@@ -143,7 +143,7 @@ class eAITargetInformation
 	 */
     eAITarget Insert(notnull eAIGroup group, int max_time = -2147483647 /*-int.MIN*/)
     {
-        //eAITrace trace(this, "Insert", group.GetID().ToString(), max_time.ToString());
+        //auto trace = CF_Trace_2(this, "Insert").Add(group).Add(max_time);
 
         eAITarget target;
         target = new eAITarget(group, GetGame().GetTime(), max_time, this);
@@ -162,7 +162,7 @@ class eAITargetInformation
 	 */
     eAITarget Insert(eAIBase ai, int max_time = -2147483647 /*-int.MIN*/)
     {
-        //eAITrace trace(this, "Insert", Object.GetDebugName(ai), max_time.ToString());
+        //auto trace = CF_Trace_2(this, "Insert").Add(ai).Add(max_time);
 
         eAITarget target;
         target = Insert(ai.GetGroup(), max_time);
@@ -180,7 +180,7 @@ class eAITargetInformation
 	 */
     eAITarget AddAI(eAIBase ai, int max_time = -2147483647 /*-int.MIN*/)
     {
-        //eAITrace trace(this, "AddAI", Object.GetDebugName(ai), max_time.ToString());
+        //auto trace = CF_Trace_2(this, "AddAI").Add(ai).Add(max_time);
 
         eAITarget target;
         int group_id = ai.GetGroup().GetID();
@@ -200,7 +200,7 @@ class eAITargetInformation
      */
     bool RemoveAI(eAIBase ai)
     {
-        //eAITrace trace(this, "RemoveAI", Object.GetDebugName(ai));
+        //auto trace = CF_Trace_1(this, "RemoveAI").Add(ai);
 
         eAITarget target;
         int group_id = ai.GetGroup().GetID();
@@ -227,7 +227,7 @@ class eAITargetInformation
      */
     void Remove(int group_id)
     {
-        //eAITrace trace(this, "Remove", group_id.ToString());
+        //auto trace = CF_Trace_1(this, "Remove").Add(group_id);
 
         eAITarget target;
         if (!m_Groups.Find(group_id, target)) return;
@@ -251,7 +251,7 @@ class eAITargetInformation
      */
     void Remove(eAIGroup group)
     {
-        //eAITrace trace(this, "Remove", group.GetID().ToString());
+        //auto trace = CF_Trace_1(this, "Remove").Add(group);
         int group_id = group.GetID();
         
         Remove(group_id);
@@ -259,7 +259,7 @@ class eAITargetInformation
 
     void RemoveFromAll()
     {
-        //eAITrace trace(this, "RemoveFromAll");
+        //auto trace = CF_Trace_0(this, "RemoveFromAll");
         foreach (int id, eAITarget target : m_Groups) Remove(id);
     }
 
@@ -270,7 +270,7 @@ class eAITargetInformation
      */
     bool IsTargetted()
     {
-        //eAITrace trace(this, "IsTargetted");
+        //auto trace = CF_Trace_0(this, "IsTargetted");
         return m_Groups.Count() > 0;
     }
 
@@ -282,7 +282,7 @@ class eAITargetInformation
      */
     bool IsTargetted(int group_id)
     {
-        //eAITrace trace(this, "IsTargetted", group_id.ToString());
+        //auto trace = CF_Trace_1(this, "IsTargetted").Add(group_id);
         return m_Groups.Contains(group_id);
     }
 
@@ -294,7 +294,7 @@ class eAITargetInformation
      */
     bool IsTargetted(notnull eAIGroup group)
     {
-        //eAITrace trace(this, "IsTargetted", group.GetID().ToString());
+        //auto trace = CF_Trace_1(this, "IsTargetted").Add(group);
         return m_Groups.Contains(group.GetID());
     }
 
@@ -306,7 +306,7 @@ class eAITargetInformation
      */
     bool IsTargetted(int group_id, out int num_ai)
     {
-        //eAITrace trace(this, "IsTargetted", group_id.ToString());
+        //auto trace = CF_Trace_1(this, "IsTargetted").Add(group_id);
         eAITarget target;
         if (!m_Groups.Find(group_id, target)) return false;
 
@@ -323,7 +323,7 @@ class eAITargetInformation
      */
     bool IsTargetted(notnull eAIGroup group, out int num_ai)
     {
-        //eAITrace trace(this, "IsTargetted", group.GetID().ToString());
+        //auto trace = CF_Trace_1(this, "IsTargetted").Add(group);
         eAITarget target;
         if (!m_Groups.Find(group.GetID(), target)) return false;
 
@@ -340,7 +340,7 @@ class eAITargetInformation
      */
     bool IsTargettedBy(eAIBase ai)
     {
-        //eAITrace trace(this, "IsTargettedBy", Object.GetDebugName(ai));
+        //auto trace = CF_Trace_1(this, "IsTargettedBy").Add(ai);
         eAITarget target;
         if (!m_Groups.Find(ai.GetGroup().GetID(), target)) return false;
 

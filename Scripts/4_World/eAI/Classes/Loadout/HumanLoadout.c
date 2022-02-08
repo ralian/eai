@@ -35,7 +35,7 @@ class HumanLoadout {
 	
 	static void Apply(PlayerBase h, string LoadoutFile) 
 	{
-        //eAITrace trace(null, "HumanLoadout::Apply");
+        //auto trace = CF_Trace_0("HumanLoadout", "Apply");
 //		static string LoadoutSave = "SoldierLoadout.json";
 	
 		HumanLoadout Loadout = LoadData(LoadoutFile);
@@ -53,7 +53,7 @@ class HumanLoadout {
 	//	Adds a clothes to.
 	
 	static void AddClothes(PlayerBase h, HumanLoadout Loadout) {
-        //eAITrace trace(null, "HumanLoadout::AddClothes");
+        //auto trace = CF_Trace_0("HumanLoadout", "HumanLoadout::AddClothes");
 
 		EntityAI item;
 		int minhealth = Loadout.ClothesHealth[0];
@@ -63,7 +63,7 @@ class HumanLoadout {
 		item = h.GetInventory().CreateInInventory(Loadout.Pants.GetRandomElement());
 			HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
 			item.SetHealth(item.GetMaxHealth() * HealthModifier);
-//			eAILogger.Debug("HumanLoadout: Add pants: " + item.GetMaxHealth() + "/" + HealthModifier + "/" + item.GetMaxHealth() * HealthModifier + ")" );
+//			CF_Log.Debug("HumanLoadout: Add pants: " + item.GetMaxHealth() + "/" + HealthModifier + "/" + item.GetMaxHealth() * HealthModifier + ")" );
 		item = h.GetInventory().CreateInInventory(Loadout.Shirts.GetRandomElement());
 			HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
 			item.SetHealth(item.GetMaxHealth() * HealthModifier);
@@ -96,12 +96,12 @@ class HumanLoadout {
 	//	       HumanLoadout.AddWeapon(pb_AI, "AKM", 10, 80);	//An AKM with 10%-80% health
 
 	static void AddWeapon(PlayerBase h, string weapon, int minhealth = 100, int maxhealth = 100) {
-        //eAITrace trace(null, "HumanLoadout::AddWeapon");
+        //auto trace = CF_Trace_0("HumanLoadout", "AddWeapon");
 
 		EntityAI gun = h.GetHumanInventory().CreateInHands(weapon);
 		float HealthModifier = (Math.RandomInt(minhealth, maxhealth)) / 100;
 		gun.SetHealth(gun.GetMaxHealth() * HealthModifier);
-		eAILogger.Debug("HumanLoadout: Add weapon: " + weapon + " (" + HealthModifier + ")" );
+		CF_Log.Debug("HumanLoadout: Add weapon: " + weapon + " (" + HealthModifier + ")" );
 	}
 	
 	//----------------------------------------------------------------
@@ -113,7 +113,7 @@ class HumanLoadout {
 	//	       HumanLoadout.AddMagazine(pb_AI, "AKM", 1, 4);	//1 to 4 random AKM magazines are added
 
 	static void AddMagazine(PlayerBase h, string weapon, int mincount = 1, int maxcount = 0) {
-        //eAITrace trace(null, "HumanLoadout::AddMagazine");
+        //auto trace = CF_Trace_0("HumanLoadout", "AddMagazine");
 
         TStringArray magazines = {};
         GetGame().ConfigGetTextArray("CfgWeapons " + weapon + " magazines", magazines);		
@@ -132,7 +132,7 @@ class HumanLoadout {
 		{
 			//Maxcount probably was larger than mincount
 			count = 1;
-			eAILogger.Error("HumanLoadout: ERROR: Please check you Weapon___MagCount. Giving 1 mag.");
+			CF_Log.Error("HumanLoadout: ERROR: Please check you Weapon___MagCount. Giving 1 mag.");
 		}
 		
 		for( i = 0; i < count; i++)
@@ -140,7 +140,7 @@ class HumanLoadout {
 			h.GetHumanInventory().CreateInInventory(mag);
 		}
 
-		eAILogger.Debug("HumanLoadout: Add " + count + " of " + mag + " magazines for weapon " + weapon);
+		CF_Log.Debug("HumanLoadout: Add " + count + " of " + mag + " magazines for weapon " + weapon);
 	}
 	
 	//----------------------------------------------------------------
@@ -148,7 +148,7 @@ class HumanLoadout {
 
 	static HumanLoadout LoadData(string fileName)
     {
-        //eAITrace trace(null, "HumanLoadout::LoadData");
+        //auto trace = CF_Trace_0("HumanLoadout", "LoadData");
 
         HumanLoadout data = new HumanLoadout;
 
@@ -160,17 +160,17 @@ class HumanLoadout {
 			loadoutPath = loadoutDirectory + fileName;
 			if (FileExist(loadoutPath))
 			{
-				eAILogger.Info("HumanLoadout: Loading '" + loadoutPath + "'.");
+				CF_Log.Info("HumanLoadout: Loading '" + loadoutPath + "'.");
 				JsonFileLoader<HumanLoadout>.JsonLoadFile(loadoutPath, data);
 				return data;
 			}
 		}
 
-        eAILogger.Error("HumanLoadout: Couldn't find a loadout matching '" + fileName + "', loading script defaults.");
+        CF_Log.Error("HumanLoadout: Couldn't find a loadout matching '" + fileName + "', loading script defaults.");
 
 		if (loadoutDirectories.Count() == 0)
 		{
-            eAILogger.Error("HumanLoadout: Couldn't find a directory to save the loadout. Please set 'LoadoutDirectories' in 'eAI/eAISettings.json'");
+            CF_Log.Error("HumanLoadout: Couldn't find a directory to save the loadout. Please set 'LoadoutDirectories' in 'eAI/eAISettings.json'");
 			return data;
 		}
 
@@ -186,9 +186,9 @@ class HumanLoadout {
 	
     static void SaveData(string loadoutPath, HumanLoadout data)
     {
-        //eAITrace trace(null, "HumanLoadout::SaveData", loadoutPath);
+        //auto trace = CF_Trace_1("HumanLoadout", "SaveData").Add(loadoutPath);
 		
-		eAILogger.Info("HumanLoadout: Saving '" + loadoutPath + "'.");
+		CF_Log.Info("HumanLoadout: Saving '" + loadoutPath + "'.");
         JsonFileLoader<HumanLoadout>.JsonSaveFile(loadoutPath, data);
     }	
 	

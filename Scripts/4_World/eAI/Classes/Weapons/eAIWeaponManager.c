@@ -148,7 +148,7 @@ class eAIWeaponManager extends WeaponManager
 					{
 						m_player.GetInputController().ResetADS();
 						m_player.ExitSights();
-						//eAILogger.Debug("exitsights");
+						//CF_Log.Debug("exitsights");
 					}
 				
 					m_justStart = false;

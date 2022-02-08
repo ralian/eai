@@ -1,6 +1,6 @@
 string GetRandomAI()
 {
-	//eAITrace trace(null, "GetRandomAI");
+	//auto trace = CF_Trace_0(null, "GetRandomAI");
 
 	int FemaleChance = 50;
 	if (Math.RandomInt(0, 100) > FemaleChance)
@@ -15,7 +15,7 @@ string GetRandomAI()
 
 string GetRandomAIFemale()
 {
-	//eAITrace trace(null, "GetRandomAIFemale");
+	//auto trace = CF_Trace_0(null, "GetRandomAIFemale");
 
 	TStringArray FemaleList = { "SurvivorF_Eva", "SurvivorF_Frida", "SurvivorF_Gabi", "SurvivorF_Helga", 
 								"SurvivorF_Irena", "SurvivorF_Judy", "SurvivorF_Keiko", "SurvivorF_Linda", 
@@ -26,7 +26,7 @@ string GetRandomAIFemale()
 
 string GetRandomAIMale()
 {
-	//eAITrace trace(null, "GetRandomAIMale");
+	//auto trace = CF_Trace_0(null, "GetRandomAIMale");
 
 	TStringArray MaleList = { "SurvivorM_Boris", "SurvivorM_Cyril", "SurvivorM_Denis", "SurvivorM_Elias", 
 							  "SurvivorM_Francis", "SurvivorM_Guo", "SurvivorM_Hassan", "SurvivorM_Indar", 

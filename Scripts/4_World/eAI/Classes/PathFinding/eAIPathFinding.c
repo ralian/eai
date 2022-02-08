@@ -202,14 +202,14 @@ class eAIPathFinding
 
 	void StopOverride()
 	{
-		//eAITrace trace(this, "StopOverride");
+		//auto trace = CF_Trace_0(this, "StopOverride");
 		
 		m_Overriding = eAITargetOverriding.NONE;
 	}
 
 	void OverridePath()
 	{
-		//eAITrace trace(this, "OverridePath");
+		//auto trace = CF_Trace_0(this, "OverridePath");
 
 		m_Overriding = eAITargetOverriding.PATH;
 		m_Path.Clear();
@@ -217,7 +217,7 @@ class eAIPathFinding
 
 	void OverridePath(array<vector> pPath)
 	{
-		//eAITrace trace(this, "OverridePath", pPath.ToString());
+		//auto trace = CF_Trace_1(this, "OverridePath").Add(pPath);
 
 		m_Overriding = eAITargetOverriding.PATH;
 		pPath.Copy(m_Path);
@@ -225,7 +225,7 @@ class eAIPathFinding
 
 	void OverridePosition(vector pPosition)
 	{
-		//eAITrace trace(this, "OverridePosition", pPosition.ToString());
+		//auto trace = CF_Trace_1(this, "OverridePosition").Add(pPosition);
 		
 		m_Overriding = eAITargetOverriding.POSITION;
 		m_OverridePosition = pPosition;

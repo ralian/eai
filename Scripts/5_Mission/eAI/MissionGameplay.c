@@ -8,7 +8,7 @@ modded class MissionGameplay
 
 		GetDayZGame().eAICreateManager();
 
-		eAILogger.Info("eAI - Loaded Client Mission");
+		CF_Log.Info("eAI - Loaded Client Mission");
 	}
 
 	override void OnMissionStart()

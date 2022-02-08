@@ -16,7 +16,7 @@ modded class Weapon_Base
 {
 	bool Hitscan(out EntityAI entity, out vector hitPosition, out int contactComponent)
 	{
-		//eAITrace trace(this, "Hitscan");
+		//auto trace = CF_Trace_0(this, "Hitscan");
 
 		eAIBase ai;
 		if (!Class.CastTo(ai, GetHierarchyRootPlayer())) return false;
@@ -26,7 +26,7 @@ modded class Weapon_Base
 		
 		if (!ai.GetAimingProfile().Get(position, direction))
 		{
-			eAILogger.Error("Data invalid.");
+			CF_Log.Error("Data invalid.");
 
 			hitPosition = position;
 

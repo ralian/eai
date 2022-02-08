@@ -6,7 +6,7 @@ class eAIAimingProfileManager
 
 	void eAIAimingProfileManager()
 	{
-        //eAITrace trace(this, "eAIAimingProfileManager");
+        //auto trace = CF_Trace_0(this, "eAIAimingProfileManager");
 
 		GetRPCManager().AddRPC("eAIAimingProfileManager", "OnStart", this, SingeplayerExecutionType.Client);
 		GetRPCManager().AddRPC("eAIAimingProfileManager", "OnEnd", this, SingeplayerExecutionType.Client);
@@ -16,35 +16,35 @@ class eAIAimingProfileManager
 
 	void AddAI(eAIBase ai)
 	{
-        //eAITrace trace(this, "AddAI");
+        //auto trace = CF_Trace_0(this, "AddAI");
 
 		if (GetGame().IsServer()) return;
 
 		int idx = m_AIs.Find(ai);
 		if (idx == -1) m_AIs.Insert(ai);
 
-		//eAILogger.Debug("Started arbitrating for " + ai);
+		//CF_Log.Debug("Started arbitrating for " + ai);
 
 		ai.CreateAimingProfile();
 	}
 
 	void RemoveAI(eAIBase ai)
 	{
-        //eAITrace trace(this, "RemoveAI");
+        //auto trace = CF_Trace_0(this, "RemoveAI");
 		
 		if (GetGame().IsServer()) return;
 
 		int idx = m_AIs.Find(ai);
 		if (idx != -1) m_AIs.RemoveOrdered(idx);
 
-		//eAILogger.Debug("Stopped arbitrating for " + ai);
+		//CF_Log.Debug("Stopped arbitrating for " + ai);
 
 		ai.DestroyAimingProfile();
 	}
 
 	void Update(float pDt)
 	{
-        //eAITrace trace(this, "Update");
+        //auto trace = CF_Trace_0(this, "Update");
 
 		m_Time += pDt;
 		//if (m_Time < 0.5) return;
@@ -68,7 +68,7 @@ class eAIAimingProfileManager
 
 	void OnStart(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
-        //eAITrace trace(this, "OnStart");
+        //auto trace = CF_Trace_0(this, "OnStart");
 
 		eAIBase ai;
 		if (!Class.CastTo(ai, target)) return;
@@ -80,7 +80,7 @@ class eAIAimingProfileManager
 
 	void OnEnd(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
-        //eAITrace trace(this, "OnEnd");
+        //auto trace = CF_Trace_0(this, "OnEnd");
 
 		eAIBase ai;
 		if (!Class.CastTo(ai, target)) return;
@@ -92,7 +92,7 @@ class eAIAimingProfileManager
 
 	void OnSync(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
-        //eAITrace trace(this, "OnSync");
+        //auto trace = CF_Trace_0(this, "OnSync");
 
 		eAIBase ai;
 		if (!Class.CastTo(ai, target)) return;

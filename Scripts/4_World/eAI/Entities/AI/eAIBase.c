@@ -195,7 +195,7 @@ class eAIBase extends PlayerBase
 	int m_MinTimeTillNextFire;
 	void TryFireWeapon()
 	{
-		//eAITrace trace(this, "TryFireWeapon");
+		//auto trace = CF_Trace_0(this, "TryFireWeapon");
 
 		if (GetGame().GetTime() < m_MinTimeTillNextFire) return;
 		m_MinTimeTillNextFire = GetGame().GetTime() + 250.0;
@@ -263,7 +263,7 @@ class eAIBase extends PlayerBase
 
 	ItemBase GetWeaponToUse(bool hasAmmo = false)
 	{
-		//eAITrace trace(this, "GetWeaponToUse", hasAmmo.ToString());
+		//auto trace = CF_Trace_1(this, "GetWeaponToUse").Add(hasAmmo);
 
 		// very messy :)
 		for (int i = 0; i < m_Weapons.Count(); i++)
@@ -285,7 +285,7 @@ class eAIBase extends PlayerBase
 
 	ItemBase GetMeleeWeaponToUse()
 	{
-		//eAITrace trace(this, "GetMeleeWeaponToUse");
+		//auto trace = CF_Trace_0(this, "GetMeleeWeaponToUse");
 
 		// very messy :)
 		for (int i = 0; i < m_MeleeWeapons.Count(); i++)
@@ -366,7 +366,7 @@ class eAIBase extends PlayerBase
 
 	void UpdateTargets()
 	{
-		//eAITrace trace(this, "UpdateTargets");
+		//auto trace = CF_Trace_0(this, "UpdateTargets");
 		
 		//TODO: use particle system instead
 
@@ -409,14 +409,14 @@ class eAIBase extends PlayerBase
 	//TODO: Use CF_PriorityQueue<T>
 	void PrioritizeTargets()
 	{
-		//eAITrace trace(this, "PrioritizeTargets");
+		//auto trace = CF_Trace_0(this, "PrioritizeTargets");
 		
 		// sorting the targets so the highest the threat is indexed lowest
 
 		for (int i = m_eAI_Targets.Count() - 1; i >= 0; i--) 
 		{
 			if (m_eAI_Targets[i] == null || m_eAI_Targets[i].ShouldRemove(this)) m_eAI_Targets.Remove(i);
-			//eAILogger.Debug("m_eAI_Targets[" + i + "] entity = " + m_eAI_Targets[i].GetEntity() + " threat = " + m_eAI_Targets[i].GetThreat(this));
+			//CF_Log.Debug("m_eAI_Targets[" + i + "] entity = " + m_eAI_Targets[i].GetEntity() + " threat = " + m_eAI_Targets[i].GetThreat(this));
 		}
 		
 		for (i = 0; i < m_eAI_Targets.Count() - 1; i++) 
@@ -474,7 +474,7 @@ class eAIBase extends PlayerBase
 
 	void Notify_Transport(Transport vehicle, int seatIndex)
 	{
-		//eAITrace trace(this, "Notify_Transport", Object.GetDebugName(vehicle), seatIndex.ToString());
+		//auto trace = CF_Trace_2(this, "Notify_Transport").Add(vehicle).Add(seatIndex);
 		
 		m_eAI_Transport = vehicle;
 		m_eAI_Transport_SeatIndex = seatIndex;
@@ -482,14 +482,14 @@ class eAIBase extends PlayerBase
 
 	void Notify_Melee()
 	{
-		//eAITrace trace(this, "Notify_Melee");
+		//auto trace = CF_Trace_0(this, "Notify_Melee");
 
 		m_eAI_Melee = true;
 	}
 
 	void UseTargetting()
 	{
-		//eAITrace trace(this, "UseTargetting");
+		//auto trace = CF_Trace_0(this, "UseTargetting");
 		
 		m_PathFinding.StopOverride();
 	}
@@ -499,7 +499,7 @@ class eAIBase extends PlayerBase
 	 */
 	void OverridePath()
 	{
-		//eAITrace trace(this, "OverridePath");
+		//auto trace = CF_Trace_0(this, "OverridePath");
 
 		m_PathFinding.OverridePath();
 	}
@@ -511,7 +511,7 @@ class eAIBase extends PlayerBase
 	 */
 	void OverridePath(array<vector> pPath)
 	{
-		//eAITrace trace(this, "OverridePath", pPath.ToString());
+		//auto trace = CF_Trace_1(this, "OverridePath").Add(pPath);
 
 		m_PathFinding.OverridePath(pPath);
 	}
@@ -523,7 +523,7 @@ class eAIBase extends PlayerBase
 	 */
 	void OverridePosition(vector pPosition)
 	{
-		//eAITrace trace(this, "OverridePosition", pPosition.ToString());
+		//auto trace = CF_Trace_1(this, "OverridePosition").Add(pPosition);
 		
 		m_PathFinding.OverridePosition(pPosition);
 	}
@@ -536,7 +536,7 @@ class eAIBase extends PlayerBase
 	 */
 	void OverrideMovementSpeed(bool pActive, int pSpeed)
 	{
-		//eAITrace trace(this, "OverrideMovementSpeed", pActive.ToString(), pSpeed.ToString());
+		//auto trace = CF_Trace_2(this, "OverrideMovementSpeed").Add(pActive).Add(pSpeed);
 		
 		m_MovementSpeedActive = pActive;
 		m_MovementSpeed = pSpeed;
@@ -550,7 +550,7 @@ class eAIBase extends PlayerBase
 	 */
 	void OverrideMovementDirection(bool pActive, float pDirection)
 	{
-		//eAITrace trace(this, "OverrideMovementDirection", pActive.ToString(), pDirection.ToString());
+		//auto trace = CF_Trace_2(this, "OverrideMovementDirection").Add(pActive).Add(pDirection);
 		
 		m_MovementDirectionActive = pActive;
 		m_MovementDirection = pDirection;
@@ -568,14 +568,14 @@ class eAIBase extends PlayerBase
 
 	override void CommandHandler(float pDt, int pCurrentCommandID, bool pCurrentCommandFinished) 
 	{
+		//auto trace = CF_Trace_3(this, "OverrideMovementDirection").Add(pDt).Add(pCurrentCommandID).Add(pCurrentCommandFinished);
+
 		//CarScript car;
 		//if (Class.CastTo(car, GetParent()))
 		//{
 		//	car.Control(pDt);
 		//}
 
-		//eAITrace trace(this, "CommandHandler", pDt.ToString(), pCurrentCommandID.ToString(), pCurrentCommandFinished.ToString());
-		
 #ifndef SERVER
 		for (int i = m_DebugShapes.Count() - 1; i >= 0; i--)
 			m_DebugShapes[i].Destroy();
@@ -781,7 +781,7 @@ class eAIBase extends PlayerBase
 
 				// land
 				m_FallYDiff = m_FallYDiff - GetPosition()[1];
-				//eAILogger.Debug(m_FallYDiff);
+				//CF_Log.Debug(m_FallYDiff);
 				if (m_FallYDiff < 0.5)
 				{
 					landType = HumanCommandFall.LANDTYPE_NONE; 
@@ -942,7 +942,7 @@ class eAIBase extends PlayerBase
 	// We should integrate this into ReloadWeapon
 	void ReloadWeaponAI( EntityAI weapon, EntityAI magazine )
 	{
-		//eAILogger.Debug(this.ToString() + "(DayZPlayerInstanceType." + GetInstanceType().ToString() + ") is trying to reload " + magazine.ToString() + " into " + weapon.ToString());
+		//CF_Log.Debug(this.ToString() + "(DayZPlayerInstanceType." + GetInstanceType().ToString() + ") is trying to reload " + magazine.ToString() + " into " + weapon.ToString());
 		eAIActionManager mngr_ai;
 		CastTo(mngr_ai, GetActionManager());
 		
@@ -1009,7 +1009,7 @@ class eAIBase extends PlayerBase
 	
 	override void HandleWeapons(float pDt, Entity pInHands, HumanInputController pInputs, out bool pExitIronSights)
 	{
-		//eAITrace trace(this, "HandleWeapons", pDt.ToString(), Object.GetDebugName(pInHands));
+		//auto trace = CF_Trace_3(this, "HandleWeapons").Add(pDt).Add(pInHands).Add(pInputs);
 		
 		HumanCommandWeapons hcw = GetCommandModifier_Weapons();
 		GetDayZPlayerInventory().HandleWeaponEvents(pDt, pExitIronSights);
@@ -1074,6 +1074,7 @@ class eAIBase extends PlayerBase
 
 		if (IsRaised())
 		{
+			/*
 			if (m_AimChangeState)
 			{
 				pInputs.OverrideAimChangeX(true, deltaUD);
@@ -1084,6 +1085,10 @@ class eAIBase extends PlayerBase
 				pInputs.OverrideAimChangeX(true, deltaLR);
 				pInputs.OverrideAimChangeY(false, 0.0);
 			}
+			*/
+
+			AnimSetFloat(m_eAI_AnimationST.m_VAR_AimX, targetLR);
+			AnimSetFloat(m_eAI_AnimationST.m_VAR_AimY, targetUD);
 
 			m_AimChangeState = !m_AimChangeState;
 		}
@@ -1218,8 +1223,8 @@ class eAIBase extends PlayerBase
 				SetSynchDirty();
 			}
 			
-			//eAILogger.Debug(last_command.ToString());
-			//eAILogger.Debug(DayZPlayerConstants.COMMANDID_SWIM.ToString());
+			//CF_Log.Debug(last_command.ToString());
+			//CF_Log.Debug(DayZPlayerConstants.COMMANDID_SWIM.ToString());
 			
 			if( m_UnconsciousTime > PlayerConstants.UNCONSCIOUS_IN_WATER_TIME_LIMIT_TO_DEATH && last_command == DayZPlayerConstants.COMMANDID_SWIM )
 			{

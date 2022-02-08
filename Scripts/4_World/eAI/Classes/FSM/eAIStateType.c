@@ -27,7 +27,7 @@ class eAIStateType
 
     static eAIStateType LoadXML(string fsmName, CF_XML_Tag xml_root_tag, FileHandle file)
     {
-		//eAITrace trace(null, "eAIStateType::LoadXML", fsmName);
+		//auto trace = CF_Trace_2("eAIStateType", "LoadXML").Add(fsmName).Add(xml_root_tag);
 
         string name = xml_root_tag.GetAttribute("name").ValueAsString();
         string child_fsm;
@@ -90,20 +90,20 @@ class eAIStateType
         if (child_fsm != "")
         {
             FPrintln(file, "override void OnEntry(string Event, eAIState From) {");
-        	FPrintln(file, "//eAITrace trace(this, \"OnEntry\", Event, \"(\" + From + \")\");");
+        	FPrintln(file, "//auto trace = CF_Trace_2(this, \"OnEntry\").Add(Event).Add(From);");
             FPrintln(file, "if (Event != \""+"\") m_SubFSM.Start(Event);");
             FPrintln(file, "else m_SubFSM.StartDefault();");
             if (event_entry.Count() > 0) FPrintln(file, event_entry[0].GetContent().GetContent());
             FPrintln(file, "}");
 
             FPrintln(file, "override void OnExit(string Event, bool Aborted, eAIState To) {");
-        	FPrintln(file, "//eAITrace trace(this, \"OnExit\", Event, Aborted.ToString(), \"(\" + To + \")\");");
+        	FPrintln(file, "//auto trace = CF_Trace_3(this, \"OnExit\").Add(Event).Add(Aborted).Add(To);");
             FPrintln(file, "if (Aborted) m_SubFSM.Abort(Event);");
             if (event_exit.Count() > 0) FPrintln(file, event_exit[0].GetContent().GetContent());
             FPrintln(file, "}");
 
             FPrintln(file, "override int OnUpdate(float DeltaTime, int SimulationPrecision) {");
-        	FPrintln(file, "//eAITrace trace(this, \"OnUpdate\", DeltaTime.ToString(), SimulationPrecision.ToString());");
+        	FPrintln(file, "//auto trace = CF_Trace_3(this, \"OnUpdate\").Add(DeltaTime).Add(SimulationPrecision);");
             #ifdef EAI_DEBUG_FSM
             FPrintln(file, "if (m_SubFSM.Debug_Update(m_Debug, m_Depth + 1, DeltaTime, SimulationPrecision) == EXIT) return EXIT;");
             #else
@@ -118,7 +118,7 @@ class eAIStateType
             if (event_entry.Count() > 0)
             {
                 FPrintln(file, "override void OnEntry(string Event, eAIState From) {");
-        		FPrintln(file, "//eAITrace trace(this, \"OnEntry\", Event, \"(\" + From + \")\");");
+        		FPrintln(file, "//auto trace = CF_Trace_2(this, \"OnEntry\").Add(Event).Add(From);");
                 FPrintln(file, event_entry[0].GetContent().GetContent());
                 FPrintln(file, "}");
             }
@@ -126,7 +126,7 @@ class eAIStateType
             if (event_exit.Count() > 0)
             {
                 FPrintln(file, "override void OnExit(string Event, bool Aborted, eAIState To) {");
-        		FPrintln(file, "//eAITrace trace(this, \"OnExit\", Event, Aborted.ToString(), \"(\" + To + \")\");");
+        		FPrintln(file, "//auto trace = CF_Trace_2(this, \"OnExit\").Add(Event).Add(Aborted).Add(To);");
                 FPrintln(file, event_exit[0].GetContent().GetContent());
                 FPrintln(file, "}");
             }
@@ -134,7 +134,7 @@ class eAIStateType
             if (event_update.Count() > 0)
             {
                 FPrintln(file, "override int OnUpdate(float DeltaTime, int SimulationPrecision) {");
-        		FPrintln(file, "//eAITrace trace(this, \"OnUpdate\", DeltaTime.ToString(), SimulationPrecision.ToString());");
+        		FPrintln(file, "//auto trace = CF_Trace_2(this, \"OnUpdate\").Add(DeltaTime).Add(SimulationPrecision);");
                 FPrintln(file, event_update[0].GetContent().GetContent());
                 FPrintln(file, "}");
             }

@@ -8,7 +8,7 @@ class eAISettings : JsonApiStruct
 
 	private string m_LoadingArray;
 
-	private eAILogLevel m_LogLevel = eAILogLevel.INFO;
+	private CF_LogLevel m_LogLevel = CF_LogLevel.TRACE;
 	private bool m_LogLevelSavedAsString = true;
 
 	private float m_Accuracy = 0.5;
@@ -20,12 +20,12 @@ class eAISettings : JsonApiStruct
 
 	private int m_MaxDynamicPatrols = -1;
 
-	void SetLogLevel(eAILogLevel logLevel)
+	void SetLogLevel(CF_LogLevel logLevel)
 	{
 		m_LogLevel = logLevel;
 	}
 
-	static eAILogLevel GetLogLevel()
+	static CF_LogLevel GetLogLevel()
 	{
 		return m_Instance.m_LogLevel;
 	}
@@ -113,12 +113,12 @@ class eAISettings : JsonApiStruct
 		if (name == "eAILogLevel")
 		{
 			m_LogLevelSavedAsString = true;
-			if (value == "TRACE") SetLogLevel(eAILogLevel.TRACE);
-			if (value == "DEBUG") SetLogLevel(eAILogLevel.DEBUG);
-			if (value == "INFO") SetLogLevel(eAILogLevel.INFO);
-			if (value == "WARNING") SetLogLevel(eAILogLevel.WARNING);
-			if (value == "ERROR") SetLogLevel(eAILogLevel.ERROR);
-			if (value == "NONE") SetLogLevel(eAILogLevel.NONE);
+			if (value == "TRACE") SetLogLevel(CF_LogLevel.TRACE);
+			if (value == "DEBUG") SetLogLevel(CF_LogLevel.DEBUG);
+			if (value == "INFO") SetLogLevel(CF_LogLevel.INFO);
+			if (value == "WARNING") SetLogLevel(CF_LogLevel.WARNING);
+			if (value == "ERROR") SetLogLevel(CF_LogLevel.ERROR);
+			if (value == "NONE") SetLogLevel(CF_LogLevel.NONE);
 			return;
 		}
 
@@ -180,7 +180,7 @@ class eAISettings : JsonApiStruct
 	{
 		if (m_LogLevelSavedAsString)
 		{
-			StoreString("eAILogLevel", typename.EnumToString(eAILogLevel, m_LogLevel));
+			StoreString("eAILogLevel", typename.EnumToString(CF_LogLevel, m_LogLevel));
 		}
 		else
 		{

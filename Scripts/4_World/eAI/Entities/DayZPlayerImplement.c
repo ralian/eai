@@ -21,25 +21,25 @@ modded class DayZPlayerImplement
 
     protected eAITargetInformation CreateTargetInformation()
     {
-		//eAITrace trace(this, "CreateTargetInformation");
+		//auto trace = CF_Trace_0(this, "CreateTargetInformation");
         return new eAIPlayerTargetInformation(this);
     }
 
     eAITargetInformation GetTargetInformation()
     {
-		//eAITrace trace(this, "GetTargetInformation");
+		//auto trace = CF_Trace_0(this, "GetTargetInformation");
         return m_TargetInformation;
     }
 
     bool IsAI()
     {
-		//eAITrace trace(this, "IsAI");
+		//auto trace = CF_Trace_0(this, "IsAI");
         return false;
     }
 
 	void SetGroup(eAIGroup group)
     {
-		//eAITrace trace(this, "SetGroup", "" + group);
+		//auto trace = CF_Trace_1(this, "SetGroup").Add(group);
 
         if (m_eAI_Group == group) return;
 
@@ -64,19 +64,19 @@ modded class DayZPlayerImplement
 
 	eAIGroup GetGroup()
 	{
-		//eAITrace trace(this, "GetGroup");
+		//auto trace = CF_Trace_0(this, "GetGroup");
 		return m_eAI_Group;
 	}
 
     int GetGroupID()
     {
-		//eAITrace trace(this, "GetGroupID");
+		//auto trace = CF_Trace_0(this, "GetGroupID");
 		return m_eAI_GroupID;
     }
 
     void SetGroupMemberIndex(int index)
     {
-		//eAITrace trace(this, "SetGroupMemberIndex", index.ToString());
+		//auto trace = CF_Trace_1(this, "SetGroupMemberIndex").Add(index);
 		
         m_eAI_GroupMemberIndex = index;
         m_eAI_GroupMemberIndexSynch = index;

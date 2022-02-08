@@ -51,7 +51,7 @@ class eAIFSMType
     
     static eAIFSMType LoadXML(string path, string fileName)
     {
-        //eAITrace trace(null, "eAIFSMType::LoadXML", path, fileName);
+        //auto trace = CF_Trace_2("eAIFSMType", "LoadXML").Add(path).Add(fileName);
 
         if (eAIFSMType.Contains(fileName)) return eAIFSMType.Get(fileName);
 
@@ -79,10 +79,10 @@ class eAIFSMType
 
     static eAIFSMType LoadXML(string path, string fileName, FileHandle file)
     {
-		//eAITrace trace(null, "eAIFSMType::LoadXML", path, fileName, "FileHandle");
+		//auto trace = CF_Trace_3("eAIFSMType", "LoadXML").Add(path).Add(fileName).Add("FileHandle");
 
         string actualFilePath = path + "/" + fileName + ".xml";
-        eAILogger.Debug(actualFilePath);
+        CF_Log.Debug(actualFilePath);
         if (!FileExist(actualFilePath)) return null;
         
         CF_XML_Document document;
@@ -161,7 +161,7 @@ class eAIFSMType
         FPrintln(file, "}");
 
         FPrintln(file, "void Setup() {");
-        FPrintln(file, "//eAITrace trace(this, \"Setup\");");
+        FPrintln(file, "//auto trace = CF_Trace_0(this, \"Setup\");");
 
 	    foreach (auto stateType0 : new_type.m_States)
         {    

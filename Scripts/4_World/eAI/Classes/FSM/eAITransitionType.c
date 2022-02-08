@@ -25,7 +25,7 @@ class eAITransitionType
 
     static eAITransitionType LoadXML(string fsmName, CF_XML_Tag xml_root_tag, FileHandle file)
     {
-		//eAITrace trace(null, "eAITransitionType::LoadXML", fsmName);
+		//auto trace = CF_Trace_1(null, "eAITransitionType::LoadXML").Add(fsmName);
 
         string from_state_name;
         auto from_state = xml_root_tag.GetTag("from_state");
@@ -70,7 +70,7 @@ class eAITransitionType
         if (guard.Count() > 0)
         {
             FPrintln(file, "override int Guard() {");
-        	FPrintln(file, "//eAITrace trace(this, \"Guard\");");
+        	FPrintln(file, "//auto trace = CF_Trace_0(this, \"Guard\");");
             FPrintln(file, guard[0].GetContent().GetContent());
             FPrintln(file, "}");
         }

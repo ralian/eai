@@ -12,7 +12,7 @@ modded class DayZGame
 
     eAIManagerBase eAIManagerGet()
     {
-		//eAITrace trace(this, "eAIManagerGet");
+		//auto trace = CF_Trace_0(this, "eAIManagerGet");
         return m_eAI_Manager;
     }
 

@@ -11,8 +11,6 @@ class eAIManagerBase
     {
 		m_Instance_3 = this;
 
-        eAILogger.Init();
-
         // anything dependent on settings during init must be initialized first.
         eAISettings.Init();
 
@@ -27,7 +25,7 @@ class eAIManagerBase
 	
 	eAICommandManager GetCommandManager()
     {
-		//eAITrace trace(this, "GetEAICommandManager");
+		//auto trace = CF_Trace_0(this, "GetEAICommandManager");
 		return m_CommandManager;
 	}
 
@@ -65,7 +63,7 @@ class eAIManagerBase
     
     void RPC_SetAdmin(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
-		//eAITrace trace(this, "RPC_SetAdmin");
+		//auto trace = CF_Trace_0(this, "RPC_SetAdmin");
 
 		Param1<bool> data;
         if (!ctx.Read(data)) return;
@@ -79,7 +77,7 @@ class eAIManagerBase
 
 	void InvokeOnConnect(DayZPlayer player, PlayerIdentity identity)
 	{
-		//eAITrace trace(this, "InvokeOnConnect");
+		//auto trace = CF_Trace_0(this, "InvokeOnConnect");
 
         string guid = identity.GetPlainId();
         int idx = eAISettings.GetAdmins().Find(guid);

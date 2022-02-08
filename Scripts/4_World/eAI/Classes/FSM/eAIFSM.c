@@ -75,7 +75,7 @@ class eAIFSM
 	
 	bool StartDefault()
 	{
-        //eAITrace trace(this, "StartDefault");
+        //auto trace = CF_Trace_0(this, "StartDefault");
 
         if (m_DefaultState == "") return Start();
 
@@ -84,7 +84,7 @@ class eAIFSM
 
         if (m_Running && src)
         {
-            eAILogger.Debug("Exiting state: " + src);
+            CF_Log.Debug("Exiting state: " + src);
             src.OnExit("", true, dst);
         }
 	
@@ -92,19 +92,19 @@ class eAIFSM
 		
         if (m_CurrentState)
         {
-            eAILogger.Debug("Starting state: " + m_CurrentState);
+            CF_Log.Debug("Starting state: " + m_CurrentState);
             m_CurrentState.OnEntry("", src);
             return true;
         }
 		
-        eAILogger.Warn("No valid state found.");
+        CF_Log.Warn("No valid state found.");
 		
         return false;
 	}
 
     bool Start(string e = "")
     {
-        //eAITrace trace(this, "Start", e);
+        //auto trace = CF_Trace_1(this, "Start").Add(e);
 
         Param2<eAIState, bool> new_state = FindSuitableTransition(m_CurrentState, "");
 
@@ -113,14 +113,14 @@ class eAIFSM
 
         if (dst == null)
         {
-            eAILogger.Warn("No valid state found. Aborting.");
+            CF_Log.Warn("No valid state found. Aborting.");
 
             return false;
         }
 
         if (m_Running && m_CurrentState && m_CurrentState != dst)
         {
-            eAILogger.Debug("Exiting state: " + m_CurrentState);
+            CF_Log.Debug("Exiting state: " + m_CurrentState);
             m_CurrentState.OnExit(e, true, dst);
         }
 
@@ -128,23 +128,23 @@ class eAIFSM
 
         if (m_CurrentState && src != m_CurrentState)
         {
-            eAILogger.Debug("Starting state: " + m_CurrentState);
+            CF_Log.Debug("Starting state: " + m_CurrentState);
             m_CurrentState.OnEntry(e, src);
             return true;
         }
 
-        eAILogger.Warn("No valid state found.");
+        CF_Log.Warn("No valid state found.");
 
         return false;
     }
 
     bool Abort(string e = "")
     {
-        //eAITrace trace(this, "Abort", e);
+        //auto trace = CF_Trace_1(this, "Abort").Add(e);
 
         if (m_Running && m_CurrentState)
         {
-            eAILogger.Debug("Exiting state: " + m_CurrentState);
+            CF_Log.Debug("Exiting state: " + m_CurrentState);
             m_CurrentState.OnExit(e, true, null);
             return true;
         }
@@ -158,9 +158,9 @@ class eAIFSM
      */
     int Update(float pDt, int pSimulationPrecision)
     {
-        //eAITrace trace(this, "Update", pDt.ToString(), pSimulationPrecision.ToString());
+        //auto trace = CF_Trace_2(this, "Update").Add(pDt).Add(pSimulationPrecision);
 
-        //eAILogger.Debug("m_CurrentState: %1", "" + m_CurrentState);
+        //CF_Log.Debug("m_CurrentState: %1", "" + m_CurrentState);
 
         #ifdef EAI_DEBUG_FSM
         if (m_CurrentState && m_CurrentState.Debug_OnUpdate(m_Debug, m_Depth + 1, pDt, pSimulationPrecision) == CONTINUE) return CONTINUE;
@@ -184,11 +184,11 @@ class eAIFSM
 
         if (m_CurrentState == null)
         {
-		    eAILogger.Info("State transition exit " + src.GetName());
+		    CF_Log.Info("State transition exit " + src.GetName());
             return EXIT;
         }
         
-		eAILogger.Info("State transition " + src.GetName() + " -> " + m_CurrentState.GetName());
+		CF_Log.Info("State transition " + src.GetName() + " -> " + m_CurrentState.GetName());
 
         m_CurrentState.OnEntry("", src);
 
@@ -197,7 +197,7 @@ class eAIFSM
 	
 	Param2<eAIState, bool> FindSuitableTransition(eAIState s, string e = "")
 	{
-        //eAITrace trace(this, "FindSuitableTransition", "" + s, e);
+        //auto trace = CF_Trace_2(this, "FindSuitableTransition").Add(s).Add(e);
 
         // returns tuple as a valid destination can still be null
 

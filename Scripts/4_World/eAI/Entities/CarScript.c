@@ -11,13 +11,13 @@ modded class CarScript
 
     protected eAITargetInformation CreateTargetInformation()
     {
-		//eAITrace trace(this, "CreateTargetInformation");
+		//auto trace = CF_Trace_0(this, "CreateTargetInformation");
         return new eAIEntityTargetInformation(this);
     }
 
     eAITargetInformation GetTargetInformation()
     {
-		//eAITrace trace(this, "GetTargetInformation");
+		//auto trace = CF_Trace_0(this, "GetTargetInformation");
         return m_TargetInformation;
     }
 
