@@ -210,11 +210,7 @@ class eAIFSM
 
 		//CF_Log.Debug("m_CurrentState: %1", "" + m_CurrentState);
 
-		#ifdef EAI_DEBUG_FSM
-		if (m_CurrentState && m_CurrentState.Debug_OnUpdate(m_Debug, m_Depth + 1, pDt, pSimulationPrecision) == CONTINUE) return CONTINUE;
-		#else
 		if (m_CurrentState && m_CurrentState.OnUpdate(pDt, pSimulationPrecision) == CONTINUE) return CONTINUE;
-		#endif
 
 		Param2<eAIState, bool> new_state = FindSuitableTransition(m_CurrentState, "");
 		if (!new_state.param2 || (new_state.param2 && m_CurrentState == new_state.param1))
@@ -261,11 +257,7 @@ class eAIFSM
 			auto t = m_Transitions.Get(i);
 			if ((t.GetSource() == curr_state || t.GetSource() == null) && (e == "" || (e != "" && t.GetEvent() == e)))
 			{
-				#ifdef EAI_DEBUG_FSM
-				int guard = t.Debug_Guard(m_Debug, m_Depth + 1, i);
-				#else
 				int guard = t.Guard();
-				#endif
 				switch (guard)
 				{
 				case eAITransition.SUCCESS:
@@ -278,103 +270,4 @@ class eAIFSM
 
 		return new Param2<eAIState, bool>(null, false);
 	}
-
-	#ifdef EAI_DEBUG_FSM
-	//! Current active debug block
-	CF_DebugUI_Block m_Debug;
-	int m_Depth;
-
-	private string Debug_Prefix()
-	{
-		int depth = m_Depth;
-		string str = "";
-		while (depth > 0)
-		{
-			str += " ";
-			depth--;
-		}
-		return str;
-	}
-
-	void Debug_Set(string key, int text)
-	{
-		m_Debug.Set(Debug_Prefix() + key, text);
-	}
-
-	void Debug_Set(string key, bool text)
-	{
-		m_Debug.Set(Debug_Prefix() + key, text);
-	}
-
-	void Debug_Set(string key, float text)
-	{
-		m_Debug.Set(Debug_Prefix() + key, text);
-	}
-
-	void Debug_Set(string key, vector text)
-	{
-		m_Debug.Set(Debug_Prefix() + key, text);
-	}
-
-	void Debug_Set(string key, Class text)
-	{
-		m_Debug.Set(Debug_Prefix() + key, text);
-	}
-
-	void Debug_Set(string key, string text)
-	{
-		m_Debug.Set(Debug_Prefix() + key, text);
-	}
-
-	int Debug_Update(Class dbg, int depth, float pDt, int pSimulationPrecision)
-	{
-		Class.CastTo(m_Debug, dbg);
-		m_Depth = depth;
-
-		Debug_Set("FSM", m_Name);
-		int ret = Update(pDt, pSimulationPrecision);
-		switch (ret)
-		{
-			case EXIT:
-				Debug_Set("Status", "EXIT");
-				break;
-			case CONTINUE:
-				Debug_Set("Status", "CONTINUE");
-				break;
-			default:
-				Debug_Set("Status", "UNKNOWN");
-				break;
-		}
-		return ret;
-	}
-	#else
-	void Debug_Set(string key, int text)
-	{
-	}
-
-	void Debug_Set(string key, bool text)
-	{
-	}
-
-	void Debug_Set(string key, float text)
-	{
-	}
-
-	void Debug_Set(string key, vector text)
-	{
-	}
-
-	void Debug_Set(string key, Class text)
-	{
-	}
-
-	void Debug_Set(string key, string text)
-	{
-	}
-
-	int Debug_Update(Class dbg, int depth, float pDt, int pSimulationPrecision)
-	{
-		return Update(pDt, pSimulationPrecision);
-	}
-	#endif
 };

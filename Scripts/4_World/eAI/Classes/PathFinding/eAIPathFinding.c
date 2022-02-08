@@ -100,11 +100,7 @@ class eAIPathFinding
 		auto trace = CF_Trace_0(this, "OnDebug");
 		#endif
 
-		#ifdef EAI_DEBUG_PATH
-		//CF_DebugUI_Block dbg;
-		//Class.CastTo(dbg, CF.DebugUI.Get("PATH", m_Unit));
-		//dbg.Clear();
-		
+		#ifdef EAI_DEBUG_PATH		
 		int i;
 		vector points[2];
 		
@@ -118,19 +114,6 @@ class eAIPathFinding
 				points[0] = m_Path[i];
 				points[1] = m_Path[i + 1];
 				m_Unit.AddShape(Shape.CreateLines(0xFF00FF00, ShapeFlags.VISIBLE | ShapeFlags.NOZBUFFER, points, 2));
-				#endif
-			}
-		}
-		for (i = 0; i < m_RoadNodes.Count(); i++)
-		{
-			//dbg.Set("[" + i + "]", m_Path[i]);
-
-			if (i != m_RoadNodes.Count() - 1)
-			{
-				#ifndef SERVER
-				points[0] = m_RoadNodes[i].m_Position + "0 0.5 0";
-				points[1] = m_RoadNodes[i + 1].m_Position + "0 0.5 0";
-				m_Unit.AddShape(Shape.CreateLines(0xFF00FFFF, ShapeFlags.VISIBLE | ShapeFlags.NOZBUFFER, points, 2));
 				#endif
 			}
 		}
