@@ -1,5 +1,3 @@
-Man eAIGlobal_HeadlessClient = null;
-
 modded class DayZGame
 {
 	private ref eAIManagerBase m_eAI_Manager;

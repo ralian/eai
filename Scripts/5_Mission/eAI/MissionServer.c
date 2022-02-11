@@ -1,7 +1,5 @@
 modded class MissionServer
 {
-	static string HeadlessClientSteamID = "REDACTED (PUT STEAMID HERE)";
-
 	void MissionServer()
 	{
 		GetDayZGame().eAICreateManager();
@@ -19,11 +17,5 @@ modded class MissionServer
 		super.InvokeOnConnect(player, identity);
 
 		GetDayZGame().eAIManagerGet().InvokeOnConnect(player, identity);
-
-		if (identity && identity.GetId() == HeadlessClientSteamID)
-		{
-			eAIGlobal_HeadlessClient = player;
-			eAIGroup.OnHeadlessClientConnect(identity);
-		}
 	}
 };

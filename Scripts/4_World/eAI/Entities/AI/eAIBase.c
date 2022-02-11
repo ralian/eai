@@ -86,14 +86,6 @@ class eAIBase extends PlayerBase
 		CF_Debug.Create(this);
 		#endif
 
-		if (IsMissionHost())
-		{
-			if (eAIGlobal_HeadlessClient && eAIGlobal_HeadlessClient.GetIdentity())
-			{
-				GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<eAIBase>(this), false, eAIGlobal_HeadlessClient.GetIdentity());
-			}
-		}
-
 		m_AllAI.Insert(this);
 	}
 
@@ -726,7 +718,8 @@ class eAIBase extends PlayerBase
 		GetHumanInventory().Update(pDt);
 		UpdateDelete();
 
-		if (m_FSM) m_FSM.Update(pDt, simulationPrecision);
+		auto nearestPlayer = GetNearestPlayer();
+		if (nearestPlayer && m_FSM) m_FSM.Update(pDt, simulationPrecision);
 
 		switch (m_AimingState)
 		{
@@ -734,13 +727,7 @@ class eAIBase extends PlayerBase
 				GetAimingProfile().UpdateArbiter(null);
 				break;
 			case eAIAimingState.ACTIVE:
-				if (eAIGlobal_HeadlessClient)
-				{
-					GetAimingProfile().UpdateArbiter(eAIGlobal_HeadlessClient);
-					break;
-				}
-				
-				GetAimingProfile().UpdateArbiter(GetNearestPlayer());
+				GetAimingProfile().UpdateArbiter(nearestPlayer);
 				break;
 		}
 
@@ -1236,7 +1223,7 @@ class eAIBase extends PlayerBase
 
 	override void OnUnconsciousUpdate(float pDt, int last_command)
 	{
-		if (!GetGame().IsMultiplayer() && GetGame().IsServer())
+		if (GetGame().IsServer())
 		{
 			m_UnconsciousTime += pDt;
 

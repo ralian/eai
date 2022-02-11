@@ -539,30 +539,4 @@ class eAIGroup
 			}
 		}
 	}
-
-	static void OnHeadlessClientConnect(PlayerIdentity identity)
-	{
-#ifdef EAI_TRACE
-		auto trace = CF_Trace_0("eAIGroup", "OnHeadlessClientConnect");
-#endif
-
-		eAIBase ai;
-		foreach (eAIGroup group : s_AllGroups)
-		{
-			for (int i = 0; i < group.Count(); i++)
-			{
-				if (!Class.CastTo(ai, group.GetMember(i)))
-				{
-					continue;
-				}
-				
-				if (!ai.IsAlive())
-				{
-					continue;
-				}
-
-				GetRPCManager().SendRPC("eAI", "HCLinkObject", new Param1<PlayerBase>(ai), false, identity);
-			}
-		}
-	}
 };

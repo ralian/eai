@@ -3,8 +3,7 @@ modded class WeaponUnjamming_Start
 	override void OnUpdate(float dt)
 	{
 		eAIBase p;
-		Class.CastTo(p, m_weapon.GetHierarchyParent());
-		if (p)
+		if (Class.CastTo(p, m_weapon.GetHierarchyParent()))
 		{
 			m_dtAccumulator += dt;
 

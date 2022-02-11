@@ -128,36 +128,6 @@ class eAIManager extends eAIManagerImplement
 		}
 	}
 	
-	// Client Side: Link the given AI
-	void HCLinkObject(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
-	{
-		#ifdef EAI_TRACE
-		auto trace = CF_Trace_0(this, "HCLinkObject");
-		#endif
-
-		Param1<PlayerBase> data;
-        if ( !ctx.Read( data ) ) return;
-		if(type == CallType.Server) {
-            CF_Log.Debug("HC: Linking object " + data.param1);
-			eAIObjectManager.Register(data.param1);
-        }
-	}
-	
-	// Client Side: Link the given AI
-	void HCUnlinkObject(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
-	{
-		#ifdef EAI_TRACE
-		auto trace = CF_Trace_0(this, "HCUnlinkObject");
-		#endif
-
-		Param1<PlayerBase> data;
-        if ( !ctx.Read( data ) ) return;
-		if(type == CallType.Server) {
-            CF_Log.Debug("HC: Unlinking object " + data.param1);
-			eAIObjectManager.Unregister(data.param1);
-        }
-	}
-	
 	// Server Side: This RPC spawns a zombie. It's actually not the right way to do it. But it's only for testing.
 	// BUG: this has sometimes crashed us before. Not sure why yet.
 	void SpawnZombie(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
