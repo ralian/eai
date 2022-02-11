@@ -87,6 +87,8 @@ class eAIBase extends PlayerBase
 		#endif
 
 		m_AllAI.Insert(this);
+
+		SetEventMask(EntityEvent.INIT);
 	}
 
 	static eAIBase Get(int index)
@@ -113,9 +115,6 @@ class eAIBase extends PlayerBase
 		m_eMeleeCombat = new eAIMeleeCombat(this);;
 		m_MeleeCombat = m_eMeleeCombat;
 		m_MeleeFightLogic = new DayZPlayerMeleeFightLogic_LightHeavy(this);
-
-		m_eActionManager = new eAIActionManager(this);;
-		m_ActionManager = m_eActionManager;
 
 		m_WeaponManager = new eAIWeaponManager(this);
 		m_ShockHandler = new eAIShockHandler(this);
@@ -156,6 +155,35 @@ class eAIBase extends PlayerBase
 		{
 			GetGroup().RemoveMember(GetGroup().GetIndex(this));
 		}
+	}
+
+	protected void EOnInit(IEntity other, int extra)
+	{
+		super.EOnInit(other, extra);
+
+		OnSelectPlayer();
+	}
+
+	override void OnSelectPlayer()
+	{
+		m_QuickBarBase.updateSlotsCount();
+		
+		m_PlayerSelected = true;
+		
+		m_WeaponManager.SortMagazineAfterLoad();
+
+		//! add callbacks for ai target system
+		SetAITargetCallbacks(new AITargetCallbacksPlayer(this));
+			
+		GetSoftSkillsManager().InitSpecialty(GetStatSpecialty().Get());
+		GetModifiersManager().SetModifiers(true);
+			
+		SetSynchDirty();
+		
+		CheckForGag();
+		
+		m_eActionManager = new eAIActionManager(this);
+		m_ActionManager = m_eActionManager;
 	}
 	
 	// Used for deciding the best aim arbiter for the AI.
@@ -718,6 +746,8 @@ class eAIBase extends PlayerBase
 		GetHumanInventory().Update(pDt);
 		UpdateDelete();
 
+		OnScheduledTick(pDt);
+
 		auto nearestPlayer = GetNearestPlayer();
 		if (nearestPlayer && m_FSM) m_FSM.Update(pDt, simulationPrecision);
 
@@ -744,7 +774,7 @@ class eAIBase extends PlayerBase
 					OnUnconsciousStart();
 				}
 
-				if (!m_ShouldBeUnconscious)
+				if (!m_ShouldBeUnconscious && m_UnconsciousTime > 2)
 				{
 					HumanCommandUnconscious	hcu = GetCommand_Unconscious();
 					if (hcu) hcu.WakeUp();
@@ -1223,10 +1253,10 @@ class eAIBase extends PlayerBase
 
 	override void OnUnconsciousUpdate(float pDt, int last_command)
 	{
+		m_UnconsciousTime += pDt;
+
 		if (GetGame().IsServer())
 		{
-			m_UnconsciousTime += pDt;
-
 			int shock_simplified = SimplifyShock();
 			
 			if( m_ShockSimplified != shock_simplified )
@@ -1234,9 +1264,6 @@ class eAIBase extends PlayerBase
 				m_ShockSimplified = shock_simplified;
 				SetSynchDirty();
 			}
-			
-			//CF_Log.Debug(last_command.ToString());
-			//CF_Log.Debug(DayZPlayerConstants.COMMANDID_SWIM.ToString());
 			
 			if( m_UnconsciousTime > PlayerConstants.UNCONSCIOUS_IN_WATER_TIME_LIMIT_TO_DEATH && last_command == DayZPlayerConstants.COMMANDID_SWIM )
 			{

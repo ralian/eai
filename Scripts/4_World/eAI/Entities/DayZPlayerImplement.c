@@ -13,7 +13,7 @@ modded class DayZPlayerImplement
 		auto trace = CF_Trace_0(this, "DayZPlayerImplement");
 #endif
 
-		// m_TargetInformation = CreateTargetInformation();
+		m_TargetInformation = CreateTargetInformation();
 
 		RegisterNetSyncVariableInt("m_eAI_GroupID");
 		RegisterNetSyncVariableInt("m_eAI_GroupMemberIndexSynch");
