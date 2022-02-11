@@ -20,6 +20,25 @@ class eAIState
 		parent = _fsm.GetParent();
 		unit = _unit;
 	}
+
+	#ifdef CF_DEBUG
+	bool CF_OnDebugUpdate(CF_Debug instance, CF_DebugUI_Type type)
+	{
+		int i;
+
+		instance.Add("FSM", m_SubFSM);
+		if (m_SubFSM)
+		{
+			instance.IncrementTab();
+			instance.Add(m_SubFSM);
+			instance.DecrementTab();
+		}
+
+		instance.Add("ExitGuard", ExitGuard(""));
+
+		return false;
+	}
+	#endif
 	
 	string GetName()
 	{
@@ -35,6 +54,11 @@ class eAIState
 	void OnExit(string Event, bool Aborted, eAIState To)
 	{
 
+	}
+
+	bool ExitGuard(string Event)
+	{
+		return true;
 	}
 
 	int OnUpdate(float DeltaTime, int SimulationPrecision)

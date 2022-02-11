@@ -1,6 +1,6 @@
 class eAIStateType
 {
-	private static ref map<string, ref eAIStateType> m_Types = new map<string, ref eAIStateType>();
+	private static ref map<string, autoptr eAIStateType> m_Types = new map<string, autoptr eAIStateType>();
 
 	string m_ClassName;
 	ref array<string> m_Variables;
@@ -50,7 +50,7 @@ class eAIStateType
 		string name = xml_root_tag.GetAttribute("name").ValueAsString();
 		string child_fsm;
 		if (xml_root_tag.GetAttribute("fsm")) child_fsm = xml_root_tag.GetAttribute("fsm").ValueAsString();
-		string class_name = "eAI_" + fsmName + "_" + name + "_State";
+		string class_name = "eAI_" + fsmName + "_" + name + "_State_" + eAIFSMType.s_ReloadNumber;
 		
 		//if (child_fsm != "") class_name = "eAI_FSM_" + child_fsm + "_State";
 
@@ -61,8 +61,8 @@ class eAIStateType
 
 		FPrintln(file, "class " + class_name + " extends eAIState {");
 
-		if (child_fsm != "") FPrintln(file, "eAI_" + child_fsm + "_FSM sub_fsm;");
-		FPrintln(file, "eAI_" + fsmName + "_FSM fsm;");
+		if (child_fsm != "") FPrintln(file, "eAI_" + child_fsm + "_FSM_" + eAIFSMType.s_ReloadNumber + " sub_fsm;");
+		FPrintln(file, "eAI_" + fsmName + "_FSM_" + eAIFSMType.s_ReloadNumber + " fsm;");
 
 		auto variables = xml_root_tag.GetTag("variables");
 		if (variables.Count() > 0)
@@ -91,7 +91,7 @@ class eAIStateType
 		if (child_fsm != "")
 		{
 			FPrintln(file, "m_Name = \"" + child_fsm + "\";");
-			FPrintln(file, "m_SubFSM = new eAI_" + child_fsm + "_FSM(_unit, this);");
+			FPrintln(file, "m_SubFSM = new eAI_" + child_fsm + "_FSM_" + eAIFSMType.s_ReloadNumber + "(_unit, this);");
 			FPrintln(file, "Class.CastTo(sub_fsm, m_SubFSM);");
 		}
 		else
@@ -104,6 +104,8 @@ class eAIStateType
 		auto event_entry = xml_root_tag.GetTag("event_entry");
 		auto event_exit = xml_root_tag.GetTag("event_exit");
 		auto event_update = xml_root_tag.GetTag("event_update");
+
+		auto guard_exit = xml_root_tag.GetTag("guard_exit");
 
 		if (child_fsm != "")
 		{
@@ -121,37 +123,42 @@ class eAIStateType
 			FPrintln(file, "}");
 
 			FPrintln(file, "override int OnUpdate(float DeltaTime, int SimulationPrecision) {");
-			FPrintln(file, "auto trace = CF_Trace_3(this, \"OnUpdate\").Add(DeltaTime).Add(SimulationPrecision);");
+			FPrintln(file, "auto trace = CF_Trace_2(this, \"OnUpdate\").Add(DeltaTime).Add(SimulationPrecision);");
 			FPrintln(file, "if (m_SubFSM.Update(DeltaTime, SimulationPrecision) == EXIT) return EXIT;");
 			if (event_update.Count() > 0) FPrintln(file, event_update[0].GetContent().GetContent());
 			else FPrintln(file, "return CONTINUE;");
 			FPrintln(file, "}");
+
+			FPrintln(file, "override bool ExitGuard(string Event) {");
+			FPrintln(file, "auto trace = CF_Trace_1(this, \"ExitGuard\").Add(Event);");
+			FPrintln(file, "if (!m_SubFSM.ExitGuard(Event)) return false;");
+			if (guard_exit.Count() > 0) FPrintln(file, guard_exit[0].GetContent().GetContent());
+			else FPrintln(file, "return true;");
+			FPrintln(file, "}");
 		}
 		else
 		{
-			if (event_entry.Count() > 0)
-			{
-				FPrintln(file, "override void OnEntry(string Event, eAIState From) {");
-				FPrintln(file, "auto trace = CF_Trace_2(this, \"OnEntry\").Add(Event).Add(From);");
-				FPrintln(file, event_entry[0].GetContent().GetContent());
-				FPrintln(file, "}");
-			}
+			FPrintln(file, "override void OnEntry(string Event, eAIState From) {");
+			FPrintln(file, "auto trace = CF_Trace_2(this, \"OnEntry\").Add(Event).Add(From);");
+			if (event_entry.Count() > 0) FPrintln(file, event_entry[0].GetContent().GetContent());
+			FPrintln(file, "}");
 
-			if (event_exit.Count() > 0)
-			{
-				FPrintln(file, "override void OnExit(string Event, bool Aborted, eAIState To) {");
-				FPrintln(file, "auto trace = CF_Trace_2(this, \"OnExit\").Add(Event).Add(Aborted).Add(To);");
-				FPrintln(file, event_exit[0].GetContent().GetContent());
-				FPrintln(file, "}");
-			}
+			FPrintln(file, "override void OnExit(string Event, bool Aborted, eAIState To) {");
+			FPrintln(file, "auto trace = CF_Trace_3(this, \"OnExit\").Add(Event).Add(Aborted).Add(To);");
+			if (event_exit.Count() > 0) FPrintln(file, event_exit[0].GetContent().GetContent());
+			FPrintln(file, "}");
 
-			if (event_update.Count() > 0)
-			{
-				FPrintln(file, "override int OnUpdate(float DeltaTime, int SimulationPrecision) {");
-				FPrintln(file, "auto trace = CF_Trace_2(this, \"OnUpdate\").Add(DeltaTime).Add(SimulationPrecision);");
-				FPrintln(file, event_update[0].GetContent().GetContent());
-				FPrintln(file, "}");
-			}
+			FPrintln(file, "override int OnUpdate(float DeltaTime, int SimulationPrecision) {");
+			FPrintln(file, "auto trace = CF_Trace_2(this, \"OnUpdate\").Add(DeltaTime).Add(SimulationPrecision);");
+			if (event_update.Count() > 0) FPrintln(file, event_update[0].GetContent().GetContent());
+			else FPrintln(file, "return CONTINUE;");
+			FPrintln(file, "}");
+
+			FPrintln(file, "override bool ExitGuard(string Event) {");
+			FPrintln(file, "auto trace = CF_Trace_1(this, \"ExitGuard\").Add(Event);");
+			if (guard_exit.Count() > 0) FPrintln(file, guard_exit[0].GetContent().GetContent());
+			else FPrintln(file, "return true;");
+			FPrintln(file, "}");
 		}
 
 		FPrintln(file, "}");

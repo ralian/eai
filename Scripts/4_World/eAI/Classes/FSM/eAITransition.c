@@ -13,6 +13,20 @@ class eAITransition
 		unit = _unit;
 	}
 
+	#ifdef CF_DEBUG
+	bool CF_OnDebugUpdate(CF_Debug instance, CF_DebugUI_Type type)
+	{
+		int i;
+
+		instance.Add("Source", GetSource());
+		instance.Add("Destination", GetDestination());
+		instance.Add("Event", GetEvent());
+		instance.Add("Guard", Guard());
+
+		return false;
+	}
+	#endif
+
 	eAIState GetSource()
 	{
 		return null;

@@ -61,6 +61,7 @@ class eAIBase extends PlayerBase
 	
 	private bool m_WeaponRaised;
 	private bool m_WeaponRaisedPrev;
+
 	private float m_WeaponRaisedTimer;
 
 	ref array<ItemBase> m_Weapons = {};
@@ -127,16 +128,44 @@ class eAIBase extends PlayerBase
 		{
 			SetGroup(eAIGroup.CreateGroup());
 
-			eAIFSMType type = eAIFSMType.LoadXML("eAI/scripts/FSM", "Master");
-			if (type)
-			{
-				m_FSM = type.Spawn(this, null);
-				m_FSM.StartDefault();
-			}
+			LoadFSM();
 		}
 
 		LookAtDirection("0 0 1");
 		AimAtDirection("0 0 1");
+	}
+
+	static void ReloadAllFSM()
+	{
+		array<eAIBase> ai();
+		foreach (auto ai0 : m_AllAI)
+		{
+			if (!ai0.GetFSM())
+			{
+				continue;
+			}
+			
+			ai0.m_FSM = null;
+
+			ai.Insert(ai0);
+		}
+		
+		eAIFSMType.UnloadAll();
+
+		foreach (auto ai1 : ai)
+		{
+			ai1.LoadFSM();
+		}
+	} 
+
+	void LoadFSM()
+	{
+		eAIFSMType type = eAIFSMType.LoadXML("eAI/scripts/FSM", "Master");
+		if (type)
+		{
+			m_FSM = type.Spawn(this, null);
+			m_FSM.StartDefault();
+		}
 	}
 
 	void ~eAIBase()
@@ -157,7 +186,7 @@ class eAIBase extends PlayerBase
 		}
 	}
 
-	protected void EOnInit(IEntity other, int extra)
+	protected override void EOnInit(IEntity other, int extra)
 	{
 		super.EOnInit(other, extra);
 
@@ -1082,6 +1111,13 @@ class eAIBase extends PlayerBase
 	{
 		super.CF_OnDebugUpdate(instance, type);
 
+		instance.Add("FSM", m_FSM);
+		if (m_FSM)
+		{
+			instance.IncrementTab();
+			instance.Add(m_FSM);
+			instance.DecrementTab();
+		}
 
 		return true;
 	}
@@ -1099,18 +1135,18 @@ class eAIBase extends PlayerBase
 		Weapon_Base weapon;
 		Class.CastTo(weapon, pInHands);
 		
-		if (m_WeaponRaised && m_WeaponRaised != m_WeaponRaisedPrev)
+		if (m_WeaponRaised != m_WeaponRaisedPrev)
 		{
+			m_WeaponRaisedPrev = m_WeaponRaised;
 			m_WeaponRaisedTimer = 0.0;
+
+			AnimSetBool(m_eAI_AnimationST.m_VAR_Raised, m_WeaponRaised);
 		}
-
-		m_WeaponRaisedPrev = m_WeaponRaised;
-		m_WeaponRaisedTimer += pDt;
-
-		AnimSetBool(m_eAI_AnimationST.m_VAR_Raised, m_WeaponRaised || m_DebugTargetApple != null);
 	
-		if (m_WeaponRaised || m_DebugTargetApple)
+		if (m_WeaponRaised)
 		{
+			m_WeaponRaisedTimer += pDt;
+
 			#ifndef SERVER
 			vector position;
 			vector direction;
@@ -1128,7 +1164,7 @@ class eAIBase extends PlayerBase
 			float dist = vector.Distance(GetPosition() + "0 1.5 0", m_eAI_AimPosition_WorldSpace);
 			dist = Math.Clamp(dist, 1.0, 360.0);
 			
-			aimOrientation[0] = aimOrientation[0] + (-45.0 / dist);
+			aimOrientation[0] = aimOrientation[0] + (-30.0 / dist);
 			aimOrientation[1] = aimOrientation[1];
 
 			if (aimOrientation[0] > 180.0) aimOrientation[0] = aimOrientation[0] - 360.0;
@@ -1164,7 +1200,12 @@ class eAIBase extends PlayerBase
 	
 	override bool IsRaised()
 	{
-		return m_WeaponRaised && m_WeaponRaisedTimer > 0.3;
+		return m_WeaponRaised;
+	}
+
+	override bool IsWeaponRaiseCompleted()
+	{
+		return m_WeaponRaisedTimer > 0.136;
 	}
 
 	ActionBase StartAction(typename actionType, ActionTarget target)
@@ -1205,6 +1246,16 @@ class eAIBase extends PlayerBase
 	{
 		m_eAI_AimDirection_ModelSpace = pDirectionMS;
 		m_eAI_AimDirection_Recalculate = false;
+	}
+
+	vector GetLookDirection()
+	{
+		return m_eAI_LookDirection_ModelSpace;
+	}
+
+	vector GetAimDirection()
+	{
+		return m_eAI_AimDirection_ModelSpace;
 	}
 		
 	override bool AimingModel(float pDt, SDayZPlayerAimingModel pModel)

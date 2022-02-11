@@ -1,6 +1,6 @@
 class eAITransitionType
 {
-	private static ref map<string, ref eAITransitionType> m_Types = new map<string, ref eAITransitionType>();
+	private static ref map<string, autoptr eAITransitionType> m_Types = new map<string, autoptr eAITransitionType>();
 
 	string m_ClassName;
 
@@ -10,6 +10,11 @@ class eAITransitionType
 		auto trace = CF_Trace_0(this, "eAITransitionType");
 		#endif
 		
+	}
+
+	static void UnloadAll()
+	{
+		m_Types.Clear();
 	}
 
 	static bool Contains(string name)
@@ -49,13 +54,13 @@ class eAITransitionType
 		auto from_state = xml_root_tag.GetTag("from_state");
 		if (from_state.Count() > 0) from_state_name = from_state[0].GetAttribute("name").ValueAsString();
 		string from_state_class = "eAIState";
-		if (from_state_name != "") from_state_class = "eAI_" + fsmName + "_" + from_state_name + "_State";
+		if (from_state_name != "") from_state_class = "eAI_" + fsmName + "_" + from_state_name + "_State_" + eAIFSMType.s_ReloadNumber;
 
 		string to_state_name;
 		auto to_state = xml_root_tag.GetTag("to_state");
 		if (to_state.Count() > 0) to_state_name = to_state[0].GetAttribute("name").ValueAsString();
 		string to_state_class = "eAIState";
-		if (to_state_name != "") to_state_class = "eAI_" + fsmName + "_" + to_state_name + "_State";
+		if (to_state_name != "") to_state_class = "eAI_" + fsmName + "_" + to_state_name + "_State_" + eAIFSMType.s_ReloadNumber;
 
 		string event_name;
 		auto evt = xml_root_tag.GetTag("event");
@@ -63,7 +68,7 @@ class eAITransitionType
 		string event_class = "";
 		if (event_name != "") event_class = "eAI_" + event_name + "_Event";
 
-		string class_name = "eAI_" + fsmName + "_" + from_state_name + "_" + to_state_name + "_Transition";
+		string class_name = "eAI_" + fsmName + "_" + from_state_name + "_" + to_state_name + "_Transition_" + eAIFSMType.s_ReloadNumber;
 
 		if (eAITransitionType.Contains(class_name)) return eAITransitionType.Get(class_name);
 
@@ -75,7 +80,7 @@ class eAITransitionType
 		FPrintln(file, "private " + from_state_class + " src;");
 		FPrintln(file, "private " + to_state_class + " dst;");
 
-		FPrintln(file, "eAI_" + fsmName + "_FSM fsm;");
+		FPrintln(file, "eAI_" + fsmName + "_FSM_" + eAIFSMType.s_ReloadNumber + " fsm;");
 
 		FPrintln(file, "void " + class_name + "(eAIFSM _fsm, eAIBase _unit) {");
 		FPrintln(file, "Class.CastTo(fsm, _fsm);");

@@ -27,6 +27,27 @@ class eAIFSM
 		m_Transitions = new array<ref eAITransition>();
 	}
 
+	#ifdef CF_DEBUG
+	bool CF_OnDebugUpdate(CF_Debug instance, CF_DebugUI_Type type)
+	{
+		int i;
+
+		instance.Add("Active State", m_CurrentState);
+		if (m_CurrentState)
+		{
+			instance.IncrementTab();
+			instance.Add(m_CurrentState);
+			instance.DecrementTab();
+		}
+
+		instance.Add("Transitions", m_Transitions.Count());
+		for (i = 0; i < m_Transitions.Count(); i++)
+			instance.Add(m_Transitions[i]);
+
+		return false;
+	}
+	#endif
+
 	string GetName()
 	{
 		#ifdef EAI_TRACE
@@ -251,23 +272,36 @@ class eAIFSM
 
 		eAIState curr_state = s;
 
-		int count = m_Transitions.Count();
-		for (int i = 0; i < count; ++i)
+		if (curr_state.ExitGuard(e))
 		{
-			auto t = m_Transitions.Get(i);
-			if ((t.GetSource() == curr_state || t.GetSource() == null) && (e == "" || (e != "" && t.GetEvent() == e)))
+			int count = m_Transitions.Count();
+			for (int i = 0; i < count; ++i)
 			{
-				int guard = t.Guard();
-				switch (guard)
+				auto t = m_Transitions.Get(i);
+				if ((t.GetSource() == curr_state || t.GetSource() == null) && (e == "" || (e != "" && t.GetEvent() == e)))
 				{
-				case eAITransition.SUCCESS:
-					return new Param2<eAIState, bool>(t.GetDestination(), true);
-				case eAITransition.FAIL:
-					break;
+					int guard = t.Guard();
+					switch (guard)
+					{
+					case eAITransition.SUCCESS:
+						return new Param2<eAIState, bool>(t.GetDestination(), true);
+					case eAITransition.FAIL:
+						break;
+					}
 				}
-			}
+			}	
 		}
 
 		return new Param2<eAIState, bool>(null, false);
+	}
+
+	bool ExitGuard(string e)
+	{
+		if (!m_CurrentState)
+		{
+			return true;
+		}
+
+		return m_CurrentState.ExitGuard(e);
 	}
 };

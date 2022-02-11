@@ -1,14 +1,16 @@
 class eAIFSMType
 {
-	private static ref map<string, eAIFSMType> m_SpawnableTypes = new map<string, eAIFSMType>();
-	private static ref array<ref eAIFSMType> m_Types = new array<ref eAIFSMType>();
+	static int s_ReloadNumber = 0;
+	
+	private static autoptr map<string, eAIFSMType> m_SpawnableTypes = new map<string, eAIFSMType>();
+	private static autoptr array<autoptr eAIFSMType> m_Types = new array<autoptr eAIFSMType>();
 
 	string m_ClassName;
 	ScriptModule m_Module;
 
-	ref array<string> m_Variables;
-	ref array<ref eAIStateType> m_States;
-	ref array<ref eAITransitionType> m_Transitions;
+	autoptr array<string> m_Variables = new array<string>();
+	autoptr array<autoptr eAIStateType> m_States = new array<autoptr eAIStateType>();
+	autoptr array<autoptr eAITransitionType> m_Transitions = new array<autoptr eAITransitionType>();
 
 	void eAIFSMType()
 	{
@@ -16,9 +18,14 @@ class eAIFSMType
 		auto trace = CF_Trace_0(this, "eAIFSMType");
 		#endif
 		
-		m_Variables = new array<string>();
-		m_States = new array<ref eAIStateType>();
-		m_Transitions = new array<ref eAITransitionType>();
+	}
+
+	static void UnloadAll()
+	{
+		s_ReloadNumber++;
+		
+		m_Types.Clear();
+		m_SpawnableTypes.Clear();
 	}
 
 	static bool Contains(string name)
@@ -121,7 +128,7 @@ class eAIFSMType
 		CF_XML.ReadDocument(actualFilePath, document);
 		
 		string name = document.Get("fsm")[0].GetAttribute("name").ValueAsString();
-		string class_name = "eAI_" + name + "_FSM";
+		string class_name = "eAI_" + name + "_FSM_" + s_ReloadNumber;
 
 		auto files = document.Get("fsm");
 		files = files[0].GetTag("files");
@@ -143,7 +150,7 @@ class eAIFSMType
 		states = states[0].GetTag("states");
 		auto defaultStateAttrib = states[0].GetAttribute("default");
 		string defaultState = "";
-		if (defaultStateAttrib)	defaultState = "eAI_" + name + "_" + defaultStateAttrib.ValueAsString() + "_State";
+		if (defaultStateAttrib)	defaultState = "eAI_" + name + "_" + defaultStateAttrib.ValueAsString() + "_State_" + eAIFSMType.s_ReloadNumber;
 		states = states[0].GetTag("state");
 
 		foreach (auto state : states)
