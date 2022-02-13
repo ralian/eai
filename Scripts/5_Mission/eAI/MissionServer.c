@@ -2,6 +2,9 @@ modded class MissionServer
 {
 	void MissionServer()
 	{
+        MakeDirectory("$profile:eAI/");
+        MakeDirectory("$profile:eAI/Loadout/");
+
 		GetDayZGame().eAICreateManager();
 
 		CF_Log.Info("eAI - Loaded Server Mission");

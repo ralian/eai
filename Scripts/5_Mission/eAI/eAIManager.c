@@ -66,7 +66,9 @@ class eAIManager extends eAIManagerImplement
 
 		eAIBase ai;
 		if (!Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), owner.GetPosition()))) return null;
-
+		
+		Print("My name is " + GetRandomName());
+		
 		ai.SetGroup(eAIGroup.GetGroupByLeader(owner));
 
 		HumanLoadout.Apply(ai, loadout);
