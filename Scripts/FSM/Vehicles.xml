@@ -42,9 +42,6 @@
 				auto leader = group.GetLeader();
 				Class.CastTo(transport, leader.GetParent());
 
-				Print(transport);
-				Print(seat);
-
 				unit.Notify_Transport(transport, seat);
 			</event_entry>
 			<event_exit>

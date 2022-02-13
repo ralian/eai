@@ -15,19 +15,19 @@ class eAICommandVehicle extends eAICommandBase
 	const float TIME_SWITCH_SEAT = 1.0;
 
 	private Transport m_Vehicle;
-	private Car m_Car;
+	private CarScript m_Car;
 
 	private int m_SeatIndex;
 	private int m_SeatAnim;
 	private int m_VehicleType;
-    private bool m_FromUnconscious;
+	private bool m_FromUnconscious;
 
 	private int m_State;
 	private int m_PreviousState;
 
 	private float m_Time;
 	private float m_TimeMax;
-	
+
 	private float m_TranslationSpeed;
 
 	private vector m_StartTransform[4];
@@ -46,24 +46,28 @@ class eAICommandVehicle extends eAICommandBase
 	void eAICommandVehicle(eAIBase unit, eAIAnimationST st, Transport vehicle, int seatIdx, int seat_anim, bool fromUnconscious)
 	{
 		m_Vehicle = vehicle;
-		m_Car = Car.Cast(m_Vehicle);
+		Class.CastTo(m_Car, m_Vehicle);
 
 		m_SeatIndex = seatIdx;
 		m_SeatAnim = seat_anim;
 
-        m_FromUnconscious = fromUnconscious;
-		
+		m_FromUnconscious = fromUnconscious;
+
 		m_State = STATE_UNKNOWN;
 		m_PreviousState = STATE_UNKNOWN;
 	}
 
-	override void SetLookDirection(vector direction)
+	override void SetLookDirection(vector pDirection)
 	{
-		vector angles = direction.VectorToAngles();
+		vector angles = pDirection.VectorToAngles();
 		m_LookLR = angles[0];
 		m_LookUD = angles[1];
-		if (m_LookLR > 180) m_LookLR = m_LookLR - 360;
-		if (m_LookUD > 180) m_LookUD = m_LookUD - 360;
+
+		if (m_LookLR > 180)
+			m_LookLR = m_LookLR - 360;
+		if (m_LookUD > 180)
+			m_LookUD = m_LookUD - 360;
+
 		m_Look = (Math.AbsFloat(m_LookLR) > 0.01) || (Math.AbsFloat(m_LookUD) > 0.01);
 	}
 
@@ -92,7 +96,7 @@ class eAICommandVehicle extends eAICommandBase
 
 		dBodyActive(m_Unit, ActiveState.ALWAYS_ACTIVE);
 		dBodyEnableGravity(m_Unit, true);
-		
+
 		if (!m_KeepInVehicleSpaceAfterLeave)
 		{
 			vector tmPlayer[4];
@@ -101,7 +105,7 @@ class eAICommandVehicle extends eAICommandBase
 			m_Unit.GetTransformWS(tmPlayer);
 			m_Vehicle.GetTransform(tmVehicle);
 			Math3D.MatrixMultiply4(tmVehicle, tmPlayer, tmTarget);
-			
+
 			m_Unit.UnlinkFromLocalSpace();
 			m_Unit.SetTransform(tmTarget);
 		}
@@ -119,7 +123,7 @@ class eAICommandVehicle extends eAICommandBase
 			m_Unit.GetTransformWS(tmPlayer);
 			m_Vehicle.GetTransform(tmTarget);
 			Math3D.MatrixInvMultiply4(tmTarget, tmPlayer, tmLocal);
-			
+
 			m_Unit.LinkToLocalSpaceOf(m_Vehicle, tmLocal);
 		}
 
@@ -156,42 +160,42 @@ class eAICommandVehicle extends eAICommandBase
 		m_Table.SetVehicleThrottle(this, m_Car.GetController().GetThrust() + 0);
 		m_Table.SetVehicleClutch(this, m_ClutchState);
 		m_Table.SetVehicleBrake(this, m_Car.GetController().GetBrake() != 0.0);
-		
+
 		switch (m_State)
 		{
-			case STATE_GETTING_IN:
-				m_TimeMax = TIME_GET_IN;
-				break;
-			case STATE_GETTING_OUT:
-				m_TimeMax = TIME_GET_OUT;
-				break;
-			case STATE_JUMPED_OUT:
-			case STATE_JUMPING_OUT:
-				m_TimeMax = TIME_JUMP_OUT;
-				break;
-			case STATE_SWITCHING_SEAT:
-				m_TimeMax = TIME_SWITCH_SEAT;
-				break;
+		case STATE_GETTING_IN:
+			m_TimeMax = TIME_GET_IN;
+			break;
+		case STATE_GETTING_OUT:
+			m_TimeMax = TIME_GET_OUT;
+			break;
+		case STATE_JUMPED_OUT:
+		case STATE_JUMPING_OUT:
+			m_TimeMax = TIME_JUMP_OUT;
+			break;
+		case STATE_SWITCHING_SEAT:
+			m_TimeMax = TIME_SWITCH_SEAT;
+			break;
 		}
 
 		if (m_State != m_PreviousState)
 		{
 			m_TranslationSpeed = vector.Distance(m_StartTransform[3], m_TargetTransform[3]) / m_TimeMax;
-			
+
 			switch (m_State)
 			{
-				case STATE_GETTING_IN:
-					m_Table.CallVehicleGetIn(this, m_SeatAnim);
-					break;
-				case STATE_GETTING_OUT:
-					m_Table.CallVehicleGetOut(this);
-					break;
-				case STATE_JUMPING_OUT:
-					m_Table.CallVehicleJumpOut(this);
-					break;
-				case STATE_SWITCHING_SEAT:
-					m_Table.CallVehicleSwitchSeat(this, m_SeatAnim);
-					break;
+			case STATE_GETTING_IN:
+				m_Table.CallVehicleGetIn(this, m_SeatAnim);
+				break;
+			case STATE_GETTING_OUT:
+				m_Table.CallVehicleGetOut(this);
+				break;
+			case STATE_JUMPING_OUT:
+				m_Table.CallVehicleJumpOut(this);
+				break;
+			case STATE_SWITCHING_SEAT:
+				m_Table.CallVehicleSwitchSeat(this, m_SeatAnim);
+				break;
 			}
 		}
 	}
@@ -202,33 +206,34 @@ class eAICommandVehicle extends eAICommandBase
 		{
 			return;
 		}
-		
+
 		vector translation;
-		float rotation[4]
-		
+		float rotation[4];
+
 		if (m_State == STATE_JUMPING_OUT && m_Table.IsLeaveVehicle(this))
 		{
 			m_State = STATE_JUMPED_OUT;
-			
+
 			LeaveVehicle();
-			
+
 			return;
 		}
-		
+
 		float speedT = m_TranslationSpeed;
 
 		vector tmPlayer[4];
 		m_Unit.GetTransformWS(tmPlayer);
 		translation = vector.Direction(tmPlayer[3], m_TargetTransform[3]);
 		translation = translation.InvMultiply3(m_TargetTransform);
-		
+
 		float lenT = translation.Normalize();
-		if (lenT < pDt) speedT *= lenT;
-		
+		if (lenT < pDt)
+			speedT *= lenT;
+
 		translation = translation * speedT * pDt;
-		
+
 		Math3D.MatrixToQuat(m_TargetTransform, rotation);
-		
+
 		PrePhys_SetRotation(rotation);
 		PrePhys_SetTranslation(translation);
 	}
@@ -239,25 +244,25 @@ class eAICommandVehicle extends eAICommandBase
 
 		switch (m_State)
 		{
-			case STATE_GETTING_IN:
-				if (m_Time > TIME_GET_IN)
-					m_State = STATE_AWAIT;
-				break;
-			case STATE_GETTING_OUT:
-				if (m_Time > TIME_GET_OUT)
-					m_State = STATE_FINISH;
-				break;
-			case STATE_JUMPED_OUT:
-			case STATE_JUMPING_OUT:
-				if (m_Time > TIME_JUMP_OUT)
-					m_State = STATE_FINISH;
-				break;
-			case STATE_SWITCHING_SEAT:
-				if (m_Time > TIME_SWITCH_SEAT)
-					m_State = STATE_AWAIT;
-				break;
+		case STATE_GETTING_IN:
+			if (m_Time > TIME_GET_IN)
+				m_State = STATE_AWAIT;
+			break;
+		case STATE_GETTING_OUT:
+			if (m_Time > TIME_GET_OUT)
+				m_State = STATE_FINISH;
+			break;
+		case STATE_JUMPED_OUT:
+		case STATE_JUMPING_OUT:
+			if (m_Time > TIME_JUMP_OUT)
+				m_State = STATE_FINISH;
+			break;
+		case STATE_SWITCHING_SEAT:
+			if (m_Time > TIME_SWITCH_SEAT)
+				m_State = STATE_AWAIT;
+			break;
 		}
-		
+
 		m_PreviousState = m_State;
 
 		return m_State != STATE_FINISH;
@@ -275,7 +280,7 @@ class eAICommandVehicle extends eAICommandBase
 	}
 
 	void JumpOutVehicle()
-	{		
+	{
 		vector pos;
 		vector dir;
 		m_Vehicle.CrewEntry(m_SeatIndex, pos, dir);

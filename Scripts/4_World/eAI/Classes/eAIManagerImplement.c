@@ -7,11 +7,72 @@ enum eAIProcessingState
 
 class eAIManagerImplement extends eAIManagerBase
 {
+	private static eAIManagerImplement m_Instance_4; //! weak ref
+
+	private ref eAIRoadNetwork m_Network;
+	private bool m_NetworkGenerate;
+	private vector m_NetworkPosition;
+	private float m_NetworkRadius;
+
+	void eAIManagerImplement()
+	{
+		m_Instance_4 = this;
+		
+		m_CommandManager = new eAICommandManagerClient();
+
+		m_Network = new eAIRoadNetwork();
+		//m_Network.Init();
+	}
+
 	override void OnUpdate(bool doSim, float timeslice)
-    {
+	{
 		super.OnUpdate(doSim, timeslice);
 
 		eAIGroup.UpdateAll(timeslice);
+
+		if (GetGame().IsClient() || !GetGame().IsMultiplayer())
+		{
+			DayZPlayerImplement player;
+			Class.CastTo(player, GetGame().GetPlayer());
+
+			SetInGroup(player && player.GetGroup() != null);
+		}
+
+/*
+		if (m_NetworkGenerate)
+		{
+			m_NetworkGenerate = false;
+
+			m_Network.NotifyGenerate(m_NetworkPosition, m_NetworkRadius);
+		}
+		
+		if (GetGame().GetInput().LocalPress("UAFire"))
+		{			
+			vector pos = GetGame().GetCurrentCameraPosition();
+			float radius = 500;
+			
+			m_Network.DS_Destroy();
+			
+			GenerateRoadNetwork(pos, radius);
+		}
+*/
+	}
+
+	static eAIManagerImplement Get4()
+	{
+		return m_Instance_4;
+	}
+
+	void GenerateRoadNetwork(vector position, float radius)
+	{
+		m_NetworkGenerate = true;
+		m_NetworkPosition = position;
+		m_NetworkRadius = radius;
+	}
+
+	eAIRoadNetwork GetRoadNetwork()
+	{
+		return m_Network;
 	}
 
 	/*
@@ -19,22 +80,22 @@ class eAIManagerImplement extends eAIManagerBase
 	private autoptr array<eAIProcessingState> m_AIStates = {};
 	private autoptr array<ref eAIPlayerHandler> m_AI = {};
 
-    private int m_ProcessingIndex = 0;
+	private int m_ProcessingIndex = 0;
 	private int m_MaxProcessingAI = 0;
 	private float m_MinimumTime = 0.5; // 0.050; // 20hz
 	private float m_ProcessingTime = 0;
 
-    override ref Class AddAI(DayZPlayer entity)
-    {
-        eAIPlayerHandler handler = new eAIPlayerHandler(PlayerBase.Cast(entity));
-        m_AI.Insert(handler); // insert the new handler to the back of the array
-        return handler;
-    }
+	override Class AddAI(DayZPlayer entity)
+	{
+		eAIPlayerHandler handler = new eAIPlayerHandler(PlayerBase.Cast(entity));
+		m_AI.Insert(handler); // insert the new handler to the back of the array
+		return handler;
+	}
 	
 	override void OnUpdate(bool doSim, float timeslice)
-    {
-        // don't process if we aren't the server
-        if (!GetGame().IsServer()) return;
+	{
+		// don't process if we aren't the server
+		if (!GetGame().IsServer()) return;
 
 		m_ProcessingTime += timeslice;
 		

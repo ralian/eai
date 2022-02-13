@@ -1,0 +1,243 @@
+$AnimGraph 7 {
+	$Sheet "Tests" {
+		$Node AnimNodeIK2Target {
+			 "AnimNodeIK2Target" "" "TestBlendTS0" "LFootIKTarget = LeftUpLeg, LeftUpLegRoll, LeftLeg, LeftLegRoll, LeftFoot
+RFootIKTarget = RightUpLeg, RightUpLegRoll, RightLeg, RightLegRoll, RightFoot"
+			$EditorData {
+				#EditorPos -7.8000002 -11.6000004
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "TestBlendMotion" ""
+			$States 2 {
+				$State {
+					 "NewState" "" "TestBlendMotion_Run" "" "normtime" 0
+					$EditorData {
+						#EditorPos -11.5 0.6
+					}
+				}
+				$State {
+					 "NewState0" "" "TestBlendMotion_Run2" "" "notime" 0
+					$EditorData {
+						#EditorPos -8.6999998 0.6
+					}
+				}
+			}
+			$Transitions 2 {
+				$Transition {
+					 "NewState" "NewState0" "MovementSpeed > 0" "0.5" "" 25 "S"
+				}
+				$Transition {
+					 "NewState0" "NewState" "MovementSpeed == 0" "0.5" "" 7 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos -11.6999998 2.2
+			}
+		}
+		$Node AnimNodeSourceSync {
+			 "TestBlendMotion_Run" "" "Locomotion.Erc.RunB" "loop" "RunSprint"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -11.8000002 -1.8000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "TestBlendMotion_Run2" "" "Locomotion.Idle" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -8.5 -1.7
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "TestBlendT" "" "TestBlendTIdle" "TestBlendTMovement2" "HasVariableChanged(MovementSpeed,0)" "HasVariableChanged(MovementSpeed,1.0)" "" 0.3 "S" 3
+			$EditorData {
+				#EditorPos -5.3000002 -8.5
+			}
+		}
+		$Node AnimNodeIK2 {
+			 "TestBlendTIKMain" "" "TestBlendT" "//! global values
+weight = TestFloat
+
+LFootIKTarget 
+chain = LeftUpLeg, LeftUpLegRoll, LeftLeg, LeftLegRoll, LeftFoot
+chainAxis = +x
+
+RFootIKTarget 
+chain = RightUpLeg, RightUpLegRoll, RightLeg, RightLegRoll, RightFoot
+chainAxis = -x"
+			$EditorData {
+				#EditorPos -5.3000002 -7.3000002
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "TestBlendTIdle" "" "AnimNodeIK2Target" "TestBlendTLook" "" "" "Look" 0.3 "S" 1
+			$EditorData {
+				#EditorPos -6.5999999 -9.9000006
+			}
+		}
+		$Node AnimNodePose2 {
+			 "TestBlendTLook" "" "Locomotion.Erc.Look" "LookDirY" "LookDirX" "Y(-90): X(-180)= 0, X(-90) = 1, X(0) = 2, X(90) = 3, X(180) = 4
+Y(0): X(-180) = 5, X(-90) = 6, X(0) = 7, X(90) = 8, X(180) = 9
+Y(90): X(-180) = 10, X(-90) = 11, X(0) = 12, X(90) = 13, X(180) = 14"
+			$EditorData {
+				#EditorPos -5.2000003 -11.6999998
+			}
+		}
+		$Node AnimNodeBlendTAdd {
+			 "TestBlendTMovement2" "" "TestBlendTS1" "MoveLookPose" "" "" "Look" 0.3 "S" 0
+			$EditorData {
+				#EditorPos -2.3 -10.0
+			}
+		}
+		$Node AnimNodeSource {
+			 "TestBlendTS0" "" "Locomotion.Erc.Idle" "loop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -8.0 -13.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "TestBlendTS1" "" "Locomotion.Erc.RunF" "loop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -2.4000001 -11.8000002
+			}
+		}
+		$Node AnimNodeSource {
+			 "TestHeavyHit" "" "Damage.Erc.Heavy B" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 0.0 -1.3000001
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "TestNTimePassed" ""
+			$States 2 {
+				$State {
+					 "StateRunF" "" "TestRunF" "true" "normtime" 0
+					$EditorData {
+						#EditorPos -3.1000001 0.7
+					}
+				}
+				$State {
+					 "HitTest" "" "TestHeavyHit" "" "realtime" 0
+					$EditorData {
+						#EditorPos -0.3 0.7
+					}
+				}
+			}
+			$Transitions 2 {
+				$Transition {
+					 "StateRunF" "HitTest" "LowerNTimePassed(0.5) && RandomPerc(50)" "0.3" "" 1 "S"
+				}
+				$Transition {
+					 "HitTest" "StateRunF" "RemainingTimeLess(0.3)" "0.3" "" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos -2.1000001 2.4000001
+			}
+		}
+		$Node AnimNodeSourceSync {
+			 "TestRunF" "" "Locomotion.Erc.RunB" "loop" "RunSprint"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -3.2 -1.3000001
+			}
+		}
+		$Node AnimNodeSwitch {
+			 "TestSwitch" "" 0 0.0
+			$switchitems 3 {
+				$si {
+					 "TestSwitchS0" "true" "50%=0, 50%=1"
+				}
+				$si {
+					 "TestSwitchS1" "false" "100%=2"
+				}
+				$si {
+					 "TestSwitchS2" "false" "50%=2, 50%=0"
+				}
+			}
+			$EditorData {
+				#EditorPos 1.1 9.8000002
+			}
+		}
+		$Node AnimNodeSwitch {
+			 "TestSwitchN" "" 1 0.35
+			$switchitems 2 {
+				$si {
+					 "TestSwitchNS0" "true" "100%=1"
+				}
+				$si {
+					 "TestSwitchNS1" "" "100%=0"
+				}
+			}
+			$EditorData {
+				#EditorPos 6.7000003 -6.0
+			}
+		}
+		$Node AnimNodeSourceSync {
+			 "TestSwitchNS0" "" "Locomotion.Erc.WalkF" "loop" "Walk"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 5.8000002 -6.9000001
+			}
+		}
+		$Node AnimNodeSourceSync {
+			 "TestSwitchNS1" "" "Locomotion.Erc.RunF" "loop" "RunSprint"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 8.0 -6.9000001
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "TestSwitchNSM" ""
+			$States 1 {
+				$State {
+					 "NewState" "" "TestSwitchN" "" "normtime" 0
+					$EditorData {
+						#EditorPos 6.5 -3.9000001
+					}
+				}
+			}
+			$Transitions 0 {
+			}
+			$EditorData {
+				#EditorPos 5.9000001 -2.8
+			}
+		}
+		$Node AnimNodeSource {
+			 "TestSwitchS0" "" "Locomotion.Erc.RunF" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 4.0 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "TestSwitchS1" "" "Locomotion.Erc.WalkB" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 4.0 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "TestSwitchS2" "" "Combat.Erc.StrikeL01" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 4.0 7.8000002
+			}
+		}
+	}
+}

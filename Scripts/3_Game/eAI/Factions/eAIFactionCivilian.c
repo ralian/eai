@@ -5,7 +5,7 @@ class eAIFactionCivilian : eAIFaction
 		m_Name = "Civilian";
 	}
 
-	override bool IsFriendly(eAIFaction other)
+	override bool IsFriendly(notnull eAIFaction other)
 	{
 		return true;
 	}

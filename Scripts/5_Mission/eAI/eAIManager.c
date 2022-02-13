@@ -14,12 +14,20 @@
 
 class eAIManager extends eAIManagerImplement
 {
+	private static eAIManager m_Instance_5; //! weak ref
+
 	autoptr eAIAimingProfileManager m_AimingManager;
 	
 	const vector ZOMBIE_OFFSET = "20 0 0";
 	
     void eAIManager()
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "eAIManager");
+		#endif
+
+		m_Instance_5 = this;
+
 		m_AimingManager = new eAIAimingProfileManager();
 		
 		GetRPCManager().AddRPC("eAI", "SpawnAI", this, SingeplayerExecutionType.Server);
@@ -30,6 +38,15 @@ class eAIManager extends eAIManagerImplement
 		GetRPCManager().AddRPC("eAI", "ReqFormRejoin", this, SingeplayerExecutionType.Server);
 		GetRPCManager().AddRPC("eAI", "ReqFormStop", this, SingeplayerExecutionType.Server);
     }
+
+	static eAIManager Get5()
+	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0("eAIManager", "Get5");
+		#endif
+		
+		return m_Instance_5;
+	}
 	
 	override void OnUpdate(bool doSim, float timeslice)
 	{
@@ -42,7 +59,11 @@ class eAIManager extends eAIManagerImplement
 	//! @param owner Who is the manager of this AI
 	//! @param formOffset Where should this AI follow relative to the formation?
 	eAIBase SpawnAI_Helper(PlayerBase owner, string loadout = "SoldierLoadout.json")
-	{		
+	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "SpawnAI_Helper");
+		#endif
+
 		eAIBase ai;
 		if (!Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), owner.GetPosition()))) return null;
 		
@@ -57,6 +78,10 @@ class eAIManager extends eAIManagerImplement
 	
 	eAIBase SpawnAI_Sentry(vector pos, string loadout = "SoldierLoadout.json")
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "SpawnAI_Sentry");
+		#endif
+
 		eAIBase ai;
 		if (!Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), pos))) return null;
 
@@ -67,6 +92,10 @@ class eAIManager extends eAIManagerImplement
 	
 	eAIBase SpawnAI_Patrol(vector pos, string loadout = "SoldierLoadout.json")
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "SpawnAI_Patrol");
+		#endif
+
 		eAIBase ai;
 		if (!Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), pos))) return null;
 
@@ -78,51 +107,51 @@ class eAIManager extends eAIManagerImplement
 	// Server Side: This RPC spawns a helper AI next to the player, and tells them to join the player's formation.
 	void SpawnAI(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "SpawnAI");
+		#endif
+
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
+
+		if (GetGame().IsMultiplayer())
+		{
+			string guid = sender.GetPlainId();
+			int idx = eAISettings.GetAdmins().Find(guid);
+			if (idx == -1) return;
+		}
 		
 		if(type == CallType.Server )
 		{
 			if (!GetGame().IsMultiplayer()) data.param1 = GetGame().GetPlayer();
 			
-            Print("eAI: spawn entity RPC called.");
+            CF_Log.Debug("eAI: spawn entity RPC called.");
 			SpawnAI_Helper(PlayerBase.Cast(data.param1));
 		}
-	}
-	
-	// Client Side: Link the given AI
-	void HCLinkObject(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
-	{
-		Param1<PlayerBase> data;
-        if ( !ctx.Read( data ) ) return;
-		if(type == CallType.Server) {
-            Print("HC: Linking object " + data.param1);
-			eAIObjectManager.Register(data.param1);
-        }
-	}
-	
-	// Client Side: Link the given AI
-	void HCUnlinkObject(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
-	{
-		Param1<PlayerBase> data;
-        if ( !ctx.Read( data ) ) return;
-		if(type == CallType.Server) {
-            Print("HC: Unlinking object " + data.param1);
-			eAIObjectManager.Unregister(data.param1);
-        }
 	}
 	
 	// Server Side: This RPC spawns a zombie. It's actually not the right way to do it. But it's only for testing.
 	// BUG: this has sometimes crashed us before. Not sure why yet.
 	void SpawnZombie(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "SpawnZombie");
+		#endif
+
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
-		
+
+		if (GetGame().IsMultiplayer())
+		{
+			string guid = sender.GetPlainId();
+			int idx = eAISettings.GetAdmins().Find(guid);
+			if (idx == -1) return;
+		}
+
 		if(type == CallType.Server) {
 			if (!GetGame().IsMultiplayer()) Class.CastTo(data.param1, GetGame().GetPlayer());
 			
-            Print("eAI: SpawnZombie RPC called.");
+            CF_Log.Debug("eAI: SpawnZombie RPC called.");
 			GetGame().CreateObject("ZmbF_JournalistNormal_Blue", data.param1.GetPosition() + ZOMBIE_OFFSET, false, true, true);
         }
 	}
@@ -130,26 +159,42 @@ class eAIManager extends eAIManagerImplement
 	// Server Side: Delete AI.
 	void ClearAllAI(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "ClearAllAI");
+		#endif
+
 		Param1<PlayerBase> data;
         if (!ctx.Read(data)) return;
+		
+		if (GetGame().IsMultiplayer())
+		{
+			string guid = sender.GetPlainId();
+			int idx = eAISettings.GetAdmins().Find(guid);
+			if (idx == -1) return;
+		}
+		
 		if (type == CallType.Server)
 		{
 			if (!GetGame().IsMultiplayer()) Class.CastTo(data.param1, GetGame().GetPlayer());
 			
-            Print("eAI: ClearAllAI called.");
+            CF_Log.Debug("eAI: ClearAllAI called.");
 			eAIGroup.DeleteAllAI();
 		}
 	}
 	
 	void ReqFormRejoin(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "ReqFormRejoin");
+		#endif
+
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server)
 		{
 			if (!GetGame().IsMultiplayer()) Class.CastTo(data.param1, GetGame().GetPlayer());
 			
-			Print("eAI: ReqFormRejoin called.");
+			CF_Log.Debug("eAI: ReqFormRejoin called.");
 			eAIGroup g = eAIGroup.GetGroupByLeader(DayZPlayerImplement.Cast(data.param1), false);
 			g.SetFormationState(eAIGroupFormationState.IN);
 		}
@@ -157,13 +202,17 @@ class eAIManager extends eAIManagerImplement
 	
 	void ReqFormStop(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "ReqFormStop");
+		#endif
+
 		Param1<DayZPlayer> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server)
 		{
 			if (!GetGame().IsMultiplayer()) Class.CastTo(data.param1, GetGame().GetPlayer());
 			
-			Print("eAI: ReqFormStop called.");
+			CF_Log.Debug("eAI: ReqFormStop called.");
 			eAIGroup g = eAIGroup.GetGroupByLeader(DayZPlayerImplement.Cast(data.param1), false);
 			g.SetFormationState(eAIGroupFormationState.NONE);
 		}
@@ -171,13 +220,17 @@ class eAIManager extends eAIManagerImplement
 	
 	void ReqFormationChange(CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "ReqFormationChange");
+		#endif
+
 		Param2<DayZPlayer, int> data;
         if (!ctx.Read(data)) return;
 		if(type == CallType.Server)
 		{
 			if (!GetGame().IsMultiplayer()) Class.CastTo(data.param1, GetGame().GetPlayer());
 			
-			Print("eAI: ReqFormationChange called.");
+			CF_Log.Debug("eAI: ReqFormationChange called.");
 			eAIGroup g = eAIGroup.GetGroupByLeader(DayZPlayerImplement.Cast(data.param1), false);
 			eAIFormation newForm;
 			switch (data.param2)

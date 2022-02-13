@@ -12,7 +12,7 @@ class HumanLoadout {
 	ref TStringArray Misc = {"CivilianBelt"};																			
 	ref TIntArray	 ClothesHealth = {10,100}; 						//Item health given. 10%->100%
 	
-	ref TStringArray WeaponMelee = {"MeleeBat"}; 	
+	ref TStringArray WeaponMelee = {"BarbedBaseballBat"}; 	
 	ref TStringArray WeaponRifle = {"Ruger1022"}; 	
 	ref TStringArray WeaponRifleMag = {"any"}; 	
 	ref TIntArray	 WeaponRifleMagCount = {1,3};
@@ -54,12 +54,22 @@ class HumanLoadout {
 	//	4) Create a dummy loadout (blue clothes) with the given LoadoutFile filename under "profile\eAI\loadout\".
 	
 	static void Apply(PlayerBase h, string LoadoutFile) {
+
+		if ( !FileExist(LoadoutSaveDir))
+		{
+	        MakeDirectory(LoadoutSaveDir);
+		}
 		
 		HumanLoadout Loadout = LoadData(LoadoutFile);
 		HumanLoadout.AddClothes(h, Loadout);
 
 		string weapon;
-		
+				
+		weapon = Loadout.WeaponMelee.GetRandomElement(); // Melee weapons seem to be "Inventory_Base"
+		if (weapon != "")
+		{
+			HumanLoadout.AddWeapon(h, Loadout, weapon);
+		}		
 		weapon = Loadout.WeaponRifle.GetRandomElement();
 		if (weapon != "")
 		{
@@ -189,7 +199,7 @@ class HumanLoadout {
 			{
 				optic = Loadout.WeaponHandgunOptic.GetRandomElement();
 			}
-			else
+			if (GetGame().IsKindOf(weapon, "Rifle_Base"))
 			{
 				optic = Loadout.WeaponOptic.GetRandomElement();
 			}
@@ -201,7 +211,7 @@ class HumanLoadout {
 			{
 				attachment = Loadout.WeaponHandgunAttachment.GetRandomElement();
 			}
-			else
+			if (GetGame().IsKindOf(weapon, "Rifle_Base"))
 			{
 				attachment = Loadout.WeaponAttachment.GetRandomElement();
 			}		
@@ -263,8 +273,8 @@ class HumanLoadout {
 		int maxcount = 1;
 		string mag = "";
 		
-		TStringArray magazines = {};				//Compatible magazines list
-		magazines = darc_ListMagazines(weapon);
+		TStringArray magazines = darc_ListMagazines(weapon);
+//		Print("mag---------------------" + magazines[1]);
 		
 		if (GetGame().IsKindOf(weapon, "Pistol_Base"))
 		{
@@ -285,8 +295,22 @@ class HumanLoadout {
 		}
 		else
 		{
-			Print("HumanLoadout: ERROR: Currently only 'any' is supported in mag definitions. Adding a random compatible mag.");
-			mag = magazines.GetRandomElement();
+			//Check that the magazine is compatible with the weapon.
+			bool magCompatible = false;
+			foreach (string s1: magazines)
+			{
+				if ( mag.Contains( s1 ) )
+				{
+					magCompatible = true;
+					break;
+				}
+			}				
+
+			if 	(!magCompatible)
+			{
+				Print("HumanLoadout: ERROR: " + mag + " is not compatible with " + weapon + ". Giving a random compatible one.");
+				mag = magazines.GetRandomElement();
+			}			
 		}
 
 		int i;
@@ -321,8 +345,11 @@ class HumanLoadout {
 		string LoadoutDefaultFileName = LoadoutDataDir + FileName;
 		
         ref HumanLoadout data = new ref HumanLoadout;
-		
-		//Check if the given Filename is with full patch to existing file.
+
+        Print("HumanLoadout: LoadData: Looking for " + FileName);
+				
+		//Fix the filename to have the right path.
+		//Check if the given Filename is with full path to existing file.
         if (FileExist(FileName))
 		{
 			LoadoutFileName = FileName;
@@ -332,8 +359,8 @@ class HumanLoadout {
 			LoadoutFileName = LoadoutSaveDir + FileName;			
 		}
 		
-        Print("HumanLoadout: LoadData: Looking for " + FileName);
-
+		//Load the loadout
+		//Check if the file exists under profile
         if (!FileExist(LoadoutFileName))
         {
 			//No Loadout file exists. Check if a default under Data\Loadout with same name exists.

@@ -14,7 +14,7 @@
 
 
 class eAIActionManager: ActionManagerBase
-{	
+{
 	protected bool								m_ActionPossible;
 	protected ref array<ref InventoryLocation>	m_ReservedInventoryLocations;
 	protected ref eAIInventoryActionHandler		m_InventoryActionHandler;
@@ -30,8 +30,38 @@ class eAIActionManager: ActionManagerBase
 	void eAIActionManager(PlayerBase player)
 	{		
 		m_InventoryActionHandler = new eAIInventoryActionHandler(player);
+
+		RegisterInputs(player);
 	}
 	
+	void RegisterInputs(PlayerBase player)
+	{
+		if (!m_RegistredInputsMap)
+		{
+			m_RegistredInputsMap = new TTypeNameActionInputMap;
+
+			for (int i = 0; i < m_ActionsArray.Count(); i++)
+			{	
+				ActionBase action = m_ActionsArray.Get(i);
+				typename input_type_name = action.GetInputType();
+				ref ActionInput ai;
+			
+				ai = ActionInput.Cast(m_RegistredInputsMap.Get(input_type_name));
+				if(!ai)
+				{
+					ai = ActionInput.Cast(input_type_name.Spawn());
+					m_RegistredInputsMap.Insert(input_type_name, ai);
+				}
+				action.SetInput(ai);
+			}
+		
+			foreach (auto type, auto ain : m_RegistredInputsMap)
+			{
+				ain.eAI_Init(player, this);
+			}
+		}
+	}
+
 	//------------------------------------------
 	//EVENTS 
 	//------------------------------------------
@@ -181,13 +211,9 @@ class eAIActionManager: ActionManagerBase
 		{
 			Debug.ActionLog("(O) Inventory unlock", action_data.m_Action.ToString() , "n/a", "UnlockInventory", action_data.m_Player.ToString() );
 		}
-		#ifdef DAYZ_1_11
-		if (action_data.m_Action)
-			action_data.m_Action.ClearInventoryReservation(action_data);
-		#else
+
 		if (action_data.m_Action)
 			action_data.m_Action.ClearInventoryReservationEx(action_data);
-		#endif
 	}
 	
 	protected void ActionStart(ActionBase action, ActionTarget target, ItemBase item, Param extra_data = NULL )
@@ -251,9 +277,8 @@ class eAIActionManager: ActionManagerBase
 
 	void HandleInputsOnActionStart(ActionBase action)
 	{
-		for (int i = 0; i < m_RegistredInputsMap.Count();i++)
+		foreach (auto type, auto ain : m_RegistredInputsMap)
 		{
-			ActionInput ain = m_RegistredInputsMap.GetElement(i);
 			if(action.GetInput() == ain)
 			{
 				ain.OnActionStart();
@@ -272,18 +297,16 @@ class eAIActionManager: ActionManagerBase
 	
 	void ResetInputsState()
 	{
-		for (int i = 0; i < m_RegistredInputsMap.Count();i++)
+		foreach (auto type, auto ain : m_RegistredInputsMap)
 		{
-			ActionInput ain = m_RegistredInputsMap.GetElement(i);
 			ain.Reset();
 		}
 	}
 	
 	void ResetInputsActions()
 	{
-		for (int i = 0; i < m_RegistredInputsMap.Count();i++)
+		foreach (auto type, auto ain : m_RegistredInputsMap)
 		{
-			ActionInput ain = m_RegistredInputsMap.GetElement(i);
 			ain.ActionsSelectReset();
 		}
 	}

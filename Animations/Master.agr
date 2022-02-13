@@ -1,0 +1,579 @@
+$AnimGraph 7 {
+	$Sheet "MasterControl" {
+		$Node AnimNodePose {
+			 "APoseSrc" "" "Locomotion.Erc.Idle" "0.0"
+			$EditorData {
+				#EditorPos 2.9000001 17.6000004
+			}
+		}
+		$Node AnimNodeBlend {
+			 "InventoryFacialB" "" "1.0" "InventoryIK" "InventoryFacialIdleAnim" 1
+			$EditorData {
+				#EditorPos 14.1000004 12.3000002
+			}
+		}
+		$Node AnimNodeSource {
+			 "InventoryFacialIdleAnim" "" "FacialIdle01" "loop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 15.1999998 11.3000002
+			}
+		}
+		$Node AnimNodeWeaponIK {
+			 "InventoryIK" "" "InventoryIdleG" "isbitset(ArmIK, 0)" "isbitset(ArmIK, 1)" "isbitset(ArmIK, 2)" 0.24 0.24 "eAI_AimIKX" "eAI_AimX" "WeaponIkTest" "// ik pose anim
+// (root - means RightHand - but right hand is not exported)
+//   |- RightHand_Dummy (where Weapon is)
+//   |                |-  LeftHandIKTarget  (where left hand is on weapon)
+//   |- RightHandOrigin ( inverse transform where hand originally was)
+
+// basic setup - 
+// hand - bone which represents hand holding weapon
+// weapon - bone which represents weapon node in hand
+// weaponrotator - bone - around which weapon rotates
+hand = RightHand
+weapon = RightHand_Dummy
+weaponrotator = RightArm 
+weaponaxis= -x
+
+//! 
+chain = RightArm, RightArmRoll, RightForeArm, RightForeArmRoll, RightHand
+chainaxis=-x
+secchain = LeftArm, LeftArmRoll, LeftForeArm, LeftForeArmRoll, LeftHand
+secchainaxis=+x
+
+ikpose_chainoffset = RightHandOrigin              						// bone in ikpose specifying where was 
+ikpose_weaponoffset = RightHand_Dummy      								// weapon offset from RHand 
+ikpose_secchainoffset = LeftHandIKTarget      							// secondary chain ik target offset (relative to weapon)
+ikpose_chainmiddledir = RightForeArmDirection							// hand to elbow direction (from hand)
+ikpose_chainmiddlediro = RightHandOrigin,RightForeArmDirectionOrigin	// original hand to elbow direction (from hand)
+ikpose_secchainmiddledir = LeftForeArmDirection							// sec hand to elbow direction (from ikpose_secchainoffset)
+ikpose_secchainmiddlediro = LeftHandOrigin,LeftForeArmDirectionOrigin	// original sec hand to elbow direction (from ikpose_secchainoffset)
+
+"
+			$EditorData {
+				#EditorPos 14.1000004 10.4000006
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "InventoryIdleG" "" "InventoryIdleInjG" "Locomotion" "Erc"
+			$EditorData {
+				#EditorPos 14.1000004 9.6000004
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "InventoryIdleInjG" "" "IdleAnim" "LocomotionInjured" "Erc"
+			$EditorData {
+				#EditorPos 14.1000004 8.8000002
+			}
+		}
+		$Node AnimNodeBlend {
+			 "MasterControl" "" "1.0" "APoseSrc" "MasterControl02" 0
+			$EditorData {
+				#EditorPos 4.0 19.1000004
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "MasterControl02" ""
+			$States 13 {
+				$State {
+					 "Movement" "" "LocomotionQBufferUse" "VehicleType == -1" "notime" 0
+					$EditorData {
+						#EditorPos 4.0 11.9000006
+					}
+				}
+				$State {
+					 "Vehicles" "" "VehicleMaster" "VehicleType > -1" "notime" 0
+					$EditorData {
+						#EditorPos 2.8 14.0
+					}
+				}
+				$State {
+					 "Falling" "" "FallMasterIK" "" "notime" 0
+					$EditorData {
+						#EditorPos 0.4 12.6000004
+					}
+				}
+				$State {
+					 "Deaths" "TagDeath" "DeathStanceSTM" "" "notime" 0
+					$EditorData {
+						#EditorPos 0.4 14.0
+					}
+				}
+				$State {
+					 "Swimming" "TagSwimming" "SwimmingHitQ" "" "notime" 0
+					$EditorData {
+						#EditorPos 2.8 9.9000006
+					}
+				}
+				$State {
+					 "Ladder" "" "LadderMaster" "" "realtime" 0
+					$EditorData {
+						#EditorPos 0.4 9.9000006
+					}
+				}
+				$State {
+					 "FullBodyActions" "" "FullBodyActionMaster" "" "notime" 0
+					$EditorData {
+						#EditorPos 7.5999999 11.9000006
+					}
+				}
+				$State {
+					 "FullBodyHits" "" "DamageFullBodyMaster" "" "realtime" 0
+					$EditorData {
+						#EditorPos 7.7000003 14.0
+					}
+				}
+				$State {
+					 "Melee" "" "MeleeMasterQ" "" "notime" 0
+					$EditorData {
+						#EditorPos 5.2000003 14.0
+					}
+				}
+				$State {
+					 "Unconscious" "TagUnconscious" "UnconsciousIK" "" "realtime" 0
+					$EditorData {
+						#EditorPos 5.2000003 9.9000006
+					}
+				}
+				$State {
+					 "VerticalMovement" "" "VerticalMaster" "" "notime" 0
+					$EditorData {
+						#EditorPos 0.4 11.1999998
+					}
+				}
+				$State {
+					 "FullBodyPneBActions" "TagProneBack" "FullBodyPneBActionMaster" "" "notime" 0
+					$EditorData {
+						#EditorPos 7.5999999 9.9000006
+					}
+				}
+				$State {
+					 "DeathOnBack" "" "DeathOnBackSTM" "false" "notime" 0
+					$EditorData {
+						#EditorPos -1.8000001 14.0
+					}
+				}
+			}
+			$Transitions 30 {
+				$Transition {
+					 "" "FullBodyActions" "IsCommand(CMD_FullBodyAction) && GetCommandI(CMD_FullBodyAction) == 72" "0.4" "" 0 "S"
+				}
+				$Transition {
+					 "" "Unconscious" "IsCommand(CMD_Unconscious) && !IsTag(\"TagSwimming\") && !IsTag(\"TagVehicle\")" "0.2" "" 1 "S"
+				}
+				$Transition {
+					 "Movement" "Vehicles" "IsCommand(CMD_Vehicle_GetIn)" "" "" 0 "S"
+				}
+				$Transition {
+					 "Vehicles" "Movement" "RemainingTimeLess(0.01)" "" "" 1 "S"
+				}
+				$Transition {
+					 "" "Swimming" "GetCommandI(CMD_Swim) == 1" "0.6" "" 0 "S"
+				}
+				$Transition {
+					 "Falling" "Movement" "RemainingTimeLess(0.1) || IsEvent(\"LandEarlyExit\")" "0.3" "0.8" 7 "S"
+				}
+				$Transition {
+					 "Falling" "Movement" "IsCommand(CMD_LandImmediate)" "0.25" "" 6 "S"
+				}
+				$Transition {
+					 "" "Deaths" "IsCommand(CMD_Death)
+&&
+!IsTag(\"TagVehicle\")
+&&
+!IsTag(\"TagProneBack\")
+&&
+!((eAI_AimX < -90 || eAI_AimX > 90) && Raised)" "0.1" "" 1 "S"
+				}
+				$Transition {
+					 "Swimming" "Movement" "GetCommandI(CMD_Swim) == 0" "0.5" "" 0 "S"
+				}
+				$Transition {
+					 "" "Falling" "IsCommand(CMD_Jump) || IsCommand(CMD_Fall)" "0.25" "" 1 "S"
+				}
+				$Transition {
+					 "Movement" "Ladder" "IsCommand(CMD_Ladder_Enter)" "0.3" "" 0 "S"
+				}
+				$Transition {
+					 "Ladder" "Movement" "RemainingTimeLess(0.2)" "0.2" "0.4" 1 "S"
+				}
+				$Transition {
+					 "Movement" "FullBodyPneBActions" "IsCommand(CMD_FullBodyAction) && IsTag(\"TagProneBack\") && !Raised" "0.3" "" 1 "S"
+				}
+				$Transition {
+					 "Movement" "FullBodyActions" "IsCommand(CMD_FullBodyAction) && !IsTag(\"TagProneBack\") && !Raised" "0.3" "" 1 "S"
+				}
+				$Transition {
+					 "FullBodyPneBActions" "Movement" "(RemainingTimeLess(0.8) || GetCommandI(CMD_InternalAction) == -2) && !IsTag(\"TagActionOnce\")" "0.6" "" 1 "S"
+				}
+				$Transition {
+					 "FullBodyActions" "Movement" "RemainingTimeLess(0.1) || GetCommandI(CMD_InternalAction) == -2" "0.3" "" 1 "S"
+				}
+				$Transition {
+					 "FullBodyHits" "Movement" "RemainingTimeLess(0.1)" "0.3" "" 1 "S"
+				}
+				$Transition {
+					 "" "FullBodyHits" "IsCommand(CMD_DamageHeavy) && !IsTag(\"TagSwimming\")" "0.1" "" 1 "S"
+				}
+				$Transition {
+					 "Movement" "Melee" "IsCommand(CMD_Melee_Attack2) && (Stance == 0 || (Stance == 2 && (!Raised || (Raised && ((eAI_AimX >= -65 && eAI_AimX <= 65) || (eAI_AimX <= -125 || eAI_AimX >= 125)))))) || IsCommand(CMD_Melee_Stealth) && Stance == 0" "0.3" "" 0 "S"
+				}
+				$Transition {
+					 "Melee" "Movement" "RemainingTimeLess(0.01) || IsCommand(CMD_Melee_Exit)" "0.35" "0.25" 1 "S"
+				}
+				$Transition {
+					 "Melee" "FullBodyHits" "IsCommand(CMD_DamageHeavy)" "0.3" "" 0 "S"
+				}
+				$Transition {
+					 "Unconscious" "Movement" "RemainingTimeLess(0.4)" "0.4" "" 1 "S"
+				}
+				$Transition {
+					 "Swimming" "Ladder" "IsCommand(CMD_Ladder_Enter)" "0.3" "" 0 "S"
+				}
+				$Transition {
+					 "VerticalMovement" "Movement" "RemainingTimeLess(0.1)" "0.4" "" 1 "S"
+				}
+				$Transition {
+					 "" "VerticalMovement" "IsCommand(CMD_Climb) || IsCommand(CMD_ClimbOver) " "0.2" "0.0" 1 "S"
+				}
+				$Transition {
+					 "Unconscious" "Swimming" "IsTag(\"TagUnconsciousWater\") && RemainingTimeLess(0.4)" "0.4" "" 1 "S"
+				}
+				$Transition {
+					 "FullBodyPneBActions" "Movement" "(RemainingTimeLess(0.4) || GetCommandI(CMD_InternalAction) == -2) && IsTag(\"TagActionOnce\")" "0.4" "" 1 "S"
+				}
+				$Transition {
+					 "Melee" "Movement" "IsEvent(\"CombatEarlyExitSprint\") && MovementSpeed > 0" "0.6" "0.5" 1 "S"
+				}
+				$Transition {
+					 "Vehicles" "Deaths" "false" "" "" 0 "S"
+				}
+				$Transition {
+					 "" "DeathOnBack" "IsCommand(CMD_Death)
+&&
+!IsTag(\"TagVehicle\")
+&&
+(IsTag(\"TagProneBack\")
+||
+((eAI_AimX < -90 || eAI_AimX > 90) && Raised))" "0.1" "" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 4.0999999 15.3000002
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "MasterInventoryState" ""
+			$States 1 {
+				$State {
+					 "Idle" "" "InventoryFacialB" "true" "notime" 0
+					$EditorData {
+						#EditorPos 14.1000004 14.0
+					}
+				}
+			}
+			$Transitions 0 {
+			}
+			$EditorData {
+				#EditorPos 12.4000006 15.1999998
+			}
+		}
+	}
+	$Sheet "Death" {
+		$Node AnimNodeSource {
+			 "BodyBackAnim" "" "Deaths.BodyBack" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 1.9 8.1000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "BodyFrontAnim" "" "Deaths.BodyFront" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 1.9 8.6999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "BodyLeftAnim" "" "Deaths.BodyLeft" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 1.9 7.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "BodyRightAnim" "" "Deaths.BodyRight" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 1.9 6.9000001
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "DeathCroG" "" "DeathSTM" "Deaths" "Cro"
+			$EditorData {
+				#EditorPos 1.4 17.3000011
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "DeathCroRasG" "" "DeathSTM" "Deaths" "CroRas"
+			$EditorData {
+				#EditorPos 1.4 16.6000004
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "DeathErcG" "" "DeathSTM" "Deaths" "Erc"
+			$EditorData {
+				#EditorPos -0.7 17.3000011
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "DeathErcRasG" "" "DeathSTM" "Deaths" "ErcRas"
+			$EditorData {
+				#EditorPos -0.7 16.6000004
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "DeathOnBackSTM" ""
+			$States 2 {
+				$State {
+					 "Low" "" "PneBackDeathLowG" "true" "realtime" 0
+					$EditorData {
+						#EditorPos -5.5 13.3000002
+					}
+				}
+				$State {
+					 "Ras" "" "PneBackDeathRasG" "false" "realtime" 0
+					$EditorData {
+						#EditorPos -2.7 13.3000002
+					}
+				}
+			}
+			$Transitions 0 {
+			}
+			$EditorData {
+				#EditorPos -5.7000003 14.5
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "DeathPneG" "" "DeathSTM" "Deaths" "Pne"
+			$EditorData {
+				#EditorPos 3.5 17.3000011
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "DeathPneRasG" "" "DeathSTM" "Deaths" "PneRas"
+			$EditorData {
+				#EditorPos 3.5 16.6000004
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "DeathSTM" ""
+			$States 12 {
+				$State {
+					 "BodyLeft" "" "BodyLeftAnim" "GetCommandI(CMD_Death) == 0 && inRange(GetCommandF(CMD_Death), -135.0, -45.0)" "realtime" 0
+					$EditorData {
+						#EditorPos 1.9 12.0
+					}
+				}
+				$State {
+					 "BodyFront" "" "BodyFrontAnim" "GetCommandI(CMD_Death) == 0 && inRange(GetCommandF(CMD_Death), -45.0, 45.0)" "realtime" 0
+					$EditorData {
+						#EditorPos 1.9 13.1999998
+					}
+				}
+				$State {
+					 "BodyRight" "" "BodyRightAnim" "GetCommandI(CMD_Death) == 0 && inRange(GetCommandF(CMD_Death), 45.0, 135.0)" "realtime" 0
+					$EditorData {
+						#EditorPos 1.9 11.4000006
+					}
+				}
+				$State {
+					 "BodyBack" "" "BodyBackAnim" "GetCommandI(CMD_Death) == 0 && !inRange(GetCommandF(CMD_Death), -135.0, 135.0)" "realtime" 0
+					$EditorData {
+						#EditorPos 1.9 12.6000004
+					}
+				}
+				$State {
+					 "FastFront" "" "FastFrontAnim" "GetCommandI(CMD_Death) == 10 && inRange(GetCommandF(CMD_Death), -45.0, 45.0)" "realtime" 0
+					$EditorData {
+						#EditorPos 8.0 13.1999998
+					}
+				}
+				$State {
+					 "FastBack" "" "FastBackAnim" "GetCommandI(CMD_Death) == 10 && !inRange(GetCommandF(CMD_Death), -135.0, 135.0)" "realtime" 0
+					$EditorData {
+						#EditorPos 8.0 12.6000004
+					}
+				}
+				$State {
+					 "FastLeft" "" "FastLeftAnim" "GetCommandI(CMD_Death) == 10 && inRange(GetCommandF(CMD_Death), -135.0, -45.0)" "realtime" 0
+					$EditorData {
+						#EditorPos 8.0 12.0
+					}
+				}
+				$State {
+					 "FastRight" "" "FastRightAnim" "GetCommandI(CMD_Death) == 10 && inRange(GetCommandF(CMD_Death), 45.0, 135.0)" "realtime" 0
+					$EditorData {
+						#EditorPos 8.0 11.4000006
+					}
+				}
+				$State {
+					 "FallingLanding" "" "FallingLandingDeathAnim" "GetCommandI(CMD_Death) == 12" "realtime" 0
+					$EditorData {
+						#EditorPos 12.4000006 13.1999998
+					}
+				}
+				$State {
+					 "UnconsciousLand" "" "UnconDeathLandAnim" "GetCommandI(CMD_Death) == 13" "realtime" 0
+					$EditorData {
+						#EditorPos 14.6000004 13.1999998
+					}
+				}
+				$State {
+					 "UnconsciousWater" "" "UnconDeathWaterAnim" "GetCommandI(CMD_Death) == 14" "realtime" 0
+					$EditorData {
+						#EditorPos 16.8000011 13.1999998
+					}
+				}
+				$State {
+					 "Swim" "" "SwimDeathAnim" "GetCommandI(CMD_Death) == 11" "realtime" 0
+					$EditorData {
+						#EditorPos 10.1999998 13.1999998
+					}
+				}
+			}
+			$Transitions 0 {
+			}
+			$EditorData {
+				#EditorPos 1.3000001 14.5
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "DeathStanceSTM" ""
+			$States 6 {
+				$State {
+					 "Erc" "" "DeathErcG" "Stance == 0 && !Raised" "notime" 0
+					$EditorData {
+						#EditorPos -0.7 19.7000008
+					}
+				}
+				$State {
+					 "Cro" "" "DeathCroG" "Stance == 1 && !Raised" "notime" 0
+					$EditorData {
+						#EditorPos 1.4 19.7000008
+					}
+				}
+				$State {
+					 "Pne" "" "DeathPneG" "Stance == 2 && !Raised" "notime" 0
+					$EditorData {
+						#EditorPos 3.5 19.7000008
+					}
+				}
+				$State {
+					 "ErcRas" "" "DeathErcRasG" "Stance == 0 && Raised" "notime" 0
+					$EditorData {
+						#EditorPos -0.7 19.0
+					}
+				}
+				$State {
+					 "CroRas" "" "DeathCroRasG" "Stance == 1 && Raised" "notime" 0
+					$EditorData {
+						#EditorPos 1.4 19.0
+					}
+				}
+				$State {
+					 "PneRas" "" "DeathPneRasG" "Stance == 2 && Raised" "notime" 0
+					$EditorData {
+						#EditorPos 3.5 19.0
+					}
+				}
+			}
+			$Transitions 0 {
+			}
+			$EditorData {
+				#EditorPos -1.2 21.2000008
+			}
+		}
+		$Node AnimNodeSource {
+			 "FallingLandingDeathAnim" "" "Deaths.Cro.Land" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 12.4000006 8.6999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "FastBackAnim" "" "Deaths.FastBack" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 8.0 8.1000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "FastFrontAnim" "" "Deaths.FastFront" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 8.0 8.6999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "FastLeftAnim" "" "Deaths.FastLeft" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 8.0 7.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "FastRightAnim" "" "Deaths.FastRight" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 8.0 6.9000001
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "PneBackDeathLowG" "" "BodyFrontAnim" "Deaths" "PneBack"
+			$EditorData {
+				#EditorPos -5.5 11.6000004
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "PneBackDeathRasG" "" "BodyFrontAnim" "Deaths" "PneBackRas"
+			$EditorData {
+				#EditorPos -2.7 11.6000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "SwimDeathAnim" "" "Deaths.Cro.Swim" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 10.1999998 8.6999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "UnconDeathLandAnim" "" "Deaths.Cro.UnconsciousLand" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 14.6000004 8.6999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "UnconDeathWaterAnim" "" "Deaths.Cro.UnconsciousWater" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 16.8000011 8.6999998
+			}
+		}
+	}
+}

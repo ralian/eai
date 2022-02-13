@@ -20,7 +20,7 @@ TStringArray darc_ListWeapons(string cfg) {
         string name;
         GetGame().ConfigGetChildName("CfgWeapons", i, name);
 
-		//Print("Weapon name: " + name);
+		Print("Weapon name: " + name);
  
 		//Ignore possible empty ones
         if (name == string.Empty)
@@ -47,14 +47,19 @@ TStringArray darc_ListWeapons(string cfg) {
 //--------------------------------------------------------------
 // darc_ListMagazines
 //
-// List all compatible magazines for weapon.
+// List all compatible magazines for weapon. If magazines are not found, returns compatible ammo.
 //
-// TBD: If magazines are not available, this should return just ammo. This could 
-//      work for launchers.
+// NOTE: This function needs more testing for the ammo case. Might work for launchers too.
 
 TStringArray darc_ListMagazines(string weapon) {
 	TStringArray magazines = {};
-	GetGame().ConfigGetTextArray("CfgWeapons " + weapon + " magazines", magazines);		
+	GetGame().ConfigGetTextArray("CfgWeapons " + weapon + " magazines", magazines);
+	
+	if(magazines.Count() == 0)
+	{
+		GetGame().ConfigGetTextArray("CfgWeapons " + weapon + " chamberableFrom", magazines);
+	}
+	
 	return magazines;
 }
 
@@ -134,7 +139,10 @@ TStringArray darc_ListAttachments(string weapon) {
 //
 // Credits: Hlynge
 
-bool endsWith(string str, string suffix) {
+bool endsWith(string str, string suffix) 
+{
+//	Print("endsWith: " + str);
+	
 	if (str.Length() < suffix.Length())
     	return false;
 	return str.Substring(str.Length()-suffix.Length(),suffix.Length()) == suffix;

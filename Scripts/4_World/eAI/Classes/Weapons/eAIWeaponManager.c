@@ -135,7 +135,6 @@ class eAIWeaponManager extends WeaponManager
 		
 			if(m_canEnd)
 			{
-			
 				if(m_WeaponInHand.IsIdle())
 				{
 					OnWeaponActionEnd();
@@ -149,7 +148,7 @@ class eAIWeaponManager extends WeaponManager
 					{
 						m_player.GetInputController().ResetADS();
 						m_player.ExitSights();
-						//Print("exitsights");
+						//CF_Log.Debug("exitsights");
 					}
 				
 					m_justStart = false;

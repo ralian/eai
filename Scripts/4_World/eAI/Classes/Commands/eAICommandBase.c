@@ -9,7 +9,7 @@ class eAICommandBase extends HumanCommandScript
 		m_Table = st;
 	}
 
-	void SetLookDirection(vector direction)	{ }
+	void SetLookDirection(vector pDirection) { }
 
 	//! Helper functions
 	void AnglesToQuat(vector angles, out float[] quat)

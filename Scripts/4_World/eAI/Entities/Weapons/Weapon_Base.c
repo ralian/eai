@@ -16,6 +16,10 @@ modded class Weapon_Base
 {
 	bool Hitscan(out EntityAI entity, out vector hitPosition, out int contactComponent)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "Hitscan");
+		#endif
+
 		eAIBase ai;
 		if (!Class.CastTo(ai, GetHierarchyRootPlayer())) return false;
 		
@@ -24,7 +28,7 @@ modded class Weapon_Base
 		
 		if (!ai.GetAimingProfile().Get(position, direction))
 		{
-			Print("Data invalid.");
+			CF_Log.Error("Data invalid.");
 
 			hitPosition = position;
 
@@ -51,6 +55,10 @@ modded class Weapon_Base
 
 	override void EEFired(int muzzleType, int mode, string ammoType)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_3(this, "EEFired").Add(muzzleType).Add(mode).Add(ammoType);
+		#endif
+
 		super.EEFired(muzzleType, mode, ammoType);
 
 		eAIBase ai;
@@ -71,12 +79,17 @@ modded class Weapon_Base
 		}
 	}
 	
-	/**@fn	ProcessWeaponEvent
+	/**
+	 * @fn	ProcessWeaponEvent
 	 * @brief	weapon's fsm handling of events
 	 * @NOTE: warning: ProcessWeaponEvent can be called only within DayZPlayer::HandleWeapons (or ::CommandHandler)
-	 **/
+	 */
 	override bool ProcessWeaponEvent(WeaponEventBase e)
 	{
+		#ifdef EAI_TRACE
+		auto trace = CF_Trace_1(this, "ProcessWeaponEvent").Add(e);
+		#endif
+
 		eAIBase ai;
 		if (Class.CastTo(ai, e.m_player))
 		{

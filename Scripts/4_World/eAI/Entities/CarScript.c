@@ -1,33 +1,47 @@
 modded class CarScript
 {
-    private autoptr eAITargetInformation m_TargetInformation;
+	private autoptr eAITargetInformation m_TargetInformation;
 
-    void CarScript()
-    {
-        m_TargetInformation = CreateTargetInformation();
-    }
+	void CarScript()
+	{
+#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "CarScript");
+#endif
 
-    protected eAITargetInformation CreateTargetInformation()
-    {
-        return new eAIEntityTargetInformation(this);
-    }
+		m_TargetInformation = CreateTargetInformation();
 
-    eAITargetInformation GetTargetInformation()
-    {
-        return m_TargetInformation;
-    }
+		// SetEventMask(EntityEvent.ALL);
+	}
+
+	protected eAITargetInformation CreateTargetInformation()
+	{
+#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "CreateTargetInformation");
+#endif
+
+		return new eAIEntityTargetInformation(this);
+	}
+
+	eAITargetInformation GetTargetInformation()
+	{
+#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "GetTargetInformation");
+#endif
+
+		return m_TargetInformation;
+	}
 
 	override void EEKilled(Object killer)
 	{
-        m_TargetInformation.OnDeath();
+		m_TargetInformation.OnDeath();
 
-        super.EEKilled(killer);
-    }
+		super.EEKilled(killer);
+	}
 
 	override void EEHitBy(TotalDamageResult damageResult, int damageType, EntityAI source, int component, string dmgZone, string ammo, vector modelPos, float speedCoef)
 	{
-        m_TargetInformation.OnHit();
+		m_TargetInformation.OnHit();
 
 		super.EEHitBy(damageResult, damageType, source, component, dmgZone, ammo, modelPos, speedCoef);
-    }
+	}
 };

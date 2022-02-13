@@ -1,7 +1,5 @@
 modded class MissionServer
 {
-	static string HeadlessClientSteamID = "REDACTED (PUT STEAMID HERE)";
-
 	void MissionServer()
 	{
         MakeDirectory("$profile:eAI/");
@@ -9,7 +7,7 @@ modded class MissionServer
 
 		GetDayZGame().eAICreateManager();
 
-		Print("eAI - Loaded Server Mission");
+		CF_Log.Info("eAI - Loaded Server Mission");
 	}
 
 	override void OnUpdate(float timeslice)
@@ -21,10 +19,6 @@ modded class MissionServer
 	{
 		super.InvokeOnConnect(player, identity);
 
-		if (identity && identity.GetId() == HeadlessClientSteamID)
-		{
-			eAIGlobal_HeadlessClient = player;
-			eAIGroup.OnHeadlessClientConnect(identity);
-		}
+		GetDayZGame().eAIManagerGet().InvokeOnConnect(player, identity);
 	}
 };

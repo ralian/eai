@@ -1,0 +1,1917 @@
+$AnimGraph 7 {
+	$Sheet "Reload" {
+		$Node AnimNodeBlendT {
+			 "ChamberingCross1Loop" "" "ChamberingCross1LoopErc" "ChamberingCross1LoopPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos 63.0 1.5
+			}
+		}
+		$Node AnimNodeSourceInLoopOut {
+			 "ChamberingCross1LoopErc" "" "WeaponOperations.ErcRas.ChamberingLoop1" "LoopStart" "LoopEnd" "IsCommand(CMD_Reload_Exit)"
+			$EditorData {
+				#EditorPos 61.5 0.7
+			}
+		}
+		$Node AnimNodeSourceInLoopOut {
+			 "ChamberingCross1LoopPne" "" "WeaponOperations.PneRas.ChamberingLoop1" "LoopStart" "LoopEnd" "IsCommand(CMD_Reload_Exit)"
+			$EditorData {
+				#EditorPos 64.4000015 0.7
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ChamberingCross2OpenFullLoop" "" "ChamberingCross2OpenFullLoopErc" "ChamberingCross2OpenFullLoopPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos 71.9000015 1.6
+			}
+		}
+		$Node AnimNodeSourceInLoopOut {
+			 "ChamberingCross2OpenFullLoopErc" "" "WeaponOperations.ErcRas.ChamberingLoop1" "LoopStart" "LoopEnd" "IsCommand(CMD_Reload_Exit)"
+			$EditorData {
+				#EditorPos 70.5 0.8
+			}
+		}
+		$Node AnimNodeSourceInLoopOut {
+			 "ChamberingCross2OpenFullLoopPne" "" "WeaponOperations.ErcRas.ChamberingLoop1" "LoopStart" "LoopEnd" "IsCommand(CMD_Reload_Exit)"
+			$EditorData {
+				#EditorPos 72.9000015 0.2
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "ChamberingCrossbowSM" ""
+			$States 6 {
+				$State {
+					 "ChamberingCross0Closed" "" "Chambering_Closed" "GetCommandI(CMD_Reload_Chambering)==21" "realtime" 0
+					$EditorData {
+						#EditorPos 57.5 3.9000001
+					}
+				}
+				$State {
+					 "ChamberingCross1Open" "" "Chambering_Open" "GetCommandI(CMD_Reload_Chambering)==22" "realtime" 0
+					$EditorData {
+						#EditorPos 60.7000008 3.9000001
+					}
+				}
+				$State {
+					 "ChamberingCross2OpenFull" "" "Chambering_Open" "GetCommandI(CMD_Reload_Chambering)==23" "realtime" 0
+					$EditorData {
+						#EditorPos 68.7000046 3.9000001
+					}
+				}
+				$State {
+					 "ChamberingCross2OpenFullLoop" "" "ChamberingCross2OpenFullLoop" "" "realtime" 1
+					$EditorData {
+						#EditorPos 71.9000015 3.9000001
+					}
+				}
+				$State {
+					 "ChamberingCross1Loop" "" "ChamberingCross1Loop" "" "realtime" 1
+					$EditorData {
+						#EditorPos 63.0 3.2
+					}
+				}
+				$State {
+					 "ChamberingCross1OpenEnd" "" "ReloadAction_Open" "IsEvent (\"BlendOut2\")" "realtime" 1
+					$EditorData {
+						#EditorPos 65.4000015 3.9000001
+					}
+				}
+			}
+			$Transitions 4 {
+				$Transition {
+					 "ChamberingCross0Closed" "ChamberingCross1Open" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.Chambering1\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "ChamberingCross1Open" "ChamberingCross1Loop" "RemainingTimeLess(0.01)" "0.3" "0.0" 1 "S"
+				}
+				$Transition {
+					 "ChamberingCross2OpenFull" "ChamberingCross2OpenFullLoop" "IsEvent (\"BlendOut\")" "0.3" "0.0" 1 "S"
+				}
+				$Transition {
+					 "ChamberingCross1Open" "ChamberingCross1OpenEnd" "false" "0.3" "GetEventTime(\"WeaponOperations.ReloadBoltAction1\", \"BlendIn\")" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 57.6000023 5.0999999
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "ChamberingFastSM" ""
+			$States 2 {
+				$State {
+					 "ChamberingFast_Open" "" "ChamberingFast_Open" "GetCommandI(CMD_Reload_ChamberingFast)==0" "realtime" 0
+					$EditorData {
+						#EditorPos 50.1000023 3.9000001
+					}
+				}
+				$State {
+					 "ChamberingFast_Closed" "" "ChamberingFast_Closed" "GetCommandI(CMD_Reload_ChamberingFast)==1" "realtime" 1
+					$EditorData {
+						#EditorPos 52.7000008 3.9000001
+					}
+				}
+			}
+			$Transitions 1 {
+				$Transition {
+					 "ChamberingFast_Open" "ChamberingFast_Closed" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ChamberingFast1\", \"BlendIn\")" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 49.9000015 5.0999999
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "ChamberingLoopingSM" ""
+			$States 7 {
+				$State {
+					 "ChamberingLoop_Closed_NoBullet" "" "ChamberingLoop_Closed_NoBullet" "GetCommandI(CMD_Reload_Chambering)==10" "realtime" 0
+					$EditorData {
+						#EditorPos 43.7000008 -0.6
+					}
+				}
+				$State {
+					 "ChamberingLoop_Closed_Bullet" "" "Loop_Closed_Bullet" "GetCommandI(CMD_Reload_Chambering)==12" "realtime" 1
+					$EditorData {
+						#EditorPos 47.7000008 -0.6
+					}
+				}
+				$State {
+					 "ChamberLoop_Open_NoBullet" "" "ChamberingLoop_Open_NoBullet" "GetCommandI(CMD_Reload_Chambering)==13" "realtime" 0
+					$EditorData {
+						#EditorPos 52.0 -0.6
+					}
+				}
+				$State {
+					 "ChamberLoop_Open_Bullet" "" "Loop_Open_Bullet" "GetCommandI(CMD_Reload_Chambering)==14" "realtime" 1
+					$EditorData {
+						#EditorPos 55.4000015 -0.6
+					}
+				}
+				$State {
+					 "ChamberShotgunNoBullet" "" "Loop_Shotgun_Bullet" "GetCommandI(CMD_Reload_Chambering)==15" "realtime" 0
+					$EditorData {
+						#EditorPos 38.2000008 -0.5
+					}
+				}
+				$State {
+					 "ChamberShotgunBullet" "" "Loop_Shotgun_Bullet" "GetCommandI(CMD_Reload_Chambering)==16" "realtime" 1
+					$EditorData {
+						#EditorPos 34.2999992 -0.5
+					}
+				}
+				$State {
+					 "ShotgunReloadAction" "" "Shotgun_NoBullet" "" "realtime" 1
+					$EditorData {
+						#EditorPos 40.2999992 -1.5
+					}
+				}
+			}
+			$Transitions 3 {
+				$Transition {
+					 "ChamberingLoop_Closed_NoBullet" "ChamberingLoop_Closed_Bullet" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ChamberingLoop_Closed_Bullet\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "ChamberLoop_Open_NoBullet" "ChamberLoop_Open_Bullet" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ChamberingLoop_Open_Bullet\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "ChamberShotgunNoBullet" "ShotgunReloadAction" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ChamberingLoop_Closed_NoBullet\", \"BlendIn\")" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 45.2000008 0.8
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "ChamberingOneSM" ""
+			$States 3 {
+				$State {
+					 "Chambering_Open" "" "Chambering_Open" "GetCommandI(CMD_Reload_Chambering)==0" "realtime" 0
+					$EditorData {
+						#EditorPos 21.2000008 4.0
+					}
+				}
+				$State {
+					 "Chambering_Closed" "" "Chambering_Closed" "GetCommandI(CMD_Reload_Chambering)==1" "realtime" 1
+					$EditorData {
+						#EditorPos 24.1000004 1.4
+					}
+				}
+				$State {
+					 "Chambering_Closed_Uncocked" "" "Chambering_Closed_Uncocked" "GetCommandI(CMD_Reload_Chambering)==2" "realtime" 0
+					$EditorData {
+						#EditorPos 27.0 4.0
+					}
+				}
+			}
+			$Transitions 2 {
+				$Transition {
+					 "Chambering_Open" "Chambering_Closed" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.Chambering_Closed\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Chambering_Closed_Uncocked" "Chambering_Closed" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.Chambering_Closed\", \"BlendIn\")" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 21.0 5.3000002
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "ChamberingOneUniqueSM" ""
+			$States 2 {
+				$State {
+					 "Chambering_Open_Unique" "" "Chambering_Open" "GetCommandI(CMD_Reload_Chambering)==4" "realtime" 1
+					$EditorData {
+						#EditorPos 31.5 4.0
+					}
+				}
+				$State {
+					 "Chambering_Closed_Unique" "" "Chambering_Closed" "GetCommandI(CMD_Reload_Chambering)==5" "realtime" 1
+					$EditorData {
+						#EditorPos 34.6000023 4.0
+					}
+				}
+			}
+			$Transitions 0 {
+			}
+			$EditorData {
+				#EditorPos 31.5 5.3000002
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "ChamberingTwoSM" ""
+			$States 2 {
+				$State {
+					 "ChamberingTwoInS" "" "ChamberingIn" "GetCommandI(CMD_Reload_Chambering)==6" "realtime" 1
+					$EditorData {
+						#EditorPos 38.9000015 4.0
+					}
+				}
+				$State {
+					 "ChamberingTwoOutS" "" "ChamberingOut" "false" "realtime" 1
+					$EditorData {
+						#EditorPos 41.7000008 4.0
+					}
+				}
+			}
+			$Transitions 1 {
+				$Transition {
+					 "ChamberingTwoInS" "ChamberingTwoOutS" "GetCommandI(CMD_Reload_Chambering)==7 && IsEvent(\"BlendOut\")" "0.0" "0.0" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 38.5 5.2000003
+			}
+		}
+		$Node AnimNodeSource {
+			 "ClipEndAnim" "" "WeaponOperations.ReloadClipOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 102.0999985 0.1
+			}
+		}
+		$Node AnimNodePose {
+			 "ClipEndWaitPose" "" "WeaponOperations.ReloadClipPose" "ActionProgressEnd"
+			$EditorData {
+				#EditorPos 99.7000046 0.1
+			}
+		}
+		$Node AnimNodeSource {
+			 "ClipInBulletAnim" "" "WeaponOperations.ReloadClipInNoBullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 92.5 0.7
+			}
+		}
+		$Node AnimNodeSource {
+			 "ClipInNoBulletAnim" "" "WeaponOperations.ReloadClipInBullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 92.5 0.0
+			}
+		}
+		$Node AnimNodeSourceSync {
+			 "ClipInsertAnim" "" "WeaponOperations.ReloadClipPose" "noloop" "Transitions"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 97.3000031 0.1
+			}
+		}
+		$Node AnimNodePose {
+			 "ClipStartWaitPose" "" "WeaponOperations.ReloadClipPose" "ActionProgress"
+			$EditorData {
+				#EditorPos 94.9000015 0.1
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "DoubleBarrelSTM" ""
+			$States 8 {
+				$State {
+					 "NoBullet_BulletL+R" "" "ChamberingDBNoBulletL" "GetCommandI(CMD_Reload_Chambering)==18" "realtime" 0
+					$EditorData {
+						#EditorPos 74.0 -3.4000001
+					}
+				}
+				$State {
+					 "NoBullet_BulletL" "" "ChamberingDBNoBulletL" "GetCommandI(CMD_Reload_Chambering)==17" "realtime" 1
+					$EditorData {
+						#EditorPos 71.5 -3.4000001
+					}
+				}
+				$State {
+					 "Bullet_R" "" "ChamberingDBBulletR" "GetCommandI(CMD_Reload_Chambering)==19" "realtime" 0
+					$EditorData {
+						#EditorPos 76.5999985 -3.4000001
+					}
+				}
+				$State {
+					 "Bullet_L" "" "ChamberingDBBulletL" "GetCommandI(CMD_Reload_Chambering)==20" "realtime" 0
+					$EditorData {
+						#EditorPos 79.3000031 -3.4000001
+					}
+				}
+				$State {
+					 "BulletR_DB" "" "ChamberingDBNoBulletL+R" "" "realtime" 1
+					$EditorData {
+						#EditorPos 74.0 -5.0999999
+					}
+				}
+				$State {
+					 "Reload_BulletR" "" "ChamberingDBNoBulletR" "" "realtime" 1
+					$EditorData {
+						#EditorPos 76.5999985 -5.0999999
+					}
+				}
+				$State {
+					 "Reload_BulletL" "" "ChamberingDBNoBulletL" "" "realtime" 1
+					$EditorData {
+						#EditorPos 79.3000031 -5.0999999
+					}
+				}
+				$State {
+					 "Cancel" "" "ChamberingDBCancel" "" "realtime" 1
+					$EditorData {
+						#EditorPos 71.7000046 -5.0999999
+					}
+				}
+			}
+			$Transitions 4 {
+				$Transition {
+					 "NoBullet_BulletL+R" "BulletR_DB" "IsEvent (\"BlendOut\")" "0.25" "GetEventTime(\"WeaponOperations.ChamberingOut\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Bullet_R" "Reload_BulletR" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.Chambering_NoBulletR\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Bullet_L" "Reload_BulletL" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.Chambering_NoBulletL\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "NoBullet_BulletL+R" "Cancel" "GetCommandI(CMD_Reload_Chambering)== -1" "0.2" "" 0 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 75.4000015 -1.4
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "ErcRas" "" "ReloadStanceChange" "WeaponOperations" "ErcRas"
+			$EditorData {
+				#EditorPos 4.3000002 11.6999998
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "Loop_Closed_Bullet" "" "Loop_Closed_BulletErc" "Loop_Closed_BulletPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos 47.7000008 -3.2
+			}
+		}
+		$Node AnimNodeSourceInLoopOut {
+			 "Loop_Closed_BulletErc" "" "WeaponOperations.ErcRas.ChamberingLoop_Closed_Bullet" "LoopStart" "LoopEnd" "GetCommandI(CMD_Reload_Chambering)==11"
+			$EditorData {
+				#EditorPos 46.7999992 -3.9000001
+			}
+		}
+		$Node AnimNodeSourceInLoopOut {
+			 "Loop_Closed_BulletPne" "" "WeaponOperations.PneRas.ChamberingLoop_Closed_Bullet" "LoopStart" "LoopEnd" "GetCommandI(CMD_Reload_Chambering)==11"
+			$EditorData {
+				#EditorPos 48.9000015 -3.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "Loop_Open_Bullet" "" "Loop_Open_BulletErc" "Loop_Open_BulletPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos 55.4000015 -3.2
+			}
+		}
+		$Node AnimNodeSourceInLoopOut {
+			 "Loop_Open_BulletErc" "" "WeaponOperations.ErcRas.ChamberingLoop_Open_Bullet" "LoopStart" "LoopEnd" "GetCommandI(CMD_Reload_Chambering)==11"
+			$EditorData {
+				#EditorPos 54.2999992 -4.0
+			}
+		}
+		$Node AnimNodeSourceInLoopOut {
+			 "Loop_Open_BulletPne" "" "WeaponOperations.PneRas.ChamberingLoop_Open_Bullet" "LoopStart" "LoopEnd" "GetCommandI(CMD_Reload_Chambering)==11"
+			$EditorData {
+				#EditorPos 56.7000008 -4.0
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "Loop_Shotgun_Bullet" "" "Loop_Shotgun_BulletErc" "Loop_Shotgun_BulletPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos 34.2999992 -3.2
+			}
+		}
+		$Node AnimNodeSourceInLoopOut {
+			 "Loop_Shotgun_BulletErc" "" "WeaponOperations.ErcRas.ChamberingLoop_Closed_Bullet" "LoopStart" "LoopEnd" "GetCommandI(CMD_Reload_Chambering)==11"
+			$EditorData {
+				#EditorPos 32.7999992 -3.9000001
+			}
+		}
+		$Node AnimNodeSourceInLoopOut {
+			 "Loop_Shotgun_BulletPne" "" "WeaponOperations.PneRas.ChamberingLoop_Closed_Bullet" "LoopStart" "LoopEnd" "GetCommandI(CMD_Reload_Chambering)==11"
+			$EditorData {
+				#EditorPos 35.6000023 -3.9000001
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "Mag_Detach_STM" ""
+			$States 3 {
+				$State {
+					 "RifleMag_Detach_Start" "" "ReloadMagBullet" "GetCommandI(CMD_Reload_Magazine)==17" "realtime" 0
+					$EditorData {
+						#EditorPos -3.0 3.9000001
+					}
+				}
+				$State {
+					 "RifleMag_Detach_End" "" "ReloadMagazineDetach" "false" "realtime" 1
+					$EditorData {
+						#EditorPos -0.1 3.9000001
+					}
+				}
+				$State {
+					 "PistolMag_Detach" "" "ReloadMagazineDetach" "GetCommandI(CMD_Reload_Magazine)==16" "realtime" 1
+					$EditorData {
+						#EditorPos 3.0 3.9000001
+					}
+				}
+			}
+			$Transitions 1 {
+				$Transition {
+					 "RifleMag_Detach_Start" "RifleMag_Detach_End" "IsEvent (\"BlendOut2\")" "0.3" "0.0" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos -3.2 5.0999999
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "PneRas" "" "ReloadStanceChange" "WeaponOperations" "PneRas"
+			$EditorData {
+				#EditorPos 8.6000004 11.6999998
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "ReloadBoltAction_SM" ""
+			$States 4 {
+				$State {
+					 "ReloadAction_Open" "" "ReloadAction_Open" "GetCommandI(CMD_Reload_BoltAction)==0" "realtime" 1
+					$EditorData {
+						#EditorPos 9.0 4.0999999
+					}
+				}
+				$State {
+					 "ReloadAction_Closed" "" "ReloadAction_Closed" "GetCommandI(CMD_Reload_BoltAction)==1" "realtime" 1
+					$EditorData {
+						#EditorPos 11.4000006 4.0999999
+					}
+				}
+				$State {
+					 "ReloadActionSpecial" "" "ReloadBoltAction2" "GetCommandI(CMD_Reload_BoltAction)==2" "realtime" 1
+					$EditorData {
+						#EditorPos 14.0 4.0999999
+					}
+				}
+				$State {
+					 "ReloadAction_Closed_uncocked" "" "ReloadAction_Closed_Uncocked" "GetCommandI(CMD_Reload_BoltAction)==3" "realtime" 1
+					$EditorData {
+						#EditorPos 16.7000008 4.0999999
+					}
+				}
+			}
+			$Transitions 0 {
+			}
+			$EditorData {
+				#EditorPos 11.4000006 5.4000001
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "ReloadMagazinePistol" ""
+			$States 16 {
+				$State {
+					 "MagNoBullet_Close_uncocked" "" "ReloadMagBullet" "GetCommandI(CMD_Reload_Magazine)==9" "realtime" 0
+					$EditorData {
+						#EditorPos -12.6999998 3.8
+					}
+				}
+				$State {
+					 "NoMagNoBullet_Close" "" "ReloadNoMagBullet" "GetCommandI(CMD_Reload_Magazine)==13" "realtime" 0
+					$EditorData {
+						#EditorPos -26.3000011 3.8
+					}
+				}
+				$State {
+					 "NoMagNoBullet_Open" "" "ReloadNoMagBullet" "GetCommandI(CMD_Reload_Magazine)==14" "realtime" 0
+					$EditorData {
+						#EditorPos -18.8999996 3.8
+					}
+				}
+				$State {
+					 "MagBullet_Close" "" "ReloadMagBullet" "GetCommandI(CMD_Reload_Magazine)==10" "realtime" 1
+					$EditorData {
+						#EditorPos -9.6999998 3.8
+					}
+				}
+				$State {
+					 "ReloadActionPst_Open" "" "ReloadAction_Open" "false" "realtime" 1
+					$EditorData {
+						#EditorPos -18.8999996 -1.4
+					}
+				}
+				$State {
+					 "ReloadActionPst_Closed" "" "ReloadAction_Closed" "false" "realtime" 1
+					$EditorData {
+						#EditorPos -26.3000011 -1.4
+					}
+				}
+				$State {
+					 "NoMagBullet_Close" "" "ReloadNoMagBullet" "GetCommandI(CMD_Reload_Magazine)==11" "realtime" 0
+					$EditorData {
+						#EditorPos -22.8000011 3.8
+					}
+				}
+				$State {
+					 "MagNoBullet_Open" "" "ReloadMagBullet" "GetCommandI(CMD_Reload_Magazine)==15" "realtime" 0
+					$EditorData {
+						#EditorPos -7.2000003 3.8
+					}
+				}
+				$State {
+					 "MagNoBullet_" "" "ReloadMagBullet" "false" "realtime" 0
+					$EditorData {
+						#EditorPos -26.3000011 1.4
+					}
+				}
+				$State {
+					 "MagBullet_" "" "ReloadMagBullet" "false" "realtime" 1
+					$EditorData {
+						#EditorPos -22.8000011 1.4
+					}
+				}
+				$State {
+					 "MagOpen_" "" "ReloadMagBullet" "false" "realtime" 0
+					$EditorData {
+						#EditorPos -18.8999996 1.4
+					}
+				}
+				$State {
+					 "ReloadActionPst_Closed_Uncocked" "" "ReloadAction_Closed_Uncocked" "false" "realtime" 1
+					$EditorData {
+						#EditorPos -22.8999996 -1.4
+					}
+				}
+				$State {
+					 "NoMagNoBullet_Close_uncocked" "" "ReloadNoMagBullet" "GetCommandI(CMD_Reload_Magazine)==8" "realtime" 0
+					$EditorData {
+						#EditorPos -30.0 3.8
+					}
+				}
+				$State {
+					 "MagNoBullet_0" "" "ReloadMagBullet" "false" "realtime" 0
+					$EditorData {
+						#EditorPos -30.0 1.4
+					}
+				}
+				$State {
+					 "MagNoBullet_Close" "" "ReloadMagBullet" "GetCommandI(CMD_Reload_Magazine)==12" "realtime" 0
+					$EditorData {
+						#EditorPos -15.6999998 3.8
+					}
+				}
+				$State {
+					 "MagNoBullet_1" "" "ReloadMagBullet" "false" "realtime" 0
+					$EditorData {
+						#EditorPos -15.6999998 1.4
+					}
+				}
+			}
+			$Transitions 11 {
+				$Transition {
+					 "MagNoBullet_Open" "ReloadActionPst_Open" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadAction_Open\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "MagNoBullet_Close_uncocked" "ReloadActionPst_Closed_Uncocked" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadAction_Closed_Uncocked\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "MagNoBullet_" "ReloadActionPst_Closed" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadAction_Closed\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "NoMagNoBullet_Close" "MagNoBullet_" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadMagBullet\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "NoMagBullet_Close" "MagBullet_" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadMagBullet\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "NoMagNoBullet_Open" "MagOpen_" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadMagBullet\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "MagOpen_" "ReloadActionPst_Open" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadAction_Open\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "NoMagNoBullet_Close_uncocked" "MagNoBullet_0" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadMagBullet\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "MagNoBullet_0" "ReloadActionPst_Closed_Uncocked" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadAction_Closed_Uncocked\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "MagNoBullet_Close" "MagNoBullet_1" "IsEvent (\"BlendOut2\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadMagBullet\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "MagNoBullet_1" "ReloadActionPst_Closed" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadAction_Closed\", \"BlendIn\")" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos -22.8000011 5.2000003
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "ReloadMagazineRifle" ""
+			$States 11 {
+				$State {
+					 "MagBullet_Rifle" "" "ReloadMagNoBullet" "IsCommand (CMD_Reload_Magazine)  && GetCommandI(CMD_Reload_Magazine)==0" "realtime" 0
+					$EditorData {
+						#EditorPos 5.7000003 -6.5999999
+					}
+				}
+				$State {
+					 "NoMagBullet_Rifle" "" "ReloadNoMagBullet" "IsCommand (CMD_Reload_Magazine)  && GetCommandI(CMD_Reload_Magazine)==1" "realtime" 1
+					$EditorData {
+						#EditorPos 14.4000006 -6.5
+					}
+				}
+				$State {
+					 "MagNoBullet_Rifle_Close" "" "ReloadMagNoBullet" "IsCommand (CMD_Reload_Magazine)  && GetCommandI(CMD_Reload_Magazine)==2" "realtime" 0
+					$EditorData {
+						#EditorPos -3.6000001 -6.5999999
+					}
+				}
+				$State {
+					 "NoMagNoBullet_Rifle_Close" "" "ReloadNoMagBullet" "IsCommand (CMD_Reload_Magazine)  && GetCommandI(CMD_Reload_Magazine)==3" "realtime" 0
+					$EditorData {
+						#EditorPos 8.1999998 -6.5999999
+					}
+				}
+				$State {
+					 "ReloadActionRifle" "" "ReloadAction_Open" "" "realtime" 1
+					$EditorData {
+						#EditorPos 5.8000002 -11.9000006
+					}
+				}
+				$State {
+					 "Bullet_Rifle" "" "ReloadNoMagBullet" "" "realtime" 1
+					$EditorData {
+						#EditorPos 5.7000003 -9.8000002
+					}
+				}
+				$State {
+					 "Bullet_Rifle_Closed" "" "ReloadNoMagBullet" "" "realtime" 0
+					$EditorData {
+						#EditorPos -3.6000001 -9.6999998
+					}
+				}
+				$State {
+					 "MagNoBullet_Rifle_Open" "" "ReloadMagNoBullet" "IsCommand (CMD_Reload_Magazine)  && GetCommandI(CMD_Reload_Magazine)==4" "realtime" 0
+					$EditorData {
+						#EditorPos 1.2 -6.5999999
+					}
+				}
+				$State {
+					 "ReloadActionRifle_Closed" "" "ReloadAction_Closed" "" "realtime" 1
+					$EditorData {
+						#EditorPos -3.6000001 -11.8000002
+					}
+				}
+				$State {
+					 "Bullet_Rifle_Open" "" "ReloadNoMagBullet" "" "realtime" 0
+					$EditorData {
+						#EditorPos 1.2 -9.8000002
+					}
+				}
+				$State {
+					 "NoMagNoBullet_Rifle_Open" "" "ReloadNoMagBullet" "IsCommand (CMD_Reload_Magazine)  && GetCommandI(CMD_Reload_Magazine)==5" "realtime" 0
+					$EditorData {
+						#EditorPos 11.3000002 -6.5999999
+					}
+				}
+			}
+			$Transitions 7 {
+				$Transition {
+					 "MagBullet_Rifle" "Bullet_Rifle" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadNoMagBullet\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "MagNoBullet_Rifle_Close" "Bullet_Rifle_Closed" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadNoMagBullet\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Bullet_Rifle_Closed" "ReloadActionRifle_Closed" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadAction_Closed\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "NoMagNoBullet_Rifle_Close" "ReloadActionRifle_Closed" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadAction_Closed\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Bullet_Rifle_Open" "ReloadActionRifle" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadAction_Open\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "NoMagNoBullet_Rifle_Open" "ReloadActionRifle" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadAction_Open\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "MagNoBullet_Rifle_Open" "Bullet_Rifle_Open" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadNoMagBullet\", \"BlendIn\")" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 6.4000001 -5.2000003
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "ReloadMagazineSRifle" ""
+			$States 6 {
+				$State {
+					 "BulletMag_SRifle" "" "ReloadMagBullet" "GetCommandI(CMD_Reload_Magazine)==20" "realtime" 1
+					$EditorData {
+						#EditorPos -48.1000023 2.0
+					}
+				}
+				$State {
+					 "NoMagBullet_SRifle" "" "ReloadNoMagBullet" "GetCommandI(CMD_Reload_Magazine)==21" "realtime" 0
+					$EditorData {
+						#EditorPos -48.1000023 3.9000001
+					}
+				}
+				$State {
+					 "MagNoBullet_SRifle" "" "ReloadMagNoBullet" "GetCommandI(CMD_Reload_Magazine)==22" "realtime" 0
+					$EditorData {
+						#EditorPos -42.7000008 3.9000001
+					}
+				}
+				$State {
+					 "NoMagNoBullet_SRifle" "" "ReloadNoMagNoBullet" "GetCommandI(CMD_Reload_Magazine)==23" "realtime" 0
+					$EditorData {
+						#EditorPos -35.2999992 3.9000001
+					}
+				}
+				$State {
+					 "BulletMag_SRifle_main" "" "ReloadMagBullet" "" "realtime" 0
+					$EditorData {
+						#EditorPos -39.2999992 2.5
+					}
+				}
+				$State {
+					 "FinalBoltAction" "" "ReloadBoltAction2" "" "realtime" 1
+					$EditorData {
+						#EditorPos -39.2999992 0.9
+					}
+				}
+			}
+			$Transitions 4 {
+				$Transition {
+					 "NoMagBullet_SRifle" "BulletMag_SRifle" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadMagBullet\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "MagNoBullet_SRifle" "BulletMag_SRifle_main" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadMagBullet\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "NoMagNoBullet_SRifle" "BulletMag_SRifle_main" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadMagBullet\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "BulletMag_SRifle_main" "FinalBoltAction" "IsEvent (\"BlendOut\")" "0.3" "GetEventTime(\"WeaponOperations.ReloadBoltAction2\", \"BlendIn\")" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos -40.5 5.4000001
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "ReloadStanceChange" "TagWeaponReload"
+			$States 15 {
+				$State {
+					 "ReloadBoltAction_S" "" "ReloadBoltAction_SM" "GetCommandI(CMD_Reload_BoltAction)>=0 && GetCommandI(CMD_Reload_BoltAction)<=3" "realtime" 1
+					$EditorData {
+						#EditorPos 11.4000006 7.4000001
+					}
+				}
+				$State {
+					 "ChamberingOne" "" "ChamberingOneSM" "GetCommandI(CMD_Reload_Chambering)>=0 && GetCommandI(CMD_Reload_Chambering)<=3" "realtime" 1
+					$EditorData {
+						#EditorPos 21.0 7.2000003
+					}
+				}
+				$State {
+					 "ChamberingLoop" "" "ChamberingLoopingSM" "GetCommandI(CMD_Reload_Chambering)>=10 && GetCommandI(CMD_Reload_Chambering)<=16" "realtime" 1
+					$EditorData {
+						#EditorPos 45.2999992 7.3000002
+					}
+				}
+				$State {
+					 "ChamberingTwo" "" "ChamberingTwoSM" "GetCommandI(CMD_Reload_Chambering)>=6 && GetCommandI(CMD_Reload_Chambering)<=7" "realtime" 1
+					$EditorData {
+						#EditorPos 38.5 7.3000002
+					}
+				}
+				$State {
+					 "ChamberingFastS" "" "ChamberingFastSM" "IsCommand(CMD_Reload_ChamberingFast)" "realtime" 1
+					$EditorData {
+						#EditorPos 49.9000015 7.2000003
+					}
+				}
+				$State {
+					 "ReloadMagazineSRifle" "" "ReloadMagazineSRifle" "GetCommandI(CMD_Reload_Magazine)>=20 && GetCommandI(CMD_Reload_Magazine)<=23" "realtime" 1
+					$EditorData {
+						#EditorPos -40.5 7.7000003
+					}
+				}
+				$State {
+					 "ReloadMagazinePistol" "" "ReloadMagazinePistol" "GetCommandI(CMD_Reload_Magazine)>=8 && GetCommandI(CMD_Reload_Magazine)<=15" "realtime" 1
+					$EditorData {
+						#EditorPos -22.7000008 7.7000003
+					}
+				}
+				$State {
+					 "ReloadMagazineRifle" "" "ReloadMagazineRifle" "GetCommandI(CMD_Reload_Magazine)>=0 && GetCommandI(CMD_Reload_Magazine)<=5" "notime" 1
+					$EditorData {
+						#EditorPos 6.4000001 7.4000001
+					}
+				}
+				$State {
+					 "ChamberingOneUnique" "" "ChamberingOneUniqueSM" "GetCommandI(CMD_Reload_Chambering)>=4 && GetCommandI(CMD_Reload_Chambering)<=5" "realtime" 1
+					$EditorData {
+						#EditorPos 31.5 7.3000002
+					}
+				}
+				$State {
+					 "ChamberingCrossbow" "" "ChamberingCrossbowSM" "GetCommandI(CMD_Reload_Chambering)>=21 && GetCommandI(CMD_Reload_Chambering)<=23" "realtime" 1
+					$EditorData {
+						#EditorPos 57.6000023 7.2000003
+					}
+				}
+				$State {
+					 "WeaponJamming" "" "WeaponJamSTM" "GetCommandI(CMD_Weapon_Jam) ==  1" "notime" 1
+					$EditorData {
+						#EditorPos 79.7000046 6.9000001
+					}
+				}
+				$State {
+					 "Mag_Detach" "" "Mag_Detach_STM" "GetCommandI(CMD_Reload_Magazine)>=16 && GetCommandI(CMD_Reload_Magazine)<=17" "realtime" 1
+					$EditorData {
+						#EditorPos -3.1000001 7.3000002
+					}
+				}
+				$State {
+					 "ChamberingDoubleBarrel" "" "DoubleBarrelSTM" "GetCommandI(CMD_Reload_Chambering)>=17 && GetCommandI(CMD_Reload_Chambering)<=20" "realtime" 1
+					$EditorData {
+						#EditorPos 75.5 7.0
+					}
+				}
+				$State {
+					 "WeaponCheckJam" "" "WeaponCheckJamT" "GetCommandI(CMD_Weapon_Jam) ==  2" "realtime" 1
+					$EditorData {
+						#EditorPos 87.3000031 6.9000001
+					}
+				}
+				$State {
+					 "WeaponStripperClip" "" "StripperClipSTM" "IsCommand(CMD_Reload_Clip)" "notime" 1
+					$EditorData {
+						#EditorPos 92.3000031 7.0
+					}
+				}
+			}
+			$Transitions 0 {
+			}
+			$EditorData {
+				#EditorPos 6.2000003 9.3000002
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "ReloadStanceChanges" "TagWeaponReload"
+			$States 2 {
+				$State {
+					 "ReloadErc" "" "ErcRas" "Stance == 0 || Stance ==1" "notime" 1
+					$EditorData {
+						#EditorPos 4.3000002 15.1999998
+					}
+				}
+				$State {
+					 "ReloadPne" "" "PneRas" "Stance == 2" "notime" 1
+					$EditorData {
+						#EditorPos 8.6000004 15.1999998
+					}
+				}
+			}
+			$Transitions 2 {
+				$Transition {
+					 "ReloadErc" "ReloadPne" "Stance == 2" "0.3" "GetLowerTime()" 1 "S2"
+				}
+				$Transition {
+					 "ReloadPne" "ReloadErc" "Stance == 0 || Stance ==1" "0.3" "GetLowerTime()" 1 "S2"
+				}
+			}
+			$EditorData {
+				#EditorPos 4.0 16.7000008
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "Shotgun_NoBullet" "" "Shotgun_NoBulletErc" "Shotgun_NoBulletPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos 40.2999992 -3.2
+			}
+		}
+		$Node AnimNodeSource {
+			 "Shotgun_NoBulletErc" "" "WeaponOperations.ErcRas.ChamberingLoop_Closed_NoBullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 38.7000008 -3.9000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "Shotgun_NoBulletPne" "" "WeaponOperations.PneRas.ChamberingLoop_Closed_NoBullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 41.7999992 -3.9000001
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "StripperClipSTM" ""
+			$States 7 {
+				$State {
+					 "InBullet" "" "ClipInBulletAnim" "GetCommandI(CMD_Reload_Clip) == 1" "realtime" 0
+					$EditorData {
+						#EditorPos 92.5 3.6000001
+					}
+				}
+				$State {
+					 "StartWait" "" "ClipStartWaitPose" "" "realtime" 0
+					$EditorData {
+						#EditorPos 94.9000015 2.9000001
+					}
+				}
+				$State {
+					 "Insert" "TagWeaponReloadBulletSwitch" "ClipInsertAnim" "" "normtime" 0
+					$EditorData {
+						#EditorPos 97.3000031 2.9000001
+					}
+				}
+				$State {
+					 "EndWait" "" "ClipEndWaitPose" "" "realtime" 0
+					$EditorData {
+						#EditorPos 99.7000046 2.9000001
+					}
+				}
+				$State {
+					 "End" "" "ClipEndAnim" "" "realtime" 1
+					$EditorData {
+						#EditorPos 102.0999985 2.9000001
+					}
+				}
+				$State {
+					 "InNoBullet" "" "ClipInNoBulletAnim" "GetCommandI(CMD_Reload_Clip) == 0" "realtime" 0
+					$EditorData {
+						#EditorPos 92.5 2.9000001
+					}
+				}
+				$State {
+					 "EndWaitAnim" "" "ClipEndWaitPose" "" "realtime" 0
+					$EditorData {
+						#EditorPos 99.7000046 3.6000001
+					}
+				}
+			}
+			$Transitions 7 {
+				$Transition {
+					 "InBullet" "StartWait" "RemainingTimeLess(0.4)" "0.4" "" 1 "S"
+				}
+				$Transition {
+					 "StartWait" "Insert" "GetLowerRTime() > 0.35" "0.1" "ActionProgress" 1 "S"
+				}
+				$Transition {
+					 "EndWait" "End" "GetLowerRTime() > 0.1" "0.4" "" 1 "S"
+				}
+				$Transition {
+					 "InNoBullet" "StartWait" "RemainingTimeLess(0.4)" "0.4" "" 1 "S"
+				}
+				$Transition {
+					 "Insert" "EndWaitAnim" "GetLowerTime() >= ActionProgressEnd-0.05 && ActionProgressEnd == 1.0" "0.0" "" 1 "S"
+				}
+				$Transition {
+					 "Insert" "EndWait" "GetLowerTime() >= ActionProgressEnd-0.05" "0.0" "" 1 "S"
+				}
+				$Transition {
+					 "EndWaitAnim" "End" "GetLowerRTime() > 0.1" "0.4" "" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 92.3000031 4.9000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "WeaponCheckJamErc" "" "WeaponOperations.ErcRas.Jamming Check" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 86.2000046 3.8
+			}
+		}
+		$Node AnimNodeSource {
+			 "WeaponCheckJamPne" "" "WeaponOperations.PneRas.Jamming Check" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 88.4000015 3.8
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "WeaponCheckJamT" "" "WeaponCheckJamErc" "WeaponCheckJamPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos 87.3000031 4.7000003
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "WeaponJamAnim" "" "WeaponJamAnimErc" "WeaponJamAnimPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos 79.5999985 0.5
+			}
+		}
+		$Node AnimNodeSourceInLoopOut {
+			 "WeaponJamAnimErc" "" "WeaponOperations.ErcRas.Jamming" "LoopStart" "LoopEnd" "false"
+			$EditorData {
+				#EditorPos 78.2000046 -0.3
+			}
+		}
+		$Node AnimNodeSourceInLoopOut {
+			 "WeaponJamAnimPne" "" "WeaponOperations.PneRas.Jamming" "LoopStart" "LoopEnd" "false"
+			$EditorData {
+				#EditorPos 80.8000031 -0.3
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "WeaponJamSTM" ""
+			$States 3 {
+				$State {
+					 "InLoop" "" "WeaponJamAnim" "true" "realtime" 0
+					$EditorData {
+						#EditorPos 79.5999985 3.8
+					}
+				}
+				$State {
+					 "Out" "" "Jamming" "false" "realtime" 1
+					$EditorData {
+						#EditorPos 82.7000046 3.8
+					}
+				}
+				$State {
+					 "Cancel" "" "JammingCancel" "" "realtime" 1
+					$EditorData {
+						#EditorPos 82.7000046 2.4000001
+					}
+				}
+			}
+			$Transitions 2 {
+				$Transition {
+					 "InLoop" "Out" "GetCommandI(CMD_Weapon_Jam) ==  0" "0.2" "GetEventTime(\"WeaponOperations.Jamming\", \"LoopEnd\")-0.2" 1 "S"
+				}
+				$Transition {
+					 "InLoop" "Cancel" "GetCommandI(CMD_Weapon_Jam) ==  -1" "0.2" "" 0 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos 79.7000046 5.0999999
+			}
+		}
+	}
+	$Sheet "ReloadNodes" {
+		$Node AnimNodeBlendT {
+			 "ChamberingDBBulletL" "" "ChamberingDBBulletL_Erc" "ChamberingDBBulletL_Pne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos 23.8999996 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingDBBulletL_Erc" "" "WeaponOperations.ErcRas.ChamberingBulletL" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 23.8999996 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingDBBulletL_Pne" "" "WeaponOperations.PneRas.ChamberingBulletL" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 23.8999996 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ChamberingDBBulletR" "" "ChamberingDBBulletR_Erc" "ChamberingDBBulletR_Pne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos 21.1000004 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingDBBulletR_Erc" "" "WeaponOperations.ErcRas.ChamberingBulletR" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 21.1000004 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingDBBulletR_Pne" "" "WeaponOperations.PneRas.ChamberingBulletR" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 21.1000004 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ChamberingDBCancel" "" "ChamberingDBCancel_Erc" "ChamberingDBCancel_Pne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos 27.3000011 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingDBCancel_Erc" "" "WeaponOperations.ErcRas.ChamberingCancel" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 27.3000011 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingDBCancel_Pne" "" "WeaponOperations.PneRas.ChamberingCancel" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 27.3999996 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ChamberingDBNoBulletL" "" "ChamberingDBNoBulletL_Erc" "ChamberingDBNoBulletL_Pne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos 14.5 9.1999998
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ChamberingDBNoBulletL+R" "" "ChamberingDBNoBulletL+R_Erc" "ChamberingDBNoBulletL+R_Pne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos 17.6000004 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingDBNoBulletL+R_Erc" "" "WeaponOperations.ErcRas.ChamberingOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 17.6000004 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingDBNoBulletL+R_Pne" "" "WeaponOperations.PneRas.ChamberingOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 17.6000004 7.9000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingDBNoBulletL_Erc" "" "WeaponOperations.ErcRas.Chambering_NoBulletL" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 14.5 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingDBNoBulletL_Pne" "" "WeaponOperations.PneRas.Chambering_NoBulletL" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 14.5 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ChamberingDBNoBulletR" "" "ChamberingDBNoBulletR_Erc" "ChamberingDBNoBulletR_Pne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos 11.3000002 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingDBNoBulletR_Erc" "" "WeaponOperations.ErcRas.Chambering_NoBulletR" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 11.3000002 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingDBNoBulletR_Pne" "" "WeaponOperations.PneRas.Chambering_NoBulletR" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 11.3000002 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ChamberingFast_Closed" "" "ChamberingFast_ClosedErc" "ChamberingFast_ClosedPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos 4.4000001 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingFast_ClosedErc" "" "WeaponOperations.ErcRas.ChamberingFast_Closed" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 4.4000001 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingFast_ClosedPne" "" "WeaponOperations.PneRas.ChamberingFast_Closed" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 4.4000001 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ChamberingFast_Open" "" "ChamberingFast_OpenErc" "ChamberingFast_OpenPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos 1.4 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingFast_OpenErc" "" "WeaponOperations.ErcRas.ChamberingFast_Open" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 1.4 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingFast_OpenPne" "" "WeaponOperations.PneRas.ChamberingFast_Open" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 1.4 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ChamberingIn" "" "ChamberingInErc" "ChamberingInPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -1.6 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingInErc" "" "WeaponOperations.ErcRas.ChamberingIn" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -1.6 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingInPne" "" "WeaponOperations.PneRas.ChamberingIn" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -1.6 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ChamberingLook" "" "ChamberingLookErc" "ChamberingLookPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -4.7000003 9.1000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingLookErc" "" "WeaponOperations.ErcRas.ChamberingLook" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -4.7000003 8.4000006
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingLookPne" "" "WeaponOperations.PneRas.ChamberingLook" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -4.7000003 7.8000002
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ChamberingLoop" "" "ChamberingLoopErc" "ChamberingLoopPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -7.8000002 9.1000004
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ChamberingLoop1" "" "ChamberingLoop1Erc" "ChamberingLoop1Pne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -11.1000004 9.1000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingLoop1Erc" "" "WeaponOperations.ErcRas.ChamberingLoop1" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -11.1000004 8.4000006
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingLoop1Pne" "" "WeaponOperations.PneRas.ChamberingLoop1" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -11.1000004 7.8000002
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingLoopErc" "" "WeaponOperations.ErcRas.ChamberingLoop" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -7.8000002 8.4000006
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingLoopPne" "" "WeaponOperations.PneRas.ChamberingLoop" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -7.8000002 7.8000002
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ChamberingLoop_Closed_Bullet" "" "ChamberingLoop_Closed_BulletErc" "ChamberingLoop_Closed_BulletPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -14.9000006 9.1000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingLoop_Closed_BulletErc" "" "WeaponOperations.ErcRas.ChamberingLoop_Closed_Bullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -14.9000006 8.4000006
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingLoop_Closed_BulletPne" "" "WeaponOperations.PneRas.ChamberingLoop_Closed_Bullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -14.9000006 7.8000002
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ChamberingLoop_Closed_NoBullet" "" "ChamberingLoop_Closed_NoBulletErc" "ChamberingLoop_Closed_NoBulletPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -18.8999996 9.1000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingLoop_Closed_NoBulletErc" "" "WeaponOperations.ErcRas.ChamberingLoop_Closed_NoBullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -18.8999996 8.4000006
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingLoop_Closed_NoBulletPne" "" "WeaponOperations.PneRas.ChamberingLoop_Closed_NoBullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -18.8999996 7.8000002
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ChamberingLoop_Open_Bullet" "" "ChamberingLoop_Open_BulletErc" "ChamberingLoop_Open_BulletPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -22.7000008 9.1000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingLoop_Open_BulletErc" "" "WeaponOperations.ErcRas.ChamberingLoop_Open_Bullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -22.7000008 8.4000006
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingLoop_Open_BulletPne" "" "WeaponOperations.PneRas.ChamberingLoop_Open_Bullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -22.7000008 7.8000002
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ChamberingLoop_Open_NoBullet" "" "ChamberingLoop_Open_NoBulletErc" "ChamberingLoop_Open_NoBulletPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -26.7000008 9.1000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingLoop_Open_NoBulletErc" "" "WeaponOperations.ErcRas.ChamberingLoop_Open_NoBullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -26.7000008 8.4000006
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingLoop_Open_NoBulletPne" "" "WeaponOperations.PneRas.ChamberingLoop_Open_NoBullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -26.7000008 7.8000002
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ChamberingOut" "" "ChamberingOutErc" "ChamberingOutPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -29.3999996 9.1000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingOutErc" "" "WeaponOperations.ErcRas.ChamberingOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -29.3999996 8.4000006
+			}
+		}
+		$Node AnimNodeSource {
+			 "ChamberingOutPne" "" "WeaponOperations.PneRas.ChamberingOut" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -29.3999996 7.8000002
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "Chambering_Closed" "" "Chambering_ClosedErc" "Chambering_ClosedPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -32.2999992 9.1000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "Chambering_ClosedErc" "" "WeaponOperations.ErcRas.Chambering_Closed" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -32.2999992 8.4000006
+			}
+		}
+		$Node AnimNodeSource {
+			 "Chambering_ClosedPne" "" "WeaponOperations.PneRas.Chambering_Closed" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -32.2999992 7.8000002
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "Chambering_Closed_Uncocked" "" "Chambering_Closed_UncockedErc" "Chambering_Closed_UncockedPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -36.0 9.1000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "Chambering_Closed_UncockedErc" "" "WeaponOperations.ErcRas.Chambering_Closed_Uncocked" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -36.0 8.4000006
+			}
+		}
+		$Node AnimNodeSource {
+			 "Chambering_Closed_UncockedPne" "" "WeaponOperations.PneRas.Chambering_Closed_Uncocked" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -36.0 7.8000002
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "Chambering_Open" "" "Chambering_OpenErc" "Chambering_OpenPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -38.7999992 9.1000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "Chambering_OpenErc" "" "WeaponOperations.ErcRas.Chambering_Open" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -38.7999992 8.4000006
+			}
+		}
+		$Node AnimNodeSource {
+			 "Chambering_OpenPne" "" "WeaponOperations.PneRas.Chambering_Open" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -38.7999992 7.8000002
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "Fire" "" "FireErc" "FirePne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -41.5 9.1000004
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "FireCocked" "" "FireCockedErc" "FireCockedPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -44.2999992 9.1000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "FireCockedErc" "" "WeaponOperations.ErcRas.FireCocked" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -44.2999992 8.4000006
+			}
+		}
+		$Node AnimNodeSource {
+			 "FireCockedPne" "" "WeaponOperations.PneRas.FireCocked" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -44.2999992 7.8000002
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "FireEmptyAutomatic" "" "FireEmptyAutomaticErc" "FireEmptyAutomaticPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -47.2999992 9.1000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "FireEmptyAutomaticErc" "" "WeaponOperations.ErcRas.FireEmptyAutomatic" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -47.2999992 8.4000006
+			}
+		}
+		$Node AnimNodeSource {
+			 "FireEmptyAutomaticPne" "" "WeaponOperations.PneRas.FireEmptyAutomatic" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -47.2999992 7.8000002
+			}
+		}
+		$Node AnimNodeSource {
+			 "FireErc" "" "WeaponOperations.ErcRas.Fire" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -41.5 8.4000006
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "FireJam" "" "FireJamErc" "FireJamPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -50.0 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "FireJamErc" "" "WeaponOperations.ErcRas.FireJam" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -50.0 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "FireJamPne" "" "WeaponOperations.PneRas.FireJam" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -50.0 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "FireLast" "" "FireLastErc" "FireLastPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -53.0 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "FireLastErc" "" "WeaponOperations.ErcRas.FireLast" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -53.0 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "FireLastPne" "" "WeaponOperations.PneRas.FireLast" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -53.0 7.9000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "FirePne" "" "WeaponOperations.PneRas.Fire" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -41.5 7.8000002
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "FireUncocked" "" "FireUncockedErc" "FireUncockedPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -55.7000008 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "FireUncockedErc" "" "WeaponOperations.ErcRas.FireUncocked" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -55.7000008 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "FireUncockedPne" "" "WeaponOperations.PneRas.FireUncocked" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -55.7000008 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "Jamming" "" "JammingErc" "JammingPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -60.7000008 9.1999998
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "JammingCancel" "" "JammingCancelErc" "JammingCancelPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -58.2000008 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "JammingCancelErc" "" "WeaponOperations.ErcRas.Jamming Cancel" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -58.2000008 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "JammingCancelPne" "" "WeaponOperations.PneRas.Jamming Cancel" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -58.2000008 7.9000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "JammingErc" "" "WeaponOperations.ErcRas.Jamming" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -60.7000008 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "JammingPne" "" "WeaponOperations.PneRas.Jamming" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -60.7000008 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ReloadAction_Closed" "" "ReloadAction_ClosedErc" "ReloadAction_ClosedPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -63.7000008 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "ReloadAction_ClosedErc" "" "WeaponOperations.ErcRas.ReloadAction_Closed" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -63.7000008 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "ReloadAction_ClosedPne" "" "WeaponOperations.PneRas.ReloadAction_Closed" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -63.7000008 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ReloadAction_Closed_Uncocked" "" "ReloadAction_Closed_UncockedErc" "ReloadAction_Closed_UncockedPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -67.4000015 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "ReloadAction_Closed_UncockedErc" "" "WeaponOperations.ErcRas.ReloadAction_Closed_Uncocked" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -67.4000015 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "ReloadAction_Closed_UncockedPne" "" "WeaponOperations.PneRas.ReloadAction_Closed_Uncocked" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -67.4000015 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ReloadAction_Open" "" "ReloadAction_OpenErc" "ReloadAction_OpenPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -70.2000046 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "ReloadAction_OpenErc" "" "WeaponOperations.ErcRas.ReloadAction_Open" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -70.2000046 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "ReloadAction_OpenPne" "" "WeaponOperations.PneRas.ReloadAction_Open" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -70.2000046 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ReloadBoltAction2" "" "ReloadBoltAction2Erc" "ReloadBoltAction2Pne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -73.0 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "ReloadBoltAction2Erc" "" "WeaponOperations.ErcRas.ReloadBoltAction2" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -73.0 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "ReloadBoltAction2Pne" "" "WeaponOperations.PneRas.ReloadBoltAction2" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -73.0 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ReloadMagBullet" "" "ReloadMagBulletErc" "ReloadMagBulletPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -75.9000015 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "ReloadMagBulletErc" "" "WeaponOperations.ErcRas.ReloadMagBullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -75.9000015 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "ReloadMagBulletPne" "" "WeaponOperations.PneRas.ReloadMagBullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -75.9000015 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ReloadMagNoBullet" "" "ReloadMagNoBulletErc" "ReloadMagNoBulletPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -78.7000046 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "ReloadMagNoBulletErc" "" "WeaponOperations.ErcRas.ReloadMagNoBullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -78.7000046 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "ReloadMagNoBulletPne" "" "WeaponOperations.PneRas.ReloadMagNoBullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -78.7000046 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ReloadMagazineDetach" "" "ReloadMagazineDetachErc" "ReloadMagazineDetachPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -81.5999985 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "ReloadMagazineDetachErc" "" "WeaponOperations.ErcRas.ReloadMagazineDetach" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -81.5999985 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "ReloadMagazineDetachPne" "" "WeaponOperations.PneRas.ReloadMagazineDetach" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -81.5999985 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ReloadNoMagBullet" "" "ReloadNoMagBulletErc" "ReloadNoMagBulletPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -84.3000031 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "ReloadNoMagBulletErc" "" "WeaponOperations.ErcRas.ReloadNoMagBullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -84.3000031 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "ReloadNoMagBulletPne" "" "WeaponOperations.PneRas.ReloadNoMagBullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -84.3000031 7.9000001
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "ReloadNoMagNoBullet" "" "ReloadNoMagNoBulletErc" "ReloadNoMagNoBulletPne" "" "" "Stance == 2 && eAI_AimX >= -35 && eAI_AimX <= 35" 0.4 "S" 7
+			$EditorData {
+				#EditorPos -87.2000046 9.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "ReloadNoMagNoBulletErc" "" "WeaponOperations.ErcRas.ReloadNoMagNoBullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -87.2000046 8.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "ReloadNoMagNoBulletPne" "" "WeaponOperations.PneRas.ReloadNoMagNoBullet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -87.2000046 7.9000001
+			}
+		}
+	}
+}

@@ -4,8 +4,9 @@ enum eAICommandCategories
 	CAT_MOVEMENT,
 	CAT_FORMATION,
 	CAT_STATUS,
-	CAT_DEBUG
-}
+	CAT_DEBUG,
+	CAT_EMPTY
+};
 
 class eAICommandMenuItem
 {
@@ -47,7 +48,7 @@ class eAICommandMenuItem
 	{
 		m_RadialMenuItemCard = widget;
 	}
-}
+};
 
 class eAICommandMenu extends UIScriptedMenu
 {
@@ -72,7 +73,7 @@ class eAICommandMenu extends UIScriptedMenu
 	//============================================
 	void eAICommandMenu()
 	{
-		m_GestureItems = new ref array < ref eAICommandMenuItem > ;
+		m_GestureItems = new array < ref eAICommandMenuItem > ;
 
 		if (!instance)
 		{
@@ -80,7 +81,7 @@ class eAICommandMenu extends UIScriptedMenu
 		}
 	}
 
-	void~eAICommandMenu() {}
+	void ~eAICommandMenu() {}
 
 	//============================================
 	// Init &Widget Events
@@ -118,26 +119,26 @@ class eAICommandMenu extends UIScriptedMenu
 		super.OnShow();
 
 		if (GetGame().GetUIManager())
-	        GetGame().GetUIManager().ShowCursor(true);
+			GetGame().GetUIManager().ShowCursor(true);
 	
-	    if (GetGame().GetMission())// thanks Wardog
-	        GetGame().GetMission().PlayerControlDisable(INPUT_EXCLUDE_MOUSE_RADIAL);
+		if (GetGame().GetMission())// thanks Wardog
+			GetGame().GetMission().PlayerControlDisable(INPUT_EXCLUDE_MOUSE_RADIAL);
 		
 		m_IsMenuClosing = false;
 	}
 	
 	override void OnHide()
 	{
-	    super.OnHide();
+		super.OnHide();
 	
-	    if (GetParentMenu()) // check if we're a child menu, we shouldn't give control back yet
-	        return;
+		if (GetParentMenu()) // check if we're a child menu, we shouldn't give control back yet
+			return;
 	
-	    if (GetGame().GetUIManager())
-	        GetGame().GetUIManager().ShowCursor(false);
+		if (GetGame().GetUIManager())
+			GetGame().GetUIManager().ShowCursor(false);
 	
-	    if (GetGame().GetMission())
-	        GetGame().GetMission().PlayerControlEnable(true);
+		if (GetGame().GetMission())
+			GetGame().GetMission().PlayerControlEnable(true);
 		
 		m_IsMenuClosing = true;
 	}
@@ -190,26 +191,35 @@ class eAICommandMenu extends UIScriptedMenu
 		UpdateToolbar();
 	}
 
-	protected void GetGestureItems(out ref array < ref eAICommandMenuItem > gesture_items, eAICommandCategories category)
+	protected void GetGestureItems(out array < ref eAICommandMenuItem > gesture_items, eAICommandCategories category)
 	{
 		gesture_items.Clear();
 
 		//All categories
 		if (category == eAICommandCategories.CATEGORIES)
 		{
-			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_MOVEMENT, "Movement", eAICommandCategories.CATEGORIES));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_FORMATION, "Formation", eAICommandCategories.CATEGORIES));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_STATUS, "Status", eAICommandCategories.CATEGORIES));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_DEBUG, "Debug", eAICommandCategories.CATEGORIES));
+			// only show if we are in a group
+			if (GetDayZGame().eAIManagerGet().InGroup())
+			{
+				gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_MOVEMENT, "Movement", eAICommandCategories.CATEGORIES));
+				gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_FORMATION, "Formation", eAICommandCategories.CATEGORIES));
+				//gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_STATUS, "Status", eAICommandCategories.CATEGORIES));
+			}
+			
+			// only show if we are an admin
+			if (GetDayZGame().eAIManagerGet().IsAdmin())
+			{
+				gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_DEBUG, "Debug", eAICommandCategories.CATEGORIES));
+			}
 		}
 
 		//Category 1 - Movement
 		else if (category == eAICommandCategories.CAT_MOVEMENT)
 		{
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.MOV_STOP, "Stop", eAICommandCategories.CAT_MOVEMENT));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommands.MOV_GOTO, "Go To...", eAICommandCategories.CAT_MOVEMENT));
+			//gesture_items.Insert(new eAICommandMenuItem(eAICommands.MOV_GOTO, "Go To...", eAICommandCategories.CAT_MOVEMENT));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.MOV_RTF, "Rejoin", eAICommandCategories.CAT_MOVEMENT));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommands.MOV_GETIN, "Get In", eAICommandCategories.CAT_MOVEMENT));
+			//gesture_items.Insert(new eAICommandMenuItem(eAICommands.MOV_GETIN, "Get In", eAICommandCategories.CAT_MOVEMENT));
 		}
 
 		//Category 2 - Formation
@@ -235,8 +245,18 @@ class eAICommandMenu extends UIScriptedMenu
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_SPAWNALLY, "Spawn Ally", eAICommandCategories.CAT_DEBUG));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_CLEARALL, "Clear All AI", eAICommandCategories.CAT_DEBUG));
 			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_SPAWNZOM, "Spawn Zombie", eAICommandCategories.CAT_DEBUG));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_AIMAP, "AI Menu", eAICommandCategories.CAT_DEBUG));
-			gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_GRPMGR, "Group Manager", eAICommandCategories.CAT_DEBUG));
+			if (IsMissionOffline())
+			{
+				gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_TARGET_CREATE, "Create Debug Apple", eAICommandCategories.CAT_DEBUG));
+				gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_TARGET_DESTROY, "Destroy Debug Apple", eAICommandCategories.CAT_DEBUG));
+			}
+			//gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_AIMAP, "AI Menu", eAICommandCategories.CAT_DEBUG));
+			//gesture_items.Insert(new eAICommandMenuItem(eAICommands.DEB_GRPMGR, "Group Manager", eAICommandCategories.CAT_DEBUG));
+		}
+
+		if (gesture_items.Count() == 1)
+		{
+			gesture_items.Insert(new eAICommandMenuItem(eAICommandCategories.CAT_EMPTY, "NULL", eAICommandCategories.CATEGORIES));
 		}
 	}
 
@@ -526,7 +546,7 @@ class eAICommandMenu extends UIScriptedMenu
 				instance.m_SelectedItem.GetUserData(selected);
 
 				if (selected)
-					DayZGame.Cast(GetGame()).GetEAICommandManager().Send(selected.GetID());
+					g_Game.eAIManagerGet().GetCommandManager().Send(selected.GetID());
 			}
 		}
 	}
@@ -540,4 +560,4 @@ class eAICommandMenu extends UIScriptedMenu
 	{
 		m_IsMenuClosing = state;
 	}
-}
+};

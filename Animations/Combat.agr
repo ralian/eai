@@ -1,0 +1,909 @@
+$AnimGraph 7 {
+	$Sheet "Hits" {
+		$Node AnimNodeWeaponIK {
+			 "DamageFullBodyIK" "" "DamageFullBodySTM" "isbitset(ArmIK, 0)" "isbitset(ArmIK, 1)" "isbitset(ArmIK, 2)" 0.36 0.15 "eAI_AimIKX" "eAI_AimY" "WeaponIKTest" "// ik pose anim
+// (root - means RightHand - but right hand is not exported)
+//   |- RightHand_Dummy (where Weapon is)
+//   |                |-  LeftHandIKTarget  (where left hand is on weapon)
+//   |- RightHandOrigin ( inverse transform where hand originally was)
+
+// basic setup - 
+// hand - bone which represents hand holding weapon
+// weapon - bone which represents weapon node in hand
+// weaponrotator - bone - around which weapon rotates
+hand = RightHand
+weapon = RightHand_Dummy
+weaponrotator = RightArm 
+weaponaxis= -x
+
+chain = RightArm, RightArmRoll, RightForeArm, RightForeArmRoll, RightHand
+chainaxis=-x
+secchain = LeftArm, LeftArmRoll, LeftForeArm, LeftForeArmRoll, LeftHand
+secchainaxis=+x
+
+ikpose_chainoffset = RightHandOrigin              			// bone in ikpose specifying where was 
+ikpose_weaponoffset = RightHand_Dummy      			// weapon offset from RHand 
+ikpose_secchainoffset = LeftHandIKTarget      			// secondary chain ik target offset (relative to weapon)
+ikpose_chainmiddledir = RightForeArmDirection			// hand to elbow direction (from hand)
+ikpose_chainmiddlediro = RightHandOrigin,RightForeArmDirectionOrigin	// original hand to elbow direction (from hand)
+ikpose_secchainmiddledir = LeftForeArmDirection			// sec hand to elbow direction (from ikpose_secchainoffset)
+ikpose_secchainmiddlediro = LeftHandOrigin,LeftForeArmDirectionOrigin	// original sec hand to elbow direction (from ikpose_secchainoffset)
+
+"
+			$EditorData {
+				#EditorPos 5.0999999 12.1000004
+			}
+		}
+		$Node AnimNodeBlend {
+			 "DamageFullBodyMaster" "" "0.0" "DamageFullBodyIK" "FacialHeavyHitAnim" 0
+			$EditorData {
+				#EditorPos 5.2000003 13.8000002
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "DamageFullBodySTM" "TagDamageFullBody"
+			$States 6 {
+				$State {
+					 "DamageHeavyErcRas" "" "DamageHeavyErcRas" "Stance == 0 && Raised && IsCommand(CMD_DamageHeavy)" "notime" 1
+					$EditorData {
+						#EditorPos 5.5999999 9.4000006
+					}
+				}
+				$State {
+					 "DamageHeavyErc" "" "DamageHeavyErc" "Stance == 0 && !Raised && IsCommand(CMD_DamageHeavy)" "notime" 1
+					$EditorData {
+						#EditorPos 8.0 9.4000006
+					}
+				}
+				$State {
+					 "DamageHeavyCroRas" "" "DamageHeavyCroRas" "Stance == 1 && Raised && IsCommand(CMD_DamageHeavy)" "notime" 1
+					$EditorData {
+						#EditorPos 11.5 9.4000006
+					}
+				}
+				$State {
+					 "DamageHeavyCro" "" "DamageHeavyCro" "Stance == 1 && !Raised && IsCommand(CMD_DamageHeavy)" "notime" 1
+					$EditorData {
+						#EditorPos 13.9000006 9.4000006
+					}
+				}
+				$State {
+					 "DamageHeavyPneRas" "" "DamageHeavyPneRas" "Stance == 2 && Raised && IsCommand(CMD_DamageHeavy)" "notime" 1
+					$EditorData {
+						#EditorPos 17.5 9.4000006
+					}
+				}
+				$State {
+					 "DamageHeavyPne" "" "DamageHeavyPne" "Stance == 2 && !Raised && IsCommand(CMD_DamageHeavy)" "notime" 1
+					$EditorData {
+						#EditorPos 20.3999996 9.4000006
+					}
+				}
+			}
+			$Transitions 0 {
+			}
+			$EditorData {
+				#EditorPos 5.0999999 10.6999998
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "DamageHeavyCro" "" "DamageHeavyDirSTM" "Damage" "Cro"
+			$EditorData {
+				#EditorPos 13.9000006 7.5999999
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "DamageHeavyCroRas" "" "DamageHeavyDirSTM" "Damage" "CroRas"
+			$EditorData {
+				#EditorPos 11.5 7.5999999
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "DamageHeavyDirSTM" ""
+			$States 4 {
+				$State {
+					 "Back" "" "HeavyB" "DamageDirection <= -135 || DamageDirection >= 135" "realtime" 1
+					$EditorData {
+						#EditorPos 14.1999998 2.2
+					}
+				}
+				$State {
+					 "Forward" "" "HeavyF" "DamageDirection > -45 && DamageDirection < 45" "realtime" 1
+					$EditorData {
+						#EditorPos 14.1999998 3.2
+					}
+				}
+				$State {
+					 "Left" "" "HeavyL" "DamageDirection <= -45 && DamageDirection > -135" "realtime" 1
+					$EditorData {
+						#EditorPos 12.0 2.7
+					}
+				}
+				$State {
+					 "Right" "" "HeavyR" "DamageDirection >= 45 && DamageDirection < 135" "realtime" 1
+					$EditorData {
+						#EditorPos 16.3999996 2.7
+					}
+				}
+			}
+			$Transitions 0 {
+			}
+			$EditorData {
+				#EditorPos 11.6999998 4.5999999
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "DamageHeavyErc" "" "DamageHeavyDirSTM" "Damage" "Erc"
+			$EditorData {
+				#EditorPos 8.0 7.5999999
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "DamageHeavyErcRas" "" "DamageHeavyDirSTM" "Damage" "ErcRas"
+			$EditorData {
+				#EditorPos 5.5999999 7.5999999
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "DamageHeavyPne" "" "DamageHeavyDirSTM" "Damage" "Pne"
+			$EditorData {
+				#EditorPos 20.3999996 7.5999999
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "DamageHeavyPneRas" "" "DamageHeavyDirSTM" "Damage" "PneRas"
+			$EditorData {
+				#EditorPos 17.5 7.5999999
+			}
+		}
+		$Node AnimNodeSource {
+			 "DamageLightBSrc" "" "Damage.Light B" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -8.1999998 0.5
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "DamageLightCro" "" "DamageLightDirectional" "Damage" "Cro"
+			$EditorData {
+				#EditorPos -6.8000002 7.2000003
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "DamageLightCroRas" "" "DamageLightDirectional" "Damage" "CroRas"
+			$EditorData {
+				#EditorPos -4.7000003 5.0999999
+			}
+		}
+		$Node AnimNodeBlendN {
+			 "DamageLightDirectional" "" "DamageDirection" 1 "S"
+			$Inputs {
+				 -180.0 "DamageLightBSrc"
+				 -90.0 "DamageLightLSrc"
+				 0.0 "DamageLightFT"
+				 90.0 "DamageLightRSrc"
+				 180.0
+			}
+			$EditorData {
+				#EditorPos -5.9000001 1.4
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "DamageLightErc" "" "DamageLightDirectional" "Damage" "Erc"
+			$EditorData {
+				#EditorPos -1.2 7.3000002
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "DamageLightErcRas" "" "DamageLightDirectional" "Damage" "ErcRas"
+			$EditorData {
+				#EditorPos 1.2 7.3000002
+			}
+		}
+		$Node AnimNodeSource {
+			 "DamageLightFBlockSrc" "" "Damage.Light F Block" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -3.9000001 -1.0
+			}
+		}
+		$Node AnimNodeSource {
+			 "DamageLightFSrc" "" "Damage.Light F" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -6.0 -1.0
+			}
+		}
+		$Node AnimNodeBlendT {
+			 "DamageLightFT" "" "DamageLightFSrc" "DamageLightFBlockSrc" "" "" "Stance == 0 && Raised && MeleeBlock" 0.3 "S" 7
+			$EditorData {
+				#EditorPos -4.9000001 -0.1
+			}
+		}
+		$Node AnimNodeSource {
+			 "DamageLightLSrc" "" "Damage.Light L" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -7.0999999 -0.1
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "DamageLightPne" "" "DamageLightDirectional" "Damage" "Pne"
+			$EditorData {
+				#EditorPos -15.1000004 7.3000002
+			}
+		}
+		$Node AnimNodeBlendN {
+			 "DamageLightPneBackB" "" "eAI_AimX" 1 "S"
+			$Inputs {
+				 -135.0 "DamageLightCroRas"
+				 -60.0 "DamageLightPneRas"
+				 0.0 "DamageLightPneRas"
+				 60.0 "DamageLightPneRas"
+				 135.0
+			}
+			$EditorData {
+				#EditorPos -9.8000002 6.7000003
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "DamageLightPneRas" "" "DamageLightDirectional" "Damage" "PneRas"
+			$EditorData {
+				#EditorPos -9.4000006 4.9000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "DamageLightRSrc" "" "Damage.Light R" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -3.9000001 0.6
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "DamageLightSTM" "TagDamage"
+			$States 6 {
+				$State {
+					 "DamageLightErc" "" "DamageLightErc" "Stance == 0 && !Raised && GetCommandI(CMD_Damage) == 0 || IsTag(\"TagProneBack\")" "realtime" 1
+					$EditorData {
+						#EditorPos -1.3000001 9.4000006
+					}
+				}
+				$State {
+					 "DamageLightErcRas" "" "DamageLightErcRas" "Stance == 0 && Raised && GetCommandI(CMD_Damage) == 0" "realtime" 1
+					$EditorData {
+						#EditorPos 1.3000001 9.4000006
+					}
+				}
+				$State {
+					 "DamageLightCro" "" "DamageLightCro" "Stance == 1 && !Raised && GetCommandI(CMD_Damage) == 0" "realtime" 1
+					$EditorData {
+						#EditorPos -6.8000002 9.4000006
+					}
+				}
+				$State {
+					 "DamageLightPne" "" "DamageLightPne" "Stance == 2 && !Raised && GetCommandI(CMD_Damage) == 0 && !IsTag(\"TagProneBack\")" "realtime" 1
+					$EditorData {
+						#EditorPos -15.1000004 9.4000006
+					}
+				}
+				$State {
+					 "DamageLightCroRas" "" "DamageLightCroRas" "Stance == 1 && Raised && GetCommandI(CMD_Damage) == 0" "realtime" 1
+					$EditorData {
+						#EditorPos -3.9000001 9.4000006
+					}
+				}
+				$State {
+					 "DamageLightPneRas" "" "DamageLightPneBackB" "Stance == 2 && Raised && GetCommandI(CMD_Damage) == 0 && !IsTag(\"TagProneBack\")" "realtime" 1
+					$EditorData {
+						#EditorPos -10.3000002 9.4000006
+					}
+				}
+			}
+			$Transitions 6 {
+				$Transition {
+					 "DamageLightErc" "DamageLightErcRas" "Raised" "0.2" "GetLowerTime()" 1 "S"
+				}
+				$Transition {
+					 "DamageLightErcRas" "DamageLightErc" "!Raised" "0.2" "GetLowerTime()" 1 "S"
+				}
+				$Transition {
+					 "DamageLightCroRas" "DamageLightCro" "!Raised" "0.2" "GetLowerTime()" 1 "S"
+				}
+				$Transition {
+					 "DamageLightCro" "DamageLightCroRas" "Raised" "0.2" "GetLowerTime()" 1 "S"
+				}
+				$Transition {
+					 "DamageLightPneRas" "DamageLightPne" "!Raised" "0.2" "GetLowerTime()" 1 "S"
+				}
+				$Transition {
+					 "DamageLightPne" "DamageLightPneRas" "Raised" "0.2" "GetLowerTime()" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos -1.7 10.6999998
+			}
+		}
+		$Node AnimNodeBlend {
+			 "DamageMaster" "" "0.0" "DamageLightSTM" "FacialLightHitAnim" 0
+			$EditorData {
+				#EditorPos -1.7 12.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "FacialHeavyHitAnim" "" "FacialHitHeavy" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 6.5 13.0
+			}
+		}
+		$Node AnimNodeSource {
+			 "FacialLightHitAnim" "" "FacialHitLight" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -0.6 11.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "HeavyB" "" "Damage.Heavy B" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 14.1999998 -0.5
+			}
+		}
+		$Node AnimNodeSource {
+			 "HeavyF" "" "Damage.Heavy F" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 14.1999998 0.4
+			}
+		}
+		$Node AnimNodeSource {
+			 "HeavyL" "" "Damage.Heavy L" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 12.0 0.4
+			}
+		}
+		$Node AnimNodeSource {
+			 "HeavyR" "" "Damage.Heavy R" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 16.3999996 0.4
+			}
+		}
+	}
+	$Sheet "Combat" {
+		$Node AnimNodeSource {
+			 "BayonetAnim" "" "Combat.Erc.Bayonet" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -13.9000006 6.0
+			}
+		}
+		$Node AnimNodeSource {
+			 "FacialAngryAnim" "" "FacialAnger" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -4.0 14.1999998
+			}
+		}
+		$Node AnimNodeSource {
+			 "HeavyLAnim" "" "Combat.Erc.StrikeL02" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 0.4 5.0
+			}
+		}
+		$Node AnimNodeSource {
+			 "HeavyLInPlaceAnim" "" "Combat.Erc.StrikeLInplace02" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -2.3 5.9000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "HeavyRAnim" "" "Combat.Erc.StrikeR03" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 0.4 5.9000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "HeavyRInPlaceAnim" "" "Combat.Erc.StrikeRInplace03" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -2.3 5.0
+			}
+		}
+		$Node AnimNodeSource {
+			 "LightLAnim" "" "Combat.Erc.StrikeL01" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 3.1000001 5.9000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "LightLInPlaceAnim" "" "Combat.Erc.StrikeLInplace01" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -4.9000001 5.0
+			}
+		}
+		$Node AnimNodeSource {
+			 "LightRAnim" "" "Combat.Erc.StrikeR01" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 3.1000001 5.0
+			}
+		}
+		$Node AnimNodeSource {
+			 "LightRInplaceAnim" "" "Combat.Erc.StrikeRInplace01" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -4.9000001 5.9000001
+			}
+		}
+		$Node AnimNodeBlend {
+			 "MeleeFacialB" "" "0.0" "MeleeSTM0" "FacialAngryAnim" 0
+			$EditorData {
+				#EditorPos -5.0999999 15.1999998
+			}
+		}
+		$Node AnimNodeQueue {
+			 "MeleeMasterQ" "" "MeleeRotNode"
+			$items 1 {
+				$item {
+					 "DamageMaster" "IsCommand(CMD_Damage)" "" "" 0.1 0.3 1 0
+				}
+			}
+			$EditorData {
+				#EditorPos -5.0999999 17.8999996
+			}
+		}
+		$Node AnimNodeRot {
+			 "MeleeRotNode" "" "MeleeWeaponIK" "LeanForward * 0.01745329251994329576923690768489"
+			$rotitems 7 {
+				$ri {
+					 "spine" "xmr" 0.3
+				}
+				$ri {
+					 "spine1" "xmr" 0.2
+				}
+				$ri {
+					 "spine2" "xmr" 0.1
+				}
+				$ri {
+					 "spine3" "xmr" 0.1
+				}
+				$ri {
+					 "leftshoulder" "xmr" 0.3
+				}
+				$ri {
+					 "rightshoulder" "xmr" 0.3
+				}
+				$ri {
+					 "Collision" "zlt" -0.2
+				}
+			}
+			$EditorData {
+				#EditorPos -5.0999999 17.0
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "MeleeSTM0" "TagMelee"
+			$States 14 {
+				$State {
+					 "Light R" "" "LightRAnim" "GetCommandI(CMD_Melee_Attack2) == 0 && GetCommandF(CMD_Melee_Attack2) == 0.0 && Stance == 0" "realtime" 1
+					$EditorData {
+						#EditorPos 3.1000001 9.5
+					}
+				}
+				$State {
+					 "Light L" "" "LightLAnim" "false" "realtime" 1
+					$EditorData {
+						#EditorPos 3.1000001 10.9000006
+					}
+				}
+				$State {
+					 "Heavy R" "" "HeavyRAnim" "GetCommandI(CMD_Melee_Attack2) == 1 && GetCommandF(CMD_Melee_Attack2) == 0.0 && Stance == 0" "realtime" 1
+					$EditorData {
+						#EditorPos 0.4 12.0
+					}
+				}
+				$State {
+					 "Heavy L" "" "HeavyLAnim" "false" "realtime" 1
+					$EditorData {
+						#EditorPos 0.4 8.3000002
+					}
+				}
+				$State {
+					 "Light R Inplace" "" "LightRInplaceAnim" "GetCommandI(CMD_Melee_Attack2) == 0 && GetCommandF(CMD_Melee_Attack2) == 1.0 && Stance == 0" "realtime" 1
+					$EditorData {
+						#EditorPos -4.9000001 10.9000006
+					}
+				}
+				$State {
+					 "Light L Inplace" "" "LightLInPlaceAnim" "false" "realtime" 1
+					$EditorData {
+						#EditorPos -4.9000001 9.5
+					}
+				}
+				$State {
+					 "Heavy R Inplace" "" "HeavyRInPlaceAnim" "GetCommandI(CMD_Melee_Attack2) == 1 && GetCommandF(CMD_Melee_Attack2) == 1.0 && Stance == 0" "realtime" 1
+					$EditorData {
+						#EditorPos -2.3 8.3000002
+					}
+				}
+				$State {
+					 "Heavy L Inplace" "" "HeavyLInPlaceAnim" "false" "realtime" 1
+					$EditorData {
+						#EditorPos -2.3 12.0
+					}
+				}
+				$State {
+					 "ProneOnBackKick" "" "PneKickAnim" "Stance == 2 && Raised && (eAI_AimX <= -125 || eAI_AimX >= 125)" "realtime" 1
+					$EditorData {
+						#EditorPos -10.3000002 10.9000006
+					}
+				}
+				$State {
+					 "SprintCharge" "" "SprintChargeR01Anim" "IsCommand(CMD_Melee_Attack2) && Stance == 0 && MovementSpeed > 2.1 && MovementDirection >= -50 && MovementDirection <= 50" "realtime" 1
+					$EditorData {
+						#EditorPos -16.6000004 10.9000006
+					}
+				}
+				$State {
+					 "PneAttack" "" "PneAttackAnim" "Stance == 2 && Raised && eAI_AimX >= -65 && eAI_AimX <= 65" "realtime" 1
+					$EditorData {
+						#EditorPos -7.5999999 10.9000006
+					}
+				}
+				$State {
+					 "Bayonet" "" "BayonetAnim" "GetCommandI(CMD_Melee_Attack2) == 2 && Stance == 0" "realtime" 1
+					$EditorData {
+						#EditorPos -13.9000006 10.9000006
+					}
+				}
+				$State {
+					 "StealthAttack_Liver" "TagNoTurn" "StealthAttack_LiverAnim" "GetCommandI(CMD_Melee_Stealth) == 1 && Stance == 0" "realtime" 1
+					$EditorData {
+						#EditorPos -19.2000008 10.9000006
+					}
+				}
+				$State {
+					 "StealthAttack_Neck" "TagNoTurn" "StealthAttack_NeckAnim" "GetCommandI(CMD_Melee_Stealth) == 2 && Stance == 0" "realtime" 1
+					$EditorData {
+						#EditorPos -21.8000011 10.9000006
+					}
+				}
+			}
+			$Transitions 32 {
+				$Transition {
+					 "Light L" "Light R" "GetCommandI(CMD_Melee_Combo) == 0 && GetCommandF(CMD_Melee_Combo) == 0.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeR01\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Light R" "Light L" "GetCommandI(CMD_Melee_Combo) == 0 && GetCommandF(CMD_Melee_Combo) == 0.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeL01\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Heavy L" "Heavy R" "GetCommandI(CMD_Melee_Combo) == 1 && GetCommandF(CMD_Melee_Combo) == 0.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeR02\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Heavy R" "Heavy L" "GetCommandI(CMD_Melee_Combo) == 1 && GetCommandF(CMD_Melee_Combo) == 0.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeL02\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Light L" "Heavy R" "GetCommandI(CMD_Melee_Combo) == 1 && GetCommandF(CMD_Melee_Combo) == 0.0" "0.2" "GetEventTime(\"Combat.Erc.StrikeR03\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Heavy R" "Light L" "GetCommandI(CMD_Melee_Combo) == 0 && GetCommandF(CMD_Melee_Combo) == 0.0" "0.2" "GetEventTime(\"Combat.Erc.StrikeL01\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Light R" "Heavy L" "GetCommandI(CMD_Melee_Combo) == 1 && GetCommandF(CMD_Melee_Combo) == 0.0" "0.2" "GetEventTime(\"Combat.Erc.StrikeL03\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Heavy L" "Light R" "GetCommandI(CMD_Melee_Combo) == 0 && GetCommandF(CMD_Melee_Combo) == 0.0" "0.2" "GetEventTime(\"Combat.Erc.StrikeR01\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Heavy R Inplace" "Heavy L" "GetCommandI(CMD_Melee_Combo) == 1 && GetCommandF(CMD_Melee_Combo) == 0.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeL02\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Heavy L" "Heavy R Inplace" "GetCommandI(CMD_Melee_Combo) == 1 && GetCommandF(CMD_Melee_Combo) == 1.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeRInplace03\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Heavy L Inplace" "Heavy R" "GetCommandI(CMD_Melee_Combo) == 1 && GetCommandF(CMD_Melee_Combo) == 0.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeR03\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Heavy R" "Heavy L Inplace" "GetCommandI(CMD_Melee_Combo) == 1 && GetCommandF(CMD_Melee_Combo) == 1.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeLInplace02\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Light R Inplace" "Light L" "GetCommandI(CMD_Melee_Combo) == 0 && GetCommandF(CMD_Melee_Combo) == 0.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeL01\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Light L" "Light R Inplace" "GetCommandI(CMD_Melee_Combo) == 0 && GetCommandF(CMD_Melee_Combo) == 1.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeRInplaceR01\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Light L Inplace" "Light R" "GetCommandI(CMD_Melee_Combo) == 0 && GetCommandF(CMD_Melee_Combo) == 0.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeR01\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Light R" "Light L Inplace" "GetCommandI(CMD_Melee_Combo) == 0 && GetCommandF(CMD_Melee_Combo) == 1.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeLInplace01\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Heavy R Inplace" "Light L Inplace" "GetCommandI(CMD_Melee_Combo) == 0 && GetCommandF(CMD_Melee_Combo) == 1.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeLInplace02\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Light L Inplace" "Heavy R Inplace" "GetCommandI(CMD_Melee_Combo) == 1 && GetCommandF(CMD_Melee_Combo) == 1.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeRInplace03\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Light R Inplace" "Heavy L Inplace" "GetCommandI(CMD_Melee_Combo) == 1 && GetCommandF(CMD_Melee_Combo) == 1.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeLInplace01\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Heavy L Inplace" "Light R Inplace" "GetCommandI(CMD_Melee_Combo) == 0 && GetCommandF(CMD_Melee_Combo) == 1.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeRInplace01\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Light R Inplace" "Light L Inplace" "GetCommandI(CMD_Melee_Combo) == 0 && GetCommandF(CMD_Melee_Combo) == 1.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeLInplace01\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Light L Inplace" "Light R Inplace" "GetCommandI(CMD_Melee_Combo) == 0 && GetCommandF(CMD_Melee_Combo) == 1.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeRInplace01\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Heavy R Inplace" "Heavy L Inplace" "GetCommandI(CMD_Melee_Combo) == 1 && GetCommandF(CMD_Melee_Combo) == 1.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeLInplace02\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Heavy L Inplace" "Heavy R Inplace" "GetCommandI(CMD_Melee_Combo) == 1" "0.3" "GetEventTime(\"Combat.Erc.StrikeRInplace03\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Light R" "Heavy L Inplace" "GetCommandI(CMD_Melee_Combo) == 1 && GetCommandF(CMD_Melee_Combo) == 1.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeLInplace02\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Heavy L Inplace" "Light R" "GetCommandI(CMD_Melee_Combo) == 0 && GetCommandF(CMD_Melee_Combo) == 0.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeL01\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Light L Inplace" "Heavy R" "GetCommandI(CMD_Melee_Combo) == 1 && GetCommandF(CMD_Melee_Combo) == 0.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeR03\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Heavy R" "Light L Inplace" "GetCommandI(CMD_Melee_Combo) == 0 && GetCommandF(CMD_Melee_Combo) == 1.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeLInplace01\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Light R Inplace" "Heavy L" "GetCommandI(CMD_Melee_Combo) == 1 && GetCommandF(CMD_Melee_Combo) == 0.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeL02\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Heavy L" "Light R Inplace" "GetCommandI(CMD_Melee_Combo) == 0 && GetCommandF(CMD_Melee_Combo) == 1.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeRInplace01\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Light L" "Heavy R Inplace" "GetCommandI(CMD_Melee_Combo) == 1 && GetCommandF(CMD_Melee_Combo) == 1.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeRInplace03\", \"BlendIn\")" 1 "S"
+				}
+				$Transition {
+					 "Heavy R Inplace" "Light L" "GetCommandI(CMD_Melee_Combo) == 0 && GetCommandF(CMD_Melee_Combo) == 0.0" "0.3" "GetEventTime(\"Combat.Erc.StrikeL01\", \"BlendIn\")" 1 "S"
+				}
+			}
+			$EditorData {
+				#EditorPos -5.2000003 13.1000004
+			}
+		}
+		$Node AnimNodeWeaponIK {
+			 "MeleeWeaponIK" "" "MeleeFacialB" "false" "isbitset(ArmIK, 1)" "isbitset(ArmIK, 2)" 0.36 0.15 "eAI_AimIKX" "eAI_AimY" "WeaponIKTest" "// ik pose anim
+// (root - means RightHand - but right hand is not exported)
+//   |- RightHand_Dummy (where Weapon is)
+//   |                |-  LeftHandIKTarget  (where left hand is on weapon)
+//   |- RightHandOrigin ( inverse transform where hand originally was)
+
+// basic setup - 
+// hand - bone which represents hand holding weapon
+// weapon - bone which represents weapon node in hand
+// weaponrotator - bone - around which weapon rotates
+hand = RightHand
+weapon = RightHand_Dummy
+weaponrotator = RightArm 
+weaponaxis= -x
+
+
+chain = RightArm, RightArmRoll, RightForeArm, RightForeArmRoll, RightHand
+chainaxis=-x
+secchain = LeftArm, LeftArmRoll, LeftForeArm, LeftForeArmRoll, LeftHand
+secchainaxis=+x
+
+ikpose_chainoffset = RightHandOrigin              						// bone in ikpose specifying where was 
+ikpose_weaponoffset = RightHand_Dummy      								// weapon offset from RHand 
+ikpose_secchainoffset = LeftHandIKTarget      							// secondary chain ik target offset (relative to weapon)
+ikpose_chainmiddledir = RightForeArmDirection							// hand to elbow direction (from hand)
+ikpose_chainmiddlediro = RightHandOrigin,RightForeArmDirectionOrigin	// original hand to elbow direction (from hand)
+ikpose_secchainmiddledir = LeftForeArmDirection							// sec hand to elbow direction (from ikpose_secchainoffset)
+ikpose_secchainmiddlediro = LeftHandOrigin,LeftForeArmDirectionOrigin	// original sec hand to elbow direction (from ikpose_secchainoffset)
+
+"
+			$EditorData {
+				#EditorPos -5.0999999 16.1000004
+			}
+		}
+		$Node AnimNodeSource {
+			 "PneAttackAnim" "" "Combat.Pne.StrikeR01" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -7.5999999 5.9000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "PneKickAnim" "" "Combat.Pne.Kick" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -10.3000002 5.9000001
+			}
+		}
+		$Node AnimNodeSource {
+			 "SprintChargeR01Anim" "" "Combat.Erc.Sprint_StrikeR01" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -16.6000004 6.0
+			}
+		}
+		$Node AnimNodeSource {
+			 "StealthAttack_LiverAnim" "" "Combat.Erc.StealthAttack_Liver" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -19.2000008 6.0
+			}
+		}
+		$Node AnimNodeSource {
+			 "StealthAttack_NeckAnim" "" "Combat.Erc.StealthAttack_Neck" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -21.8000011 6.0
+			}
+		}
+	}
+	$Sheet "WeaponActions" {
+		$Node AnimNodeSource {
+			 "FireAnim" "" "WeaponOperations.Fire" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos -0.6 5.7000003
+			}
+		}
+		$Node AnimNodeSource {
+			 "FireCockedAnim" "" "WeaponOperations.FireCocked" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 3.6000001 5.7000003
+			}
+		}
+		$Node AnimNodeSource {
+			 "FireEmptyAutomatic" "" "WeaponOperations.FireEmptyAutomatic" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 7.8000002 5.7000003
+			}
+		}
+		$Node AnimNodeSource {
+			 "FireJamAnim" "" "WeaponOperations.FireJam" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 10.0 5.7000003
+			}
+		}
+		$Node AnimNodeSource {
+			 "FireLastAnim" "" "WeaponOperations.FireLast" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 1.5 5.7000003
+			}
+		}
+		$Node AnimNodeSource {
+			 "FireUncocked" "" "WeaponOperations.FireUncocked" "noloop"
+			$Predictions {
+			}
+			$EditorData {
+				#EditorPos 5.7000003 5.7000003
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "WeaponFireSTM" ""
+			$States 6 {
+				$State {
+					 "Fire" "" "FireAnim" "GetCommandI(CMD_WeaponFire) == 0" "realtime" 1
+					$EditorData {
+						#EditorPos -0.6 7.3000002
+					}
+				}
+				$State {
+					 "FireLast" "" "FireLastAnim" "GetCommandI(CMD_WeaponFire) == 1" "realtime" 1
+					$EditorData {
+						#EditorPos 1.5 7.3000002
+					}
+				}
+				$State {
+					 "FireCocked" "" "FireCockedAnim" "GetCommandI(CMD_WeaponFire) == 2" "realtime" 1
+					$EditorData {
+						#EditorPos 3.6000001 7.3000002
+					}
+				}
+				$State {
+					 "FireUncocked" "" "FireUncocked" "GetCommandI(CMD_WeaponFire) == 3" "realtime" 1
+					$EditorData {
+						#EditorPos 5.7000003 7.3000002
+					}
+				}
+				$State {
+					 "FireEmpty" "" "FireEmptyAutomatic" "GetCommandI(CMD_WeaponFire) == 4" "realtime" 1
+					$EditorData {
+						#EditorPos 7.8000002 7.3000002
+					}
+				}
+				$State {
+					 "FireJam" "" "FireJamAnim" "GetCommandI(CMD_WeaponFire) == 5" "realtime" 1
+					$EditorData {
+						#EditorPos 10.0 7.3000002
+					}
+				}
+			}
+			$Transitions 0 {
+			}
+			$EditorData {
+				#EditorPos 2.8 8.6000004
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "WeaponStanceErc" "" "WeaponFireSTM" "WeaponOperations" "ErcRas"
+			$EditorData {
+				#EditorPos 1.7 9.9000006
+			}
+		}
+		$Node AnimNodeStateMachine {
+			 "WeaponStanceMaster" "TagWeaponFire"
+			$States 2 {
+				$State {
+					 "WeaponStanceErc" "" "WeaponStanceErc" "Stance != 2" "notime" 1
+					$EditorData {
+						#EditorPos 1.7 11.6999998
+					}
+				}
+				$State {
+					 "WeaponStancePne" "" "WeaponStancePne" "Stance == 2" "notime" 1
+					$EditorData {
+						#EditorPos 4.0999999 11.6999998
+					}
+				}
+			}
+			$Transitions 0 {
+			}
+			$EditorData {
+				#EditorPos 1.3000001 13.1000004
+			}
+		}
+		$Node AnimNodeGroupSelect {
+			 "WeaponStancePne" "" "WeaponFireSTM" "WeaponOperations" "PneRas"
+			$EditorData {
+				#EditorPos 4.0999999 9.9000006
+			}
+		}
+	}
+}
